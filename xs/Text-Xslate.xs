@@ -335,48 +335,39 @@ XSLATE(not) {
     TX_st->pc++;
 }
 
-XSLATE(eq) {
-    SV* const sa = TX_st_sa;
-    SV* const sb = TX_st_sb;
+static I32
+tx_sv_eq(pTHX_ SV* const a, SV* const b) {
+    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
+    U32 const bf = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
 
-    /* undef == anything-defined is always false */
-    if(SvOK(sa) && SvOK(sb)) {
-        TX_st_sa = boolSV(sv_eq(sa, sb));
-    }
-    else {
-        SvGETMAGIC(sa);
-        SvGETMAGIC(sb);
-
-        if(SvOK(sa) && SvOK(sb)) {
-            TX_st_sa = boolSV(sv_eq(sa, sb));
+    if(af && bf) {
+        if(af == SVf_IOK && bf == SVf_IOK) {
+            return SvIVX(a) == SvIVX(b);
         }
         else {
-            TX_st_sa = &PL_sv_no;
+            return sv_eq(a, b);
         }
     }
+
+    SvGETMAGIC(a);
+    SvGETMAGIC(b);
+
+    if(SvOK(a)) {
+        return SvOK(b) && sv_eq(a, b);
+    }
+    else { /* !SvOK(a) */
+        return !SvOK(b);
+    }
+}
+
+XSLATE(eq) {
+    TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
     TX_st->pc++;
 }
 
 XSLATE(ne) {
-    SV* const sa = TX_st_sa;
-    SV* const sb = TX_st_sb;
-
-    /* undef == anything-defined is always false */
-    if(SvOK(sa) && SvOK(sb)) {
-        TX_st_sa = boolSV(!sv_eq(sa, sb));
-    }
-    else {
-        SvGETMAGIC(sa);
-        SvGETMAGIC(sb);
-
-        if(SvOK(sa) && SvOK(sb)) {
-            TX_st_sa = boolSV(!sv_eq(sa, sb));
-        }
-        else {
-            TX_st_sa = &PL_sv_yes;
-        }
-    }
+    TX_st_sa = boolSV( !tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
     TX_st->pc++;
 }
