@@ -43,23 +43,27 @@ typedef struct tx_state_s tx_state_t;
 typedef void (*tx_exec_t)(pTHX_ tx_state_t*);
 
 struct tx_state_s {
-    Size_t pc;       /* the program counter */
-    line_t line;
+    U32 pc;       /* the program counter */
+    SV* output;
 
     tx_code_t* code; /* compiled code */
-    Size_t     code_len;
+    U32        code_len;
 
-    SV* output;
+    /* registers */
+
+    SV* sa;
+    SV* sb;
+    SV* sc;
+
+    /* variables */
+
     HV* vars;    /* template variables */
     AV* iter_v;  /* iterator variables */
     AV* iter_i;  /* iterator counter */
 
-    /* registers */
-    //IV ia;
-    //IV ib;
-
-    SV* sa;
-    SV* sb;
+    /* file information */
+    SV*  file;
+    U32* lines;  /* code index -> line number */
 };
 
 struct tx_code_s {
@@ -67,6 +71,23 @@ struct tx_code_s {
 
     SV* arg;
 };
+
+static const char*
+tx_file(pTHX_ const tx_state_t* const st) {
+    if(st->file) {
+        assert(SvPOK(st->file));
+        return SvPVX_const(st->file);
+    }
+    else {
+        return "<input>";
+    }
+}
+
+static int
+tx_line(pTHX_ const tx_state_t* const st) {
+    PERL_UNUSED_ARG(st);
+    return 0;
+}
 
 static SV*
 tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
@@ -87,7 +108,8 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
         PUTBACK;
 
         if(sv_true(ERRSV)){
-            croak("%d: Exception cought on %"SVf".%"SVf": %"SVf, (int)st->line,
+            croak("Xslate(%s:%d): Exception cought on %"SVf".%"SVf": %"SVf,
+                tx_file(aTHX_ st), tx_line(aTHX_ st),
                 var, key, ERRSV);
         }
 
@@ -114,7 +136,8 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
     }
     else {
         invalid_container:
-        croak("%d: Cannot access '%"SVf"' (%s is not a container)", (int)st->line,
+        croak("Xslate(%s:%d): Cannot access '%"SVf"' (%s is not a container)",
+            tx_file(aTHX_ st), tx_line(aTHX_ st),
             key, SvOK(var) ? form("'%"SVf"'", var) : "undef");
     }
     return sv;
@@ -236,7 +259,8 @@ XSLATE(for_start) {
     AV* av;
 
     if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
-        croak("%d: Iterator variables must be an ARRAY reference", (int)TX_st->line);
+        croak("Xslate(%s:%d): Iterator variables must be an ARRAY reference",
+            tx_file(aTHX_ TX_st), tx_line(aTHX_ TX_st));
     }
 
     av = (AV*)SvRV(sv);
@@ -450,6 +474,9 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 
     SvREFCNT_dec(st->iter_v);
     SvREFCNT_dec(st->iter_i);
+
+    SvREFCNT_dec(st->file);
+    Safefree(st->lines);
 
     return 0;
 }
