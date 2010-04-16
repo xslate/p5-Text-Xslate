@@ -281,6 +281,9 @@ sub BUILD {
 
     $parser->prefix('(', \&_nud_paren);
 
+    # constants
+    $parser->constant('nil', undef);
+
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
     #$parser->symbol('var')      ->set_std(\&_std_var);
@@ -396,7 +399,8 @@ sub _led_infix {
 sub infix {
     my($parser, $id, $bp, $led) = @_;
 
-    return $parser->symbol($id, $bp)->set_led($led || \&_led_infix);
+    $parser->symbol($id, $bp)->set_led($led || \&_led_infix);
+    return;
 }
 
 sub _led_infixr {
@@ -410,7 +414,8 @@ sub _led_infixr {
 sub infixr {
     my($parser, $id, $bp, $led) = @_;
 
-    return $parser->symbol($id, $bp)->set_led($led || \&_led_infixr);
+    $parser->symbol($id, $bp)->set_led($led || \&_led_infixr);
+    return;
 }
 
 sub _led_ternary {
@@ -453,7 +458,26 @@ sub _nud_prefix {
 sub prefix {
     my($parser, $id, $nud) = @_;
 
-    return $parser->symbol($id)->set_nud($nud || \&_nud_prefix);
+    $parser->symbol($id)->set_nud($nud || \&_nud_prefix);
+    return;
+}
+
+sub _nud_constant {
+    my($parser, $symbol) = @_;
+
+    my $c = $symbol->clone(arity => 'literal');
+    $parser->reserve($c);
+
+    return $c;
+}
+
+sub constant {
+    my($parser, $id, $value) = @_;
+
+    my $symbol = $parser->symbol($id);
+    $symbol->set_nud(\&_nud_constant);
+    $symbol->value($value);
+    return;
 }
 
 sub new_scope {

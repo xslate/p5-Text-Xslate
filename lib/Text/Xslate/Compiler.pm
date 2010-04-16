@@ -225,7 +225,8 @@ sub _variable_to_value {
 sub _literal_to_value {
     my($self, $arg) = @_;
 
-    my $value = $arg->value;
+    my $value = $arg->value // return undef;
+
     if($value =~ s/"(.+)"/$1/){
         $value =~ s/\\n/\n/g;
         $value =~ s/\\t/\t/g;
