@@ -645,16 +645,17 @@ BOOT:
     REG_TXOP(goto);
 }
 
-SV*
-new(SV* klass, AV* proto)
+void
+_load_protocode(SV* self, AV* proto)
 CODE:
 {
-    if(SvROK(klass)) {
-        croak("Cannot call new as an instance method");
+    if(!SvROK(self)) {
+        croak("Cannot call _load_protocode as a class method");
     }
 
-    RETVAL = newRV_noinc((SV*)newHV());
-    sv_bless(RETVAL, gv_stashsv(klass, GV_ADD));
+    if(SvRMAGICAL(SvRV(self)) && mgx_find(aTHX_ SvRV(self), &xslate_vtbl)) {
+        croak("Cannot call _load_protocode twice");
+    }
 
     {
         MAGIC* mg;
@@ -676,7 +677,7 @@ CODE:
 
         st.code     = code;
         st.code_len = len;
-        mg = sv_magicext(SvRV(RETVAL), NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
+        mg = sv_magicext(SvRV(self), NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
         mg->mg_private = 1; /* initial hint size */
 
         for(i = 0; i < len; i++) {
@@ -711,8 +712,6 @@ CODE:
         }
     }
 }
-OUTPUT:
-    RETVAL
 
 SV*
 render(HV* self, HV* hv)

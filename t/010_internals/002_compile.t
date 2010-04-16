@@ -23,7 +23,7 @@ my @data = (
 foreach my $d(@data) {
     my($str, @patterns) = @{$d};
 
-    my $code = Dumper($c->_compile_str($str));
+    my $code = Dumper($c->compile($str));
     #note($code);
 
     foreach my $pat(@patterns) {

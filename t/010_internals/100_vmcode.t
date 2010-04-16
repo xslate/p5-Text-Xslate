@@ -9,13 +9,13 @@ use Carp ();
 $SIG{__WARN__} = \&Carp::confess;
 
 foreach my $i(0 .. 2) {
-    my $x = Text::Xslate->new([
-        [ print_raw_s => "Hello, "  ],
-        [ fetch       => "my"       ],
-        [ fetch_field => "lang"     ],
-        [ print       => ()         ],
-        [ print_raw_s => " world!\n"],
-    ]);
+    my $x = Text::Xslate->new(assembly => <<'TX_ASM');
+        print_raw_s "Hello, "
+        fetch       "my"
+        fetch_field "lang"
+        print
+        print_raw_s " world!\n"
+TX_ASM
 
 
     for my $j(0 .. 2) {
@@ -33,17 +33,17 @@ foreach my $i(0 .. 2) {
         like $@, qr/\b lang \b/xms, "correct error (interpolate)";
     }
 
-    $x = Text::Xslate->new([
-        [ fetch       => "data"],
-        [ for_start   => 0      ], # 0:$item
-        [ print_raw_s => "* "   ],
-        [ fetch_iter  => 0      ], # fetch the iterator variable(0:$item)
-        [ fetch_field => "title"],
-        [ print       => 0      ],
-        [ print_raw_s => "\n"   ],
-        [ literal     => 0      ], # 0:$item
-        [ for_next    => -6     ], # to the loop start
-    ]);
+    $x = Text::Xslate->new(assembly => <<'TX_ASM');
+        fetch "data" # $data
+        for_start 0  # $item
+        print_raw_s "* "
+        fetch_iter 0         # $item
+        fetch_field "title"  # .title
+        print
+        print_raw_s "\n"
+        literal 0 # $item
+        for_next -6
+TX_ASM
 
     is $x->render({ data => [ { title => "foo" }, { title => "bar" } ] }),
         "* foo\n* bar\n", 'for';

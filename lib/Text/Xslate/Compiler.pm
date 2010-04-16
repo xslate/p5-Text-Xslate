@@ -4,6 +4,7 @@ use Mouse;
 use warnings FATAL => 'all';
 
 use Text::Xslate;
+use Scalar::Util ();
 
 use constant _DUMP_CODE => !!$ENV{XSLATE_DUMP_CODE};
 
@@ -12,10 +13,10 @@ extends qw(Text::Xslate::Parser);
 sub compile_str {
     my($self, $str) = @_;
 
-    return Text::Xslate->new( $self->_compile_str($str) );
+    return Text::Xslate->new( protocode => $self->compile($str) );
 }
 
-sub _compile_str {
+sub compile {
     my($self, $str) = @_;
 
     my $ast = $self->parse($str);
@@ -24,7 +25,7 @@ sub _compile_str {
 
     $self->_optimize(\@code);
 
-    print $self->_dump(\@code) if _DUMP_CODE;
+    print STDERR $self->as_assembly(\@code) if _DUMP_CODE;
     return \@code;
 }
 
@@ -257,11 +258,10 @@ sub _optimize {
 }
 
 
-sub _dump { # as xslate assembly
+sub as_assembly {
     my($self, $code_ref) = @_;
 
-    my $as = '';
-    $as .= "# xslate opcode version $Text::Xslate::VERSION\n";
+    my $as = "";
     foreach my $op(@{$code_ref}) {
         my($opname, $arg, $comment) = @{$op};
         $as .= $opname;
@@ -272,8 +272,8 @@ sub _dump { # as xslate assembly
                 $as .= $arg;
             }
             else {
-                $arg =~ s/\n/\\n/g;
                 $arg =~ s/\\/\\\\/;
+                $arg =~ s/\n/\\n/g;
                 $as .= qq{"$arg"};
             }
         }
