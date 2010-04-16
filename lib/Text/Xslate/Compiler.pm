@@ -55,12 +55,12 @@ sub _generate_command {
     foreach my $arg(@{ $node->args }){
         if($arg->arity eq 'literal'){
             my $value = $self->_literal_to_value($arg);
-            push @code, [ $proc . '_s' => $value ];
+            push @code, [ $proc . '_s' => $value, $node->line ];
         }
         else {
             push @code,
                 $self->_generate_expr($arg),
-                [ $proc => () ];
+                [ $proc => undef, $node->line ];
         }
     }
     return @code;
@@ -77,12 +77,12 @@ sub _generate_for {
     push @code, $self->_generate_expr($expr);
 
     my $for_start = scalar @code;
-    push @code, [ for_start => $iter_var->scope_depth - 1, $iter_var->id ];
+    push @code, [ for_start => $iter_var->scope_depth - 1, undef, $iter_var->id ];
 
     push @code, $self->_compile_ast($block);
 
     push @code,
-        [ literal  => $iter_var->scope_depth - 1, $iter_var->id ],
+        [ literal  => $iter_var->scope_depth - 1, undef, $iter_var->id ],
         [ for_next => -(scalar(@code) - $for_start) ];
     return @code;
 }
@@ -101,7 +101,7 @@ sub _generate_if {
 
     my @code = (
         @expr,
-        [ and    => scalar(@then) + 2, 'if' ],
+        [ and    => scalar(@then) + 2, undef, 'if' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
@@ -120,17 +120,17 @@ sub _generate_variable {
     my($self, $node) = @_;
 
     if(defined(my $id = $node->scope_depth)) {
-        return [ fetch_iter => $id - 1, $node->id ];
+        return [ fetch_iter => $id - 1, $node->line, $node->id ];
     }
     else {
-        return [ fetch => $self->_variable_to_value($node) ];
+        return [ fetch => $self->_variable_to_value($node), $node->line ];
     }
 }
 
 sub _generate_literal {
     my($self, $node) = @_;
 
-    return [ literal => $self->_literal_to_value($node) ];
+    return [ literal => $self->_literal_to_value($node), $node->line ];
 }
 
 sub _generate_unary {
@@ -207,7 +207,7 @@ sub _generate_ternary { # the conditional operator
 
     my @code = (
         @expr,
-        [ and    => scalar(@then) + 2, 'ternary' ],
+        [ and    => scalar(@then) + 2, $node->line, 'ternary' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
@@ -263,7 +263,7 @@ sub as_assembly {
 
     my $as = "";
     foreach my $op(@{$code_ref}) {
-        my($opname, $arg, $comment) = @{$op};
+        my($opname, $arg, $line, $comment) = @{$op};
         $as .= $opname;
         if(defined $arg) {
             $as .= " ";
@@ -277,8 +277,11 @@ sub as_assembly {
                 $as .= qq{"$arg"};
             }
         }
+        if(defined $line) {
+            $as .= " #$line";
+        }
         if(defined $comment) {
-            $as .= " # $comment";
+            $as .= " // $comment";
         }
         $as .= "\n";
     }

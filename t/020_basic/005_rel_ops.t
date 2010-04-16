@@ -79,7 +79,6 @@ my @data = (
 
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
-
     my $x = $tx->compile_str($in);
 
     my %vars = (

@@ -180,11 +180,12 @@ sub _load_assembly {
 
     # name ?arg comment
     my @protocode;
-    while($assembly =~ /^\s* (\.?\w+) (?: \s+ ($STRING|$NUMBER) )? [^\n]* \n/xmsg) {
-        my @pair = ($1);
-
+    while($assembly =~ /^\s* (\.?\w+) (?: \s+ ($STRING|$NUMBER) )? (?:\#(\d+))? [^\n]* \n/xmsg) {
+        my $name  = $1;
         my $value = $2;
-        if(defined $value) {
+        my $line  = $3;
+
+        if(defined($value)) {
             if($value =~ s/"(.+)"/$1/){
                 $value =~ s/\\n/\n/g;
                 $value =~ s/\\t/\t/g;
@@ -193,9 +194,8 @@ sub _load_assembly {
             elsif($value =~ s/'(.+)'/$1/) {
                 $value =~ s/\\(['\\])/$1/g; # ' for poor editors
             }
-            push @pair, $value;
         }
-        push @protocode, \@pair;
+        push @protocode, [ $name, $value, $line ];
     }
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);

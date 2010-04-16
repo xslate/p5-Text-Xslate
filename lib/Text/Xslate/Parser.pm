@@ -70,6 +70,18 @@ has input => (
     init_arg => undef,
 );
 
+has line => (
+    is  => 'rw',
+    isa => 'Int',
+
+    traits  => [qw(Counter)],
+    handles => {
+        line_inc => 'inc',
+    },
+
+    default  => 0,
+    init_arg => undef,
+);
 
 my $token_pattern_t = subtype __PACKAGE__ . '.token_pattern', as 'Regexp';
 
@@ -183,7 +195,7 @@ sub preprocess {
             }
         }
     }
-    warn $code, "\n" if _DUMP_PROTO;
+    print STDERR $code, "\n" if _DUMP_PROTO;
     return $code;
 }
 
@@ -192,7 +204,7 @@ sub next_token {
 
     local *_ = \$self->{input};
 
-    s/\A \s+ //xms;
+    s{\G (\s) }{ $1 eq "\n" and $self->line_inc; ""}xmsge;
 
     if(s/\A ($ID)//xmso){
         return [ name => $1 ];
@@ -366,7 +378,7 @@ sub advance {
         confess "Unexpected token: $value ($arity)";
     }
 
-    return $parser->token( $proto->clone( id => $value, arity => $arity ) );
+    return $parser->token( $proto->clone( id => $value, arity => $arity, line => $parser->line + 1 ) );
 }
 
 sub expression {

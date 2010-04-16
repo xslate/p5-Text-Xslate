@@ -62,7 +62,7 @@ struct tx_state_s {
 
     /* file information */
     SV*  file;
-    U32* lines;  /* code index -> line number */
+    U16* lines;  /* code index -> line number */
 };
 
 struct tx_code_s {
@@ -84,8 +84,7 @@ tx_file(pTHX_ const tx_state_t* const st) {
 
 static int
 tx_line(pTHX_ const tx_state_t* const st) {
-    PERL_UNUSED_ARG(st);
-    return 0;
+    return (int)st->lines[ st->pc ];
 }
 
 static SV*
@@ -209,58 +208,69 @@ XSLATE(fetch_field) { /* fetch a field from a variable */
 XSLATE(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
-    STRLEN len;
-    const char*       cur = SvPV_const(sv, len);
-    const char* const end = cur + len;
 
-    (void)SvGROW(output, len + SvCUR(output) + 1);
-
-    while(cur != end) {
-        const char* parts;
-        STRLEN      parts_len;
-
-        switch(*cur) {
-        case '<':
-            parts     =        "&lt;";
-            parts_len = sizeof("&lt;") - 1;
-            break;
-        case '>':
-            parts     =        "&gt;";
-            parts_len = sizeof("&gt;") - 1;
-            break;
-        case '&':
-            parts     =        "&amp;";
-            parts_len = sizeof("&amp;") - 1;
-            break;
-        case '"':
-            parts     =        "&quot;";
-            parts_len = sizeof("&quot;") - 1;
-            break;
-        case '\'':
-            parts     =        "&#39;";
-            parts_len = sizeof("&#39;") - 1;
-            break;
-        default:
-            parts     = cur;
-            parts_len = 1;
-            break;
+    SvGETMAGIC(sv);
+    if(!SvOK(sv)) {
+        if(ckWARN(WARN_UNINITIALIZED)) {
+            Perl_warner(aTHX_ packWARN(WARN_UNINITIALIZED),
+                "Xslate: You should not pass undefined values to %s "
+                    "at %s line %d.\n",
+                    "print", tx_file(aTHX_ TX_st), tx_line(aTHX_ TX_st));
         }
-
-        len = SvCUR(output) + parts_len + 1;
-        (void)SvGROW(output, len);
-
-        if(parts_len == 1) {
-            *SvEND(output) = *parts;
-        }
-        else {
-            Copy(parts, SvEND(output), parts_len, char);
-        }
-        SvCUR_set(output, SvCUR(output) + parts_len);
-
-        cur++;
     }
+    else {
+        STRLEN len;
+        const char*       cur = SvPV_const(sv, len);
+        const char* const end = cur + len;
 
-    *SvEND(output) = '\0';
+        (void)SvGROW(output, len + SvCUR(output) + 1);
+
+        while(cur != end) {
+            const char* parts;
+            STRLEN      parts_len;
+
+            switch(*cur) {
+            case '<':
+                parts     =        "&lt;";
+                parts_len = sizeof("&lt;") - 1;
+                break;
+            case '>':
+                parts     =        "&gt;";
+                parts_len = sizeof("&gt;") - 1;
+                break;
+            case '&':
+                parts     =        "&amp;";
+                parts_len = sizeof("&amp;") - 1;
+                break;
+            case '"':
+                parts     =        "&quot;";
+                parts_len = sizeof("&quot;") - 1;
+                break;
+            case '\'':
+                parts     =        "&#39;";
+                parts_len = sizeof("&#39;") - 1;
+                break;
+            default:
+                parts     = cur;
+                parts_len = 1;
+                break;
+            }
+
+            len = SvCUR(output) + parts_len + 1;
+            (void)SvGROW(output, len);
+
+            if(parts_len == 1) {
+                *SvEND(output) = *parts;
+            }
+            else {
+                Copy(parts, SvEND(output), parts_len, char);
+            }
+            SvCUR_set(output, SvCUR(output) + parts_len);
+
+            cur++;
+        }
+        *SvEND(output) = '\0';
+    }
 
     TX_st->pc++;
 }
@@ -662,8 +672,10 @@ CODE:
         HV* const ops = get_hv("Text::Xslate::_ops", GV_ADD);
         I32 const len = av_len(proto) + 1;
         I32 i;
+        U16 l = 0;
         tx_code_t* code;
         tx_state_t st;
+        SV** filep;
 
         Zero(&st, 1, tx_state_t);
 
@@ -673,10 +685,18 @@ CODE:
         st.iter_v   = newAV();
         st.iter_i   = newAV();
 
-        Newxz(code, len, tx_code_t);
+        Newx(code, len, tx_code_t);
 
         st.code     = code;
         st.code_len = len;
+
+        filep = hv_fetchs((HV*)SvRV(self), "loaded", FALSE);
+        if(filep) {
+            st.file = newSVsv(*filep);
+        }
+
+        Newx(st.lines, len, U16);
+
         mg = sv_magicext(SvRV(self), NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
         mg->mg_private = 1; /* initial hint size */
 
@@ -686,6 +706,7 @@ CODE:
                 AV* const av     = (AV*)SvRV(pair);
                 SV* const opname = *av_fetch(av, 0, TRUE);
                 SV** const arg   =  av_fetch(av, 1, FALSE);
+                SV** const line  =  av_fetch(av, 2, FALSE);
                 HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
                 SV* opnum;
 
@@ -695,7 +716,7 @@ CODE:
 
                 opnum             = hv_iterval(ops, he);
                 code[i].exec_code = tx_opcode[ SvIV(opnum) ];
-                if(arg) {
+                if(arg && SvOK(*arg)) {
                     if(SvIV(opnum) == TXOP_fetch) {
                         STRLEN len;
                         const char* const pv = SvPV_const(*arg, len);
@@ -705,6 +726,15 @@ CODE:
                         code[i].arg = newSVsv(*arg);
                     }
                 }
+                else {
+                    code[i].arg = &PL_sv_undef;
+                }
+
+                /* setup line number */
+                if(line && SvOK(*line)) {
+                    l = (U16)SvIV(*line);
+                }
+                st.lines[i] = l;
             }
             else {
                 croak("Broken code found on [%d]", (int)i);

@@ -121,6 +121,13 @@ has scope_depth => (
     required => 0,
 );
 
+has line => (
+    is  => 'ro',
+    isa => 'Int',
+
+    required => 0,
+);
+
 sub nud {
     my($self, $parser) = @_;
 
