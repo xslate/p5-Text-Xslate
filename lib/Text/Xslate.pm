@@ -62,6 +62,10 @@ sub default_path {
     return( File::Basename::dirname($FindBin::Bin) . "/template", $FindBin::Bin );
 }
 
+sub render;
+
+sub _load_protocode;
+
 sub _load_file {
     my($self, $file) = @_;
 
@@ -263,18 +267,23 @@ This document describes Text::Xslate version 0.001.
 
 =head1 DESCRIPTION
 
-Text::Xslate is a template engine with high performance and
-extensitibily.
+Text::Xslate is a template engine with high performance.
+
+This is still under development.
 
 =head1 INTERFACE
 
-TODO
+=head2 Methods
+
+=head3 B<< Text::Xslate->new(%options) -> TX >>
+
+Creates a new xslate template code.
+
+=head3 B<< $tx->render(\%vars) -> Str >>
+
+Renderes a template with variables, and returns the result.
 
 =head1 TEMPLATE SYNTAX
-
-TODO
-
-=head1 PERFORMANCE
 
 TODO
 
