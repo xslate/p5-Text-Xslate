@@ -53,7 +53,6 @@ struct tx_state_s {
 
     SV* sa;
     SV* sb;
-    SV* sc;
 
     /* variables */
 
@@ -153,6 +152,37 @@ XSLATE(move_sa_to_sb) {
     TX_st->pc++;
 }
 
+XSLATE(swap) { /* swap sa and sb */
+    SV* const tmp = TX_st_sa;
+    TX_st_sa      = TX_st_sb;
+    TX_st_sb      = tmp;
+
+    TX_st->pc++;
+}
+
+XSLATE(push) {
+    dSP;
+    XPUSHs(TX_st_sa);
+    PUTBACK;
+
+    TX_st->pc++;
+}
+
+XSLATE(pop) {
+    dSP;
+    TX_st_sa = POPs;
+    PUTBACK;
+
+    TX_st->pc++;
+}
+XSLATE(pop_to_sb) {
+    dSP;
+    TX_st_sb = POPs;
+    PUTBACK;
+
+    TX_st->pc++;
+}
+
 XSLATE(literal) {
     TX_st_sa = TX_op_arg;
 
@@ -163,7 +193,7 @@ XSLATE(fetch) { /* fetch a field from top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
-    TX_st_sa = he ? hv_iterval(vars, he) : &PL_sv_undef;
+    TX_st_sa = LIKELY(he != NULL) ? hv_iterval(vars, he) : &PL_sv_undef;
 
     TX_st->pc++;
 }
@@ -254,16 +284,16 @@ XSLATE(print_raw_s) {
 }
 
 XSLATE(for_start) {
-    SV* const sv = TX_st_sa;
-    IV  const id = SvIV(TX_op_arg);
+    SV* const avref = TX_st_sa;
+    IV  const id    = SvIV(TX_op_arg);
     AV* av;
 
-    if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
+    if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
         croak("Xslate(%s:%d): Iterator variables must be an ARRAY reference",
             tx_file(aTHX_ TX_st), tx_line(aTHX_ TX_st));
     }
 
-    av = (AV*)SvRV(sv);
+    av = (AV*)SvRV(avref);
     SvREFCNT_inc_simple_void_NN(av);
     (void)av_store(TX_st->iter_v, id, (SV*)av);
     sv_setiv(*av_fetch(TX_st->iter_i, id, TRUE), 0); /* (re)set iterator */
@@ -278,6 +308,7 @@ XSLATE(for_next) {
     SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
 
     assert(SvTYPE(av) == SVt_PVAV);
+    assert(SvIOK(i));
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     if(++SvIVX(i) <= AvFILLp(av)) {
@@ -305,6 +336,7 @@ XSLATE(fetch_iter) {
     SV** svp;
 
     assert(SvTYPE(av) == SVt_PVAV);
+    assert(SvIOK(i));
 
     //warn("fetch_iter[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     svp = av_fetch(av, SvIVX(i), FALSE);
@@ -322,16 +354,6 @@ XSLATE(sub) {
     TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) - SvNVx(TX_st_sa) ) );
 
     TX_st->pc++;
-}
-
-XSLATE(cond_expr) {
-    assert(TX_st_sa != NULL);
-    if(sv_true(TX_st_sa)) {
-        TX_st->pc++;
-    }
-    else {
-        TX_st->pc += SvIVx(TX_op_arg);
-    }
 }
 
 XSLATE(and) {
@@ -494,7 +516,13 @@ static MGVTBL xslate_vtbl = { /* for identity */
 
 enum {
     TXOP_noop,
+
     TXOP_move_sa_to_sb,
+    TXOP_swap,
+    TXOP_push,
+    TXOP_pop,
+    TXOP_pop_to_sb,
+
     TXOP_literal,
     TXOP_fetch,
     TXOP_fetch_field,
@@ -511,7 +539,6 @@ enum {
     TXOP_add,
     TXOP_sub,
 
-    TXOP_cond_expr,
     TXOP_and,
     TXOP_or,
     TXOP_not,
@@ -530,7 +557,13 @@ enum {
 
 static const tx_exec_t tx_opcode[] = {
     XSLATE_noop,
+
     XSLATE_move_sa_to_sb,
+    XSLATE_swap,
+    XSLATE_push,
+    XSLATE_pop,
+    XSLATE_pop_to_sb,
+
     XSLATE_literal,
     XSLATE_fetch,
     XSLATE_fetch_field,
@@ -547,7 +580,6 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_add,
     XSLATE_sub,
 
-    XSLATE_cond_expr,
     XSLATE_and,
     XSLATE_or,
     XSLATE_not,
@@ -576,7 +608,13 @@ BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
     REG_TXOP(noop);
+
     REG_TXOP(move_sa_to_sb);
+    REG_TXOP(swap);
+    REG_TXOP(push);
+    REG_TXOP(pop);
+    REG_TXOP(pop_to_sb);
+
     REG_TXOP(literal);
     REG_TXOP(fetch);
     REG_TXOP(fetch_field);
@@ -593,7 +631,6 @@ BOOT:
     REG_TXOP(add);
     REG_TXOP(sub);
 
-    REG_TXOP(cond_expr);
     REG_TXOP(and);
     REG_TXOP(or);
     REG_TXOP(not);
@@ -686,8 +723,10 @@ CODE:
     STRLEN hint_size;
     assert(st);
 
-    RETVAL = sv_2mortal(newSV( mg->mg_private << TX_BUFFER_SIZE_C ));
-    sv_setpvs(RETVAL, "");
+    RETVAL = sv_newmortal();
+    sv_upgrade(RETVAL, SVt_PV);
+    sv_grow(RETVAL, mg->mg_private << TX_BUFFER_SIZE_C);
+    SvPOK_on(RETVAL);
 
     st->output = RETVAL;
     st->vars   = hv;

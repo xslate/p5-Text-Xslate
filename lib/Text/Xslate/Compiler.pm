@@ -100,7 +100,7 @@ sub _generate_if {
 
     my @code = (
         @expr,
-        [ cond_expr => scalar(@then) + 2 ],
+        [ and    => scalar(@then) + 2, 'if' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
@@ -177,9 +177,10 @@ sub _generate_binary {
         when(%bin) {
             return
                 $self->_generate_expr($node->first),
-                [ move_sa_to_sb => () ],
+                [ push      => () ],
                 $self->_generate_expr($node->second),
-                [ $bin{$_} => () ];
+                [ pop_to_sb => () ],
+                [ $bin{$_}  => () ];
         }
         when(%bin_r) {
             my @right = $self->_generate_expr($node->second);
@@ -205,7 +206,7 @@ sub _generate_ternary { # the conditional operator
 
     my @code = (
         @expr,
-        [ cond_expr => scalar(@then) + 2 ],
+        [ and    => scalar(@then) + 2, 'ternary' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
