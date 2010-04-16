@@ -723,7 +723,6 @@ CODE:
     assert(st);
 
     RETVAL = sv_newmortal();
-    sv_upgrade(RETVAL, SVt_PV);
     sv_grow(RETVAL, mg->mg_private << TX_BUFFER_SIZE_C);
     SvPOK_on(RETVAL);
 
