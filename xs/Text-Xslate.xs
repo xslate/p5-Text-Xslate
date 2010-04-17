@@ -354,12 +354,22 @@ XSLATE(fetch_iter) {
 
 XSLATE(add) {
     TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) + SvNVx(TX_st_sa) ) );
-
     TX_st->pc++;
 }
 XSLATE(sub) {
     TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) - SvNVx(TX_st_sa) ) );
-
+    TX_st->pc++;
+}
+XSLATE(mul) {
+    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) * SvNVx(TX_st_sa) ) );
+    TX_st->pc++;
+}
+XSLATE(div) {
+    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) / SvNVx(TX_st_sa) ) );
+    TX_st->pc++;
+}
+XSLATE(mod) {
+    TX_st_sa = sv_2mortal( newSVnv( SvIVx(TX_st_sb) % SvIVx(TX_st_sa) ) );
     TX_st->pc++;
 }
 
@@ -588,6 +598,9 @@ enum {
 
     TXOP_add,
     TXOP_sub,
+    TXOP_mul,
+    TXOP_div,
+    TXOP_mod,
 
     TXOP_and,
     TXOP_or,
@@ -630,6 +643,9 @@ static const tx_exec_t tx_opcode[] = {
 
     XSLATE_add,
     XSLATE_sub,
+    XSLATE_mul,
+    XSLATE_div,
+    XSLATE_mod,
 
     XSLATE_and,
     XSLATE_or,
@@ -683,6 +699,9 @@ BOOT:
 
     REG_TXOP(add);
     REG_TXOP(sub);
+    REG_TXOP(mul);
+    REG_TXOP(div);
+    REG_TXOP(mod);
 
     REG_TXOP(and);
     REG_TXOP(or);

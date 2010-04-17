@@ -36,7 +36,7 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
 ), ',');
 
 
-my $COMMENT = qr/\# [^\n;]* [;\n]?/xms;
+my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 has symbol_table => (
     is  => 'ro',
@@ -191,7 +191,7 @@ sub preprocess {
                 }
             }
             default {
-                confess "Unknown token: $_";
+                $self->_parse_error("Unknown token: $_");
             }
         }
     }
@@ -225,7 +225,7 @@ sub next_token {
         goto &next_token; # tail call
     }
     elsif(s/\A (\S+)//xms) {
-        confess("Unexpected symbol '$1'");
+        $self->_parse_error("Unexpected symbol '$1'");
     }
     else { # empty
         return undef;
@@ -271,6 +271,8 @@ sub BUILD {
     $parser->infix('+', 70);
     $parser->infix('-', 70);
 
+    $parser->infix('~',  70); # connect
+
 
     $parser->infix('<',  60);
     $parser->infix('<=', 60);
@@ -280,12 +282,13 @@ sub BUILD {
     $parser->infix('==', 50);
     $parser->infix('!=', 50);
 
-    $parser->infix('|',  40);
+    $parser->infix('|',  40); # filter
 
     $parser->infix('?', 20, \&_led_ternary);
 
     $parser->infix('.', 100, \&_led_dot);
     $parser->infix('[', 100, \&_led_fetch);
+    $parser->infix('(', 100, \&_led_call);
 
     $parser->infixr('&&', 35);
     $parser->infixr('||', 30);
@@ -333,7 +336,7 @@ sub advance {
     my($parser, $id) = @_;
 
     if($id && $parser->token->id ne $id) {
-        confess("Expected '$id', but " . $parser->token);
+        $parser->_parse_error("Expected '$id', but " . $parser->token);
     }
 
     my $symtab = $parser->symbol_table;
@@ -362,7 +365,7 @@ sub advance {
         when("operator") {
             $proto = $symtab->{$value};
             if(!$proto) {
-                confess("Unknown operator '$value'");
+                $parser->_parse_error("Unknown operator '$value'");
             }
         }
         when("string") {
@@ -376,7 +379,7 @@ sub advance {
     }
 
     if(!$proto) {
-        confess "Unexpected token: $value ($arity)";
+        $parser->_parse_error("Unexpected token: $value ($arity)");
     }
 
     return $parser->token( $proto->clone( id => $value, arity => $arity, line => $parser->line + 1 ) );
@@ -448,7 +451,7 @@ sub _led_dot {
 
     my $t = $parser->token;
     if($t->arity ne 'name') {
-        confess("Expected a field name");
+        $parser->_parse_error("Expected a field name");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -470,6 +473,37 @@ sub _led_fetch {
 
     $parser->advance("]");
     return $fetch;
+}
+
+sub _led_call {
+    my($parser, $symbol, $left) = @_;
+
+    my $call = $symbol->clone(arity => 'call');
+
+    if( $left->arity ne "unary"
+        && $left->arity ne "name"
+        && ( $left->arity ne "binary"
+            || ( $left->id ne "." && $left->id ne "(" && $left->id ne "["))) {
+        $parser->_parse_error("Expected a variable name");
+    }
+
+    $call->first($left);
+
+    my @args;
+    if($parser->token->id ne ")") {
+        while(1) {
+            push @args, $parser->expression(0);
+            if($parser->token->id ne ",") {
+                last;
+            }
+            $parser->advance(",");
+        }
+    }
+    $parser->advance(")");
+
+    $call->second(\@args);
+
+    return $call;
 }
 
 sub _nud_prefix {
@@ -686,7 +720,7 @@ sub _std_for {
 
     my $t = $parser->token;
     if($t->arity ne "variable") {
-        confess("Expected a variable name, but $t is not");
+        $parser->_parse_error("Expected a variable name, but $t is not");
     }
 
     my $iter_var = $t;
@@ -740,7 +774,13 @@ sub _std_command {
         $parser->advance(",");
     }
     $parser->advance(";");
-    return $symbol->clone(args => \@args, arity => 'command');
+    return $symbol->clone(first => \@args, arity => 'command');
+}
+
+sub _parse_error {
+    my($self, $message) = @_;
+
+    Carp::croak("Xslate::Parser: $message at template line " . $self->line);
 }
 
 no Mouse::Util::TypeConstraints;

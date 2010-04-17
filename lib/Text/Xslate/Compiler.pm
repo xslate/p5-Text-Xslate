@@ -52,7 +52,7 @@ sub _generate_command {
     my @code;
 
     my $proc = $node->id;
-    foreach my $arg(@{ $node->args }){
+    foreach my $arg(@{ $node->first }){
         if($arg->arity eq 'literal'){
             my $value = $self->_literal_to_value($arg);
             push @code, [ $proc . '_s' => $value, $node->line ];

@@ -67,9 +67,8 @@ has std => ( # statement denotation
 );
 
 
-has [qw(first second third args)] => (
+has [qw(first second third)] => (
     is  => 'rw',
-    isa => 'Any',
 
     required => 0,
 );
