@@ -2,7 +2,7 @@
 use 5.010_000;
 use strict;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 use Text::MicroTemplate qw(build_mt);
 
 use Benchmark qw(:all);
@@ -14,8 +14,9 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 100;
 
-my $x = Text::Xslate::Compiler->new
-    ->compile_str("Hello, <?= \$lang ?> world!\n" x $n);
+my $x = Text::Xslate->new(
+    string => "Hello, <?= \$lang ?> world!\n" x $n,
+);
 
 my $mt = build_mt("Hello, <?= \$_[0]->{lang} ?> world!\n" x $n);
 

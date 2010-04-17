@@ -30,6 +30,7 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     & | ^ 
     !
     .
+    ~
     ? :
     ( )
     { }

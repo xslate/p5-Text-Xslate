@@ -2,7 +2,7 @@
 use 5.010_000;
 use strict;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 use Text::MicroTemplate qw(build_mt);
 use HTML::Template::Pro;
 
@@ -15,7 +15,7 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro)){
 
 my $n = shift(@ARGV) || 10;
 
-my $x = Text::Xslate::Compiler->new->compile_str(<<'TX_END');
+my $x = Text::Xslate->new(string => <<'TX_END');
 <ul>
 ? for $books ->($item) {
     <li><?= $item.title ?></li>

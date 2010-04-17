@@ -56,6 +56,7 @@ struct tx_state_s {
 
     SV* sa;
     SV* sb;
+    SV* targ;
 
     /* variables */
 
@@ -107,11 +108,20 @@ tx_neat(pTHX_ SV* const sv) {
 }
 
 static SV*
-tx_call(pTHX_ SV* const proc, I32 const flags, const char* const name) {
-    SV* sv;
-
+tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
     ENTER;
     SAVETMPS;
+
+    if(!(flags & G_METHOD)) {
+        HV* dummy_stash;
+        GV* dummy_gv;
+        CV* const cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
+        if(!cv) {
+            croak("Functions must be a CODE reference, not %s",
+                tx_neat(aTHX_ proc));
+        }
+        proc = (SV*)cv;
+    }
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
@@ -120,16 +130,16 @@ tx_call(pTHX_ SV* const proc, I32 const flags, const char* const name) {
             "\t... exception cought on %s", ERRSV, name);
     }
 
-    sv = newSVsv(TX_pop());
+    sv_setsv_nomg(st->targ, TX_pop());
 
     FREETMPS;
     LEAVE;
 
-    return sv_2mortal(sv);
+    return st->targ;
 }
 
 static SV*
-tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
+tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
     PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) {
@@ -138,7 +148,7 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
         XPUSHs(var);
         PUTBACK;
 
-        sv = tx_call(aTHX_ key, G_METHOD, "accessor");
+        sv = tx_call(aTHX_ st, key, G_METHOD, "accessor");
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
@@ -245,8 +255,6 @@ XSLATE(print) {
     STRLEN len;
     const char*       cur = SvPV_const(sv, len);
     const char* const end = cur + len;
-
-    (void)SvGROW(output, len + SvCUR(output) + 1);
 
     while(cur != end) {
         const char* parts;
@@ -380,23 +388,37 @@ XSLATE(fetch_iter) {
 }
 
 XSLATE(add) {
-    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) + SvNVx(TX_st_sa) ) );
+    sv_setnv(TX_st->targ, SvNVx(TX_st_sb) + SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(sub) {
-    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) - SvNVx(TX_st_sa) ) );
+    sv_setnv(TX_st->targ, SvNVx(TX_st_sb) - SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(mul) {
-    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) * SvNVx(TX_st_sa) ) );
+    sv_setnv(TX_st->targ, SvNVx(TX_st_sb) * SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(div) {
-    TX_st_sa = sv_2mortal( newSVnv( SvNVx(TX_st_sb) / SvNVx(TX_st_sa) ) );
+    sv_setnv(TX_st->targ, SvNVx(TX_st_sb) / SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(mod) {
-    TX_st_sa = sv_2mortal( newSVnv( SvIVx(TX_st_sb) % SvIVx(TX_st_sa) ) );
+    sv_setnv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+
+XSLATE(concat) {
+    SV* const sv = sv_mortalcopy(TX_st_sb);
+    sv_catsv_nomg(sv, TX_st_sa);
+
+    TX_st_sa = sv;
+
     TX_st->pc++;
 }
 
@@ -404,21 +426,12 @@ XSLATE(filt) {
     SV* const arg    = TX_st_sb;
     SV* const filter = TX_st_sa;
     dSP;
-    HV* dummy_stash;
-    GV* dummy_gv;
-    CV* cv;
-
-    cv = sv_2cv(filter, &dummy_stash, &dummy_gv, FALSE);
-    if(!cv) {
-        croak("Filters must be a CODE reference, not %s",
-            tx_neat(aTHX_ filter));
-    }
 
     PUSHMARK(SP);
     XPUSHs(arg);
     PUTBACK;
 
-    TX_st_sa = tx_call(aTHX_ filter, 0, "filtering");
+    TX_st_sa = tx_call(aTHX_ TX_st, filter, 0, "filtering");
 
     TX_st->pc++;
 }
@@ -506,6 +519,12 @@ XSLATE(function) {
     HE* he;
     if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
+
+        /* replace the current opcode */
+        SvREFCNT_dec(TX_op->arg);
+        TX_op->arg = SvREFCNT_inc_simple_NN(TX_st_sa);
+
+        TX_op->exec_code = XSLATE_literal;
     }
     else {
         croak("Function %s is not registered", tx_neat(aTHX_ TX_st_sa));
@@ -516,7 +535,7 @@ XSLATE(function) {
 
 XSLATE(call) {
     /* PUSHMARK & PUSH must be done */
-    TX_st_sa = tx_call(aTHX_ TX_st_sa, 0, "calling");
+    TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "calling");
 
     TX_st->pc++;
 }
@@ -625,6 +644,8 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     SvREFCNT_dec(st->iter_v);
     SvREFCNT_dec(st->iter_i);
 
+    SvREFCNT_dec(st->targ);
+
     SvREFCNT_dec(st->file);
     Safefree(st->lines);
 
@@ -671,6 +692,7 @@ enum {
     TXOP_mul,
     TXOP_div,
     TXOP_mod,
+    TXOP_concat,
     TXOP_filt,
 
     TXOP_and,
@@ -721,6 +743,7 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_mul,
     XSLATE_div,
     XSLATE_mod,
+    XSLATE_concat,
     XSLATE_filt,
 
     XSLATE_and,
@@ -782,6 +805,7 @@ BOOT:
     REG_TXOP(mul);
     REG_TXOP(div);
     REG_TXOP(mod);
+    REG_TXOP(concat);
     REG_TXOP(filt);
 
     REG_TXOP(and);
@@ -848,6 +872,7 @@ CODE:
 
         st.sa       = &PL_sv_undef;
         st.sb       = &PL_sv_undef;
+        st.targ     = newSV(0);
 
         st.iter_v   = newAV();
         st.iter_i   = newAV();

@@ -12,6 +12,31 @@ extends qw(Text::Xslate::Parser);
 
 our @CARP_NOT = qw(Text::Xslate);
 
+my %bin = (
+    '==' => 'eq',
+    '!=' => 'ne',
+    '<'  => 'lt',
+    '<=' => 'le',
+    '>'  => 'gt',
+    '>=' => 'ge',
+
+    '+'  => 'add',
+    '-'  => 'sub',
+    '*'  => 'mul',
+    '/'  => 'div',
+    '%'  => 'mod',
+
+    '~'  => 'concat',
+
+    '|'  => 'filt',
+
+    '['  => 'fetch_field',
+);
+my %bin_r = (
+    '&&' => 'and',
+    '||' => 'or',
+);
+
 sub compile_str {
     my($self, $str) = @_;
 
@@ -149,28 +174,6 @@ sub _generate_unary {
     }
 }
 
-my %bin = (
-    '==' => 'eq',
-    '!=' => 'ne',
-    '<'  => 'lt',
-    '<=' => 'le',
-    '>'  => 'gt',
-    '>=' => 'ge',
-
-    '+'  => 'add',
-    '-'  => 'sub',
-    '*'  => 'mul',
-    '/'  => 'div',
-    '%'  => 'mod',
-
-    '|'  => 'filt',
-
-    '['  => 'fetch_field',
-);
-my %bin_r = (
-    '&&' => 'and',
-    '||' => 'or',
-);
 sub _generate_binary {
     my($self, $node) = @_;
 
