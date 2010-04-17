@@ -254,7 +254,6 @@ XSLATE(print) {
     SV* const output      = TX_st->output;
 
     if(SvNIOK(sv) && !SvPOK(sv)){
-        SvIV_please(sv);
         sv_catsv_mg(output, sv);
     }
     else {
@@ -396,21 +395,25 @@ XSLATE(fetch_iter) {
 
 XSLATE(add) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) + SvNVx(TX_st_sa));
+    sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(sub) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) - SvNVx(TX_st_sa));
+    sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(mul) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) * SvNVx(TX_st_sa));
+    sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 XSLATE(div) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) / SvNVx(TX_st_sa));
+    sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }

@@ -14,6 +14,8 @@ my @data = (
     ['<?= sprintf("<%s>", $value) ?>',      "&lt;foo&gt;"],
     ['<?= sprintf("<%s>", $value | uc) ?>', "&lt;FOO&gt;"],
     ['<?= sprintf("<%s>", uc($value)) ?>',  "&lt;FOO&gt;"],
+
+    ['<?= sprintf("%s %s", uc($value), uc($value)) ?>',  "FOO FOO"],
 );
 
 $tx->constant(uc      => sub{ uc $_[0] });
