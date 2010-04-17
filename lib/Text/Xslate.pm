@@ -305,10 +305,6 @@ String filters (like Template-Toolkit)
 
 =item *
 
-Encodings
-
-=item *
-
 Template inclusion
 
 =item *
