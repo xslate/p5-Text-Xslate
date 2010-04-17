@@ -480,11 +480,9 @@ sub _led_call {
 
     my $call = $symbol->clone(arity => 'call');
 
-    if( $left->arity ne "unary"
-        && $left->arity ne "name"
-        && ( $left->arity ne "binary"
-            || ( $left->id ne "." && $left->id ne "(" && $left->id ne "["))) {
-        $parser->_parse_error("Expected a variable name");
+    if(!( $left->arity ~~ [qw(name variable literal)] )) {
+        print $left->dump;
+        $parser->_parse_error("Expected a function, not $left");
     }
 
     $call->first($left);
@@ -720,7 +718,7 @@ sub _std_for {
 
     my $t = $parser->token;
     if($t->arity ne "variable") {
-        $parser->_parse_error("Expected a variable name, but $t is not");
+        $parser->_parse_error("Expected a variable name, not $t");
     }
 
     my $iter_var = $t;
@@ -780,7 +778,7 @@ sub _std_command {
 sub _parse_error {
     my($self, $message) = @_;
 
-    Carp::croak("Xslate::Parser: $message at template line " . $self->line);
+    Carp::croak("Xslate::Parser: $message at template line " . ($self->line + 1));
 }
 
 no Mouse::Util::TypeConstraints;

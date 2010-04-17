@@ -99,14 +99,13 @@ sub _generate_if {
         ? $self->_generate_if($other)
         : $self->_compile_ast($other);
 
-    my @code = (
+    return(
         @expr,
         [ and    => scalar(@then) + 2, undef, 'if' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
     );
-    return @code;
 }
 
 sub _generate_expr {
@@ -162,6 +161,8 @@ my %bin = (
     '/'  => 'div',
     '%'  => 'mod',
 
+    '|'  => 'filt',
+
     '['  => 'fetch_field',
 );
 my %bin_r = (
@@ -207,15 +208,29 @@ sub _generate_ternary { # the conditional operator
 
     my @else = $self->_generate_expr($node->third);
 
-    my @code = (
+    return(
         @expr,
         [ and    => scalar(@then) + 2, $node->line, 'ternary' ],
         @then,
         [ pc_inc => scalar(@else) + 1 ],
         @else,
     );
-    return @code;
 }
+
+
+sub _generate_call {
+    my($self, $node) = @_;
+    my $function = $node->first;
+    my $args     = $node->second;
+
+    return(
+        [ pushmark => () ],
+        ( map { $self->_generate_expr($_), [ 'push' ] } @{$args} ),
+        $self->_generate_expr($function),
+        [ call => undef, $node->line ],
+    );
+}
+
 
 sub _variable_to_value {
     my($self, $arg) = @_;

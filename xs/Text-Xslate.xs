@@ -34,6 +34,9 @@ tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, in
 #define TX_op_arg (TX_op->arg)
 #endif
 
+#define TX_push(s) (*(++PL_stack_sp) = (s))
+#define TX_pop()   (*(PL_stack_sp--))
+
 struct tx_code_s;
 struct tx_state_s;
 
@@ -90,6 +93,41 @@ tx_line(pTHX_ const tx_state_t* const st) {
     return (int)st->lines[ st->pc ];
 }
 
+static const char*
+tx_neat(pTHX_ SV* const sv) {
+    if(SvOK(sv)) {
+        if(SvROK(sv) || looks_like_number(sv)) {
+            return form("%"SVf, sv);
+        }
+        else {
+            return form("'%"SVf"'", sv);
+        }
+    }
+    return "undef";
+}
+
+static SV*
+tx_call(pTHX_ SV* const proc, I32 const flags, const char* const name) {
+    SV* sv;
+
+    ENTER;
+    SAVETMPS;
+
+    call_sv(proc, G_SCALAR | G_EVAL | flags);
+
+    if(sv_true(ERRSV)){
+        croak("%"SVf "\n"
+            "\t... exception cought on %s", ERRSV, name);
+    }
+
+    sv = newSVsv(TX_pop());
+
+    FREETMPS;
+    LEAVE;
+
+    return sv_2mortal(sv);
+}
+
 static SV*
 tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
@@ -100,24 +138,7 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
         XPUSHs(var);
         PUTBACK;
 
-        ENTER;
-        SAVETMPS;
-
-        call_sv(key, G_SCALAR | G_METHOD | G_EVAL);
-
-        SPAGAIN;
-        sv = newSVsv(POPs);
-        PUTBACK;
-
-        if(sv_true(ERRSV)){
-            croak("%"SVf "\n\t... exception cought on %"SVf".%"SVf,
-                ERRSV, var, key);
-        }
-
-        FREETMPS;
-        LEAVE;
-
-        sv_2mortal(sv);
+        sv = tx_call(aTHX_ key, G_METHOD, "accessor");
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
@@ -138,7 +159,7 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
     else {
         invalid_container:
         croak("Cannot access '%"SVf"' (%s is not a container)",
-            key, SvOK(var) ? form("'%"SVf"'", var) : "undef");
+            key, tx_neat(aTHX_ var));
     }
     return sv;
 }
@@ -162,24 +183,25 @@ XSLATE(swap) { /* swap sa and sb */
 }
 
 XSLATE(push) {
-    dSP;
-    XPUSHs(TX_st_sa);
-    PUTBACK;
+    TX_push(TX_st_sa);
 
     TX_st->pc++;
 }
 
 XSLATE(pop) {
-    dSP;
-    TX_st_sa = POPs;
-    PUTBACK;
+    TX_st_sa = TX_pop();
 
     TX_st->pc++;
 }
 XSLATE(pop_to_sb) {
+    TX_st_sb = TX_pop();
+
+    TX_st->pc++;
+}
+
+XSLATE(pushmark) {
     dSP;
-    TX_st_sb = POPs;
-    PUTBACK;
+    PUSHMARK(SP);
 
     TX_st->pc++;
 }
@@ -297,7 +319,8 @@ XSLATE(for_start) {
     AV* av;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Iterator variables must be an ARRAY reference");
+        croak("Iterator variables must be an ARRAY reference, not %s",
+            tx_neat(aTHX_ avref));
     }
 
     av = (AV*)SvRV(avref);
@@ -370,6 +393,29 @@ XSLATE(div) {
 }
 XSLATE(mod) {
     TX_st_sa = sv_2mortal( newSVnv( SvIVx(TX_st_sb) % SvIVx(TX_st_sa) ) );
+    TX_st->pc++;
+}
+
+XSLATE(filt) {
+    SV* const arg    = TX_st_sb;
+    SV* const filter = TX_st_sa;
+    dSP;
+    HV* dummy_stash;
+    GV* dummy_gv;
+    CV* cv;
+
+    cv = sv_2cv(filter, &dummy_stash, &dummy_gv, FALSE);
+    if(!cv) {
+        croak("Filters must be a CODE reference, not %s",
+            tx_neat(aTHX_ filter));
+    }
+
+    PUSHMARK(SP);
+    XPUSHs(arg);
+    PUTBACK;
+
+    TX_st_sa = tx_call(aTHX_ filter, 0, "filtering");
+
     TX_st->pc++;
 }
 
@@ -452,6 +498,13 @@ XSLATE(ge) {
     TX_st->pc++;
 }
 
+XSLATE(call) {
+    /* PUSHMARK & PUSH must be done */
+    TX_st_sa = tx_call(aTHX_ TX_st_sa, 0, "calling");
+
+    TX_st->pc++;
+}
+
 XSLATE(pc_inc) {
     TX_st->pc += SvIV(TX_op_arg);
 }
@@ -459,7 +512,6 @@ XSLATE(pc_inc) {
 XSLATE(goto) {
     TX_st->pc = SvIV(TX_op_arg);
 }
-
 
 XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
 XS(XS_Text__Xslate__error) {
@@ -581,6 +633,7 @@ enum {
     TXOP_push,
     TXOP_pop,
     TXOP_pop_to_sb,
+    TXOP_pushmark,
 
     TXOP_literal,
     TXOP_fetch,
@@ -601,6 +654,7 @@ enum {
     TXOP_mul,
     TXOP_div,
     TXOP_mod,
+    TXOP_filt,
 
     TXOP_and,
     TXOP_or,
@@ -611,6 +665,8 @@ enum {
     TXOP_le,
     TXOP_gt,
     TXOP_ge,
+
+    TXOP_call,
 
     TXOP_pc_inc,
     TXOP_goto,
@@ -626,6 +682,7 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_push,
     XSLATE_pop,
     XSLATE_pop_to_sb,
+    XSLATE_pushmark,
 
     XSLATE_literal,
     XSLATE_fetch,
@@ -646,6 +703,7 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_mul,
     XSLATE_div,
     XSLATE_mod,
+    XSLATE_filt,
 
     XSLATE_and,
     XSLATE_or,
@@ -656,6 +714,8 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_le,
     XSLATE_gt,
     XSLATE_ge,
+
+    XSLATE_call,
 
     XSLATE_pc_inc,
     XSLATE_goto,
@@ -682,6 +742,7 @@ BOOT:
     REG_TXOP(push);
     REG_TXOP(pop);
     REG_TXOP(pop_to_sb);
+    REG_TXOP(pushmark);
 
     REG_TXOP(literal);
     REG_TXOP(fetch);
@@ -702,6 +763,7 @@ BOOT:
     REG_TXOP(mul);
     REG_TXOP(div);
     REG_TXOP(mod);
+    REG_TXOP(filt);
 
     REG_TXOP(and);
     REG_TXOP(or);
@@ -712,6 +774,8 @@ BOOT:
     REG_TXOP(le);
     REG_TXOP(gt);
     REG_TXOP(ge);
+
+    REG_TXOP(call);
 
     REG_TXOP(pc_inc);
     REG_TXOP(goto);
