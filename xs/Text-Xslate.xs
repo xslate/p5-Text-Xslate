@@ -688,11 +688,11 @@ BOOT:
 }
 
 void
-_load_protocode(HV* self, AV* proto)
+_initialize(HV* self, AV* proto)
 CODE:
 {
     if(SvRMAGICAL((SV*)self) && mgx_find(aTHX_ (SV*)self, &xslate_vtbl)) {
-        croak("Cannot call _load_protocode twice");
+        croak("Cannot call _initialize twice");
     }
 
 

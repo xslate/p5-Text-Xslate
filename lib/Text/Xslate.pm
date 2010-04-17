@@ -45,7 +45,7 @@ sub new {
 
     if($args{protocode}) {
         $source++;
-        $self->_load_protocode($args{protocode});
+        $self->_initialize($args{protocode});
     }
 
     if($source != 1) {
@@ -64,7 +64,7 @@ sub default_path {
 
 sub render;
 
-sub _load_protocode;
+sub _initialize;
 
 sub _load_file {
     my($self, $file) = @_;
@@ -136,7 +136,7 @@ sub _load_file {
             }
         }
 
-        $self->_load_protocode($protocode);
+        $self->_initialize($protocode);
     }
     return;
 }
@@ -171,7 +171,7 @@ sub _load_string {
     my($self, $string) = @_;
 
     my $protocode = $self->_compiler->compile($string);
-    $self->_load_protocode($protocode);
+    $self->_initialize($protocode);
     return;
 }
 
@@ -200,7 +200,7 @@ sub _load_assembly {
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);
 
-    $self->_load_protocode(\@protocode);
+    $self->_initialize(\@protocode);
     return;
 }
 
