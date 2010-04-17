@@ -2,7 +2,6 @@ package Text::Xslate::Symbol;
 use 5.010;
 use Mouse;
 use Mouse::Util::TypeConstraints;
-use warnings FATAL => 'all';
 
 use overload
     '""' => sub{ $_[0]->id },
@@ -111,13 +110,6 @@ has scope => (
     isa => 'HashRef',
 
     weak_ref => 1,
-
-    required => 0,
-);
-
-has scope_depth => (
-    is  => 'rw',
-    isa => 'Int',
 
     required => 0,
 );

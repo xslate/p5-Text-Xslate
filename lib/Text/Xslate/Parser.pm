@@ -2,7 +2,6 @@ package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
 use Mouse::Util::TypeConstraints;
-use warnings FATAL => 'all';
 
 use Text::Xslate::Symbol;
 
@@ -582,8 +581,7 @@ sub reserve { # reserve a name to the scope
 
 sub define { # define a name to the scope
     my($parser, $symbol) = @_;
-    my $depth = scalar(@{$parser->scope}) - 1;
-    my $top = $parser->scope->[$depth];
+    my $top = $parser->scope->[-1];
 
     my $t = $top->{$symbol->value};
     if(defined $t) {
@@ -598,7 +596,6 @@ sub define { # define a name to the scope
     $symbol->remove_std();
     $symbol->lbp(0);
     $symbol->scope($top);
-    $symbol->scope_depth($depth);
     return $symbol;
 }
 

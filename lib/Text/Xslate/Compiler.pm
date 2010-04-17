@@ -1,7 +1,6 @@
 package Text::Xslate::Compiler;
 use 5.010;
 use Mouse;
-use warnings FATAL => 'all';
 
 use Text::Xslate;
 use Scalar::Util ();
@@ -35,6 +34,26 @@ my %bin = (
 my %bin_r = (
     '&&' => 'and',
     '||' => 'or',
+);
+
+has lvar_id => ( # local varialbe id
+    is  => 'rw',
+    isa => 'Int',
+
+    traits  => [qw(Counter)],
+    handles => {
+        lvar_id_inc => 'inc',
+        lvar_id_dec => 'dec',
+    },
+
+    default => 0,
+);
+
+has lvar => ( # local varialbe table
+    is  => 'rw',
+    isa => 'HashRef[Int]',
+
+    default => sub{ {} },
 );
 
 sub compile_str {
@@ -103,14 +122,22 @@ sub _generate_for {
 
     push @code, $self->_generate_expr($expr);
 
-    my $for_start = scalar @code;
-    push @code, [ for_start => $iter_var->scope_depth - 1, undef, $iter_var->id ];
+    my $lvar_id   = $self->lvar_id;
+    my $lvar_name = $iter_var->id;
 
+    local $self->lvar->{$lvar_name} = $lvar_id;
+
+    my $for_start = scalar @code;
+    push @code, [ for_start => $lvar_id, undef, $lvar_name ];
+
+    $self->lvar_id_inc;
     push @code, $self->_compile_ast($block);
+    $self->lvar_id_dec;
 
     push @code,
-        [ literal  => $iter_var->scope_depth - 1, undef, $iter_var->id ],
+        [ literal  => $lvar_id, undef, $lvar_name ],
         [ for_next => -(scalar(@code) - $for_start) ];
+
     return @code;
 }
 
@@ -145,8 +172,8 @@ sub _generate_expr {
 sub _generate_variable {
     my($self, $node) = @_;
 
-    if(defined(my $id = $node->scope_depth)) {
-        return [ fetch_iter => $id - 1, $node->line, $node->id ];
+    if(defined(my $lvar_id = $self->lvar->{$node->id})) {
+        return [ fetch_iter => $lvar_id, $node->line, $node->id ];
     }
     else {
         return [ fetch => $self->_variable_to_value($node), $node->line ];
