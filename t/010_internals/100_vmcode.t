@@ -10,11 +10,11 @@ $SIG{__WARN__} = \&Carp::confess;
 
 foreach my $i(0 .. 2) {
     my $x = Text::Xslate->new(assembly => <<'TX_ASM');
-        print_raw_s "Hello, "
-        fetch       "my"
-        fetch_field "lang"
+        print_raw_s   "Hello, "
+        fetch         "my"
+        fetch_field_s "lang"
         print
-        print_raw_s " world!\n"
+        print_raw_s   " world!\n"
 TX_ASM
 
 
@@ -38,7 +38,7 @@ TX_ASM
         for_start 0  # $item
         print_raw_s "* "
         fetch_iter 0         # $item
-        fetch_field "title"  # .title
+        fetch_field_s "title"  # .title
         print
         print_raw_s "\n"
         literal 0 # $item

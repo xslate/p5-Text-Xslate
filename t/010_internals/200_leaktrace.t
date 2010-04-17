@@ -9,7 +9,7 @@ no_leaks_ok {
     my $x = Text::Xslate->new(assembly => <<'TX_ASM', path => []);
         print_raw_s "Hello, "
         fetch       "my"
-        fetch_field "lang"
+        fetch_field_s "lang"
         print
         print_raw_s " world!\n"
 TX_ASM
@@ -19,7 +19,7 @@ no_leaks_ok {
     my $x = Text::Xslate->new(assembly => <<'TX_ASM', path => []);
         print_raw_s "Hello, "
         fetch       "my"
-        fetch_field "lang"
+        fetch_field_s "lang"
         print
         print_raw_s " world!\n"
 TX_ASM
@@ -34,7 +34,7 @@ no_leaks_ok {
         for_start 0  # $item
         print_raw_s "* "
         fetch_iter 0         # $item
-        fetch_field "title"  # .title
+        fetch_field_s "title"  # .title
         print
         print_raw_s "\n"
         literal 0 # $item

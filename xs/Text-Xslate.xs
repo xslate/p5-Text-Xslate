@@ -199,7 +199,15 @@ XSLATE(fetch) { /* fetch a field from top */
     TX_st->pc++;
 }
 
-XSLATE(fetch_field) { /* fetch a field from a variable */
+XSLATE(fetch_field) { /* fetch a field from a variable (bin operator) */
+    SV* const var = TX_st_sb;
+    SV* const key = TX_st_sa;
+
+    TX_st_sa = tx_fetch(aTHX_ TX_st, var, key);
+    TX_st->pc++;
+}
+
+XSLATE(fetch_field_s) { /* fetch a field from a variable (for literal) */
     SV* const var = TX_st_sa;
     SV* const key = TX_op_arg;
 
@@ -567,6 +575,7 @@ enum {
     TXOP_literal,
     TXOP_fetch,
     TXOP_fetch_field,
+    TXOP_fetch_field_s,
     TXOP_fetch_iter,
 
     TXOP_print,
@@ -608,6 +617,7 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_literal,
     XSLATE_fetch,
     XSLATE_fetch_field,
+    XSLATE_fetch_field_s,
     XSLATE_fetch_iter,
 
     XSLATE_print,
@@ -660,6 +670,7 @@ BOOT:
     REG_TXOP(literal);
     REG_TXOP(fetch);
     REG_TXOP(fetch_field);
+    REG_TXOP(fetch_field_s);
     REG_TXOP(fetch_iter);
 
     REG_TXOP(print);

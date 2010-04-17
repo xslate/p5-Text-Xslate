@@ -8,15 +8,15 @@ use Text::MicroTemplate;
 use Benchmark qw(:all);
 
 my $x = Text::Xslate->new([
-    [ fetch       => "books"],
-    [ for_start   => 0      ], # 0:$item
-    [ print_raw_s => "* "   ],
-    [ fetch_iter  => 0      ], # fetch the iterator variable(0:$item)
-    [ fetch_field => "title"],
-    [ print       => 0      ],
-    [ print_raw_s => "\n"   ],
-    [ literal     => 0      ], # 0:$item
-    [ for_next    => -6     ], # to the loop start
+    [ fetch         => "books"],
+    [ for_start     => 0      ], # 0:$item
+    [ print_raw_s   => "* "   ],
+    [ fetch_iter    => 0      ], # fetch the iterator variable(0:$item)
+    [ fetch_field_s => "title"],
+    [ print         => 0      ],
+    [ print_raw_s   => "\n"   ],
+    [ literal       => 0      ], # 0:$item
+    [ for_next      => -6     ], # to the loop start
 ]);
 
 #? for $books ->($item) {

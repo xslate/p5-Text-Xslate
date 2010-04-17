@@ -161,6 +161,8 @@ my %bin = (
     '*'  => 'mul',
     '/'  => 'div',
     '%'  => 'mod',
+
+    '['  => 'fetch_field',
 );
 my %bin_r = (
     '&&' => 'and',
@@ -173,7 +175,7 @@ sub _generate_binary {
         when('.') {
             return
                 $self->_generate_expr($node->first),
-                [ fetch_field => $node->second->id ],
+                [ fetch_field_s => $node->second->id ];
         }
         when(%bin) {
             return

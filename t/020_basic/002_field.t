@@ -12,6 +12,14 @@ my @data = (
     ['<?= $g.f.x ?>',  'gfx'],
     ['<?= $x.f.g ?>',  'xfg'],
     ['<?= $a.foo ?>',  'bar'],
+
+    ['<?= $var["attr"] ?>',  'value'],
+
+    ['<?= $g["f"]["x"] ?>',  'gfx'],
+    ['<?= $x["f"]["g"] ?>',  'xfg'],
+    ['<?= $a["foo"] ?>',     'bar'],
+
+    ['<?= $a[$foo] ?>',      'bar'],
 );
 
 {
@@ -34,9 +42,11 @@ foreach my $pair(@data) {
         g => { f => { x => 'gfx' } },
         x => { f => { g => 'xfg' } },
         a => A->new(foo => 'bar'),
+
+        foo => 'foo',
     );
 
-    is $x->render(\%vars), $out, 'first';
+    is $x->render(\%vars), $out, 'first:' . $in;
     is $x->render(\%vars), $out, 'second';
 }
 

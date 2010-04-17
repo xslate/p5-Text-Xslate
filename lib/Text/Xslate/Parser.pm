@@ -152,7 +152,7 @@ sub split {
             last;
         }
     }
-
+    ## tokens: @tokens
     return \@tokens;
 }
 
@@ -180,7 +180,7 @@ sub preprocess {
                 $s =~ s/\A =/print/xms;
 
                 #if($s =~ /[\{\}\[\]]\n?\z/xms){ # ???
-                if($s =~ /[\}\]]\n?\z/xms){
+                if($s =~ /[\}]\n?\z/xms){
                     $code .= $s;
                 }
                 elsif(chomp $s) {
@@ -285,6 +285,7 @@ sub BUILD {
     $parser->infix('?', 20, \&_led_ternary);
 
     $parser->infix('.', 100, \&_led_dot);
+    $parser->infix('[', 100, \&_led_fetch);
 
     $parser->infixr('&&', 35);
     $parser->infixr('||', 30);
@@ -447,7 +448,7 @@ sub _led_dot {
 
     my $t = $parser->token;
     if($t->arity ne 'name') {
-        confess("Expected a property name");
+        confess("Expected a field name");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -457,6 +458,18 @@ sub _led_dot {
 
     $parser->advance();
     return $dot;
+}
+
+sub _led_fetch {
+    my($parser, $symbol, $left) = @_;
+
+    my $fetch = $symbol->clone(arity => 'binary');
+
+    $fetch->first($left);
+    $fetch->second($parser->expression(0));
+
+    $parser->advance("]");
+    return $fetch;
 }
 
 sub _nud_prefix {
