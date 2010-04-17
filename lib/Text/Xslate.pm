@@ -121,7 +121,7 @@ sub _load_file {
 
         if($self->{auto_compile}) {
             # compile templates into assemblies
-            open my($out), '>:raw', "${fullpath}c"
+            open my($out), '>:raw:utf8', "${fullpath}c"
                 or $self->throw_error("Cannot open ${fullpath}c for writing: $!");
 
             print $out $XSLATE_MAGIC;
