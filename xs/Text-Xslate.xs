@@ -529,12 +529,6 @@ XSLATE(function) {
     HE* he;
     if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
-
-        /* replace the current opcode */
-        SvREFCNT_dec(TX_op->arg);
-        TX_op->arg = SvREFCNT_inc_simple_NN(TX_st_sa);
-
-        TX_op->exec_code = XSLATE_literal;
     }
     else {
         croak("Function %s is not registered", tx_neat(aTHX_ TX_st_sa));
@@ -904,16 +898,18 @@ CODE:
                 SV** const arg   =  av_fetch(av, 1, FALSE);
                 SV** const line  =  av_fetch(av, 2, FALSE);
                 HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
-                SV* opnum;
+                IV  opnum;
 
                 if(!he){
                     croak("Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
                 }
 
-                opnum             = hv_iterval(ops, he);
-                st.code[i].exec_code = tx_opcode[ SvIV(opnum) ];
+                opnum                = SvIVx(hv_iterval(ops, he));
+                st.code[i].exec_code = tx_opcode[ opnum ];
                 if(arg && SvOK(*arg)) {
-                    if(SvIV(opnum) == TXOP_fetch) {
+                    if(opnum == TXOP_fetch
+                            || opnum == TXOP_fetch_field_s
+                            || opnum == TXOP_function ) {
                         STRLEN len;
                         const char* const pv = SvPV_const(*arg, len);
                         st.code[i].arg = newSVpvn_share(pv, len, 0U);
