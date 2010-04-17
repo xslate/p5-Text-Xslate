@@ -41,4 +41,13 @@ TX
 is $tx->render({ var => {} }), "nil";
 is $tx->render({ var => { value => "<foo>" }}), "&lt;foo&gt;";
 
+$tx = $txc->compile_str(<<'TX');
+? for $data ->($item) {
+[<?= $item + 5 ?>]
+? } # end for
+TX
+
+is $tx->render({ data => [1 .. 100] }),
+    join('', map{ sprintf "[%d]\n", $_ + 5 } 1 .. 100);
+
 done_testing;

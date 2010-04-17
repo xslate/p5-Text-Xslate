@@ -356,6 +356,8 @@ XSLATE(for_next) {
 
         TX_st->pc++;
     }
+
+    FREETMPS;
 }
 
 XSLATE(fetch_iter) {
