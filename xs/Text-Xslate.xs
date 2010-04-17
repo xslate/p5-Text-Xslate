@@ -252,55 +252,62 @@ XSLATE(fetch_field_s) { /* fetch a field from a variable (for literal) */
 XSLATE(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
-    STRLEN len;
-    const char*       cur = SvPV_const(sv, len);
-    const char* const end = cur + len;
 
-    while(cur != end) {
-        const char* parts;
-        STRLEN      parts_len;
-
-        switch(*cur) {
-        case '<':
-            parts     =        "&lt;";
-            parts_len = sizeof("&lt;") - 1;
-            break;
-        case '>':
-            parts     =        "&gt;";
-            parts_len = sizeof("&gt;") - 1;
-            break;
-        case '&':
-            parts     =        "&amp;";
-            parts_len = sizeof("&amp;") - 1;
-            break;
-        case '"':
-            parts     =        "&quot;";
-            parts_len = sizeof("&quot;") - 1;
-            break;
-        case '\'':
-            parts     =        "&#39;";
-            parts_len = sizeof("&#39;") - 1;
-            break;
-        default:
-            parts     = cur;
-            parts_len = 1;
-            break;
-        }
-
-        len = SvCUR(output) + parts_len + 1;
-        (void)SvGROW(output, len);
-
-        if(parts_len == 1) {
-            *SvEND(output) = *parts;
-        }
-        else {
-            Copy(parts, SvEND(output), parts_len, char);
-        }
-        SvCUR_set(output, SvCUR(output) + parts_len);
-
-        cur++;
+    if(SvNIOK(sv) && !SvPOK(sv)){
+        SvIV_please(sv);
+        sv_catsv_mg(output, sv);
     }
-    *SvEND(output) = '\0';
+    else {
+        STRLEN len;
+        const char*       cur = SvPV_const(sv, len);
+        const char* const end = cur + len;
+
+        while(cur != end) {
+            const char* parts;
+            STRLEN      parts_len;
+
+            switch(*cur) {
+            case '<':
+                parts     =        "&lt;";
+                parts_len = sizeof("&lt;") - 1;
+                break;
+            case '>':
+                parts     =        "&gt;";
+                parts_len = sizeof("&gt;") - 1;
+                break;
+            case '&':
+                parts     =        "&amp;";
+                parts_len = sizeof("&amp;") - 1;
+                break;
+            case '"':
+                parts     =        "&quot;";
+                parts_len = sizeof("&quot;") - 1;
+                break;
+            case '\'':
+                parts     =        "&#39;";
+                parts_len = sizeof("&#39;") - 1;
+                break;
+            default:
+                parts     = cur;
+                parts_len = 1;
+                break;
+            }
+
+            len = SvCUR(output) + parts_len + 1;
+            (void)SvGROW(output, len);
+
+            if(parts_len == 1) {
+                *SvEND(output) = *parts;
+            }
+            else {
+                Copy(parts, SvEND(output), parts_len, char);
+            }
+            SvCUR_set(output, SvCUR(output) + parts_len);
+
+            cur++;
+        }
+        *SvEND(output) = '\0';
+    }
 
     TX_st->pc++;
 }
@@ -408,7 +415,7 @@ XSLATE(div) {
     TX_st->pc++;
 }
 XSLATE(mod) {
-    sv_setnv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
+    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
