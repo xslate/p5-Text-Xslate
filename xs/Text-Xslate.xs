@@ -491,7 +491,7 @@ xslate_exec(pTHX_ tx_state_t* const parent, SV* const output, HV* const hv) {
         CALL_FPTR(st.code[st.pc].exec_code)(aTHX_ &st);
 
         if(UNLIKELY(old_pc == st.pc)) {
-            croak("%d: pogram counter has not been changed", (int)st.pc);
+            croak("panic: pogram counter has not been changed on [%d]", (int)st.pc);
         }
     }
 
