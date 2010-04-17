@@ -287,6 +287,38 @@ Renderes a template with variables, and returns the result.
 
 TODO
 
+=head1 EXAMPLES
+
+=head2 Variable access
+
+    <?= $var ?>
+    <?= $var.field ?>
+    <?= $var["field"] ?>
+
+=head2 Loop (C<for>)
+
+    ? for $data ->($item) {
+        [<?= $item.field =>]
+    ? }
+
+=head2 Conditional statement (C<if>)
+
+    ? if $var == nil {
+        $var is nil.
+    ? }
+    ? else if $var != "foo" {
+        $var is not nil nor "foo".
+    ? }
+    ? else {
+        $var is "foo".
+    ? }
+
+    ? if( $var >= 1 && $var <= 10 ) {
+        $var is 1 .. 10
+    ? }
+
+    ?= $var.value == nil ? "nil" : $var.value
+
 =head1 TODO
 
 =over
