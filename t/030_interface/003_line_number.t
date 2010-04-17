@@ -13,28 +13,25 @@ TX
     loaded => "foo.tx",
 );
 
-my $warn;
+my $warn = '';
 $SIG{__WARN__} = sub{ $warn .= join '', @_ };
 
-$warn = '';
 eval {
     $tx->render({one => 1, two => 2});
 };
-like $warn, qr/at foo\.tx line 3\./;
+like $@, qr/^Xslate\Q(foo.tx:3)/;
 
-$warn = '';
 eval {
     $tx->render({one => 1, three => 3});
 };
 
-like $warn, qr/line 2\./;
+like $@, qr/^Xslate\Q(foo.tx:2)/;
 
-$warn = '';
 eval {
     $tx->render({two => 2, three => 3});
 };
 
-like $warn, qr/line 1\./;
+like $@, qr/^Xslate\Q(foo.tx:1)/;
 
 $tx = Text::Xslate->new(
     string => <<'TX',
@@ -46,18 +43,49 @@ $tx = Text::Xslate->new(
 TX
 );
 
-$warn = '';
 eval {
     $tx->render({one => 1, three => 3});
 };
-like $warn, qr/line 5\./;
+like $@, qr/^Xslate\Q(<input>:5)/;
 
-$warn = '';
 eval {
     $tx->render({one => 1, five => 5});
 };
 
-like $warn, qr/line 3\./;
+like $@, qr/^Xslate\Q(<input>:3)/;
 
+$tx = Text::Xslate->new(
+    string => <<'TX',
+
+? for $data ->($item) {
+
+* <?= $item ?>
+
+? }
+
+TX
+);
+
+eval {
+    $tx->render({data => "foo"});
+};
+like $@, qr/^Xslate\Q(<input>:2)/;
+
+{
+    package Foo;
+    sub bar { die 42 };
+}
+
+$tx = Text::Xslate->new(
+    string => "\n<?= \$foo.bar ?>",
+);
+
+eval {
+    $tx->render({foo => bless {}, 'Foo'});
+};
+
+like $@, qr/^Xslate\Q(<input>:2)/;
+
+is $warn, '', "no warns";
 
 done_testing;

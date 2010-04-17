@@ -21,10 +21,10 @@
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
     if(UNLIKELY(*svp == NULL)) {
-        croak("Xslate-panic: %s is NULL at %s line %d.\n", name, f, l);
+        croak("panic: %s is NULL at %s line %d.\n", name, f, l);
     }
     else if(UNLIKELY(SvIS_FREED(*svp))) {
-        croak("Xslate-panic: %s is a freed sv at %s line %d.\n", name, f, l);
+        croak("panic: %s is a freed sv at %s line %d.\n", name, f, l);
     }
     return svp;
 }
@@ -44,7 +44,6 @@ typedef void (*tx_exec_t)(pTHX_ tx_state_t*);
 
 struct tx_state_s {
     U32 pc;       /* the program counter */
-    SV* output;
 
     tx_code_t* code; /* compiled code */
     U32        code_len;
@@ -59,6 +58,10 @@ struct tx_state_s {
     HV* vars;    /* template variables */
     AV* iter_v;  /* iterator variables */
     AV* iter_i;  /* iterator counter */
+
+    SV* output;
+
+    SV* error_handler;
 
     /* file information */
     SV*  file;
@@ -90,6 +93,7 @@ tx_line(pTHX_ const tx_state_t* const st) {
 static SV*
 tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
+    PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) {
         dSP;
         PUSHMARK(SP);
@@ -106,9 +110,8 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
         PUTBACK;
 
         if(sv_true(ERRSV)){
-            croak("Xslate(%s:%d): Exception cought on %"SVf".%"SVf": %"SVf,
-                tx_file(aTHX_ st), tx_line(aTHX_ st),
-                var, key, ERRSV);
+            croak("%"SVf "\n\t... exception cought on %"SVf".%"SVf,
+                ERRSV, var, key);
         }
 
         FREETMPS;
@@ -134,8 +137,7 @@ tx_fetch(pTHX_ const tx_state_t* const st, SV* const var, SV* const key) {
     }
     else {
         invalid_container:
-        croak("Xslate(%s:%d): Cannot access '%"SVf"' (%s is not a container)",
-            tx_file(aTHX_ st), tx_line(aTHX_ st),
+        croak("Cannot access '%"SVf"' (%s is not a container)",
             key, SvOK(var) ? form("'%"SVf"'", var) : "undef");
     }
     return sv;
@@ -208,69 +210,57 @@ XSLATE(fetch_field) { /* fetch a field from a variable */
 XSLATE(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
+    STRLEN len;
+    const char*       cur = SvPV_const(sv, len);
+    const char* const end = cur + len;
 
-    SvGETMAGIC(sv);
-    if(!SvOK(sv)) {
-        if(ckWARN(WARN_UNINITIALIZED)) {
-            Perl_warner(aTHX_ packWARN(WARN_UNINITIALIZED),
-                "Xslate: You should not pass undefined values to %s "
-                    "at %s line %d.\n",
-                    "print", tx_file(aTHX_ TX_st), tx_line(aTHX_ TX_st));
+    (void)SvGROW(output, len + SvCUR(output) + 1);
+
+    while(cur != end) {
+        const char* parts;
+        STRLEN      parts_len;
+
+        switch(*cur) {
+        case '<':
+            parts     =        "&lt;";
+            parts_len = sizeof("&lt;") - 1;
+            break;
+        case '>':
+            parts     =        "&gt;";
+            parts_len = sizeof("&gt;") - 1;
+            break;
+        case '&':
+            parts     =        "&amp;";
+            parts_len = sizeof("&amp;") - 1;
+            break;
+        case '"':
+            parts     =        "&quot;";
+            parts_len = sizeof("&quot;") - 1;
+            break;
+        case '\'':
+            parts     =        "&#39;";
+            parts_len = sizeof("&#39;") - 1;
+            break;
+        default:
+            parts     = cur;
+            parts_len = 1;
+            break;
         }
-    }
-    else {
-        STRLEN len;
-        const char*       cur = SvPV_const(sv, len);
-        const char* const end = cur + len;
 
-        (void)SvGROW(output, len + SvCUR(output) + 1);
+        len = SvCUR(output) + parts_len + 1;
+        (void)SvGROW(output, len);
 
-        while(cur != end) {
-            const char* parts;
-            STRLEN      parts_len;
-
-            switch(*cur) {
-            case '<':
-                parts     =        "&lt;";
-                parts_len = sizeof("&lt;") - 1;
-                break;
-            case '>':
-                parts     =        "&gt;";
-                parts_len = sizeof("&gt;") - 1;
-                break;
-            case '&':
-                parts     =        "&amp;";
-                parts_len = sizeof("&amp;") - 1;
-                break;
-            case '"':
-                parts     =        "&quot;";
-                parts_len = sizeof("&quot;") - 1;
-                break;
-            case '\'':
-                parts     =        "&#39;";
-                parts_len = sizeof("&#39;") - 1;
-                break;
-            default:
-                parts     = cur;
-                parts_len = 1;
-                break;
-            }
-
-            len = SvCUR(output) + parts_len + 1;
-            (void)SvGROW(output, len);
-
-            if(parts_len == 1) {
-                *SvEND(output) = *parts;
-            }
-            else {
-                Copy(parts, SvEND(output), parts_len, char);
-            }
-            SvCUR_set(output, SvCUR(output) + parts_len);
-
-            cur++;
+        if(parts_len == 1) {
+            *SvEND(output) = *parts;
         }
-        *SvEND(output) = '\0';
+        else {
+            Copy(parts, SvEND(output), parts_len, char);
+        }
+        SvCUR_set(output, SvCUR(output) + parts_len);
+
+        cur++;
     }
+    *SvEND(output) = '\0';
 
     TX_st->pc++;
 }
@@ -299,8 +289,7 @@ XSLATE(for_start) {
     AV* av;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Xslate(%s:%d): Iterator variables must be an ARRAY reference",
-            tx_file(aTHX_ TX_st), tx_line(aTHX_ TX_st));
+        croak("Iterator variables must be an ARRAY reference");
     }
 
     av = (AV*)SvRV(avref);
@@ -453,12 +442,49 @@ XSLATE(goto) {
     TX_st->pc = SvIV(TX_op_arg);
 }
 
+
+XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
+XS(XS_Text__Xslate__error) {
+    dVAR; dXSARGS;
+    tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
+    assert(st);
+
+    PERL_UNUSED_ARG(items);
+
+    /* avoid recursion; they are retrieved at the end of the scope, anyway */
+    PL_diehook  = NULL;
+    PL_warnhook = NULL;
+
+    croak("Xslate(%s:%d): %"SVf,
+        tx_file(aTHX_ st), tx_line(aTHX_ st), ST(0));
+    XSRETURN_EMPTY; /* not reached */
+}
+
 static SV*
-xslate_exec(pTHX_ tx_state_t* const parent) {
+xslate_exec(pTHX_ tx_state_t* const parent, SV* const output, HV* const hv) {
     Size_t const code_len = parent->code_len;
     tx_state_t st;
 
     StructCopy(parent, &st, tx_state_t);
+
+    st.output = output;
+    st.vars   = hv;
+
+    ENTER;
+    SAVETMPS;
+
+    /* local $SIG{__WARN__} = \&error_handler */
+    SAVESPTR(PL_warnhook);
+    PL_warnhook = st.error_handler;
+
+    /* local $SIG{__DIE__} = \&error_handler */
+    SAVESPTR(PL_diehook);
+    PL_diehook = st.error_handler;
+
+    if(SvTYPE(st.error_handler) == SVt_PVCV
+        && CvXSUB((CV*)st.error_handler) == XS_Text__Xslate__error) {
+        CvXSUBANY(st.error_handler).any_ptr = &st;
+    }
 
     while(st.pc < code_len) {
         Size_t const old_pc = st.pc;
@@ -468,6 +494,9 @@ xslate_exec(pTHX_ tx_state_t* const parent) {
             croak("%d: pogram counter has not been changed", (int)st.pc);
         }
     }
+
+    FREETMPS;
+    LEAVE;
 
     return st.output;
 }
@@ -503,6 +532,8 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 
     Safefree(code);
     PERL_UNUSED_ARG(sv);
+
+    SvREFCNT_dec(st->error_handler);
 
     SvREFCNT_dec(st->iter_v);
     SvREFCNT_dec(st->iter_i);
@@ -617,6 +648,7 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
+
     REG_TXOP(noop);
 
     REG_TXOP(move_sa_to_sb);
@@ -656,16 +688,13 @@ BOOT:
 }
 
 void
-_load_protocode(SV* self, AV* proto)
+_load_protocode(HV* self, AV* proto)
 CODE:
 {
-    if(!SvROK(self)) {
-        croak("Cannot call _load_protocode as a class method");
-    }
-
-    if(SvRMAGICAL(SvRV(self)) && mgx_find(aTHX_ SvRV(self), &xslate_vtbl)) {
+    if(SvRMAGICAL((SV*)self) && mgx_find(aTHX_ (SV*)self, &xslate_vtbl)) {
         croak("Cannot call _load_protocode twice");
     }
+
 
     {
         MAGIC* mg;
@@ -673,11 +702,24 @@ CODE:
         I32 const len = av_len(proto) + 1;
         I32 i;
         U16 l = 0;
-        tx_code_t* code;
         tx_state_t st;
-        SV** filep;
+        SV** svp;
 
         Zero(&st, 1, tx_state_t);
+
+        svp = hv_fetchs(self, "loaded", FALSE);
+        if(svp) {
+            st.file = newSVsv(*svp);
+        }
+
+        svp = hv_fetchs(self, "error_handler", FALSE);
+        if(svp && SvOK(*svp)) {
+            st.error_handler = *svp;
+        }
+        else {
+            CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
+            st.error_handler = (SV*)eh;
+        }
 
         st.sa       = &PL_sv_undef;
         st.sb       = &PL_sv_undef;
@@ -685,19 +727,13 @@ CODE:
         st.iter_v   = newAV();
         st.iter_i   = newAV();
 
-        Newx(code, len, tx_code_t);
-
-        st.code     = code;
-        st.code_len = len;
-
-        filep = hv_fetchs((HV*)SvRV(self), "loaded", FALSE);
-        if(filep) {
-            st.file = newSVsv(*filep);
-        }
-
         Newx(st.lines, len, U16);
 
-        mg = sv_magicext(SvRV(self), NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
+        Newx(st.code, len, tx_code_t);
+
+        st.code_len = len;
+
+        mg = sv_magicext((SV*)self, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
         mg->mg_private = 1; /* initial hint size */
 
         for(i = 0; i < len; i++) {
@@ -715,19 +751,19 @@ CODE:
                 }
 
                 opnum             = hv_iterval(ops, he);
-                code[i].exec_code = tx_opcode[ SvIV(opnum) ];
+                st.code[i].exec_code = tx_opcode[ SvIV(opnum) ];
                 if(arg && SvOK(*arg)) {
                     if(SvIV(opnum) == TXOP_fetch) {
                         STRLEN len;
                         const char* const pv = SvPV_const(*arg, len);
-                        code[i].arg = newSVpvn_share(pv, len, 0U);
+                        st.code[i].arg = newSVpvn_share(pv, len, 0U);
                     }
                     else {
-                        code[i].arg = newSVsv(*arg);
+                        st.code[i].arg = newSVsv(*arg);
                     }
                 }
                 else {
-                    code[i].arg = &PL_sv_undef;
+                    st.code[i].arg = &PL_sv_undef;
                 }
 
                 /* setup line number */
@@ -756,10 +792,7 @@ CODE:
     sv_grow(RETVAL, mg->mg_private << TX_BUFFER_SIZE_C);
     SvPOK_on(RETVAL);
 
-    st->output = RETVAL;
-    st->vars   = hv;
-
-    xslate_exec(aTHX_ st);
+    xslate_exec(aTHX_ st, RETVAL, hv);
 
     /* store a hint size for the next time */
     hint_size = SvCUR(RETVAL) >> TX_BUFFER_SIZE_C;
