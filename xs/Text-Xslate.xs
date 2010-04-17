@@ -34,7 +34,6 @@ tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, in
 #define TX_op_arg (TX_op->arg)
 #endif
 
-#define TX_push(s) (*(++PL_stack_sp) = (s))
 #define TX_pop()   (*(PL_stack_sp--))
 
 struct tx_code_s;
@@ -51,6 +50,8 @@ struct tx_state_s {
     tx_code_t* code; /* compiled code */
     U32        code_len;
 
+    SV* output;
+
     /* registers */
 
     SV* sa;
@@ -62,8 +63,7 @@ struct tx_state_s {
     AV* iter_v;  /* iterator variables */
     AV* iter_i;  /* iterator counter */
 
-    SV* output;
-
+    HV* function;
     SV* error_handler;
 
     /* file information */
@@ -183,7 +183,9 @@ XSLATE(swap) { /* swap sa and sb */
 }
 
 XSLATE(push) {
-    TX_push(TX_st_sa);
+    dSP;
+    XPUSHs(TX_st_sa);
+    PUTBACK;
 
     TX_st->pc++;
 }
@@ -500,6 +502,18 @@ XSLATE(ge) {
     TX_st->pc++;
 }
 
+XSLATE(function) {
+    HE* he;
+    if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
+        TX_st_sa = hv_iterval(TX_st->function, he);
+    }
+    else {
+        croak("Function %s is not registered", tx_neat(aTHX_ TX_st_sa));
+    }
+
+    TX_st->pc++;
+}
+
 XSLATE(call) {
     /* PUSHMARK & PUSH must be done */
     TX_st_sa = tx_call(aTHX_ TX_st_sa, 0, "calling");
@@ -606,6 +620,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     PERL_UNUSED_ARG(sv);
 
     SvREFCNT_dec(st->error_handler);
+    SvREFCNT_dec(st->function);
 
     SvREFCNT_dec(st->iter_v);
     SvREFCNT_dec(st->iter_i);
@@ -668,6 +683,7 @@ enum {
     TXOP_gt,
     TXOP_ge,
 
+    TXOP_function,
     TXOP_call,
 
     TXOP_pc_inc,
@@ -717,6 +733,7 @@ static const tx_exec_t tx_opcode[] = {
     XSLATE_gt,
     XSLATE_ge,
 
+    XSLATE_function,
     XSLATE_call,
 
     XSLATE_pc_inc,
@@ -777,6 +794,7 @@ BOOT:
     REG_TXOP(gt);
     REG_TXOP(ge);
 
+    REG_TXOP(function);
     REG_TXOP(call);
 
     REG_TXOP(pc_inc);
@@ -817,15 +835,26 @@ CODE:
             st.error_handler = (SV*)eh;
         }
 
+        svp = hv_fetchs(self, "function", FALSE);
+        if(svp && SvOK(*svp)) {
+            if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
+                st.function = (HV*)SvRV(*svp);
+                SvREFCNT_inc(st.function);
+            }
+            else {
+                croak("Function table must be a HASH reference");
+            }
+        }
+
         st.sa       = &PL_sv_undef;
         st.sb       = &PL_sv_undef;
 
         st.iter_v   = newAV();
         st.iter_i   = newAV();
 
-        Newx(st.lines, len, U16);
+        Newxz(st.lines, len, U16);
 
-        Newx(st.code, len, tx_code_t);
+        Newxz(st.code, len, tx_code_t);
 
         st.code_len = len;
 

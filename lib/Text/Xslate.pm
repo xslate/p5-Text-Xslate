@@ -24,6 +24,7 @@ sub new {
     $args{input_layer}  //= ':utf8';
     $args{auto_compile} //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
+   #$args{functions}    //= {}; # see _compiler()
 
     my $self = bless \%args, $class;
 
@@ -162,6 +163,19 @@ sub _compiler {
         }
 
         $compiler = $compiler->new();
+
+        if(my $funcs = $self->{function}) {
+            while(my $name = each %{$funcs}) {
+                my $symbol = $compiler->symbol($name);
+                $symbol->set_nud(sub {
+                    my($p, $s) = @_;
+                    my $f = $s->clone(arity => 'function');
+                    $p->reserve($f);
+                    return $f;
+                });
+                $symbol->value($name);
+            }
+        }
     }
 
     return $compiler;

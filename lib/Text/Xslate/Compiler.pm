@@ -10,6 +10,8 @@ use constant _DUMP_CODE => !!$ENV{XSLATE_DUMP_CODE};
 
 extends qw(Text::Xslate::Parser);
 
+our @CARP_NOT = qw(Text::Xslate);
+
 sub compile_str {
     my($self, $str) = @_;
 
@@ -217,7 +219,6 @@ sub _generate_ternary { # the conditional operator
     );
 }
 
-
 sub _generate_call {
     my($self, $node) = @_;
     my $function = $node->first;
@@ -229,6 +230,12 @@ sub _generate_call {
         $self->_generate_expr($function),
         [ call => undef, $node->line ],
     );
+}
+
+sub _generate_function {
+    my($self, $node) = @_;
+
+    return [ function => $node->value ];
 }
 
 

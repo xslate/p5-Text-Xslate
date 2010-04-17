@@ -133,7 +133,7 @@ sub nud {
     my($self, $parser) = @_;
 
     if(!$self->has_nud) {
-        $self->meta->throw_error('Undefined symbol: ' . $self->dump);
+        Carp::croak(sprintf 'Xslate::Symbol: Undefined symbol (%s): %s', $self->arity, $self->id);
     }
 
     return $self->get_nud()->($parser, $self);
@@ -143,7 +143,7 @@ sub led {
     my($self, $parser, $left) = @_;
 
     if(!$self->has_led) {
-        $self->meta->throw_error('Missing operator: ' . $self->dump);
+        Carp::croak(sprintf 'Xslate::Symbol: Missing operator (%s): %s', $self->arity, $self->id);
     }
 
     return $self->get_led()->($parser, $self, $left);
@@ -153,7 +153,7 @@ sub std {
     my($self, $parser) = @_;
 
     if(!$self->has_std) {
-        $self->meta->throw_error('Not a statement: ' . $self->dump);
+        Carp::croak(sprintf 'Xslate::Symbol: Not a statement (%s): %s', $self->arity, $self->id);
     }
 
     return $self->get_std()->($parser, $self);

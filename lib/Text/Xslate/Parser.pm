@@ -8,6 +8,8 @@ use Text::Xslate::Symbol;
 
 use constant _DUMP_PROTO => !!$ENV{XSLATE_DUMP_PROTO};
 
+our @CARP_NOT = qw(Text::Xslate::Compiler);
+
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms;
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms;
 my $QUOTED  = qr/(?: $dquoted | $squoted )/xms;
@@ -480,8 +482,7 @@ sub _led_call {
 
     my $call = $symbol->clone(arity => 'call');
 
-    if(!( $left->arity ~~ [qw(name variable literal)] )) {
-        print $left->dump;
+    if(!( $left->arity ~~ [qw(function name variable literal)] )) {
         $parser->_parse_error("Expected a function, not $left");
     }
 
