@@ -1,4 +1,7 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_01 Mon Apr  5 18:52:06 2010
+    - The first preview release for OSDC.TW 2010 (5/24-25)
+
 0.001 Mon Apr  5 18:52:06 2010
     - original version; created by Module::Setup
