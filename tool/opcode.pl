@@ -53,11 +53,10 @@ for(my $i = 0; $i < @ops; $i++) {
     my $arg_type = $ops[$i][1];
     my $flags;
     if($arg_type) {
-        $arg_type =~ s/^_w_//;
-        $flags .= "(U8)TXARG_" . uc $arg_type;
+        $flags .= "TXCODE" . uc $arg_type;
     }
     else {
-        $flags = '(U8)0';
+        $flags = '0U';
     }
 
     say "    $flags, /* $ops[$i][0] */";

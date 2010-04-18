@@ -16,10 +16,15 @@
 #define XSLATE_w_key(n) XSLATE(n) /* has TX_op_arg as a keyword */
 #define XSLATE_w_var(n) XSLATE(n) /* has TX_op_arg as a local variable */
 
-#define TXARG_SV   (0x01U)
-#define TXARG_INT ((0x02U) | TXARG_SV)
-#define TXARG_KEY ((0x04U) | TXARG_SV)
-#define TXARG_VAR ((0x08U) | TXARG_INT)
+#define TXARGf_SV  ((U8)(0x01))
+#define TXARGf_INT ((U8)(0x02))
+#define TXARGf_KEY ((U8)(0x04))
+#define TXARGf_VAR ((U8)(0x08))
+
+#define TXCODE_W_SV  (TXARGf_SV)
+#define TXCODE_W_INT (TXARGf_SV | TXARGf_INT)
+#define TXCODE_W_KEY (TXARGf_SV | TXARGf_KEY)
+#define TXCODE_W_VAR (TXARGf_SV | TXARGf_VAR | TXARGf_VAR)
 
 #define TX_st (txst)
 #define TX_op (&(TX_st->code[TX_st->pc]))
@@ -343,7 +348,7 @@ XSLATE_w_sv(print_raw_s) {
 
 XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
-    IV  const id    = SvIV(TX_op_arg);
+    IV  const id    = SvIVX(TX_op_arg);
     AV* av;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
@@ -370,7 +375,7 @@ XSLATE_w_int(for_next) {
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     if(++SvIVX(i) <= AvFILLp(av)) {
-        TX_st->pc += SvIV(TX_op_arg); /* back to */
+        TX_st->pc += SvIVX(TX_op_arg); /* back to */
     }
     else {
         /* finish the for loop */
@@ -557,11 +562,11 @@ XSLATE(call) {
 }
 
 XSLATE_w_int(pc_inc) {
-    TX_st->pc += SvIV(TX_op_arg);
+    TX_st->pc += SvIVX(TX_op_arg);
 }
 
 XSLATE_w_int(goto) {
-    TX_st->pc = SvIV(TX_op_arg);
+    TX_st->pc = SvIVX(TX_op_arg);
 }
 
 XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
@@ -766,20 +771,28 @@ CODE:
 
                 opnum                = SvIVx(hv_iterval(ops, he));
                 st.code[i].exec_code = tx_opcode[ opnum ];
-                if(arg && SvOK(*arg)) {
-                    if(opnum == TXOP_fetch
-                            || opnum == TXOP_fetch_field_s
-                            || opnum == TXOP_function ) {
+                if(tx_oparg[opnum] & TXARGf_SV) {
+                    if(!arg) {
+                        croak("Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
+                    }
+
+                    if(tx_oparg[opnum] & TXARGf_KEY) {
                         STRLEN len;
                         const char* const pv = SvPV_const(*arg, len);
                         st.code[i].arg = newSVpvn_share(pv, len, 0U);
+                    }
+                    else if(tx_oparg[opnum] & TXARGf_INT) {
+                        st.code[i].arg = newSViv(SvIV(*arg));
                     }
                     else {
                         st.code[i].arg = newSVsv(*arg);
                     }
                 }
                 else {
-                    st.code[i].arg = &PL_sv_undef;
+                    if(arg && SvOK(*arg)) {
+                        croak("Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
+                    }
+                    st.code[i].arg = NULL;
                 }
 
                 /* setup line number */
