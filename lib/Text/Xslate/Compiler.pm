@@ -325,7 +325,7 @@ sub _optimize {
     for(my $i = 0; $i < @{$code_ref}; $i++) {
         given($code_ref->[$i][0]) {
             when('print_raw_s') {
-                # merge a list of print_raw_s into single command
+                # merge a set of print_raw_s into single command
                 for(my $j = $i + 1;
                     $j < @{$code_ref} && $code_ref->[$j][0] eq 'print_raw_s';
                     $j++) {
@@ -336,18 +336,20 @@ sub _optimize {
                 }
             }
             when('store_to_lvar') {
+                # use registers, instead of local variables
+                #
+                # given:
+                #   store_to_lvar $n
+                #   blah blah blah
+                #   load_lvar_to_sb $n
+                # convert into:
+                #   move_sa_to_sb
+                #   blah blah blah
                 my $it = $code_ref->[$i];
                 my $nn = $code_ref->[$i+2]; # next next
                 if(defined($nn)
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
-                    # given:
-                    #   store_to_lvar $n
-                    #   blah blah blah
-                    #   load_lvar_to_sb $n
-                    # convert into:
-                    #   move_sa_to_sb
-                    #   blah blah blah
                     @{$it} = ('move_sa_to_sb', undef, undef, 'optimized from store_to_lvar');
 
                     # replace to noop, need to adjust goto address
