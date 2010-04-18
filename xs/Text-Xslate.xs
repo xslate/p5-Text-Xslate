@@ -76,8 +76,7 @@ struct tx_state_s {
     /* variables */
 
     HV* vars;    /* template variables */
-    AV* iter_c;  /* iterating containers */
-    AV* iter_i;  /* iterators */
+    AV* locals;  /* local variables */
 
     HV* function;
     SV* error_handler;
@@ -370,8 +369,9 @@ XSLATE_w_var(for_start) {
 
     av = (AV*)SvRV(avref);
     SvREFCNT_inc_simple_void_NN(av);
-    (void)av_store(TX_st->iter_c, id, (SV*)av);
-    sv_setiv(*av_fetch(TX_st->iter_i, id, TRUE), 0); /* (re)set iterator */
+
+    sv_setiv(*av_fetch(TX_st->locals, id+1, TRUE), 0); /* (re)set iterator */
+    (void)    av_store(TX_st->locals, id, (SV*)av);
 
     TX_st->pc++;
 }
@@ -379,8 +379,8 @@ XSLATE_w_var(for_start) {
 XSLATE_w_int(for_next) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIVX(idsv); /* by literal_i */
-    AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
-    SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
+    AV* const av   = (AV*)AvARRAY(TX_st->locals)[ id   ];
+    SV* const i    =      AvARRAY(TX_st->locals)[ id+1 ];
 
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
@@ -396,8 +396,8 @@ XSLATE_w_int(for_next) {
            they will be cleaned at the end of render() */
 
         /* IV const id = SvIV(TX_op_arg); */
-        /* av_delete(TX_st->iter_c, id, G_DISCARD); */
-        /* av_delete(TX_st->iter_i, id, G_DISCARD); */
+        /* av_delete(TX_st->locals, id,   G_DISCARD); */
+        /* av_delete(TX_st->locals, id+1, G_DISCARD); */
 
         TX_st->pc++;
     }
@@ -407,8 +407,8 @@ XSLATE_w_int(for_next) {
 XSLATE_w_int(fetch_iter) {
     SV* const idsv = TX_op_arg;
     IV  const id   = SvIVX(idsv);
-    AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
-    SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
+    AV* const av   = (AV*)AvARRAY(TX_st->locals)[ id   ];
+    SV* const i    =      AvARRAY(TX_st->locals)[ id+1 ];
     SV** svp;
 
     assert(SvTYPE(av) == SVt_PVAV);
@@ -682,8 +682,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     SvREFCNT_dec(st->error_handler);
     SvREFCNT_dec(st->function);
 
-    SvREFCNT_dec(st->iter_c);
-    SvREFCNT_dec(st->iter_i);
+    SvREFCNT_dec(st->locals);
 
     SvREFCNT_dec(st->targ);
 
@@ -761,8 +760,7 @@ CODE:
     st.sb       = &PL_sv_undef;
     st.targ     = newSV(0);
 
-    st.iter_c   = newAV();
-    st.iter_i   = newAV();
+    st.locals   = newAV();
 
     Newxz(st.lines, len, U16);
 

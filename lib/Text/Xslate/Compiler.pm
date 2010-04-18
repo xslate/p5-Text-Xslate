@@ -137,9 +137,10 @@ sub _generate_for {
     my $for_start = scalar @code;
     push @code, [ for_start => $lvar_id, undef, $lvar_name ];
 
-    $self->lvar_id_inc;
+    # a for statement uses two local variables (container and iterator)
+    $self->lvar_id_inc(2);
     push @code, $self->_compile_ast($block);
-    $self->lvar_id_dec;
+    $self->lvar_id_dec(2);
 
     push @code,
         [ literal_i => $lvar_id, undef, $lvar_name ],
