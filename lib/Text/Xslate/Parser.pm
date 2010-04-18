@@ -8,8 +8,8 @@ use constant _DUMP_PROTO => !!$ENV{XSLATE_DUMP_PROTO};
 
 our @CARP_NOT = qw(Text::Xslate::Compiler);
 
-my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms;
-my $squoted = qr/' (?: \\. | [^'\\] )* '/xms;
+my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
+my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $QUOTED  = qr/(?: $dquoted | $squoted )/xms;
 
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
@@ -39,7 +39,7 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
 
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
-my $CODE    = qr/ (?: (?: $QUOTED | [^'"] )*? ) /xms;
+my $CODE    = qr/ (?: (?: $QUOTED | [^'"] )*? ) /xms; # ' for poor editors
 
 has symbol_table => (
     is  => 'ro',
@@ -158,7 +158,7 @@ sub preprocess {
         given($token->[0]) {
             when('text') {
                 my $s = $token->[1];
-                $s =~ s/(["\\])/\\$1/gxms;
+                $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
 
                 if($s =~ s/\n/\\n/xms) {
                     $code .= qq{print_raw "$s";\n};

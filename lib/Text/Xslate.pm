@@ -9,8 +9,8 @@ our $VERSION = '0.001';
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
-my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms;
-my $squoted = qr/' (?: \\. | [^'\\] )* '/xms;
+my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
+my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $STRING  = qr/(?: $dquoted | $squoted )/xms;
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 
