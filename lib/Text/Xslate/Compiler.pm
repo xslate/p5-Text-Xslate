@@ -141,8 +141,8 @@ sub _generate_for {
     $self->lvar_id_dec;
 
     push @code,
-        [ literal  => $lvar_id, undef, $lvar_name ],
-        [ for_next => -(scalar(@code) - $for_start) ];
+        [ literal_i => $lvar_id, undef, $lvar_name ],
+        [ for_next  => -(scalar(@code) - $for_start) ];
 
     return @code;
 }
@@ -189,7 +189,13 @@ sub _generate_variable {
 sub _generate_literal {
     my($self, $node) = @_;
 
-    return [ literal => $self->_literal_to_value($node), $node->line ];
+    my $value = $self->_literal_to_value($node);
+    if(Mouse::Util::TypeConstraints::Int($value)) {
+        return [ literal_i => $value, $node->line ];
+    }
+    else {
+        return [ literal => $value, $node->line ];
+    }
 }
 
 sub _generate_unary {

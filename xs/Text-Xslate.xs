@@ -93,6 +93,9 @@ struct tx_code_s {
     SV* arg;
 };
 
+
+#define TXCODE_literal_i TXCODE_literal
+
 #include "xslate_ops.h"
 
 static const char*
@@ -240,6 +243,9 @@ XSLATE_w_sv(literal) {
 
     TX_st->pc++;
 }
+
+/* the same as literal, but make sure its argument is an integer */
+XSLATE_w_int(literal_i);
 
 XSLATE_w_key(fetch) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
