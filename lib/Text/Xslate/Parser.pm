@@ -123,8 +123,6 @@ sub split {
     my $tag_start     = $self->tag_start;
     my $tag_end       = $self->tag_end;
 
-    my @state = 'text';
-
     while($_) {
         if(s/\A ^ [ \t]* $line_start ([^\n]* \n?) //xms) {
             push @tokens,

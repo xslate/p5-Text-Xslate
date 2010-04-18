@@ -146,7 +146,7 @@ sub _load_file {
 }
 
 sub _compiler {
-    my($self, $string) = @_;
+    my($self) = @_;
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
