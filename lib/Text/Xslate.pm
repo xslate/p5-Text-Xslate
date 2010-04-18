@@ -274,7 +274,7 @@ This document describes Text::Xslate version 0.001.
         </ul>
     };
 
-    my $tx = Text::Xslate->new(
+    $tx = Text::Xslate->new(
         string => $template,
     );
 
@@ -315,7 +315,7 @@ Options:
 
 =head3 B<< $tx->render(\%vars) -> Str >>
 
-Renderes a template with variables, and returns the result.
+Renders a template with variables, and returns the result.
 
 =head1 TEMPLATE SYNTAX
 
@@ -360,7 +360,7 @@ Relational operators (C<< == != < <= > >= >>):
     ?= $var == 10 ? "10"     : "not 10"
     ?= $var != 10 ? "not 10" : "10"
 
-Arithmatic operators (C<< + - * / % >>):
+Arithmetic operators (C<< + - * / % >>):
 
     ?= $var + 10
     ?= ($var % 10) == 0

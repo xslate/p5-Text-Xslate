@@ -16,3 +16,10 @@ __DATA__
 Goro Fuji (gfx)
 gfuji(at)cpan.org
 Text::Xslate
+xslate
+todo
+str
+Opcode
+gfx
+cpan
+render
