@@ -698,112 +698,109 @@ void
 _initialize(HV* self, AV* proto)
 CODE:
 {
+    MAGIC* mg;
+    HV* const ops = get_hv("Text::Xslate::_ops", GV_ADD);
+    I32 const len = av_len(proto) + 1;
+    I32 i;
+    U16 l = 0;
+    tx_state_t st;
+    SV** svp;
+
     if(SvRMAGICAL((SV*)self) && mgx_find(aTHX_ (SV*)self, &xslate_vtbl)) {
         croak("Cannot call _initialize twice");
     }
 
+    Zero(&st, 1, tx_state_t);
 
-    {
-        MAGIC* mg;
-        HV* const ops = get_hv("Text::Xslate::_ops", GV_ADD);
-        I32 const len = av_len(proto) + 1;
-        I32 i;
-        U16 l = 0;
-        tx_state_t st;
-        SV** svp;
+    svp = hv_fetchs(self, "loaded", FALSE);
+    if(svp) {
+        st.file = newSVsv(*svp);
+    }
 
-        Zero(&st, 1, tx_state_t);
+    svp = hv_fetchs(self, "error_handler", FALSE);
+    if(svp && SvOK(*svp)) {
+        st.error_handler = *svp;
+    }
+    else {
+        CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
+        st.error_handler = (SV*)eh;
+    }
 
-        svp = hv_fetchs(self, "loaded", FALSE);
-        if(svp) {
-            st.file = newSVsv(*svp);
-        }
-
-        svp = hv_fetchs(self, "error_handler", FALSE);
-        if(svp && SvOK(*svp)) {
-            st.error_handler = *svp;
+    svp = hv_fetchs(self, "function", FALSE);
+    if(svp && SvOK(*svp)) {
+        if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
+            st.function = (HV*)SvRV(*svp);
+            SvREFCNT_inc(st.function);
         }
         else {
-            CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
-            st.error_handler = (SV*)eh;
+            croak("Function table must be a HASH reference");
         }
+    }
 
-        svp = hv_fetchs(self, "function", FALSE);
-        if(svp && SvOK(*svp)) {
-            if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
-                st.function = (HV*)SvRV(*svp);
-                SvREFCNT_inc(st.function);
+    st.sa       = &PL_sv_undef;
+    st.sb       = &PL_sv_undef;
+    st.targ     = newSV(0);
+
+    st.iter_c   = newAV();
+    st.iter_i   = newAV();
+
+    Newxz(st.lines, len, U16);
+
+    Newxz(st.code, len, tx_code_t);
+
+    st.code_len = len;
+
+    mg = sv_magicext((SV*)self, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
+    mg->mg_private = 1; /* initial hint size */
+
+    for(i = 0; i < len; i++) {
+        SV* const pair = *av_fetch(proto, i, TRUE);
+        if(SvROK(pair) && SvTYPE(SvRV(pair)) == SVt_PVAV) {
+            AV* const av     = (AV*)SvRV(pair);
+            SV* const opname = *av_fetch(av, 0, TRUE);
+            SV** const arg   =  av_fetch(av, 1, FALSE);
+            SV** const line  =  av_fetch(av, 2, FALSE);
+            HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
+            IV  opnum;
+
+            if(!he){
+                croak("Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
             }
-            else {
-                croak("Function table must be a HASH reference");
-            }
-        }
 
-        st.sa       = &PL_sv_undef;
-        st.sb       = &PL_sv_undef;
-        st.targ     = newSV(0);
-
-        st.iter_c   = newAV();
-        st.iter_i   = newAV();
-
-        Newxz(st.lines, len, U16);
-
-        Newxz(st.code, len, tx_code_t);
-
-        st.code_len = len;
-
-        mg = sv_magicext((SV*)self, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
-        mg->mg_private = 1; /* initial hint size */
-
-        for(i = 0; i < len; i++) {
-            SV* const pair = *av_fetch(proto, i, TRUE);
-            if(SvROK(pair) && SvTYPE(SvRV(pair)) == SVt_PVAV) {
-                AV* const av     = (AV*)SvRV(pair);
-                SV* const opname = *av_fetch(av, 0, TRUE);
-                SV** const arg   =  av_fetch(av, 1, FALSE);
-                SV** const line  =  av_fetch(av, 2, FALSE);
-                HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
-                IV  opnum;
-
-                if(!he){
-                    croak("Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
+            opnum                = SvIVx(hv_iterval(ops, he));
+            st.code[i].exec_code = tx_opcode[ opnum ];
+            if(tx_oparg[opnum] & TXARGf_SV) {
+                if(!arg) {
+                    croak("Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
                 }
 
-                opnum                = SvIVx(hv_iterval(ops, he));
-                st.code[i].exec_code = tx_opcode[ opnum ];
-                if(tx_oparg[opnum] & TXARGf_SV) {
-                    if(!arg) {
-                        croak("Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
-                    }
-
-                    if(tx_oparg[opnum] & TXARGf_KEY) {
-                        STRLEN len;
-                        const char* const pv = SvPV_const(*arg, len);
-                        st.code[i].arg = newSVpvn_share(pv, len, 0U);
-                    }
-                    else if(tx_oparg[opnum] & TXARGf_INT) {
-                        st.code[i].arg = newSViv(SvIV(*arg));
-                    }
-                    else {
-                        st.code[i].arg = newSVsv(*arg);
-                    }
+                if(tx_oparg[opnum] & TXARGf_KEY) {
+                    STRLEN len;
+                    const char* const pv = SvPV_const(*arg, len);
+                    st.code[i].arg = newSVpvn_share(pv, len, 0U);
+                }
+                else if(tx_oparg[opnum] & TXARGf_INT) {
+                    st.code[i].arg = newSViv(SvIV(*arg));
                 }
                 else {
-                    if(arg && SvOK(*arg)) {
-                        croak("Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
-                    }
-                    st.code[i].arg = NULL;
+                    st.code[i].arg = newSVsv(*arg);
                 }
-
-                /* setup line number */
-                if(line && SvOK(*line)) {
-                    l = (U16)SvIV(*line);
-                }
-                st.lines[i] = l;
             }
             else {
-                croak("Broken code found on [%d]", (int)i);
+                if(arg && SvOK(*arg)) {
+                    croak("Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
+                }
+                st.code[i].arg = NULL;
             }
+
+            /* setup line number */
+            if(line && SvOK(*line)) {
+                l = (U16)SvIV(*line);
+            }
+            st.lines[i] = l;
+        }
+        else {
+            croak("Broken code found on [%d]", (int)i);
         }
     }
 }
