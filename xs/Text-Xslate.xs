@@ -614,11 +614,11 @@ XS(XS_Text__Xslate__error) {
 }
 
 static SV*
-xslate_exec(pTHX_ tx_state_t* const parent, SV* const output, HV* const hv) {
-    Size_t const code_len = parent->code_len;
+xslate_exec(pTHX_ const tx_state_t* const base, SV* const output, HV* const hv) {
+    Size_t const code_len = base->code_len;
     tx_state_t st;
 
-    StructCopy(parent, &st, tx_state_t);
+    StructCopy(base, &st, tx_state_t);
 
     st.output = output;
     st.vars   = hv;
