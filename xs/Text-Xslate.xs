@@ -283,7 +283,7 @@ XSLATE(print) {
     SV* const output      = TX_st->output;
 
     if(SvNIOK(sv) && !SvPOK(sv)){
-        sv_catsv_mg(output, sv);
+        sv_catsv_nomg(output, sv);
     }
     else {
         STRLEN len;
