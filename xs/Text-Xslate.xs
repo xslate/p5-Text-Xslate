@@ -598,10 +598,6 @@ XSLATE_w_int(pc_inc) {
     TX_st->pc += SvIVX(TX_op_arg);
 }
 
-XSLATE_w_int(goto) {
-    TX_st->pc = SvIVX(TX_op_arg);
-}
-
 XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
 XS(XS_Text__Xslate__error) {
     dVAR; dXSARGS;

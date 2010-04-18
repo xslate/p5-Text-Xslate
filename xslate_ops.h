@@ -42,7 +42,6 @@ XSLATE(ge);
 XSLATE_w_key(function);
 XSLATE(call);
 XSLATE_w_int(pc_inc);
-XSLATE_w_int(goto);
 
 enum tx_opcode_t {
     TXOP_noop, /* 0 */
@@ -85,7 +84,6 @@ enum tx_opcode_t {
     TXOP_function, /* 37 */
     TXOP_call, /* 38 */
     TXOP_pc_inc, /* 39 */
-    TXOP_goto, /* 40 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -130,7 +128,6 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_function,
     TXCODE_call,
     TXCODE_pc_inc,
-    TXCODE_goto,
     NULL
 }; /* tx_opcode[] */
 
@@ -175,7 +172,6 @@ static const U8 tx_oparg[] = {
     TXCODE_W_KEY, /* function */
     0U, /* call */
     TXCODE_W_INT, /* pc_inc */
-    TXCODE_W_INT, /* goto */
 }; /* tx_oparg[] */
 
 static void
@@ -220,5 +216,4 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(function), newSViv(TXOP_function));
     (void)hv_stores(ops, STRINGIFY(call), newSViv(TXOP_call));
     (void)hv_stores(ops, STRINGIFY(pc_inc), newSViv(TXOP_pc_inc));
-    (void)hv_stores(ops, STRINGIFY(goto), newSViv(TXOP_goto));
 } /* tx_register_ops() */
