@@ -11,6 +11,8 @@ requires 'Mouse'                => '0.53';
 requires 'MouseX::NativeTraits' => '0.002';
 
 test_requires 'Test::More' => 0.88; # done_testing()
+test_requires 'Test::Requires';
+test_requires 'Test::LeakTrace';
 
 tests_recursive 't';
 
