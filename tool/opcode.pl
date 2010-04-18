@@ -39,7 +39,7 @@ static const tx_exec_t tx_opcode[] = {
 H
 
 for(my $i = 0; $i < @ops; $i++) {
-    say "    TXCODE_$ops[$i][0], /* $i */";
+    say "    TXCODE_$ops[$i][0],";
 }
 
 print <<'H';
