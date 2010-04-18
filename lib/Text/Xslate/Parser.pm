@@ -134,7 +134,7 @@ sub split {
     my @state = 'text';
 
     while($_) {
-        if(s/\A ^$line_start ([^\n]* \n?) //xms) {
+        if(s/\A ^ \s* $line_start ([^\n]* \n?) //xms) {
             push @tokens,
                 [ code => _trim($1) ];
         }
