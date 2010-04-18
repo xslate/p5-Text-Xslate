@@ -60,7 +60,8 @@ sub new {
 sub default_path {
     require FindBin;
     require File::Basename;
-    return( File::Basename::dirname($FindBin::Bin) . "/template", $FindBin::Bin );
+    no warnings 'once';
+    return( File::Basename::dirname($FindBin::Bin) . "/template" );
 }
 
 sub render;
