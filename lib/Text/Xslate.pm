@@ -200,12 +200,12 @@ sub _load_assembly {
         my $line  = $3;
 
         if(defined($value)) {
-            if($value =~ s/"(.+)"/$1/){
+            if($value =~ s/"(.*)"/$1/){
                 $value =~ s/\\n/\n/g;
                 $value =~ s/\\t/\t/g;
                 $value =~ s/\\(.)/$1/g;
             }
-            elsif($value =~ s/'(.+)'/$1/) {
+            elsif($value =~ s/'(.*)'/$1/) {
                 $value =~ s/\\(['\\])/$1/g; # ' for poor editors
             }
         }

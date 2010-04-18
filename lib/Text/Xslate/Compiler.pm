@@ -295,12 +295,12 @@ sub _literal_to_value {
 
     my $value = $arg->value // return undef;
 
-    if($value =~ s/"(.+)"/$1/){
+    if($value =~ s/"(.*)"/$1/){
         $value =~ s/\\n/\n/g;
         $value =~ s/\\t/\t/g;
         $value =~ s/\\(.)/$1/g;
     }
-    elsif($value =~ s/'(.+)'/$1/) {
+    elsif($value =~ s/'(.*)'/$1/) {
         $value =~ s/\\(['\\])/$1/g; # ' for poor editors
     }
     return $value;
@@ -338,8 +338,9 @@ sub as_assembly {
                 $as .= $arg;
             }
             else {
-                $arg =~ s/\\/\\\\/;
+                $arg =~ s/\\/\\\\/g;
                 $arg =~ s/\n/\\n/g;
+                $arg =~ s/"/\\"/g;
                 $as .= qq{"$arg"};
             }
         }
