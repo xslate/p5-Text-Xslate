@@ -5,7 +5,8 @@ use Mouse;
 use Text::Xslate;
 use Scalar::Util ();
 
-use constant _DUMP_CODE => !!$ENV{XSLATE_DUMP_CODE};
+use constant _DUMP_ASM => (Text::Xslate::_XSLATE =~ /\b asm \b/xms);
+use constant _OPTIMIZE => (Text::Xslate::_XSLATE =~ /\b optimize=(\d+) \b/xms);
 
 extends qw(Text::Xslate::Parser);
 
@@ -76,9 +77,9 @@ sub compile {
 
     my @code = $self->_compile_ast($ast);
 
-    $self->_optimize(\@code) if $optimize // 1;
+    $self->_optimize(\@code) if $optimize // _OPTIMIZE // 1;
 
-    print $self->as_assembly(\@code) if _DUMP_CODE;
+    print $self->as_assembly(\@code) if _DUMP_ASM;
     return \@code;
 }
 
@@ -328,8 +329,10 @@ sub _optimize {
                 for(my $j = $i + 1;
                     $j < @{$code_ref} && $code_ref->[$j][0] eq 'print_raw_s';
                     $j++) {
-                    my($op) = splice @{$code_ref}, $j, 1;
+
+                    my $op = $code_ref->[$j];
                     $code_ref->[$i][1] .= $op->[1];
+                    @{$op} = (noop => undef, undef, 'optimized away');
                 }
             }
             when('store_to_lvar') {

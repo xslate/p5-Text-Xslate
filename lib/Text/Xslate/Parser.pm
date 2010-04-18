@@ -2,9 +2,10 @@ package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
 
+use Text::Xslate;
 use Text::Xslate::Symbol;
 
-use constant _DUMP_PROTO => !!$ENV{XSLATE_DUMP_PROTO};
+use constant _DUMP_PROTO => (Text::Xslate::_XSLATE =~ /\b proto \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler);
 
