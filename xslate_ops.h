@@ -4,10 +4,10 @@
 /* forward decl */
 XSLATE(noop);
 XSLATE(move_sa_to_sb);
-XSLATE(swap); /* swap sa and sb */
+XSLATE_w_var(store_to_lvar);
+XSLATE_w_var(load_lvar_to_sb);
 XSLATE(push);
 XSLATE(pop);
-XSLATE(pop_to_sb);
 XSLATE(pushmark);
 XSLATE(nil);
 XSLATE_w_sv(literal);
@@ -27,7 +27,7 @@ XSLATE(sub);
 XSLATE(mul);
 XSLATE(div);
 XSLATE(mod);
-XSLATE(concat);
+XSLATE_w_sv(concat);
 XSLATE(filt);
 XSLATE_w_int(and);
 XSLATE_w_int(or);
@@ -47,10 +47,10 @@ XSLATE_w_int(goto);
 enum tx_opcode_t {
     TXOP_noop, /* 0 */
     TXOP_move_sa_to_sb, /* 1 */
-    TXOP_swap, /* 2 */
-    TXOP_push, /* 3 */
-    TXOP_pop, /* 4 */
-    TXOP_pop_to_sb, /* 5 */
+    TXOP_store_to_lvar, /* 2 */
+    TXOP_load_lvar_to_sb, /* 3 */
+    TXOP_push, /* 4 */
+    TXOP_pop, /* 5 */
     TXOP_pushmark, /* 6 */
     TXOP_nil, /* 7 */
     TXOP_literal, /* 8 */
@@ -92,10 +92,10 @@ enum tx_opcode_t {
 static const tx_exec_t tx_opcode[] = {
     TXCODE_noop,
     TXCODE_move_sa_to_sb,
-    TXCODE_swap,
+    TXCODE_store_to_lvar,
+    TXCODE_load_lvar_to_sb,
     TXCODE_push,
     TXCODE_pop,
-    TXCODE_pop_to_sb,
     TXCODE_pushmark,
     TXCODE_nil,
     TXCODE_literal,
@@ -137,10 +137,10 @@ static const tx_exec_t tx_opcode[] = {
 static const U8 tx_oparg[] = {
     0U, /* noop */
     0U, /* move_sa_to_sb */
-    0U, /* swap */
+    TXCODE_W_VAR, /* store_to_lvar */
+    TXCODE_W_VAR, /* load_lvar_to_sb */
     0U, /* push */
     0U, /* pop */
-    0U, /* pop_to_sb */
     0U, /* pushmark */
     0U, /* nil */
     TXCODE_W_SV, /* literal */
@@ -160,7 +160,7 @@ static const U8 tx_oparg[] = {
     0U, /* mul */
     0U, /* div */
     0U, /* mod */
-    0U, /* concat */
+    TXCODE_W_SV, /* concat */
     0U, /* filt */
     TXCODE_W_INT, /* and */
     TXCODE_W_INT, /* or */
@@ -182,10 +182,10 @@ static void
 tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(noop), newSViv(TXOP_noop));
     (void)hv_stores(ops, STRINGIFY(move_sa_to_sb), newSViv(TXOP_move_sa_to_sb));
-    (void)hv_stores(ops, STRINGIFY(swap), newSViv(TXOP_swap));
+    (void)hv_stores(ops, STRINGIFY(store_to_lvar), newSViv(TXOP_store_to_lvar));
+    (void)hv_stores(ops, STRINGIFY(load_lvar_to_sb), newSViv(TXOP_load_lvar_to_sb));
     (void)hv_stores(ops, STRINGIFY(push), newSViv(TXOP_push));
     (void)hv_stores(ops, STRINGIFY(pop), newSViv(TXOP_pop));
-    (void)hv_stores(ops, STRINGIFY(pop_to_sb), newSViv(TXOP_pop_to_sb));
     (void)hv_stores(ops, STRINGIFY(pushmark), newSViv(TXOP_pushmark));
     (void)hv_stores(ops, STRINGIFY(nil), newSViv(TXOP_nil));
     (void)hv_stores(ops, STRINGIFY(literal), newSViv(TXOP_literal));

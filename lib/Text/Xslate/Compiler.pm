@@ -228,12 +228,20 @@ sub _generate_binary {
                 [ fetch_field_s => $node->second->id ];
         }
         when(%bin) {
-            return
+            my $lvar = $self->lvar_id;
+            my @code = (
                 $self->_generate_expr($node->first),
-                [ push      => () ],
-                $self->_generate_expr($node->second),
-                [ pop_to_sb => () ],
-                [ $bin{$_}  => () ];
+                [ store_to_lvar => $lvar ],
+            );
+
+            $self->_lvar_id_inc(1);
+            push @code, $self->_generate_expr($node->second);
+            $self->_lvar_id_dec(1);
+
+            push @code,
+                [ load_lvar_to_sb => $lvar ],
+                [ $bin{$_}   => undef ];
+            return @code;
         }
         when(%bin_r) {
             my @right = $self->_generate_expr($node->second);
