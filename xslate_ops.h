@@ -9,6 +9,7 @@ XSLATE(push);
 XSLATE(pop);
 XSLATE(pop_to_sb);
 XSLATE(pushmark);
+XSLATE(nil);
 XSLATE_w_sv(literal);
 XSLATE_w_int(literal_i);
 XSLATE_w_key(fetch); /* fetch a field from the top */
@@ -30,6 +31,7 @@ XSLATE(concat);
 XSLATE(filt);
 XSLATE_w_int(and);
 XSLATE_w_int(or);
+XSLATE_w_int(dor);
 XSLATE(not);
 XSLATE(eq);
 XSLATE(ne);
@@ -50,38 +52,40 @@ enum tx_opcode_t {
     TXOP_pop, /* 4 */
     TXOP_pop_to_sb, /* 5 */
     TXOP_pushmark, /* 6 */
-    TXOP_literal, /* 7 */
-    TXOP_literal_i, /* 8 */
-    TXOP_fetch, /* 9 */
-    TXOP_fetch_field, /* 10 */
-    TXOP_fetch_field_s, /* 11 */
-    TXOP_print, /* 12 */
-    TXOP_print_s, /* 13 */
-    TXOP_print_raw, /* 14 */
-    TXOP_print_raw_s, /* 15 */
-    TXOP_for_start, /* 16 */
-    TXOP_for_next, /* 17 */
-    TXOP_fetch_iter, /* 18 */
-    TXOP_add, /* 19 */
-    TXOP_sub, /* 20 */
-    TXOP_mul, /* 21 */
-    TXOP_div, /* 22 */
-    TXOP_mod, /* 23 */
-    TXOP_concat, /* 24 */
-    TXOP_filt, /* 25 */
-    TXOP_and, /* 26 */
-    TXOP_or, /* 27 */
-    TXOP_not, /* 28 */
-    TXOP_eq, /* 29 */
-    TXOP_ne, /* 30 */
-    TXOP_lt, /* 31 */
-    TXOP_le, /* 32 */
-    TXOP_gt, /* 33 */
-    TXOP_ge, /* 34 */
-    TXOP_function, /* 35 */
-    TXOP_call, /* 36 */
-    TXOP_pc_inc, /* 37 */
-    TXOP_goto, /* 38 */
+    TXOP_nil, /* 7 */
+    TXOP_literal, /* 8 */
+    TXOP_literal_i, /* 9 */
+    TXOP_fetch, /* 10 */
+    TXOP_fetch_field, /* 11 */
+    TXOP_fetch_field_s, /* 12 */
+    TXOP_print, /* 13 */
+    TXOP_print_s, /* 14 */
+    TXOP_print_raw, /* 15 */
+    TXOP_print_raw_s, /* 16 */
+    TXOP_for_start, /* 17 */
+    TXOP_for_next, /* 18 */
+    TXOP_fetch_iter, /* 19 */
+    TXOP_add, /* 20 */
+    TXOP_sub, /* 21 */
+    TXOP_mul, /* 22 */
+    TXOP_div, /* 23 */
+    TXOP_mod, /* 24 */
+    TXOP_concat, /* 25 */
+    TXOP_filt, /* 26 */
+    TXOP_and, /* 27 */
+    TXOP_or, /* 28 */
+    TXOP_dor, /* 29 */
+    TXOP_not, /* 30 */
+    TXOP_eq, /* 31 */
+    TXOP_ne, /* 32 */
+    TXOP_lt, /* 33 */
+    TXOP_le, /* 34 */
+    TXOP_gt, /* 35 */
+    TXOP_ge, /* 36 */
+    TXOP_function, /* 37 */
+    TXOP_call, /* 38 */
+    TXOP_pc_inc, /* 39 */
+    TXOP_goto, /* 40 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -93,6 +97,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_pop,
     TXCODE_pop_to_sb,
     TXCODE_pushmark,
+    TXCODE_nil,
     TXCODE_literal,
     TXCODE_literal_i,
     TXCODE_fetch,
@@ -114,6 +119,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_filt,
     TXCODE_and,
     TXCODE_or,
+    TXCODE_dor,
     TXCODE_not,
     TXCODE_eq,
     TXCODE_ne,
@@ -136,6 +142,7 @@ static const U8 tx_oparg[] = {
     0U, /* pop */
     0U, /* pop_to_sb */
     0U, /* pushmark */
+    0U, /* nil */
     TXCODE_W_SV, /* literal */
     TXCODE_W_INT, /* literal_i */
     TXCODE_W_KEY, /* fetch */
@@ -157,6 +164,7 @@ static const U8 tx_oparg[] = {
     0U, /* filt */
     TXCODE_W_INT, /* and */
     TXCODE_W_INT, /* or */
+    TXCODE_W_INT, /* dor */
     0U, /* not */
     0U, /* eq */
     0U, /* ne */
@@ -179,6 +187,7 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(pop), newSViv(TXOP_pop));
     (void)hv_stores(ops, STRINGIFY(pop_to_sb), newSViv(TXOP_pop_to_sb));
     (void)hv_stores(ops, STRINGIFY(pushmark), newSViv(TXOP_pushmark));
+    (void)hv_stores(ops, STRINGIFY(nil), newSViv(TXOP_nil));
     (void)hv_stores(ops, STRINGIFY(literal), newSViv(TXOP_literal));
     (void)hv_stores(ops, STRINGIFY(literal_i), newSViv(TXOP_literal_i));
     (void)hv_stores(ops, STRINGIFY(fetch), newSViv(TXOP_fetch));
@@ -200,6 +209,7 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(filt), newSViv(TXOP_filt));
     (void)hv_stores(ops, STRINGIFY(and), newSViv(TXOP_and));
     (void)hv_stores(ops, STRINGIFY(or), newSViv(TXOP_or));
+    (void)hv_stores(ops, STRINGIFY(dor), newSViv(TXOP_dor));
     (void)hv_stores(ops, STRINGIFY(not), newSViv(TXOP_not));
     (void)hv_stores(ops, STRINGIFY(eq), newSViv(TXOP_eq));
     (void)hv_stores(ops, STRINGIFY(ne), newSViv(TXOP_ne));

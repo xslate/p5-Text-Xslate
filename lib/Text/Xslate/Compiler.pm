@@ -34,6 +34,7 @@ my %bin = (
 my %bin_r = (
     '&&' => 'and',
     '||' => 'or',
+    '//' => 'dor',
 );
 
 has lvar_id => ( # local varialbe id
@@ -191,10 +192,13 @@ sub _generate_literal {
 
     my $value = $self->_literal_to_value($node);
     if(Mouse::Util::TypeConstraints::Int($value)) {
-        return [ literal_i => $value, $node->line ];
+        return [ literal_i => $value ];
+    }
+    elsif(defined $value){
+        return [ literal => $value ];
     }
     else {
-        return [ literal => $value, $node->line ];
+        return [ nil => undef ];
     }
 }
 

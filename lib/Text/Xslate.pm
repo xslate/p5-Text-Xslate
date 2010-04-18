@@ -333,6 +333,27 @@ TODO
 
     ?= $var.value == nil ? "nil" : $var.value
 
+=head2 Expressions
+
+Relational operators (C<< == != < <= > >= >>):
+
+    ?= $var == 10 ? "10"     : "not 10"
+    ?= $var != 10 ? "not 10" : "10"
+
+Arithmatic operators (C<< + - * / % >>):
+
+    ?= $var + 10
+    ?= ($var % 10) == 0
+
+Logical operators (C<< || && // >>)
+
+    ?= $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
+    ?= $var // "foo" # as a default value
+
+Operator precedence:
+
+    (TODO)
+
 =head1 TODO
 
 =over
@@ -347,15 +368,7 @@ Template inheritance (like Text::MicroTemplate::Extended)
 
 =item *
 
-String filters (like Template-Toolkit)
-
-=item *
-
 Template inclusion
-
-=item *
-
-The given-when syntax
 
 =item *
 

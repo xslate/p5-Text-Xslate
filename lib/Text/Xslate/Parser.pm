@@ -20,7 +20,7 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     -- ++
     == != <=> <= >=
     << >>
-    && ||
+    && || //
     -> =>
 
     < >
@@ -285,6 +285,7 @@ sub BUILD {
 
     $parser->infixr('&&', 35);
     $parser->infixr('||', 30);
+    $parser->infixr('//', 30);
 
     $parser->prefix('!');
 

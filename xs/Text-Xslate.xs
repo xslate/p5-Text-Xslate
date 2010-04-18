@@ -238,6 +238,12 @@ XSLATE(pushmark) {
     TX_st->pc++;
 }
 
+XSLATE(nil) {
+    TX_st_sa = &PL_sv_undef;
+
+    TX_st->pc++;
+}
+
 XSLATE_w_sv(literal) {
     TX_st_sa = TX_op_arg;
 
@@ -484,6 +490,17 @@ XSLATE_w_int(and) {
 
 XSLATE_w_int(or) {
     if(!sv_true(TX_st_sa)) {
+        TX_st->pc++;
+    }
+    else {
+        TX_st->pc += SvIVX(TX_op_arg);
+    }
+}
+
+XSLATE_w_int(dor) {
+    SV* const sv = TX_st_sa;
+    SvGETMAGIC(sv);
+    if(!SvOK(sv)) {
         TX_st->pc++;
     }
     else {
