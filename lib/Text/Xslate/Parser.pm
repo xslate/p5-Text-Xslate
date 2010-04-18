@@ -15,7 +15,7 @@ my $QUOTED  = qr/(?: $dquoted | $squoted )/xms;
 
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 
-my $ID = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
+my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 
 my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     -- ++
@@ -39,6 +39,8 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
 
 
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
+
+my $CODE    = qr/ (?: (?: $QUOTED | [^'"] )*? ) /xms;
 
 has symbol_table => (
     is  => 'ro',
@@ -81,8 +83,7 @@ has line => (
         line_inc => 'inc',
     },
 
-    default  => 0,
-    init_arg => undef,
+    required => 0,
 );
 
 my $token_pattern_t = subtype __PACKAGE__ . '.token_pattern', as 'Regexp';
@@ -130,8 +131,6 @@ sub split {
     my $tag_start     = $self->tag_start;
     my $tag_end       = $self->tag_end;
 
-    my $code_rx = qr/ (?: (?: $QUOTED | [^'"] )*? ) /xms;
-
     my @state = 'text';
 
     while($_) {
@@ -139,7 +138,7 @@ sub split {
             push @tokens,
                 [ code => _trim($1) ];
         }
-        elsif(s/\A ([^\n]*?) $tag_start ($code_rx) $tag_end //xms) {
+        elsif(s/\A ([^\n]*?) $tag_start ($CODE) $tag_end //xms) {
             if($1){
                 push @tokens, [ text => $1 ];
             }
@@ -236,7 +235,8 @@ sub next_token {
 
 sub parse {
     my($parser, $input) = @_;
-    
+
+    $parser->line(0);
     $parser->input( $parser->preprocess($input) );
 
     return $parser->statements();
