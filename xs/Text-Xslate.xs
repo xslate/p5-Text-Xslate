@@ -764,14 +764,14 @@ CODE:
             IV  opnum;
 
             if(!he){
-                croak("Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
+                croak("Oops: Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
             }
 
             opnum                = SvIVx(hv_iterval(ops, he));
             st.code[i].exec_code = tx_opcode[ opnum ];
             if(tx_oparg[opnum] & TXARGf_SV) {
                 if(!arg) {
-                    croak("Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
+                    croak("Oops: Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
                 }
 
                 if(tx_oparg[opnum] & TXARGf_KEY) {
@@ -788,7 +788,7 @@ CODE:
             }
             else {
                 if(arg && SvOK(*arg)) {
-                    croak("Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
+                    croak("Oops: Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
                 }
                 st.code[i].arg = NULL;
             }
@@ -800,7 +800,7 @@ CODE:
             st.lines[i] = l;
         }
         else {
-            croak("Broken code found on [%d]", (int)i);
+            croak("Oops: Broken code found on [%d]", (int)i);
         }
     }
 }
