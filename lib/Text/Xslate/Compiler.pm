@@ -70,15 +70,15 @@ sub compile_str {
 }
 
 sub compile {
-    my($self, $str) = @_;
+    my($self, $str, $optimize) = @_;
 
     my $ast = $self->parse($str);
 
     my @code = $self->_compile_ast($ast);
 
-    $self->_optimize(\@code);
+    $self->_optimize(\@code) if $optimize // 1;
 
-    print STDERR $self->as_assembly(\@code) if _DUMP_CODE;
+    print $self->as_assembly(\@code) if _DUMP_CODE;
     return \@code;
 }
 
@@ -322,16 +322,39 @@ sub _optimize {
     my($self, $code_ref) = @_;
 
     for(my $i = 0; $i < @{$code_ref}; $i++) {
-        if($code_ref->[$i][0] eq 'print_raw_s') {
-            # merge a list of print_raw_s into single command
-            for(my $j = $i + 1;
-                $j < @{$code_ref} && $code_ref->[$j][0] eq 'print_raw_s';
-                $j++) {
-                my($op) = splice @{$code_ref}, $j, 1;
-                $code_ref->[$i][1] .= $op->[1];
+        given($code_ref->[$i][0]) {
+            when('print_raw_s') {
+                # merge a list of print_raw_s into single command
+                for(my $j = $i + 1;
+                    $j < @{$code_ref} && $code_ref->[$j][0] eq 'print_raw_s';
+                    $j++) {
+                    my($op) = splice @{$code_ref}, $j, 1;
+                    $code_ref->[$i][1] .= $op->[1];
+                }
+            }
+            when('store_to_lvar') {
+                my $it = $code_ref->[$i];
+                my $nn = $code_ref->[$i+2]; # next next
+                if(defined($nn)
+                    && $nn->[0] eq 'load_lvar_to_sb'
+                    && $nn->[1] == $it->[1]) {
+                    # given:
+                    #   store_to_lvar $n
+                    #   blah blah blah
+                    #   load_lvar_to_sb $n
+                    # convert into:
+                    #   move_sa_to_sb
+                    #   blah blah blah
+                    @{$it} = ('move_sa_to_sb', undef, undef, 'optimized from store_to_lvar');
+
+                    # replace to noop, need to adjust goto address
+                    @{$code_ref->[$i+2]} = (noop => undef, undef, 'optimized away');
+                }
             }
         }
     }
+
+    # TODO: re-calculate goto addresses
     return;
 }
 
