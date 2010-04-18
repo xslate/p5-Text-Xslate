@@ -808,9 +808,11 @@ CODE:
                 }
                 else if(tx_oparg[opnum] & TXARGf_INT) {
                     st.code[i].arg = newSViv(SvIV(*arg));
+                    SvREADONLY_on(st.code[i].arg);
                 }
                 else {
                     st.code[i].arg = newSVsv(*arg);
+                    SvREADONLY_on(st.code[i].arg);
                 }
             }
             else {
