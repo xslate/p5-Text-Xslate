@@ -319,19 +319,28 @@ sub _literal_to_value {
     return $value;
 }
 
-sub _optimize {
-    my($self, $code_ref) = @_;
+#my %goto;
+#@goto{qw(
+#    for_next
+#    and
+#    or
+#    dor
+#    pc_inc
+#)} = ();
 
-    for(my $i = 0; $i < @{$code_ref}; $i++) {
-        given($code_ref->[$i][0]) {
+sub _optimize {
+    my($self, $cr) = @_;
+
+    for(my $i = 0; $i < @{$cr}; $i++) {
+        given($cr->[$i][0]) {
             when('print_raw_s') {
                 # merge a set of print_raw_s into single command
                 for(my $j = $i + 1;
-                    $j < @{$code_ref} && $code_ref->[$j][0] eq 'print_raw_s';
+                    $j < @{$cr} && $cr->[$j][0] eq 'print_raw_s';
                     $j++) {
 
-                    my $op = $code_ref->[$j];
-                    $code_ref->[$i][1] .= $op->[1];
+                    my $op = $cr->[$j];
+                    $cr->[$i][1] .= $op->[1];
                     @{$op} = (noop => undef, undef, 'optimized away');
                 }
             }
@@ -345,21 +354,34 @@ sub _optimize {
                 # convert into:
                 #   move_sa_to_sb
                 #   blah blah blah
-                my $it = $code_ref->[$i];
-                my $nn = $code_ref->[$i+2]; # next next
+                my $it = $cr->[$i];
+                my $nn = $cr->[$i+2]; # next next
                 if(defined($nn)
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
                     @{$it} = ('move_sa_to_sb', undef, undef, 'optimized from store_to_lvar');
 
                     # replace to noop, need to adjust goto address
-                    @{$code_ref->[$i+2]} = (noop => undef, undef, 'optimized away');
+                    @{$cr->[$i+2]} = (noop => undef, undef, 'optimized away');
                 }
             }
         }
     }
 
-    # TODO: re-calculate goto addresses
+    # TODO: recalculate goto address
+#    my @goto_addr;
+#    for(my $i = 0; $i < @{$cr}; $i++) {
+#        if(exists $goto{ $cr->[$i][0] }) { # goto family
+#            my $addr = $cr->[$i][1]; # relational addr
+#
+#            my @range = $addr > 0
+#                ? ($i .. ($i+$addr))
+#                : (($i+$addr) .. $i);
+#            foreach my $j(@range) {
+#                push @{$goto_addr[$j] //= []}, $cr->[$i];
+#            }
+#        }
+#    }
     return;
 }
 
