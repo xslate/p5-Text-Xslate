@@ -378,7 +378,7 @@ XSLATE_w_var(for_start) {
 
 XSLATE_w_int(for_next) {
     SV* const idsv = TX_st_sa;
-    IV  const id   = SvIV(idsv);
+    IV  const id   = SvIVX(idsv); /* by literal_i */
     AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
     SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
 
@@ -407,7 +407,7 @@ XSLATE_w_int(for_next) {
 
 XSLATE_w_int(fetch_iter) {
     SV* const idsv = TX_op_arg;
-    IV  const id   = SvIV(idsv);
+    IV  const id   = SvIVX(idsv);
     AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
     SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
     SV** svp;
