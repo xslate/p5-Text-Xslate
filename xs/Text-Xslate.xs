@@ -76,8 +76,8 @@ struct tx_state_s {
     /* variables */
 
     HV* vars;    /* template variables */
-    AV* iter_v;  /* iterator variables */
-    AV* iter_i;  /* iterator counter */
+    AV* iter_c;  /* iterating containers */
+    AV* iter_i;  /* iterators */
 
     HV* function;
     SV* error_handler;
@@ -358,7 +358,7 @@ XSLATE_w_var(for_start) {
 
     av = (AV*)SvRV(avref);
     SvREFCNT_inc_simple_void_NN(av);
-    (void)av_store(TX_st->iter_v, id, (SV*)av);
+    (void)av_store(TX_st->iter_c, id, (SV*)av);
     sv_setiv(*av_fetch(TX_st->iter_i, id, TRUE), 0); /* (re)set iterator */
 
     TX_st->pc++;
@@ -367,7 +367,7 @@ XSLATE_w_var(for_start) {
 XSLATE_w_int(for_next) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIV(idsv);
-    AV* const av   = (AV*)AvARRAY(TX_st->iter_v)[ id ];
+    AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
     SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
 
     assert(SvTYPE(av) == SVt_PVAV);
@@ -384,7 +384,7 @@ XSLATE_w_int(for_next) {
            they will be cleaned at the end of render() */
 
         /* IV const id = SvIV(TX_op_arg); */
-        /* av_delete(TX_st->iter_v, id, G_DISCARD); */
+        /* av_delete(TX_st->iter_c, id, G_DISCARD); */
         /* av_delete(TX_st->iter_i, id, G_DISCARD); */
 
         TX_st->pc++;
@@ -396,7 +396,7 @@ XSLATE_w_int(for_next) {
 XSLATE_w_int(fetch_iter) {
     SV* const idsv = TX_op_arg;
     IV  const id   = SvIV(idsv);
-    AV* const av   = (AV*)AvARRAY(TX_st->iter_v)[ id ];
+    AV* const av   = (AV*)AvARRAY(TX_st->iter_c)[ id ];
     SV* const i    =      AvARRAY(TX_st->iter_i)[ id ];
     SV** svp;
 
@@ -662,7 +662,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     SvREFCNT_dec(st->error_handler);
     SvREFCNT_dec(st->function);
 
-    SvREFCNT_dec(st->iter_v);
+    SvREFCNT_dec(st->iter_c);
     SvREFCNT_dec(st->iter_i);
 
     SvREFCNT_dec(st->targ);
@@ -743,7 +743,7 @@ CODE:
         st.sb       = &PL_sv_undef;
         st.targ     = newSV(0);
 
-        st.iter_v   = newAV();
+        st.iter_c   = newAV();
         st.iter_i   = newAV();
 
         Newxz(st.lines, len, U16);
