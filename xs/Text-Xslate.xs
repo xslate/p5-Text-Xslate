@@ -402,7 +402,6 @@ XSLATE_w_int(for_next) {
         TX_st->pc++;
     }
 
-    FREETMPS;
 }
 
 XSLATE_w_int(fetch_iter) {
@@ -623,9 +622,6 @@ xslate_exec(pTHX_ const tx_state_t* const base, SV* const output, HV* const hv) 
     st.output = output;
     st.vars   = hv;
 
-    ENTER;
-    SAVETMPS;
-
     /* local $SIG{__WARN__} = \&error_handler */
     SAVESPTR(PL_warnhook);
     PL_warnhook = st.error_handler;
@@ -647,9 +643,6 @@ xslate_exec(pTHX_ const tx_state_t* const base, SV* const output, HV* const hv) 
             croak("panic: pogram counter has not been changed on [%d]", (int)st.pc);
         }
     }
-
-    FREETMPS;
-    LEAVE;
 
     return st.output;
 }
