@@ -282,9 +282,12 @@ This document describes Text::Xslate version 0.001.
 
 =head1 DESCRIPTION
 
-Text::Xslate is a template engine with high performance.
+B<Text::Xslate> is a template engine tuned for persistent applications.
+This engine introduces virtual machines. That is, templates are compiled
+into xslate opcodes, and then executed by the xslate virtual machine just
+like as Perl does.
 
-This is still under development.
+This software is under development :)
 
 =head1 INTERFACE
 
@@ -293,6 +296,22 @@ This is still under development.
 =head3 B<< Text::Xslate->new(%options) -> TX >>
 
 Creates a new xslate template code.
+
+Options:
+
+=over
+
+=item C<< string => $template_string >>
+
+=item C<< file => $template_file >>
+
+=item C<< path => \@path // ["$FindBin::Bin/../template"] >>
+
+=item C<< function => \%functions >>
+
+=item C<< auto_compile => $bool // true >>
+
+=back
 
 =head3 B<< $tx->render(\%vars) -> Str >>
 
@@ -361,7 +380,7 @@ Operator precedence:
 
 =item *
 
-Debuggability improvement
+Documentation
 
 =item *
 
