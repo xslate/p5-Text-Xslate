@@ -374,6 +374,25 @@ Operator precedence:
 
     (TODO)
 
+=head2 Template inheritance
+
+(NOT YET IMPLEMENTED)
+
+Base templates F<mytmpl/base.tx>:
+
+    ? block title -> {
+        My Template!
+    ? }
+    ? block body is abstract # without default
+
+Derived templates F<mytmpl/derived.tx>:
+
+    ? extends mytmpl.base
+    ? # use default title
+    ? override block body {
+        My Template Body!
+    ? }
+
 =head1 TODO
 
 =over
@@ -385,10 +404,6 @@ Documentation
 =item *
 
 Template inheritance (like Text::MicroTemplate::Extended)
-
-=item *
-
-Template inclusion
 
 =item *
 
