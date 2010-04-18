@@ -9,7 +9,17 @@
 /* (1 << 6) * U16_MAX = about 4 MiB */
 #define TX_BUFFER_SIZE_C 6
 
-#define XSLATE(name) static void CAT2(XSLATE_, name)(pTHX_ tx_state_t* const txst)
+#define XSLATE(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
+/* XSLATE_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
+#define XSLATE_w_sv(n)  XSLATE(n) /* has TX_op_arg as a SV */
+#define XSLATE_w_int(n) XSLATE(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
+#define XSLATE_w_key(n) XSLATE(n) /* has TX_op_arg as a keyword */
+#define XSLATE_w_var(n) XSLATE(n) /* has TX_op_arg as a local variable */
+
+#define TXARG_SV   (0x01U)
+#define TXARG_INT ((0x02U) | TXARG_SV)
+#define TXARG_KEY ((0x04U) | TXARG_SV)
+#define TXARG_VAR ((0x08U) | TXARG_INT)
 
 #define TX_st (txst)
 #define TX_op (&(TX_st->code[TX_st->pc]))
@@ -77,6 +87,8 @@ struct tx_code_s {
 
     SV* arg;
 };
+
+#include "xslate_ops.h"
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
@@ -218,13 +230,13 @@ XSLATE(pushmark) {
     TX_st->pc++;
 }
 
-XSLATE(literal) {
+XSLATE_w_sv(literal) {
     TX_st_sa = TX_op_arg;
 
     TX_st->pc++;
 }
 
-XSLATE(fetch) { /* fetch a field from top */
+XSLATE_w_key(fetch) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
@@ -241,7 +253,7 @@ XSLATE(fetch_field) { /* fetch a field from a variable (bin operator) */
     TX_st->pc++;
 }
 
-XSLATE(fetch_field_s) { /* fetch a field from a variable (for literal) */
+XSLATE_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
     SV* const var = TX_st_sa;
     SV* const key = TX_op_arg;
 
@@ -311,10 +323,10 @@ XSLATE(print) {
     TX_st->pc++;
 }
 
-XSLATE(print_s) {
+XSLATE_w_sv(print_s) {
     TX_st_sa = TX_op_arg;
 
-    XSLATE_print(aTHX_ TX_st);
+    TXCODE_print(aTHX_ TX_st);
 }
 
 XSLATE(print_raw) {
@@ -323,13 +335,13 @@ XSLATE(print_raw) {
     TX_st->pc++;
 }
 
-XSLATE(print_raw_s) {
+XSLATE_w_sv(print_raw_s) {
     sv_catsv_nomg(TX_st->output, TX_op_arg);
 
     TX_st->pc++;
 }
 
-XSLATE(for_start) {
+XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIV(TX_op_arg);
     AV* av;
@@ -347,7 +359,7 @@ XSLATE(for_start) {
     TX_st->pc++;
 }
 
-XSLATE(for_next) {
+XSLATE_w_int(for_next) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIV(idsv);
     AV* const av   = (AV*)AvARRAY(TX_st->iter_v)[ id ];
@@ -376,7 +388,7 @@ XSLATE(for_next) {
     FREETMPS;
 }
 
-XSLATE(fetch_iter) {
+XSLATE_w_int(fetch_iter) {
     SV* const idsv = TX_op_arg;
     IV  const id   = SvIV(idsv);
     AV* const av   = (AV*)AvARRAY(TX_st->iter_v)[ id ];
@@ -446,21 +458,21 @@ XSLATE(filt) {
     TX_st->pc++;
 }
 
-XSLATE(and) {
+XSLATE_w_int(and) {
     if(sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
     else {
-        TX_st->pc += SvIVx(TX_op_arg);
+        TX_st->pc += SvIVX(TX_op_arg);
     }
 }
 
-XSLATE(or) {
+XSLATE_w_int(or) {
     if(!sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
     else {
-        TX_st->pc += SvIVx(TX_op_arg);
+        TX_st->pc += SvIVX(TX_op_arg);
     }
 }
 
@@ -525,7 +537,7 @@ XSLATE(ge) {
     TX_st->pc++;
 }
 
-XSLATE(function) {
+XSLATE_w_key(function) {
     HE* he;
     if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
@@ -544,11 +556,11 @@ XSLATE(call) {
     TX_st->pc++;
 }
 
-XSLATE(pc_inc) {
+XSLATE_w_int(pc_inc) {
     TX_st->pc += SvIV(TX_op_arg);
 }
 
-XSLATE(goto) {
+XSLATE_w_int(goto) {
     TX_st->pc = SvIV(TX_op_arg);
 }
 
@@ -667,166 +679,14 @@ static MGVTBL xslate_vtbl = { /* for identity */
     NULL,  /* local */
 };
 
-enum {
-    TXOP_noop,
-
-    TXOP_move_sa_to_sb,
-    TXOP_swap,
-    TXOP_push,
-    TXOP_pop,
-    TXOP_pop_to_sb,
-    TXOP_pushmark,
-
-    TXOP_literal,
-    TXOP_fetch,
-    TXOP_fetch_field,
-    TXOP_fetch_field_s,
-    TXOP_fetch_iter,
-
-    TXOP_print,
-    TXOP_print_s,
-    TXOP_print_raw,
-    TXOP_print_raw_s,
-
-    TXOP_for_start,
-    TXOP_for_next,
-
-    TXOP_add,
-    TXOP_sub,
-    TXOP_mul,
-    TXOP_div,
-    TXOP_mod,
-    TXOP_concat,
-    TXOP_filt,
-
-    TXOP_and,
-    TXOP_or,
-    TXOP_not,
-    TXOP_eq,
-    TXOP_ne,
-    TXOP_lt,
-    TXOP_le,
-    TXOP_gt,
-    TXOP_ge,
-
-    TXOP_function,
-    TXOP_call,
-
-    TXOP_pc_inc,
-    TXOP_goto,
-
-    TXOP_last
-};
-
-static const tx_exec_t tx_opcode[] = {
-    XSLATE_noop,
-
-    XSLATE_move_sa_to_sb,
-    XSLATE_swap,
-    XSLATE_push,
-    XSLATE_pop,
-    XSLATE_pop_to_sb,
-    XSLATE_pushmark,
-
-    XSLATE_literal,
-    XSLATE_fetch,
-    XSLATE_fetch_field,
-    XSLATE_fetch_field_s,
-    XSLATE_fetch_iter,
-
-    XSLATE_print,
-    XSLATE_print_s,
-    XSLATE_print_raw,
-    XSLATE_print_raw_s,
-
-    XSLATE_for_start,
-    XSLATE_for_next,
-
-    XSLATE_add,
-    XSLATE_sub,
-    XSLATE_mul,
-    XSLATE_div,
-    XSLATE_mod,
-    XSLATE_concat,
-    XSLATE_filt,
-
-    XSLATE_and,
-    XSLATE_or,
-    XSLATE_not,
-    XSLATE_eq,
-    XSLATE_ne,
-    XSLATE_lt,
-    XSLATE_le,
-    XSLATE_gt,
-    XSLATE_ge,
-
-    XSLATE_function,
-    XSLATE_call,
-
-    XSLATE_pc_inc,
-    XSLATE_goto,
-
-    NULL
-};
-
-
-#define REG_TXOP(name) (void)hv_stores(ops, STRINGIFY(name), newSViv(CAT2(TXOP_, name)))
-
 MODULE = Text::Xslate    PACKAGE = Text::Xslate
 
 PROTOTYPES: DISABLE
 
-
 BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
-
-    REG_TXOP(noop);
-
-    REG_TXOP(move_sa_to_sb);
-    REG_TXOP(swap);
-    REG_TXOP(push);
-    REG_TXOP(pop);
-    REG_TXOP(pop_to_sb);
-    REG_TXOP(pushmark);
-
-    REG_TXOP(literal);
-    REG_TXOP(fetch);
-    REG_TXOP(fetch_field);
-    REG_TXOP(fetch_field_s);
-    REG_TXOP(fetch_iter);
-
-    REG_TXOP(print);
-    REG_TXOP(print_s);
-    REG_TXOP(print_raw);
-    REG_TXOP(print_raw_s);
-
-    REG_TXOP(for_start);
-    REG_TXOP(for_next);
-
-    REG_TXOP(add);
-    REG_TXOP(sub);
-    REG_TXOP(mul);
-    REG_TXOP(div);
-    REG_TXOP(mod);
-    REG_TXOP(concat);
-    REG_TXOP(filt);
-
-    REG_TXOP(and);
-    REG_TXOP(or);
-    REG_TXOP(not);
-    REG_TXOP(eq);
-    REG_TXOP(ne);
-    REG_TXOP(lt);
-    REG_TXOP(le);
-    REG_TXOP(gt);
-    REG_TXOP(ge);
-
-    REG_TXOP(function);
-    REG_TXOP(call);
-
-    REG_TXOP(pc_inc);
-    REG_TXOP(goto);
+    tx_init_ops(aTHX_ ops);
 }
 
 void
