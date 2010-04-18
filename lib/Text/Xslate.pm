@@ -231,7 +231,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate - High performance template engine
+Text::Xslate - High performance template engine (ALPHA)
 
 =head1 VERSION
 
@@ -287,7 +287,7 @@ This engine introduces virtual machines. That is, templates are compiled
 into xslate opcodes, and then executed by the xslate virtual machine just
 like as Perl does.
 
-This software is under development :)
+This software is under development. Any interfaces will be changed.
 
 =head1 INTERFACE
 
