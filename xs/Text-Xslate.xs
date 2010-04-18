@@ -410,6 +410,9 @@ XSLATE_w_int(fetch_iter) {
     TX_st->pc++;
 }
 
+/* For arithmatic operators, SvIV_please() can make stringification faster,
+   although I don't know why it is :)
+*/
 XSLATE(add) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) + SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
@@ -440,6 +443,7 @@ XSLATE(mod) {
     TX_st->pc++;
 }
 
+/* NOTE: XSLATE_w_sv will make it faster, but it may be unimportant */
 XSLATE(concat) {
     SV* const sv = sv_mortalcopy(TX_st_sb);
     sv_catsv_nomg(sv, TX_st_sa);
