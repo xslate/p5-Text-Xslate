@@ -185,7 +185,7 @@ sub _generate_variable {
         return [ fetch_iter => $lvar_id, $node->line, $node->id ];
     }
     else {
-        return [ fetch => $self->_variable_to_value($node), $node->line ];
+        return [ fetch_s => $self->_variable_to_value($node), $node->line ];
     }
 }
 

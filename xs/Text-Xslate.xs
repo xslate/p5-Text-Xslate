@@ -266,7 +266,7 @@ XSLATE_w_sv(literal) {
 /* the same as literal, but make sure its argument is an integer */
 XSLATE_w_int(literal_i);
 
-XSLATE_w_key(fetch) { /* fetch a field from the top */
+XSLATE_w_key(fetch_s) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
