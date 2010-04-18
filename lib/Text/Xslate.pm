@@ -382,18 +382,43 @@ Operator precedence:
 
 Base templates F<mytmpl/base.tx>:
 
-    ? block title -> {
-        My Template!
+    ? block title -> { # with default
+        [My Template!]
     ? }
+
     ? block body is abstract # without default
 
-Derived templates F<mytmpl/derived.tx>:
+Derived templates F<mytmpl/foo.tx>:
 
-    ? extends mytmpl.base
+    ? extends base
     ? # use default title
-    ? override block body {
+    ? override body {
         My Template Body!
     ? }
+
+Derived templates F<mytmpl/bar.tx>:
+
+    ? extends foo
+    ? # use default title
+    ? before body {
+        Before body!
+    ? }
+    ? after body {
+        After body!
+    ? }
+
+Then, Perl code:
+
+    my $tx = Text::Xslate->new( file => 'mytmpl/bar.tx' );
+    $tx->render({});
+
+Output:
+
+        [My Template!]
+
+        Before body!
+        My Template Body!
+        Before Body!
 
 =head1 TODO
 

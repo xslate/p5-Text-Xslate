@@ -302,6 +302,17 @@ sub BUILD {
     $parser->symbol('print')    ->set_std(\&_std_command);
     $parser->symbol('print_raw')->set_std(\&_std_command);
 
+    $parser->symbol('include')  ->set_std(\&_std_command);
+
+    # not yet
+    $parser->symbol('extend');
+    $parser->symbol('body');
+    $parser->symbol('override');
+    $parser->symbol('before');
+    $parser->symbol('after');
+    $parser->symbol('is');
+    $parser->symbol('abstract');
+
     return;
 }
 
