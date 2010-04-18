@@ -43,8 +43,8 @@ has lvar_id => ( # local varialbe id
 
     traits  => [qw(Counter)],
     handles => {
-        lvar_id_inc => 'inc',
-        lvar_id_dec => 'dec',
+        _lvar_id_inc => 'inc',
+        _lvar_id_dec => 'dec',
     },
 
     default => 0,
@@ -138,9 +138,9 @@ sub _generate_for {
     push @code, [ for_start => $lvar_id, undef, $lvar_name ];
 
     # a for statement uses two local variables (container and iterator)
-    $self->lvar_id_inc(2);
+    $self->_lvar_id_inc(2);
     push @code, $self->_compile_ast($block);
-    $self->lvar_id_dec(2);
+    $self->_lvar_id_dec(2);
 
     push @code,
         [ literal_i => $lvar_id, undef, $lvar_name ],
@@ -284,7 +284,6 @@ sub _generate_function {
 
     return [ function => $node->value ];
 }
-
 
 sub _variable_to_value {
     my($self, $arg) = @_;

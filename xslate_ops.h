@@ -20,7 +20,7 @@ XSLATE_w_sv(print_s);
 XSLATE(print_raw);
 XSLATE_w_sv(print_raw_s);
 XSLATE_w_var(for_start);
-XSLATE_w_int(for_next);
+XSLATE_w_var(for_next);
 XSLATE_w_int(fetch_iter);
 XSLATE(add);
 XSLATE(sub);
@@ -153,7 +153,7 @@ static const U8 tx_oparg[] = {
     0U, /* print_raw */
     TXCODE_W_SV, /* print_raw_s */
     TXCODE_W_VAR, /* for_start */
-    TXCODE_W_INT, /* for_next */
+    TXCODE_W_VAR, /* for_next */
     TXCODE_W_INT, /* fetch_iter */
     0U, /* add */
     0U, /* sub */

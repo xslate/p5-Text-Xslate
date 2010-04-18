@@ -23,8 +23,8 @@
 
 #define TXCODE_W_SV  (TXARGf_SV)
 #define TXCODE_W_INT (TXARGf_SV | TXARGf_INT)
+#define TXCODE_W_VAR (TXARGf_SV | TXARGf_INT | TXARGf_VAR)
 #define TXCODE_W_KEY (TXARGf_SV | TXARGf_KEY)
-#define TXCODE_W_VAR (TXARGf_SV | TXARGf_VAR | TXARGf_VAR)
 
 #define TX_st (txst)
 #define TX_op (&(TX_st->code[TX_st->pc]))
@@ -360,27 +360,29 @@ XSLATE_w_sv(print_raw_s) {
 XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIVX(TX_op_arg);
-    AV* av;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
         croak("Iterator variables must be an ARRAY reference, not %s",
             tx_neat(aTHX_ avref));
     }
 
-    av = (AV*)SvRV(avref);
-    SvREFCNT_inc_simple_void_NN(av);
+    if(!(AvFILLp(TX_st->locals) >= (id+1))){
+        croak("panic: local variable storage is too small (%d)", (int)AvFILLp(TX_st->locals));
+    }
+    assert(AvARRAY(TX_st->locals)[id] != &PL_sv_undef);
+    assert(AvARRAY(TX_st->locals)[id+1] != &PL_sv_undef);
 
-    sv_setiv(*av_fetch(TX_st->locals, id+1, TRUE), 0); /* (re)set iterator */
-    (void)    av_store(TX_st->locals, id, (SV*)av);
+    sv_setsv(AvARRAY(TX_st->locals)[id  ], avref);
+    sv_setiv(AvARRAY(TX_st->locals)[id+1], 0); /* (re)set iterator */
 
     TX_st->pc++;
 }
 
-XSLATE_w_int(for_next) {
+XSLATE_w_var(for_next) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIVX(idsv); /* by literal_i */
-    AV* const av   = (AV*)AvARRAY(TX_st->locals)[ id   ];
-    SV* const i    =      AvARRAY(TX_st->locals)[ id+1 ];
+    AV* const av   = (AV*)SvRV(AvARRAY(TX_st->locals)[ id   ]);
+    SV* const i    =           AvARRAY(TX_st->locals)[ id+1 ];
 
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
@@ -407,8 +409,8 @@ XSLATE_w_int(for_next) {
 XSLATE_w_int(fetch_iter) {
     SV* const idsv = TX_op_arg;
     IV  const id   = SvIVX(idsv);
-    AV* const av   = (AV*)AvARRAY(TX_st->locals)[ id   ];
-    SV* const i    =      AvARRAY(TX_st->locals)[ id+1 ];
+    AV* const av   = (AV*)SvRV(AvARRAY(TX_st->locals)[ id   ]);
+    SV* const i    =           AvARRAY(TX_st->locals)[ id+1 ];
     SV** svp;
 
     assert(SvTYPE(av) == SVt_PVAV);
@@ -722,6 +724,7 @@ CODE:
     I32 const len = av_len(proto) + 1;
     I32 i;
     U16 l = 0;
+    I32 lvar_id_max = -1;
     tx_state_t st;
     SV** svp;
 
@@ -800,8 +803,15 @@ CODE:
                 else if(tx_oparg[opnum] & TXARGf_INT) {
                     st.code[i].arg = newSViv(SvIV(*arg));
                     SvREADONLY_on(st.code[i].arg);
+
+                    if(tx_oparg[opnum] & TXARGf_VAR) { /* local variable id */
+                        I32 const id = SvIVX(st.code[i].arg) + 1; /* for-loop requires +1 */
+                        if(lvar_id_max < id) {
+                            lvar_id_max = id;
+                        }
+                    }
                 }
-                else {
+                else { /* normal sv */
                     st.code[i].arg = newSVsv(*arg);
                     SvREADONLY_on(st.code[i].arg);
                 }
@@ -821,6 +831,13 @@ CODE:
         }
         else {
             croak("Oops: Broken code found on [%d]", (int)i);
+        }
+    } /* end for */
+    if(lvar_id_max >= 0) {
+        av_extend(st.locals, lvar_id_max);
+        lvar_id_max++;
+        for(i = 0; i < lvar_id_max; i++) {
+            av_store(st.locals, i, newSV(0));
         }
     }
 }
