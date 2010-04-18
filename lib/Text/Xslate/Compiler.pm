@@ -59,7 +59,13 @@ has lvar => ( # local varialbe table
 sub compile_str {
     my($self, $str) = @_;
 
-    return Text::Xslate->new( protocode => $self->compile($str) );
+    return Text::Xslate->new(
+        protocode    => $self->compile($str),
+
+        # "in-place" mode
+        path         => [],
+        auto_compile => 0,
+    );
 }
 
 sub compile {
