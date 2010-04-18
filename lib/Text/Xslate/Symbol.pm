@@ -105,14 +105,14 @@ has reserved => (
     required => 0,
 );
 
-has scope => (
-    is  => 'rw',
-    isa => 'HashRef',
-
-    weak_ref => 1,
-
-    required => 0,
-);
+#has scope => (
+#    is  => 'rw',
+#    isa => 'HashRef',
+#
+#    weak_ref => 1,
+#
+#    required => 0,
+#);
 
 has line => (
     is  => 'ro',

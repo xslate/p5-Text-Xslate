@@ -595,7 +595,7 @@ sub define { # define a name to the scope
     $symbol->remove_led();
     $symbol->remove_std();
     $symbol->lbp(0);
-    $symbol->scope($top);
+    #$symbol->scope($top);
     return $symbol;
 }
 
