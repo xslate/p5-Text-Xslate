@@ -1,7 +1,6 @@
 package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
-use Mouse::Util::TypeConstraints;
 
 use Text::Xslate::Symbol;
 
@@ -86,29 +85,21 @@ has line => (
     required => 0,
 );
 
-my $token_pattern_t = subtype __PACKAGE__ . '.token_pattern', as 'Regexp';
-
-coerce __PACKAGE__ . '.token_pattern',
-    from 'Str', via { qr/\Q$_\E/ms };
-
 has line_start => (
     is      => 'ro',
-    isa     => $token_pattern_t,
-    coerce  => 1,
+    isa     => 'RegexpRef',
     default => sub{ qr/\?/xms },
 );
 
 has tag_start => (
     is      => 'ro',
-    isa     => $token_pattern_t,
-    coerce  => 1,
+    isa     => 'RegexpRef',
     default => sub{ qr/\<\?/xms },
 );
 
 has tag_end => (
     is      => 'ro',
-    isa     => $token_pattern_t,
-    coerce  => 1,
+    isa     => 'RegexpRef',
     default => sub{ qr/\?\>/xms },
 );
 
@@ -780,6 +771,5 @@ sub _parse_error {
     Carp::croak("Xslate::Parser: $message at template line " . ($self->line + 1));
 }
 
-no Mouse::Util::TypeConstraints;
 no Mouse;
 __PACKAGE__->meta->make_immutable;
