@@ -9,7 +9,8 @@ our $VERSION = '0.001_01';
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
-use constant _XSLATE => $ENV{XSLATE} // '';
+our $DEBUG;
+$DEBUG = $ENV{XSLATE} // $DEBUG // '';
 
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors

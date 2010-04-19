@@ -5,7 +5,7 @@ use Mouse;
 use Text::Xslate;
 use Text::Xslate::Symbol;
 
-use constant _DUMP_PROTO => (Text::Xslate::_XSLATE =~ /\b dump=proto \b/xmsi);
+use constant _DUMP_PROTO => ($Text::Xslate::DEBUG =~ /\b dump=proto \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler);
 
