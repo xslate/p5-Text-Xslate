@@ -3,10 +3,10 @@
 use strict;
 use Test::More;
 
-use Test::Vars;
+use Test::Requires qw(Test::Vars);
 
 all_vars_ok(
-    ignore_vars => [qw($parser $symol)],
+    ignore_vars => [qw($parser $symbol)],
 );
 
 done_testing;

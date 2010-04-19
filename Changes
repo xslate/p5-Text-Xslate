@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_02 
+    - Fix a bug that program branches could be broken by the optimizer
+
 0.001_01 Mon Apr  5 18:52:06 2010
     - The first preview release for OSDC.TW 2010 (5/24-25)
 
