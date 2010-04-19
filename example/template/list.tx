@@ -1,0 +1,4 @@
+List:
+? for $data ->($item) {
+    [<?= $item["title"] ?>]
+? }
