@@ -341,11 +341,15 @@ TODO
     <?= $var.field ?>
     <?= $var["field"] ?>
 
+Variables may be HASH references, ARRAY references, or objects.
+
 =head2 Loop (C<for>)
 
     ? for $data ->($item) {
         [<?= $item.field =>]
     ? }
+
+Iterating data may be ARRAY references.
 
 =head2 Conditional statement (C<if>)
 

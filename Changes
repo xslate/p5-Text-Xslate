@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.001_02 
+0.001_02 Mon Apr 19 15:07:43 2010
     - Fix a bug that program branches could be broken by the optimizer
 
 0.001_01 Mon Apr  5 18:52:06 2010
