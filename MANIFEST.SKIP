@@ -61,3 +61,5 @@ nytprof/
 
 Text-Xslate-
 ppport\.h$
+
+\.txc$
