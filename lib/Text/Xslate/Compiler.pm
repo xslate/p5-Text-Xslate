@@ -5,7 +5,7 @@ use Mouse;
 use Text::Xslate;
 use Scalar::Util ();
 
-use constant _DUMP_ASM => (Text::Xslate::_XSLATE =~ /\b asm \b/xms);
+use constant _DUMP_ASM => (Text::Xslate::_XSLATE =~ /\b dump=asm \b/xms);
 use constant _OPTIMIZE => (Text::Xslate::_XSLATE =~ /\b optimize=(\d+) \b/xms);
 
 extends qw(Text::Xslate::Parser);

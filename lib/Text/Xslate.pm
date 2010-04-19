@@ -16,6 +16,8 @@ my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $STRING  = qr/(?: $dquoted | $squoted )/xms;
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 
+my $IDENT   = qr/(?: [.]? [a-zA-Z_][a-zA-Z0-9_]* )/xms;
+
 my $XSLATE_MAGIC = ".xslate $VERSION\n";
 
 sub new {
@@ -197,7 +199,14 @@ sub _load_assembly {
 
     # name ?arg comment
     my @protocode;
-    while($assembly =~ /^\s* (\.?\w+) (?: \s+ ($STRING|$NUMBER) )? (?:\#(\d+))? [^\n]* \n/xmsg) {
+    while($assembly =~ m{
+            ^[ \t]*
+                ($IDENT)                        # an opname
+                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand
+                (?:\#($NUMBER))?                # line number
+                [^\n]*                          # any comments
+            \n}xmsog) {
+
         my $name  = $1;
         my $value = $2;
         my $line  = $3;
