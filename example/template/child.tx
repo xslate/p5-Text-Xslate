@@ -1,0 +1,10 @@
+? extend base
+
+<? override title ->{ ?>My amazing blog<? } ?>
+
+? override content -> {
+? for $blog_entries -> ($entry) {
+    <h2><?= $entry.title ?></h2>
+    <p><?= $entry.body ?></p>
+? } # end for
+? } # end content
