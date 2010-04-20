@@ -19,7 +19,7 @@ my $x = Text::Xslate->new(
     function => { uc => sub{ uc($_[0]) } },
 );
 
-my $mt = build_mt("Hello, <:= uc(\$_[0]->{lang}) :> world!\n" x $n);
+my $mt = build_mt("Hello, <?= uc(\$_[0]->{lang}) ?> world!\n" x $n);
 
 my $subst_tmpl = qq{Hello, %lang% world!\n} x $n;
 

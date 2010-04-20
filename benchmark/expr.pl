@@ -18,7 +18,7 @@ my $x = Text::Xslate->new(
     string => "Hello, <:=  \$value + 1 :> world!\n" x $n,
 );
 
-my $mt = build_mt(qq{Hello, <:= \$_[0]->{value} + 1 :> world!\n} x $n);
+my $mt = build_mt(qq{Hello, <?= \$_[0]->{value} + 1 ?> world!\n} x $n);
 
 my $subst_tmpl = qq{Hello, %value% world!\n} x $n;
 
