@@ -19,6 +19,8 @@ XSLATE(print);
 XSLATE_w_sv(print_s);
 XSLATE(print_raw);
 XSLATE_w_sv(print_raw_s);
+XSLATE(include);
+XSLATE_w_sv(include_s);
 XSLATE_w_var(for_start);
 XSLATE_w_var(for_next);
 XSLATE_w_int(fetch_iter);
@@ -61,29 +63,31 @@ enum tx_opcode_t {
     TXOP_print_s, /* 14 */
     TXOP_print_raw, /* 15 */
     TXOP_print_raw_s, /* 16 */
-    TXOP_for_start, /* 17 */
-    TXOP_for_next, /* 18 */
-    TXOP_fetch_iter, /* 19 */
-    TXOP_add, /* 20 */
-    TXOP_sub, /* 21 */
-    TXOP_mul, /* 22 */
-    TXOP_div, /* 23 */
-    TXOP_mod, /* 24 */
-    TXOP_concat, /* 25 */
-    TXOP_filt, /* 26 */
-    TXOP_and, /* 27 */
-    TXOP_or, /* 28 */
-    TXOP_dor, /* 29 */
-    TXOP_not, /* 30 */
-    TXOP_eq, /* 31 */
-    TXOP_ne, /* 32 */
-    TXOP_lt, /* 33 */
-    TXOP_le, /* 34 */
-    TXOP_gt, /* 35 */
-    TXOP_ge, /* 36 */
-    TXOP_function, /* 37 */
-    TXOP_call, /* 38 */
-    TXOP_pc_inc, /* 39 */
+    TXOP_include, /* 17 */
+    TXOP_include_s, /* 18 */
+    TXOP_for_start, /* 19 */
+    TXOP_for_next, /* 20 */
+    TXOP_fetch_iter, /* 21 */
+    TXOP_add, /* 22 */
+    TXOP_sub, /* 23 */
+    TXOP_mul, /* 24 */
+    TXOP_div, /* 25 */
+    TXOP_mod, /* 26 */
+    TXOP_concat, /* 27 */
+    TXOP_filt, /* 28 */
+    TXOP_and, /* 29 */
+    TXOP_or, /* 30 */
+    TXOP_dor, /* 31 */
+    TXOP_not, /* 32 */
+    TXOP_eq, /* 33 */
+    TXOP_ne, /* 34 */
+    TXOP_lt, /* 35 */
+    TXOP_le, /* 36 */
+    TXOP_gt, /* 37 */
+    TXOP_ge, /* 38 */
+    TXOP_function, /* 39 */
+    TXOP_call, /* 40 */
+    TXOP_pc_inc, /* 41 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -105,6 +109,8 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_print_s,
     TXCODE_print_raw,
     TXCODE_print_raw_s,
+    TXCODE_include,
+    TXCODE_include_s,
     TXCODE_for_start,
     TXCODE_for_next,
     TXCODE_fetch_iter,
@@ -149,6 +155,8 @@ static const U8 tx_oparg[] = {
     TXCODE_W_SV, /* print_s */
     0U, /* print_raw */
     TXCODE_W_SV, /* print_raw_s */
+    0U, /* include */
+    TXCODE_W_SV, /* include_s */
     TXCODE_W_VAR, /* for_start */
     TXCODE_W_VAR, /* for_next */
     TXCODE_W_INT, /* fetch_iter */
@@ -193,6 +201,8 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(print_s), newSViv(TXOP_print_s));
     (void)hv_stores(ops, STRINGIFY(print_raw), newSViv(TXOP_print_raw));
     (void)hv_stores(ops, STRINGIFY(print_raw_s), newSViv(TXOP_print_raw_s));
+    (void)hv_stores(ops, STRINGIFY(include), newSViv(TXOP_include));
+    (void)hv_stores(ops, STRINGIFY(include_s), newSViv(TXOP_include_s));
     (void)hv_stores(ops, STRINGIFY(for_start), newSViv(TXOP_for_start));
     (void)hv_stores(ops, STRINGIFY(for_next), newSViv(TXOP_for_next));
     (void)hv_stores(ops, STRINGIFY(fetch_iter), newSViv(TXOP_fetch_iter));

@@ -6,6 +6,12 @@
 #define NEED_newSVpvn_flags
 #include "ppport.h"
 
+#define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
+typedef struct {
+    U32 depth;
+} my_cxt_t;
+START_MY_CXT
+
 /* buffer size coefficient (bits), used for memory allocation */
 /* (1 << 6) * U16_MAX = about 4 MiB */
 #define TX_BUFFER_SIZE_C 6
@@ -74,6 +80,7 @@ struct tx_state_s {
     U32 hint_size;
 
     AV* tmpl; /* [name, fullpath, mtime, error_handler] */
+    SV* self;
     U16* lines;  /* code index -> line number */
 };
 
@@ -123,6 +130,12 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 #define TXCODE_literal_i TXCODE_literal
 
 #include "xslate_ops.h"
+
+static SV*
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
+
+static tx_state_t*
+tx_load_template(pTHX_ SV* const self, SV* const name);
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
@@ -375,6 +388,26 @@ XSLATE_w_sv(print_raw_s) {
     TX_st->pc++;
 }
 
+XSLATE(include) {
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
+
+    ENTER; /* for error handlers */
+    tx_exec(pTHX_ st, TX_st->output, TX_st->vars);
+    LEAVE;
+
+    TX_st->pc++;
+}
+
+XSLATE_w_sv(include_s) {
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
+
+    ENTER; /* for error handlers */
+    tx_exec(pTHX_ st, TX_st->output, TX_st->vars);
+    LEAVE;
+
+    TX_st->pc++;
+}
+
 XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIVX(TX_op_arg);
@@ -606,12 +639,15 @@ XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
 XS(XS_Text__Xslate__error) {
     dVAR; dXSARGS;
     tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
+    dMY_CXT;
 
     PERL_UNUSED_ARG(items);
 
     /* avoid recursion; they are retrieved at the end of the scope, anyway */
     PL_diehook  = NULL;
     PL_warnhook = NULL;
+
+    MY_CXT.depth = 0;
 
     assert(st);
 
@@ -622,9 +658,14 @@ XS(XS_Text__Xslate__error) {
 
 static SV*
 tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
+    dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
     SV* eh;
+
+    if(++MY_CXT.depth > 100) {
+        croak("Execution is too deep (> 100)");
+    }
 
     StructCopy(base, &st, tx_state_t);
 
@@ -690,15 +731,14 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     }
 
     Safefree(code);
-    PERL_UNUSED_ARG(sv);
+    Safefree(st->lines);
 
     SvREFCNT_dec(st->function);
-
     SvREFCNT_dec(st->locals);
-
     SvREFCNT_dec(st->targ);
+    SvREFCNT_dec(st->self);
 
-    Safefree(st->lines);
+    PERL_UNUSED_ARG(sv);
 
     return 0;
 }
@@ -714,19 +754,28 @@ static MGVTBL xslate_vtbl = { /* for identity */
     NULL,  /* local */
 };
 
+
 static void
-tx_load_file(pTHX_ HV* const self, SV* const name) {
+tx_invoke_load_file(pTHX_ SV* const self, SV* const name) {
     dSP;
+    ENTER;
+    SAVETMPS;
+
     PUSHMARK(SP);
     EXTEND(SP, 2);
-    mPUSHs(newRV_inc((SV*)self));
+    PUSHs(self);
     PUSHs(name);
     PUTBACK;
+
     call_method("_load_file", G_EVAL | G_VOID);
+
+    FREETMPS;
+    LEAVE;
 }
 
 static tx_state_t*
-tx_load_template(pTHX_ HV* const self, SV* const name) {
+tx_load_template(pTHX_ SV* const self, SV* const name) {
+    HV* hv;
     const char* why = NULL;
     HE* he;
     SV** svp;
@@ -736,13 +785,19 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
     MAGIC* mg;
     int retried = 0;
 
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Invalid xslate object");
+    }
+
+    hv = (HV*)SvRV(self);
+
     retry:
     if(++retried > 2) {
         why = "something's wrong";
         goto err;
     }
 
-    svp = hv_fetchs(self, "template", FALSE);
+    svp = hv_fetchs(hv, "template", FALSE);
     if(!svp) {
         why = "template table is not found";
         goto err;
@@ -758,7 +813,7 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
 
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        tx_load_file(aTHX_ self, name);
+        tx_invoke_load_file(aTHX_ self, name);
         if(sv_true(ERRSV)){
             why = SvPVx_nolen_const(ERRSV);
             goto err;
@@ -794,7 +849,7 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
             return (tx_state_t*)mg->mg_ptr;
         }
         else {
-            tx_load_file(aTHX_ self, name);
+            tx_invoke_load_file(aTHX_ self, name);
             goto retry;
         }
 
@@ -815,8 +870,23 @@ PROTOTYPES: DISABLE
 BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
+    MY_CXT_INIT;
+    MY_CXT.depth = 0;
     tx_init_ops(aTHX_ ops);
 }
+
+#ifdef USE_ITHREADS
+
+void
+CLONE(...)
+CODE:
+{
+    MY_TXT_CLONE;
+    MY_CXT.depth = 0;
+    PERL_UNUSED_VAR(items);
+}
+
+#endif
 
 #define undef &PL_sv_undef
 
@@ -866,6 +936,8 @@ CODE:
     Zero(&st, 1, tx_state_t);
 
     st.tmpl = tmpl;
+    st.self = newRV_inc((SV*)self);
+    sv_rvweaken(st.self);
 
     svp = hv_fetchs(self, "function", FALSE);
     if(svp && SvOK(*svp)) {
@@ -963,7 +1035,7 @@ CODE:
 }
 
 SV*
-render(HV* self, ...)
+render(SV* self, ...)
 CODE:
 {
     SV* name;
