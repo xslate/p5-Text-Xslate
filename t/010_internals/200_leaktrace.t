@@ -1,6 +1,7 @@
 #!perl -w
 
 use strict;
+use if $] == 5.010_000, 'Test::More', 'skip_all' => '5.10.0 has a bug about weak refs';
 use Test::Requires qw(Test::LeakTrace);
 use Test::More;
 use Text::Xslate;
