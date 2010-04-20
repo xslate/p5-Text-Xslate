@@ -69,6 +69,8 @@ sub default_path {
     return( File::Basename::dirname($FindBin::Bin) . "/template" );
 }
 
+sub name { $_[0]->{name} }
+
 sub render;
 
 sub _initialize;
@@ -103,7 +105,8 @@ sub _load_file {
         $self->throw_error("Cannot find $file (path: @{$self->{path}})");
     }
 
-    $self->{loaded} = $fullpath;
+    $self->{name}     = $file;
+    $self->{fullpath} = $fullpath;
 
     my $string;
     {

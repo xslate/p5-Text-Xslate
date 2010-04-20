@@ -6,6 +6,9 @@ use Text::Xslate;
 use FindBin qw($Bin);
 
 my @caches = ("$Bin/../template/hello.txc", "$Bin/../template/for.txc");
+
+ok !-e $_, "$_ does not exist" for @caches;
+
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
         file => 'hello.tx',
@@ -13,7 +16,8 @@ for(1 .. 10) {
         auto_compile => 1,
     );
 
-    is $tx->render({ lang => 'Xslate' }), "Hello, Xslate world!\n", "file($tx->{loaded})";
+
+    is $tx->render({ lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
 
     $tx = Text::Xslate->new(
         file => 'for.tx',
@@ -21,7 +25,9 @@ for(1 .. 10) {
     );
 
     is $tx->render({ books => [ { title => "Foo" }, { title => "Bar" } ]}),
-        "[Foo]\n[Bar]\n", "file($tx->{loaded})";
+        "[Foo]\n[Bar]\n", "file";
+
+    ok -e $_, "$_ exists" for @caches;
 
     if(($_ % 3) == 0) {
         my $t = time + $_;
