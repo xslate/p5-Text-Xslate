@@ -1,5 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_03 Tue Apr 20 15:28:13 2010
+    [IMCOMPATIBLE CHANGE]
+    - Template tags are now <: ... :>, not <? ... ?>. This is because
+      <? $var ?> looks too like Text::MicroTemplate
+    - render() requires a file name:
+        my $tx = Text::Xslate->new( files => [qw(foo.tx bar.tx)] );
+        print $tx->render('foo.tx', \%vars);
+        print $tx->render('bar.tx', \%vars);
+
 0.001_02 Mon Apr 19 15:07:43 2010
     - Fix a bug that program branches could be broken by the optimizer
 
