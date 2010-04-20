@@ -383,6 +383,13 @@ Operator precedence:
 
     (TODO)
 
+=head2 Template inclusion
+
+    ? include "foo.tx"
+
+Xslate templates may be recursively included, but including depth is
+limited to 100.
+
 =head2 Template inheritance
 
 (NOT YET IMPLEMENTED)

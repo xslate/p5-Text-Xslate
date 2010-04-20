@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_05
+    - Add "include" command
+
 0.001_04 Tue Apr 20 17:08:49 2010
     - The "file => [...]" option is no longer required
     - Fix file auto reloading
