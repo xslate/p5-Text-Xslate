@@ -27,6 +27,22 @@ for(1 .. 10) {
     }
 }
 
+for(1 .. 10) {
+    my $tx = Text::Xslate->new();
+
+    is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
+
+    is $tx->render('for.tx', { books => [ { title => "Foo" }, { title => "Bar" } ]}),
+        "[Foo]\n[Bar]\n", "file";
+
+    ok -e $_, "$_ exists" for @caches;
+
+    if(($_ % 3) == 0) {
+        my $t = time + $_;
+        utime $t, $t, @caches;
+    }
+}
+
 unlink @caches;
 
 done_testing;

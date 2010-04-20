@@ -27,7 +27,7 @@ sub new {
 
     $args{path}         //= [ $class->default_path ];
     $args{input_layer}  //= ':utf8';
-    $args{auto_compile} //= 1;
+    $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
    #$args{functions}    //= {}; # see _compiler()
 
@@ -44,17 +44,17 @@ sub new {
 
     if($args{string}) {
         $source++;
-        $self->_load_string('<input>' => $args{string});
+        $self->_load_string($args{string});
     }
 
     if($args{assembly}) {
         $source++;
-        $self->_load_assembly('<input>' => $args{assembly});
+        $self->_load_assembly($args{assembly});
     }
 
     if($args{protocode}) {
         $source++;
-        $self->_initialize('<input>' => $args{protocode});
+        $self->_initialize($args{protocode});
     }
 
     if($source > 1) {
@@ -70,8 +70,6 @@ sub default_path {
     no warnings 'once';
     return( File::Basename::dirname($FindBin::Bin) . "/template" );
 }
-
-sub name { $_[0]->{name} }
 
 sub render;
 
@@ -107,9 +105,6 @@ sub _load_file {
         $self->throw_error("Cannot find $file (path: @{$self->{path}})");
     }
 
-    $self->{name}     = $file;
-    $self->{fullpath} = $fullpath;
-
     my $string;
     {
         open my($in), '<' . $self->{input_layer}, $fullpath
@@ -125,13 +120,15 @@ sub _load_file {
         $string = <$in>;
     }
 
+    my $mtime = ( stat $fullpath )[9];
+
     if($is_assembly) {
-        $self->_load_assembly($file, $string);
+        $self->_load_assembly($string, $file, $fullpath, $mtime);
     }
     else {
         my $protocode = $self->_compiler->compile($string);
 
-        if($self->{auto_compile}) {
+        if($self->{cache}) {
             # compile templates into assemblies
             open my($out), '>:raw:utf8', "${fullpath}c"
                 or $self->throw_error("Cannot open ${fullpath}c for writing: $!");
@@ -143,12 +140,11 @@ sub _load_file {
                  unlink "${fullpath}c";
             }
             else {
-                my $mtime = ( stat $fullpath )[9];
-                utime $mtime, $mtime, "${fullpath}c";
+                 utime $mtime, $mtime, "${fullpath}c";
             }
         }
 
-        $self->_initialize($file, $protocode);
+        $self->_initialize($protocode, $file, $fullpath, $mtime);
     }
     return;
 }
@@ -193,15 +189,15 @@ sub _compiler {
 }
 
 sub _load_string {
-    my($self, $name, $string) = @_;
+    my($self, $string, @args) = @_;
 
     my $protocode = $self->_compiler->compile($string);
-    $self->_initialize($name, $protocode);
+    $self->_initialize($protocode, @args);
     return;
 }
 
 sub _load_assembly {
-    my($self, $name, $assembly) = @_;
+    my($self, $assembly, @args) = @_;
 
     # name ?arg comment
     my @protocode;
@@ -232,7 +228,7 @@ sub _load_assembly {
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);
 
-    $self->_initialize($name, \@protocode);
+    $self->_initialize(\@protocode, @args);
     return;
 }
 
@@ -270,7 +266,7 @@ This document describes Text::Xslate version 0.001_03.
     );
 
     # for multiple files
-    my $tx = Text::Xslate->new(file => [qw(hello.tx)]);
+    my $tx = Text::Xslate->new();
     print $tx->render_file('hello.tx', \%vars);
 
     # for strings
@@ -318,7 +314,7 @@ Options:
 
 =item C<< function => \%functions >>
 
-=item C<< auto_compile => $bool // true >>
+=item C<< cache => $bool // true >>
 
 =back
 

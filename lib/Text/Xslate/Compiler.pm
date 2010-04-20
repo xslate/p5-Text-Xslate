@@ -65,8 +65,8 @@ sub compile_str {
         protocode    => $self->compile($str),
 
         # "in-place" mode
-        path         => [],
-        auto_compile => 0,
+        path  => [],
+        cache => 0,
     );
 }
 

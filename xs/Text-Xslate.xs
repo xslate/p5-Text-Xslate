@@ -728,7 +728,7 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
     if(!svp) {
         why = "template table is not found";
         goto err;
-   }
+    }
 
     sv = *svp;
     if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV)) {
@@ -740,9 +740,26 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
 
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        why = "template entry is not found";
-        goto err;
+        dSP;
+        PUSHMARK(SP);
+        EXTEND(SP, 2);
+        mPUSHs(newRV_inc((SV*)self));
+        PUSHs(name);
+        PUTBACK;
+        call_method("_load_file", G_EVAL | G_VOID);
+        if(sv_true(ERRSV)){
+            why = SvPVx_nolen_const(ERRSV);
+            goto err;
+        }
+        /* retry */
+        assert(!SvIS_FREED(ttable));
+        he = hv_fetch_ent(ttable, name, FALSE, 0U);
+        if(!he) {
+            why = "template entry is not found";
+            goto err;
+        }
     }
+
     sv = hv_iterval(ttable, he);
     if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
         why = "template entry is invalid";
@@ -779,8 +796,10 @@ BOOT:
     tx_init_ops(aTHX_ ops);
 }
 
+#define undef &PL_sv_undef
+
 void
-_initialize(HV* self, SV* name, AV* proto, SV* fullpath = &PL_sv_undef, SV* mtime = &PL_sv_undef)
+_initialize(HV* self, AV* proto, SV* name = undef, SV* fullpath = undef, SV* mtime = undef)
 CODE:
 {
     MAGIC* mg;
@@ -796,9 +815,14 @@ CODE:
 
     svp = hv_fetchs(self, "template", FALSE);
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
-        croak("The xslate object has no 'template' table");
+        croak("The xslate object has no template table");
     }
-    tobj = hv_iterval((HV*)SvRV(*svp), hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U));
+    if(!SvOK(name)) {
+        name = newSVpvs_flags("<input>", SVs_TEMP);
+    }
+    tobj = hv_iterval((HV*)SvRV(*svp),
+         hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U)
+    );
     tmpl = newAV();
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
 
@@ -813,9 +837,9 @@ CODE:
         sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
     }
 
-    sv_setsv(*av_fetch(tmpl, TXo_MTIME, TRUE),    mtime);
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE), mtime );
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE), fullpath);
-    sv_setsv(*av_fetch(tmpl, TXo_NAME, TRUE),     name);
+    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE), name);
 
     Zero(&st, 1, tx_state_t);
 
