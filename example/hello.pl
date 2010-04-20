@@ -8,5 +8,5 @@ my $tx = Text::Xslate->new(
     path  => ["$Bin/template"],
 );
 
-print $tx->render({ lang => "Xslate" });
+print $tx->render('hello.tx', { lang => "Xslate" });
 

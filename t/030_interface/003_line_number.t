@@ -10,7 +10,6 @@ my $tx = Text::Xslate->new(
 <:= $two :>
 <:= $three :>
 TX
-    loaded => "foo.tx",
 );
 
 my $warn = '';
@@ -19,19 +18,19 @@ $SIG{__WARN__} = sub{ $warn .= join '', @_ };
 eval {
     $tx->render({one => 1, two => 2});
 };
-like $@, qr/^Xslate\Q(foo.tx:3)/;
+like $@, qr/^Xslate\Q(<input>:3)/;
 
 eval {
     $tx->render({one => 1, three => 3});
 };
 
-like $@, qr/^Xslate\Q(foo.tx:2)/;
+like $@, qr/^Xslate\Q(<input>:2)/;
 
 eval {
     $tx->render({two => 2, three => 3});
 };
 
-like $@, qr/^Xslate\Q(foo.tx:1)/;
+like $@, qr/^Xslate\Q(<input>:1)/;
 
 $tx = Text::Xslate->new(
     string => <<'TX',

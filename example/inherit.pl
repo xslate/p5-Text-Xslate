@@ -26,5 +26,5 @@ my $tx = Text::Xslate->new(
     path  => ["$Bin/template"],
 );
 
-print $tx->render(blog_entries => \@blog_entries);
+print $tx->render('child.tx', { blog_entries => \@blog_entries });
 

@@ -11,20 +11,12 @@ ok !-e $_, "$_ does not exist" for @caches;
 
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
-        file => 'hello.tx',
-
-        auto_compile => 1,
+        file => [qw(hello.tx for.tx)],
     );
 
+    is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
 
-    is $tx->render({ lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
-
-    $tx = Text::Xslate->new(
-        file => 'for.tx',
-        auto_compile => 1,
-    );
-
-    is $tx->render({ books => [ { title => "Foo" }, { title => "Bar" } ]}),
+    is $tx->render('for.tx', { books => [ { title => "Foo" }, { title => "Bar" } ]}),
         "[Foo]\n[Bar]\n", "file";
 
     ok -e $_, "$_ exists" for @caches;

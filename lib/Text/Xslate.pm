@@ -31,32 +31,34 @@ sub new {
     $args{compiler}     //= 'Text::Xslate::Compiler';
    #$args{functions}    //= {}; # see _compiler()
 
+    $args{template}       = {};
+
     my $self = bless \%args, $class;
 
-    my $source = 0;
-    if($args{file}) {
-        $source++;
-        $self->_load_file($args{file});
+    if(my $file = $args{file}) {
+        $self->_load_file($_)
+            for ref($file) ? @{$file} : $file;
     }
+
+    my $source = 0;
 
     if($args{string}) {
         $source++;
-        $self->_load_string($args{string});
+        $self->_load_string('<input>' => $args{string});
     }
 
     if($args{assembly}) {
         $source++;
-        $self->_load_assembly($args{assembly});
+        $self->_load_assembly('<input>' => $args{assembly});
     }
 
     if($args{protocode}) {
         $source++;
-        $self->_initialize($args{protocode});
+        $self->_initialize('<input>' => $args{protocode});
     }
 
-    if($source != 1) {
-        my $num = ($source == 0 ? "no" : "multiple");
-        $self->throw_error("$num template sources are specified");
+    if($source > 1) {
+        $self->throw_error("Multiple template sources are specified");
     }
 
     return $self;
@@ -124,7 +126,7 @@ sub _load_file {
     }
 
     if($is_assembly) {
-        $self->_load_assembly($string);
+        $self->_load_assembly($file, $string);
     }
     else {
         my $protocode = $self->_compiler->compile($string);
@@ -146,7 +148,7 @@ sub _load_file {
             }
         }
 
-        $self->_initialize($protocode);
+        $self->_initialize($file, $protocode);
     }
     return;
 }
@@ -191,15 +193,15 @@ sub _compiler {
 }
 
 sub _load_string {
-    my($self, $string) = @_;
+    my($self, $name, $string) = @_;
 
     my $protocode = $self->_compiler->compile($string);
-    $self->_initialize($protocode);
+    $self->_initialize($name, $protocode);
     return;
 }
 
 sub _load_assembly {
-    my($self, $assembly) = @_;
+    my($self, $name, $assembly) = @_;
 
     # name ?arg comment
     my @protocode;
@@ -230,7 +232,7 @@ sub _load_assembly {
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);
 
-    $self->_initialize(\@protocode);
+    $self->_initialize($name, \@protocode);
     return;
 }
 

@@ -3,6 +3,7 @@
 #include <perl.h>
 #include <XSUB.h>
 
+#define NEED_newSVpvn_flags
 #include "ppport.h"
 
 /* buffer size coefficient (bits), used for memory allocation */
@@ -30,6 +31,15 @@
 #define TX_op (&(TX_st->code[TX_st->pc]))
 
 #define TX_pop()   (*(PL_stack_sp--))
+
+enum txo_ix {
+    TXo_NAME,
+    TXo_FULLPATH,
+    TXo_MTIME,
+    TXo_ERROR_HANDLER,
+
+    TXo_size
+};
 
 struct tx_code_s;
 struct tx_state_s;
@@ -60,10 +70,10 @@ struct tx_state_s {
     SV** pad;    /* AvARRAY(locals) */
 
     HV* function;
-    SV* error_handler;
 
-    /* file information */
-    SV*  file;
+    U32 hint_size;
+
+    AV* tmpl; /* [name, fullpath, mtime, error_handler] */
     U16* lines;  /* code index -> line number */
 };
 
@@ -116,13 +126,7 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
-    if(st->file) {
-        assert(SvPOK(st->file));
-        return SvPVX_const(st->file);
-    }
-    else {
-        return "<input>";
-    }
+    return SvPVx_nolen_const(*av_fetch(st->tmpl, TXo_NAME, TRUE));
 }
 
 static int
@@ -602,7 +606,6 @@ XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
 XS(XS_Text__Xslate__error) {
     dVAR; dXSARGS;
     tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
-    assert(st);
 
     PERL_UNUSED_ARG(items);
 
@@ -610,32 +613,36 @@ XS(XS_Text__Xslate__error) {
     PL_diehook  = NULL;
     PL_warnhook = NULL;
 
+    assert(st);
+
     croak("Xslate(%s:%d): %"SVf,
         tx_file(aTHX_ st), tx_line(aTHX_ st), ST(0));
     XSRETURN_EMPTY; /* not reached */
 }
 
 static SV*
-xslate_exec(pTHX_ const tx_state_t* const base, SV* const output, HV* const hv) {
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     Size_t const code_len = base->code_len;
     tx_state_t st;
+    SV* eh;
 
     StructCopy(base, &st, tx_state_t);
 
     st.output = output;
     st.vars   = hv;
 
+    assert(st.tmpl != NULL);
+
     /* local $SIG{__WARN__} = \&error_handler */
-    SAVESPTR(PL_warnhook);
-    PL_warnhook = st.error_handler;
-
     /* local $SIG{__DIE__} = \&error_handler */
-    SAVESPTR(PL_diehook);
-    PL_diehook = st.error_handler;
 
-    if(SvTYPE(st.error_handler) == SVt_PVCV
-        && CvXSUB((CV*)st.error_handler) == XS_Text__Xslate__error) {
-        CvXSUBANY(st.error_handler).any_ptr = &st;
+    SAVESPTR(PL_warnhook);
+    SAVESPTR(PL_diehook);
+    eh = PL_warnhook = PL_diehook = AvARRAY(st.tmpl)[TXo_ERROR_HANDLER];
+
+    if(SvROK(eh) && SvTYPE(SvRV(eh)) == SVt_PVCV
+        && CvXSUB((CV*)SvRV(eh)) == XS_Text__Xslate__error) {
+        CvXSUBANY((CV*)SvRV(eh)).any_ptr = &st;
     }
 
     while(st.pc < code_len) {
@@ -647,8 +654,11 @@ xslate_exec(pTHX_ const tx_state_t* const base, SV* const output, HV* const hv) 
         }
     }
 
+    base->hint_size = SvCUR(st.output);
+
     return st.output;
 }
+
 
 static MAGIC*
 mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
@@ -664,7 +674,7 @@ mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
         }
     }
 
-    croak("MAGIC(0x%p) not found", vtbl);
+    croak("Xslate: Invalid xslate object was passed");
     return NULL; /* not reached */
 }
 
@@ -682,14 +692,12 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     Safefree(code);
     PERL_UNUSED_ARG(sv);
 
-    SvREFCNT_dec(st->error_handler);
     SvREFCNT_dec(st->function);
 
     SvREFCNT_dec(st->locals);
 
     SvREFCNT_dec(st->targ);
 
-    SvREFCNT_dec(st->file);
     Safefree(st->lines);
 
     return 0;
@@ -702,9 +710,64 @@ static MGVTBL xslate_vtbl = { /* for identity */
     NULL, /* clear */
     tx_mg_free, /* free */
     NULL, /* copy */
-    NULL, /* dup */
+    NULL, /* dup */ /* TODO: must be implemented!!! */
     NULL,  /* local */
 };
+
+static tx_state_t*
+tx_load_template(pTHX_ HV* const self, SV* const name) {
+    const char* why;
+    HE* he;
+    SV** svp;
+    SV* sv;
+    HV* ttable;
+    AV* tmpl;
+    MAGIC* mg;
+
+    svp = hv_fetchs(self, "template", FALSE);
+    if(!svp) {
+        why = "template table is not found";
+        goto err;
+   }
+
+    sv = *svp;
+    if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV)) {
+        why = "template table is not a HASH reference";
+        goto err;
+    }
+
+    ttable = (HV*)SvRV(sv);
+
+    he = hv_fetch_ent(ttable, name, FALSE, 0U);
+    if(!he) {
+        why = "template entry is not found";
+        goto err;
+    }
+    sv = hv_iterval(ttable, he);
+    if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
+        why = "template entry is invalid";
+        goto err;
+    }
+
+    tmpl = (AV*)SvRV(sv);
+    mg   = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
+
+    if(AvFILLp(tmpl) >= (TXo_size-1)) {
+        why = "template entry is broken";
+    }
+
+    if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
+        /* TODO */
+        return (tx_state_t*)mg->mg_ptr;
+    }
+    else { /* for strings */
+        return (tx_state_t*)mg->mg_ptr;
+    }
+
+    err:
+    croak("Xslate: Cannot load template %s: %s", tx_neat(aTHX_ name), why);
+}
+
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate
 
@@ -717,7 +780,7 @@ BOOT:
 }
 
 void
-_initialize(HV* self, AV* proto)
+_initialize(HV* self, SV* name, AV* proto, SV* fullpath = &PL_sv_undef, SV* mtime = &PL_sv_undef)
 CODE:
 {
     MAGIC* mg;
@@ -727,27 +790,36 @@ CODE:
     U16 l = 0;
     I32 lvar_id_max = -1;
     tx_state_t st;
+    AV* tmpl;
+    SV* tobj;
     SV** svp;
 
-    if(SvRMAGICAL((SV*)self) && mgx_find(aTHX_ (SV*)self, &xslate_vtbl)) {
-        croak("Cannot call _initialize twice");
+    svp = hv_fetchs(self, "template", FALSE);
+    if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
+        croak("The xslate object has no 'template' table");
     }
+    tobj = hv_iterval((HV*)SvRV(*svp), hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U));
+    tmpl = newAV();
+    sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
 
-    Zero(&st, 1, tx_state_t);
-
-    svp = hv_fetchs(self, "loaded", FALSE);
-    if(svp) {
-        st.file = newSVsv(*svp);
-    }
+    /* tmpl = [name, fullpath, mtime of the file, error_handler] */
 
     svp = hv_fetchs(self, "error_handler", FALSE);
     if(svp && SvOK(*svp)) {
-        st.error_handler = *svp;
+        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), *svp);
     }
     else {
         CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
-        st.error_handler = (SV*)eh;
+        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
     }
+
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME, TRUE),    mtime);
+    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE), fullpath);
+    sv_setsv(*av_fetch(tmpl, TXo_NAME, TRUE),     name);
+
+    Zero(&st, 1, tx_state_t);
+
+    st.tmpl = tmpl;
 
     svp = hv_fetchs(self, "function", FALSE);
     if(svp && SvOK(*svp)) {
@@ -759,6 +831,8 @@ CODE:
             croak("Function table must be a HASH reference");
         }
     }
+
+    st.hint_size = 64;
 
     st.sa       = &PL_sv_undef;
     st.sb       = &PL_sv_undef;
@@ -772,8 +846,7 @@ CODE:
 
     st.code_len = len;
 
-    mg = sv_magicext((SV*)self, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
-    mg->mg_private = 1; /* initial hint size */
+    mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
 
     for(i = 0; i < len; i++) {
         SV* const pair = *av_fetch(proto, i, TRUE);
@@ -844,25 +917,39 @@ CODE:
 }
 
 SV*
-render(HV* self, HV* hv)
+render(HV* self, ...)
 CODE:
 {
-    MAGIC* const mg      = mgx_find(aTHX_ (SV*)self, &xslate_vtbl);
-    tx_state_t* const st = (tx_state_t*)mg->mg_ptr;
-    STRLEN hint_size;
-    assert(st);
+    SV* name;
+    SV* vars_ref;
+    HV* vars;
+    tx_state_t* st;
+
+    if(items < 2) {
+        croak_xs_usage(cv,  "self, name, vars");
+    }
+
+    if(items == 2) {
+        name     = newSVpvs_flags("<input>", SVs_TEMP);
+        vars_ref = ST(1);
+    }
+    else {
+        name     = ST(1);
+        vars_ref = ST(2);
+    }
+
+    if(!(SvROK(vars_ref) && SvTYPE(SvRV(vars_ref)))) {
+        croak("Xslate: Template variables must be a HASH ref");
+    }
+    vars = (HV*)SvRV(vars_ref);
+
+    st = tx_load_template(aTHX_ self, name);
 
     RETVAL = sv_newmortal();
-    sv_grow(RETVAL, mg->mg_private << TX_BUFFER_SIZE_C);
+    sv_grow(RETVAL, st->hint_size);
     SvPOK_on(RETVAL);
 
-    xslate_exec(aTHX_ st, RETVAL, hv);
-
-    /* store a hint size for the next time */
-    hint_size = SvCUR(RETVAL) >> TX_BUFFER_SIZE_C;
-    if(hint_size > mg->mg_private) {
-        mg->mg_private = (U16)(hint_size > U16_MAX ? U16_MAX : hint_size);
-    }
+    tx_exec(aTHX_ st, RETVAL, vars);
 
     ST(0) = RETVAL;
     XSRETURN(1);

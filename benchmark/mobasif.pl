@@ -27,7 +27,7 @@ $tx->render($vars) eq MobaSiF::Template::insert($mst_bin, $vars)
 
 cmpthese -1, {
     'Xslate' => sub {
-        my $output = $tx->render($vars);
+        my $output = $tx->render('simple.tx', $vars);
         return;
     },
     'MobaSiF::T' => sub {
