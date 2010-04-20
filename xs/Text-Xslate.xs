@@ -714,15 +714,33 @@ static MGVTBL xslate_vtbl = { /* for identity */
     NULL,  /* local */
 };
 
+static void
+tx_load_file(pTHX_ HV* const self, SV* const name) {
+    dSP;
+    PUSHMARK(SP);
+    EXTEND(SP, 2);
+    mPUSHs(newRV_inc((SV*)self));
+    PUSHs(name);
+    PUTBACK;
+    call_method("_load_file", G_EVAL | G_VOID);
+}
+
 static tx_state_t*
 tx_load_template(pTHX_ HV* const self, SV* const name) {
-    const char* why;
+    const char* why = NULL;
     HE* he;
     SV** svp;
     SV* sv;
     HV* ttable;
     AV* tmpl;
     MAGIC* mg;
+    int retried = 0;
+
+    retry:
+    if(++retried > 2) {
+        why = "something's wrong";
+        goto err;
+    }
 
     svp = hv_fetchs(self, "template", FALSE);
     if(!svp) {
@@ -740,24 +758,13 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
 
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        dSP;
-        PUSHMARK(SP);
-        EXTEND(SP, 2);
-        mPUSHs(newRV_inc((SV*)self));
-        PUSHs(name);
-        PUTBACK;
-        call_method("_load_file", G_EVAL | G_VOID);
+        tx_load_file(aTHX_ self, name);
         if(sv_true(ERRSV)){
             why = SvPVx_nolen_const(ERRSV);
             goto err;
         }
-        /* retry */
-        assert(!SvIS_FREED(ttable));
-        he = hv_fetch_ent(ttable, name, FALSE, 0U);
-        if(!he) {
-            why = "template entry is not found";
-            goto err;
-        }
+
+        goto retry;
     }
 
     sv = hv_iterval(ttable, he);
@@ -774,8 +781,23 @@ tx_load_template(pTHX_ HV* const self, SV* const name) {
     }
 
     if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
-        /* TODO */
-        return (tx_state_t*)mg->mg_ptr;
+        SV* const fullpath = AvARRAY(tmpl)[TXo_FULLPATH];
+        SV* const mtime    = AvARRAY(tmpl)[TXo_MTIME];
+        Stat_t f;
+
+        if(PerlLIO_stat(SvPV_nolen_const(fullpath), &f) < 0) {
+            why = "failed to stat(2)";
+            goto err;
+        }
+
+        if(SvIV(mtime) == (IV)f.st_mtime) {
+            return (tx_state_t*)mg->mg_ptr;
+        }
+        else {
+            tx_load_file(aTHX_ self, name);
+            goto retry;
+        }
+
     }
     else { /* for strings */
         return (tx_state_t*)mg->mg_ptr;
