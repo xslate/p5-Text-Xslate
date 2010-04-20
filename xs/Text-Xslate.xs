@@ -745,6 +745,34 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     return 0;
 }
 
+static int
+tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
+    tx_state_t* const st              = (tx_state_t*)mg->mg_ptr;
+    const U16* const proto_lines      = st->lines;
+    const tx_code_t* const proto_code = st->code;
+    I32 const len                     = st->code_len;
+    I32 i;
+
+    Newx(st->code, len, tx_code_t);
+
+    for(i = 0; i < len; i++) {
+        st->code[i].exec_code = proto_code[i].exec_code;
+        st->code[i].arg       = sv_dup(proto_code[i].arg, param);
+    }
+
+    Newx(st->lines, len, U16);
+    Copy(proto_lines, st->lines, len, U16);
+
+    st->function = (HV*)sv_dup((SV*)st->function, param);
+    st->locals   = (AV*)sv_dup((SV*)st->locals, param);
+    st->targ     =      sv_dup(st->targ, param);
+    st->self     =      sv_dup(st->self, param);
+
+    mg->mg_flags |= MGf_DUP;
+
+    return 0;
+}
+
 static MGVTBL xslate_vtbl = { /* for identity */
     NULL, /* get */
     NULL, /* set */
@@ -752,7 +780,7 @@ static MGVTBL xslate_vtbl = { /* for identity */
     NULL, /* clear */
     tx_mg_free, /* free */
     NULL, /* copy */
-    NULL, /* dup */ /* TODO: must be implemented!!! */
+    tx_mg_dup, /* dup */
     NULL,  /* local */
 };
 
@@ -967,6 +995,7 @@ CODE:
     st.code_len = len;
 
     mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
+    mg->mg_flags |= MGf_DUP;
 
     for(i = 0; i < len; i++) {
         SV* const pair = *av_fetch(proto, i, TRUE);
