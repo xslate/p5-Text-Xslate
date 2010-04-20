@@ -392,7 +392,7 @@ XSLATE(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
     ENTER; /* for error handlers */
-    tx_exec(pTHX_ st, TX_st->output, TX_st->vars);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_st->pc++;
@@ -402,7 +402,7 @@ XSLATE_w_sv(include_s) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
 
     ENTER; /* for error handlers */
-    tx_exec(pTHX_ st, TX_st->output, TX_st->vars);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_st->pc++;
@@ -883,7 +883,7 @@ void
 CLONE(...)
 CODE:
 {
-    MY_TXT_CLONE;
+    MY_CXT_CLONE;
     MY_CXT.depth = 0;
     PERL_UNUSED_VAR(items);
 }
