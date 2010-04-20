@@ -9,13 +9,13 @@ use Text::Xslate::Compiler;
 my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
-    ['<?= $value | uc ?>', "FOO"],
-    ['<?= uc($value) ?>',  "FOO"],
-    ['<?= sprintf("<%s>", $value) ?>',      "&lt;foo&gt;"],
-    ['<?= sprintf("<%s>", $value | uc) ?>', "&lt;FOO&gt;"],
-    ['<?= sprintf("<%s>", uc($value)) ?>',  "&lt;FOO&gt;"],
+    ['<:= $value | uc :>', "FOO"],
+    ['<:= uc($value) :>',  "FOO"],
+    ['<:= sprintf("<%s>", $value) :>',      "&lt;foo&gt;"],
+    ['<:= sprintf("<%s>", $value | uc) :>', "&lt;FOO&gt;"],
+    ['<:= sprintf("<%s>", uc($value)) :>',  "&lt;FOO&gt;"],
 
-    ['<?= sprintf("%s %s", uc($value), uc($value)) ?>',  "FOO FOO"],
+    ['<:= sprintf("%s %s", uc($value), uc($value)) :>',  "FOO FOO"],
 );
 
 $tx->constant(uc      => sub{ uc $_[0] });

@@ -9,7 +9,7 @@ use FindBin qw($Bin);
 
 my $tx = Text::Xslate->new(
     string => <<'TX',
-ようこそ <?= $value ?> の世界へ！
+ようこそ <:= $value :> の世界へ！
 TX
 );
 

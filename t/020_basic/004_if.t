@@ -9,76 +9,76 @@ use Text::Xslate::Compiler;
 my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
-    ['? if $lang {
+    [': if $lang {
 ok
-? }
-? else {
+: }
+: else {
 not ok
-? }
+: }
 '
         => "ok\n"],
 
-    ['? if !$lang {
+    [': if !$lang {
 ok
-? }
-? else {
+: }
+: else {
 not ok
-? }
+: }
 '
         => "not ok\n"],
 
-    ['? if($lang){
+    [': if($lang){
 ok
-? }
-? else {
+: }
+: else {
 not ok
-? }
+: }
 '
         => "ok\n"],
 
-    ['? if(!$lang){
+    [': if(!$lang){
 ok
-? }
-? else {
+: }
+: else {
 not ok
-? }
+: }
 '
         => "not ok\n"],
 
 
-    ['? if $lang {
+    [': if $lang {
 ok
-? }
+: }
 !'
         => "ok\n!"],
 
-    ['? if $void {
+    [': if $void {
 ok
-? }
+: }
 !'
         => "!"],
 
-    ['? if !$void {
+    [': if !$void {
 ok
-? }
+: }
 !'
         => "ok\n!"],
 
-    ['? if $lang {
+    [': if $lang {
 a
-? }
-? else if $lang {
+: }
+: else if $lang {
 b
-? }
+: }
 !'
         => "a\n!"],
 
-    ['? if !$lang {
+    [': if !$lang {
 a
-? }
-? else if $lang {
+: }
+: else if $lang {
 b
-? }
+: }
 !'
         => "b\n!"],
 

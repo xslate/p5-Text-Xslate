@@ -17,9 +17,9 @@ my $n = shift(@ARGV) || 10;
 
 my $x = Text::Xslate->new(string => <<'TX_END');
 <ul>
-? for $books ->($item) {
-    <li><?= $item.title ?></li>
-? }
+: for $books ->($item) {
+    <li><:= $item.title :></li>
+: }
 </ul>
 TX_END
 

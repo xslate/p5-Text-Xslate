@@ -265,24 +265,16 @@ This document describes Text::Xslate version 0.001_02.
     );
 
     # for files
-    my $tx = Text::Xslate->new(
-        # required arguments:
-        file => 'foo.tx', # finds foo.txc, or foo.tx
-
-        # optional arguments:
-        path         => ["$Bin/../template"],
-        auto_compile => 1,
-    );
-
-    print $tx->render(\%vars);
+    my $tx = Text::Xslate->new();
+    print $tx->render_file('hello.tx', \%vars);
 
     # for strings
     my $template = q{
-        <h1><?= $title ?></h1>
+        <h1><:= $title :></h1>
         <ul>
-        ? for $books ->($book) {
-            <li><?= $book.title ?></li>
-        ? } # for
+        : for $books ->($book) {
+            <li><:= $book.title :></li>
+        : } # for
         </ul>
     };
 
@@ -337,54 +329,54 @@ TODO
 
 =head2 Variable access
 
-    <?= $var ?>
-    <?= $var.field ?>
-    <?= $var["field"] ?>
+    <:= $var :>
+    <:= $var.field :>
+    <:= $var["field"] :>
 
 Variables may be HASH references, ARRAY references, or objects.
 
 =head2 Loop (C<for>)
 
-    ? for $data ->($item) {
-        [<?= $item.field =>]
-    ? }
+    : for $data ->($item) {
+        [<:= $item.field =>]
+    : }
 
 Iterating data may be ARRAY references.
 
 =head2 Conditional statement (C<if>)
 
-    ? if $var == nil {
+    : if $var == nil {
         $var is nil.
-    ? }
-    ? else if $var != "foo" {
+    : }
+    : else if $var != "foo" {
         $var is not nil nor "foo".
-    ? }
-    ? else {
+    : }
+    : else {
         $var is "foo".
-    ? }
+    : }
 
-    ? if( $var >= 1 && $var <= 10 ) {
+    : if( $var >= 1 && $var <= 10 ) {
         $var is 1 .. 10
-    ? }
+    : }
 
-    ?= $var.value == nil ? "nil" : $var.value
+    := $var.value == nil ? "nil" : $var.value
 
 =head2 Expressions
 
 Relational operators (C<< == != < <= > >= >>):
 
-    ?= $var == 10 ? "10"     : "not 10"
-    ?= $var != 10 ? "not 10" : "10"
+    := $var == 10 ? "10"     : "not 10"
+    := $var != 10 ? "not 10" : "10"
 
 Arithmetic operators (C<< + - * / % >>):
 
-    ?= $var + 10
-    ?= ($var % 10) == 0
+    := $var + 10
+    := ($var % 10) == 0
 
 Logical operators (C<< || && // >>)
 
-    ?= $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
-    ?= $var // "foo" # as a default value
+    := $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
+    := $var // "foo" # as a default value
 
 Operator precedence:
 
@@ -396,30 +388,30 @@ Operator precedence:
 
 Base templates F<mytmpl/base.tx>:
 
-    ? block title -> { # with default
+    : block title -> { # with default
         [My Template!]
-    ? }
+    : }
 
-    ? block body is abstract # without default
+    : block body is abstract # without default
 
 Derived templates F<mytmpl/foo.tx>:
 
-    ? extends base
-    ? # use default title
-    ? override body {
+    : extends base
+    : # use default title
+    : override body {
         My Template Body!
-    ? }
+    : }
 
 Derived templates F<mytmpl/bar.tx>:
 
-    ? extends foo
-    ? # use default title
-    ? before body {
+    : extends foo
+    : # use default title
+    : before body {
         Before body!
-    ? }
-    ? after body {
+    : }
+    : after body {
         After body!
-    ? }
+    : }
 
 Then, Perl code:
 

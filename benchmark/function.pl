@@ -15,11 +15,11 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 my $n = shift(@ARGV) || 100;
 
 my $x = Text::Xslate->new(
-    string => "Hello, <?= \$lang | uc ?> world!\n" x $n,
+    string => "Hello, <:= \$lang | uc :> world!\n" x $n,
     function => { uc => sub{ uc($_[0]) } },
 );
 
-my $mt = build_mt("Hello, <?= uc(\$_[0]->{lang}) ?> world!\n" x $n);
+my $mt = build_mt("Hello, <:= uc(\$_[0]->{lang}) :> world!\n" x $n);
 
 my $subst_tmpl = qq{Hello, %lang% world!\n} x $n;
 

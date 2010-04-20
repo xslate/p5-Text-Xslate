@@ -12,13 +12,13 @@ $txc->constant(uc => sub{ uc $_[0] });
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        Hello, <?= $my.lang ?> world!
+        Hello, <:= $my.lang :> world!
 TX
 } "new";
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        Hello, <?= $my.lang ?> world!
+        Hello, <:= $my.lang :> world!
 TX
 
     my $text = $x->render({ my => { lang => 'Xslate' } });
@@ -29,9 +29,9 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        ? for $data -> ($item) {
-            [<?= $item.title ?>]
-        ? }
+        : for $data -> ($item) {
+            [<:= $item.title :>]
+        : }
 TX
 
     my $text = $x->render({ data => [ { title => 'foo' }, { title => 'bar' } ] });
@@ -43,7 +43,7 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        <?= ($value + 10) * 2 ?>
+        <:= ($value + 10) * 2 :>
 TX
     my $text = $x->render({ value => 11 });
     $text eq <<'TEXT' or die "render() failed: $text";
@@ -51,7 +51,7 @@ TX
 TEXT
 
     $x = $txc->compile_str(<<'TX');
-        <?= ($value - 10) / 2 ?>
+        <:= ($value - 10) / 2 :>
 TX
     $text = $x->render({ value => 32 });
     $text eq <<'TEXT' or die "render() failed: $text";
@@ -59,7 +59,7 @@ TX
 TEXT
 
     $x = $txc->compile_str(<<'TX');
-        <?= $value % 2 ?>
+        <:= $value % 2 :>
 TX
     $text = $x->render({ value => 32 });
     $text eq <<'TEXT' or die "render() failed: $text";
@@ -70,7 +70,7 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        <?= "|" ~ $value ~ "|" ?>
+        <:= "|" ~ $value ~ "|" :>
 TX
 
     my $text = $x->render({ value => 'Xslate' });
@@ -81,7 +81,7 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        <?= $value > 10 ? "> 10" : "<= 10" ?>
+        <:= $value > 10 ? "> 10" : "<= 10" :>
 TX
 
     my $text = $x->render({ value => 10 });
@@ -97,7 +97,7 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        <?= $value | uc ?>
+        <:= $value | uc :>
 TX
 
     my $text = $x->render({ value => 'Xslate' });
@@ -108,7 +108,7 @@ TEXT
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');
-        <?= uc($value) ?>
+        <:= uc($value) :>
 TX
 
     my $text = $x->render({ value => 'Xslate' });

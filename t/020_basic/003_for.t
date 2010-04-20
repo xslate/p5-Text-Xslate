@@ -10,32 +10,32 @@ my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
     ['Hello,
-? for $types -> ($type) {
-[<?= $type ?>]
-? }
+: for $types -> ($type) {
+[<:= $type :>]
+: }
 world!'
         => "Hello,\n[Str]\n[Int]\n[Object]\nworld!"],
 
     ['Hello,
-?for$types->($type){
-[<?=$type?>]
-?}
+:for$types->($type){
+[<:=$type:>]
+:}
 world!'
         => "Hello,\n[Str]\n[Int]\n[Object]\nworld!"],
 
     ['Hello,
-? for $types -> ($type) {
-?= $type
-? }
+: for $types -> ($type) {
+:= $type
+: }
 world!'
         => "Hello,\nStrIntObjectworld!"],
 
     ['<<
-? for $types -> ($t1) {
-?    for $types -> ($t2) {
-[<?=$t1?>|<?=$t2?>]
-?    }
-? }
+: for $types -> ($t1) {
+:    for $types -> ($t2) {
+[<:=$t1:>|<:=$t2:>]
+:    }
+: }
 >>', "<<
 [Str|Str]
 [Str|Int]
@@ -49,13 +49,13 @@ world!'
 >>"],
 
     ['<<
-? for $types -> ($t1) {
-[<?=$t1?>]
-? }
+: for $types -> ($t1) {
+[<:=$t1:>]
+: }
 |
-? for $types -> ($t1) {
-[<?=$t1?>]
-? }
+: for $types -> ($t1) {
+[<:=$t1:>]
+: }
 >>', "<<
 [Str]
 [Int]
@@ -67,19 +67,19 @@ world!'
 >>"],
 
     ['<<
-? for $types -> ($lang) {
-[<?=$lang?>]
-? }
->> <?=$lang?>', "<<
+: for $types -> ($lang) {
+[<:=$lang:>]
+: }
+>> <:=$lang:>', "<<
 [Str]
 [Int]
 [Object]
 >> Xslate"],
 
     ['<<
-? for $Types -> ($t) {
-[<?=$t.name?>]
-? }
+: for $Types -> ($t) {
+[<:=$t.name:>]
+: }
 >>', "<<
 [Void]
 [Bool]

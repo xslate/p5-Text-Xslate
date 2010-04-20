@@ -7,19 +7,19 @@ use Text::Xslate::Compiler;
 my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
-    ['<?= $var.attr ?>', 'value'],
+    ['<:= $var.attr :>', 'value'],
 
-    ['<?= $g.f.x ?>',  'gfx'],
-    ['<?= $x.f.g ?>',  'xfg'],
-    ['<?= $a.foo ?>',  'bar'],
+    ['<:= $g.f.x :>',  'gfx'],
+    ['<:= $x.f.g :>',  'xfg'],
+    ['<:= $a.foo :>',  'bar'],
 
-    ['<?= $var["attr"] ?>',  'value'],
+    ['<:= $var["attr"] :>',  'value'],
 
-    ['<?= $g["f"]["x"] ?>',  'gfx'],
-    ['<?= $x["f"]["g"] ?>',  'xfg'],
-    ['<?= $a["foo"] ?>',     'bar'],
+    ['<:= $g["f"]["x"] :>',  'gfx'],
+    ['<:= $x["f"]["g"] :>',  'xfg'],
+    ['<:= $a["foo"] :>',     'bar'],
 
-    ['<?= $a[$foo] ?>',      'bar'],
+    ['<:= $a[$foo] :>',      'bar'],
 );
 
 {

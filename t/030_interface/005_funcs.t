@@ -8,7 +8,7 @@ use FindBin qw($Bin);
 
 my $tx = Text::Xslate->new(
     string => <<'TX',
-Hello, <?= $value | uc ?> world!
+Hello, <:= $value | uc :> world!
 TX
     function => {
         uc => sub{ uc $_[0] },
@@ -20,7 +20,7 @@ is $tx->render({ value => 'Perl' }),   "Hello, PERL world!\n";
 
 $tx = Text::Xslate->new(
     string => <<'TX',
-Hello, <?= uc($value) ?> world!
+Hello, <:= uc($value) :> world!
 TX
     function => {
         uc => sub{ uc $_[0] },
@@ -32,7 +32,7 @@ is $tx->render({ value => 'Perl' }),   "Hello, PERL world!\n";
 
 $tx = Text::Xslate->new(
     string => <<'TX',
-Hello, <?= ucfirst(lc($value)) ?> world!
+Hello, <:= ucfirst(lc($value)) :> world!
 TX
     function => {
         lc      => sub{ lc $_[0] },

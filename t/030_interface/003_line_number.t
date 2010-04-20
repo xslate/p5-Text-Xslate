@@ -6,9 +6,9 @@ use Text::Xslate;
 
 my $tx = Text::Xslate->new(
     string => <<'TX',
-<?= $one ?>
-<?= $two ?>
-<?= $three ?>
+<:= $one :>
+<:= $two :>
+<:= $three :>
 TX
     loaded => "foo.tx",
 );
@@ -35,11 +35,11 @@ like $@, qr/^Xslate\Q(foo.tx:1)/;
 
 $tx = Text::Xslate->new(
     string => <<'TX',
-<?= $one ?>
+<:= $one :>
 
-<?= $three ?>
+<:= $three :>
 
-<?= $five ?>
+<:= $five :>
 TX
 );
 
@@ -57,11 +57,11 @@ like $@, qr/^Xslate\Q(<input>:3)/;
 $tx = Text::Xslate->new(
     string => <<'TX',
 
-? for $data ->($item) {
+: for $data ->($item) {
 
-* <?= $item ?>
+* <:= $item :>
 
-? }
+: }
 
 TX
 );
@@ -77,7 +77,7 @@ like $@, qr/^Xslate\Q(<input>:2)/;
 }
 
 $tx = Text::Xslate->new(
-    string => "\n<?= \$foo.bar ?>",
+    string => "\n<:= \$foo.bar :>",
 );
 
 eval {

@@ -15,7 +15,7 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 my $n = shift(@ARGV) || 100;
 
 my $x = Text::Xslate->new(
-    string => "Hello, <?= \$lang ?> world!\n" x $n,
+    string => "Hello, <:= \$lang :> world!\n" x $n,
 );
 
 my $mt = build_mt("Hello, <?= \$_[0]->{lang} ?> world!\n" x $n);

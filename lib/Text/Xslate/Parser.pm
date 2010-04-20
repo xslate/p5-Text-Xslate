@@ -18,6 +18,8 @@ my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 
 my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
+    ...
+    ..
     -- ++
     == != <=> <= >=
     << >>
@@ -89,19 +91,19 @@ has line => (
 has line_start => (
     is      => 'ro',
     isa     => 'RegexpRef',
-    default => sub{ qr/\?/xms },
+    default => sub{ qr/\Q:/xms },
 );
 
 has tag_start => (
     is      => 'ro',
     isa     => 'RegexpRef',
-    default => sub{ qr/\<\?/xms },
+    default => sub{ qr/\Q<:/xms },
 );
 
 has tag_end => (
     is      => 'ro',
     isa     => 'RegexpRef',
-    default => sub{ qr/\?\>/xms },
+    default => sub{ qr/\Q:>/xms },
 );
 
 

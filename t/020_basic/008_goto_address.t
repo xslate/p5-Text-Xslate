@@ -12,47 +12,47 @@ my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
     [<<'T', "    [foo]\n" . "    [foo]\n"],
-? if($value == "foo") {
-    [<?= $value ?>]
-    [<?= $value ?>]
-? }
-? else {
-    [<?= $value ?>]
-    [<?= $value ?>]
-? }
+: if($value == "foo") {
+    [<:= $value :>]
+    [<:= $value :>]
+: }
+: else {
+    [<:= $value :>]
+    [<:= $value :>]
+: }
 T
 
     [<<'T', "    [foo]\n" . "    [foo]\n"],
-? if($value == "bar") {
-    [<?= $value ?>]
-    [<?= $value ?>]
-? }
-? else {
-    [<?= $value ?>]
-    [<?= $value ?>]
-? }
+: if($value == "bar") {
+    [<:= $value :>]
+    [<:= $value :>]
+: }
+: else {
+    [<:= $value :>]
+    [<:= $value :>]
+: }
 T
 
     [<<'T', "    [*foo]\n" . "    [*foo]\n"],
-? if($value == "foo") {
-    [<?= "*" ~ $value ?>]
-    [<?= "*" ~ $value ?>]
-? }
-? else {
-    [<?= "*" ~ $value ?>]
-    [<?= "*" ~ $value ?>]
-? }
+: if($value == "foo") {
+    [<:= "*" ~ $value :>]
+    [<:= "*" ~ $value :>]
+: }
+: else {
+    [<:= "*" ~ $value :>]
+    [<:= "*" ~ $value :>]
+: }
 T
 
     [<<'T', "    [*foo]\n" . "    [*foo]\n"],
-? if($value == "bar") {
-    [<?= "*" ~ $value ?>]
-    [<?= "*" ~ $value ?>]
-? }
-? else {
-    [<?= "*" ~ $value ?>]
-    [<?= "*" ~ $value ?>]
-? }
+: if($value == "bar") {
+    [<:= "*" ~ $value :>]
+    [<:= "*" ~ $value :>]
+: }
+: else {
+    [<:= "*" ~ $value :>]
+    [<:= "*" ~ $value :>]
+: }
 T
 );
 

@@ -14,10 +14,10 @@ isa_ok $parser, 'Text::Xslate::Parser';
 
 my @data = (
     ['Hello, world!', qr/"Hello, world!"/],
-    ['Hello, <?= $lang ?> world!', qr/ \$lang \b/xms, qr/"Hello, "/, qr/" world!"/],
-    ['aaa <?= $bbb ?> ccc <?= $ddd ?>', qr/aaa/, qr/\$bbb/, qr/ccc/, qr/\$ddd/],
+    ['Hello, <:= $lang :> world!', qr/ \$lang \b/xms, qr/"Hello, "/, qr/" world!"/],
+    ['aaa <:= $bbb :> ccc <:= $ddd :>', qr/aaa/, qr/\$bbb/, qr/ccc/, qr/\$ddd/],
 
-    ['<? for $data ->($item) { echo $item; } ?>', qr/\b for \b/xms, qr/\$data\b/, qr/\$item/ ],
+    ['<: for $data ->($item) { echo $item; } :>', qr/\b for \b/xms, qr/\$data\b/, qr/\$item/ ],
 );
 
 foreach my $d(@data) {

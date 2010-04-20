@@ -17,7 +17,7 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate Text::ClearSilver Template))
 my $n = shift(@ARGV) || 10;
 
 my $x = Text::Xslate->new(string => <<'T' x $n);
-Hello, <?= $lang ?> world!
+Hello, <:= $lang :> world!
 T
 
 my $tcs = Text::ClearSilver->new();
@@ -31,7 +31,7 @@ my $vars = {
 $x->render($vars) eq $mt->($vars) or die "render error: ", $x->render($vars);
 
 my $tcs_tmpl = <<'T' x $n;
-Hello, <?cs var:lang ?> world!
+Hello, <:cs var:lang :> world!
 T
 
 my $fmt = <<'T' x $n;
