@@ -20,9 +20,9 @@ my $mst_in  = "benchmark/template/simple.mst";
 my $mst_bin = "benchmark/template/simple.mst.out";
 MobaSiF::Template::Compiler::compile($mst_in, $mst_bin);
 
-my $tx = Text::Xslate->new(file => 'simple.tx', path => \@load_path);
+my $tx = Text::Xslate->new(path => \@load_path);
 
-$tx->render($vars) eq MobaSiF::Template::insert($mst_bin, $vars)
+$tx->render('simple.tx', $vars) eq MobaSiF::Template::insert($mst_bin, $vars)
     or MobaSiF::Template::insert($mst_bin, $vars);
 
 cmpthese -1, {
