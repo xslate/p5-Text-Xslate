@@ -269,8 +269,8 @@ This document describes Text::Xslate version 0.001_02.
         ],
     );
 
-    # for files
-    my $tx = Text::Xslate->new();
+    # for multiple files
+    my $tx = Text::Xslate->new(file => [qw(hello.tx)]);
     print $tx->render_file('hello.tx', \%vars);
 
     # for strings
@@ -312,7 +312,7 @@ Options:
 
 =item C<< string => $template_string >>
 
-=item C<< file => $template_file >>
+=item C<< file => $template_file | \@template_files >>
 
 =item C<< path => \@path // ["$FindBin::Bin/../template"] >>
 
@@ -322,7 +322,7 @@ Options:
 
 =back
 
-=head3 B<< $tx->render(\%vars) -> Str >>
+=head3 B<< $tx->render($name, \%vars) -> Str >>
 
 Renders a template with variables, and returns the result.
 
