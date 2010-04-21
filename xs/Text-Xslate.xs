@@ -564,7 +564,7 @@ XSLATE(not) {
 static I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
-    U32 const bf = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
+    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
 
     if(af && bf) {
         if(af == SVf_IOK && bf == SVf_IOK) {
