@@ -745,8 +745,18 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     return 0;
 }
 
+#ifdef USE_ITHREADS
+SV*
+tx_sv_dup_inc(pTHX_ const SV* const sv, CLONE_PARAMS* const param) {
+    SV* const newsv = sv_dup(sv, param);
+    SvREFCNT_inc_simple_void(newsv);
+    return newsv;
+}
+#endif
+
 static int
 tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
+#ifdef USE_ITHREADS /* single threaded perl has no "xxx_dup()" APIs */
     tx_state_t* const st              = (tx_state_t*)mg->mg_ptr;
     const U16* const proto_lines      = st->lines;
     const tx_code_t* const proto_code = st->code;
@@ -757,21 +767,23 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
 
     for(i = 0; i < len; i++) {
         st->code[i].exec_code = proto_code[i].exec_code;
-        st->code[i].arg       = sv_dup(proto_code[i].arg, param);
+        st->code[i].arg       = tx_sv_dup_inc(aTHX_ proto_code[i].arg, param);
     }
 
     Newx(st->lines, len, U16);
     Copy(proto_lines, st->lines, len, U16);
 
-    st->function = (HV*)sv_dup((SV*)st->function, param);
-    st->locals   = (AV*)sv_dup((SV*)st->locals, param);
-    st->targ     =      sv_dup(st->targ, param);
-    st->self     =      sv_dup(st->self, param);
-
-    mg->mg_flags |= MGf_DUP;
-
+    st->function = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->function, param);
+    st->locals   = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->locals, param);
+    st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
+    st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
+#else
+    PERL_UNUSED_VAR(mg);
+    PERL_UNUSED_VAR(param);
+#endif
     return 0;
 }
+
 
 static MGVTBL xslate_vtbl = { /* for identity */
     NULL, /* get */

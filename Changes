@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_06 Wed Apr 21 13:39:50 2010
+    - Workaround multi-thread related problems
+
 0.001_05 Tue Apr 20 18:27:33 2010
     - Add "include" command
 

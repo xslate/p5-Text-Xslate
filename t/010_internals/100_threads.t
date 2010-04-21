@@ -1,18 +1,29 @@
 #!perl -w
 
 use strict;
-use Test::More skip_all => 'not yet done';
 use constant HAS_THREADS => eval { require threads };
-use Test::Requires qw(threads);
+use if !HAS_THREADS, 'Test::More', skip_all => 'multi-threading tests';
 use Test::More;
 use Text::Xslate;
 
 eval {
     my $tx = Text::Xslate->new(string => "Hello, world!");
 
-    threads->create(sub{ Text::Xslate->new })->join;
+    threads->create(sub{ })->join();
 
     is $tx->render({}), "Hello, world!";
+};
+
+is $@, '';
+
+eval {
+    my $tx = Text::Xslate->new(string => "Hello, world!");
+
+    threads->create(sub{
+        is $tx->render({}), "Hello, world!", 'in a child';
+    })->join();
+
+    is $tx->render({}), "Hello, world!", 'in the main';
 };
 
 is $@, '';
