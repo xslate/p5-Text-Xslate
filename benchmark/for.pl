@@ -19,6 +19,10 @@ my $x = Text::Xslate->new(string => <<'TX_END');
 <ul>
 : for $books ->($item) {
     <li><:= $item.title :></li>
+    <li><:= $item.title :></li>
+    <li><:= $item.title :></li>
+    <li><:= $item.title :></li>
+    <li><:= $item.title :></li>
 : }
 </ul>
 TX_END
@@ -27,6 +31,10 @@ my $mt  = build_mt(<<'MT_END');
 <ul>
 ? for my $item(@{$_[0]->{books}}) {
     <li><?= $item->{title} ?></li>
+    <li><?= $item->{title} ?></li>
+    <li><?= $item->{title} ?></li>
+    <li><?= $item->{title} ?></li>
+    <li><?= $item->{title} ?></li>
 ? }
 </ul>
 MT_END
@@ -34,6 +42,10 @@ MT_END
 my $ht = HTML::Template->new(scalarref => \<<'HT_END', case_sensitive => 1);
 <ul>
 <tmpl_loop name="books">
+    <li><tmpl_var name="title" escape="html"></li>
+    <li><tmpl_var name="title" escape="html"></li>
+    <li><tmpl_var name="title" escape="html"></li>
+    <li><tmpl_var name="title" escape="html"></li>
     <li><tmpl_var name="title" escape="html"></li>
 </tmpl_loop>
 </ul>
