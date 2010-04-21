@@ -7,7 +7,7 @@ all_from 'lib/Text/Xslate.pm';
 use_ppport 3.19;
 cc_warnings;
 
-requires 'Mouse'                => '0.53';
+requires 'Mouse'                => '0.55';
 requires 'MouseX::NativeTraits' => '0.002';
 
 test_requires 'Test::More' => 0.88; # done_testing()
