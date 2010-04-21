@@ -121,7 +121,7 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
     }
     return &( (st->pad)[lvar_id] );
 }
-#else
+#else /* DEBUGGING */
 #define TX_st_sa        (TX_st->sa)
 #define TX_st_sb        (TX_st->sb)
 #define TX_op_arg       (TX_op->arg)
@@ -181,7 +181,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
-    if(sv_true(ERRSV)){
+    if(UNLIKELY(sv_true(ERRSV))){
         croak("%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
@@ -357,7 +357,7 @@ XSLATE(print) {
             len = SvCUR(output) + parts_len + 1;
             (void)SvGROW(output, len);
 
-            if(parts_len == 1) {
+            if(LIKELY(parts_len == 1)) {
                 *SvEND(output) = *parts;
             }
             else {
