@@ -54,7 +54,7 @@ my $y = "$Bin/../template/hello2.tx";
 
 my $t = time;
 utime $t, $t, $x;
-$t++;
+$t += 10;
 utime $t, $t, $y;
 
 rename $x => "${x}~";
