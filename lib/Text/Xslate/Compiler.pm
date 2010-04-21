@@ -164,9 +164,9 @@ sub _generate_if {
 
     return(
         @expr,
-        [ and    => scalar(@then) + 2, undef, 'if' ],
+        [ and  => scalar(@then) + 2, undef, 'if' ],
         @then,
-        [ pc_inc => scalar(@else) + 1 ],
+        [ goto => scalar(@else) + 1 ],
         @else,
     );
 }
@@ -268,9 +268,9 @@ sub _generate_ternary { # the conditional operator
 
     return(
         @expr,
-        [ and    => scalar(@then) + 2, $node->line, 'ternary' ],
+        [ and  => scalar(@then) + 2, $node->line, 'ternary' ],
         @then,
-        [ pc_inc => scalar(@else) + 1 ],
+        [ goto => scalar(@else) + 1 ],
         @else,
     );
 }
@@ -325,7 +325,7 @@ sub _literal_to_value {
 #    and
 #    or
 #    dor
-#    pc_inc
+#    goto
 #)} = ();
 
 sub _optimize {

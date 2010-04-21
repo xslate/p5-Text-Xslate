@@ -22,7 +22,7 @@ XSLATE_w_sv(print_raw_s);
 XSLATE(include);
 XSLATE_w_sv(include_s);
 XSLATE_w_var(for_start);
-XSLATE_w_var(for_next);
+XSLATE_goto(for_next);
 XSLATE_w_int(fetch_iter);
 XSLATE(add);
 XSLATE(sub);
@@ -31,9 +31,9 @@ XSLATE(div);
 XSLATE(mod);
 XSLATE_w_sv(concat);
 XSLATE(filt);
-XSLATE_w_int(and);
-XSLATE_w_int(or);
-XSLATE_w_int(dor);
+XSLATE_goto(and);
+XSLATE_goto(or);
+XSLATE_goto(dor);
 XSLATE(not);
 XSLATE(eq);
 XSLATE(ne);
@@ -43,7 +43,7 @@ XSLATE(gt);
 XSLATE(ge);
 XSLATE_w_key(function);
 XSLATE(call);
-XSLATE_w_int(pc_inc);
+XSLATE_goto(goto);
 
 enum tx_opcode_t {
     TXOP_noop, /* 0 */
@@ -87,7 +87,7 @@ enum tx_opcode_t {
     TXOP_ge, /* 38 */
     TXOP_function, /* 39 */
     TXOP_call, /* 40 */
-    TXOP_pc_inc, /* 41 */
+    TXOP_goto, /* 41 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -133,7 +133,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_ge,
     TXCODE_function,
     TXCODE_call,
-    TXCODE_pc_inc,
+    TXCODE_goto,
     NULL
 }; /* tx_opcode[] */
 
@@ -158,7 +158,7 @@ static const U8 tx_oparg[] = {
     0U, /* include */
     TXCODE_W_SV, /* include_s */
     TXCODE_W_VAR, /* for_start */
-    TXCODE_W_VAR, /* for_next */
+    TXCODE_GOTO, /* for_next */
     TXCODE_W_INT, /* fetch_iter */
     0U, /* add */
     0U, /* sub */
@@ -167,9 +167,9 @@ static const U8 tx_oparg[] = {
     0U, /* mod */
     TXCODE_W_SV, /* concat */
     0U, /* filt */
-    TXCODE_W_INT, /* and */
-    TXCODE_W_INT, /* or */
-    TXCODE_W_INT, /* dor */
+    TXCODE_GOTO, /* and */
+    TXCODE_GOTO, /* or */
+    TXCODE_GOTO, /* dor */
     0U, /* not */
     0U, /* eq */
     0U, /* ne */
@@ -179,7 +179,7 @@ static const U8 tx_oparg[] = {
     0U, /* ge */
     TXCODE_W_KEY, /* function */
     0U, /* call */
-    TXCODE_W_INT, /* pc_inc */
+    TXCODE_GOTO, /* goto */
 }; /* tx_oparg[] */
 
 static void
@@ -225,5 +225,5 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(ge), newSViv(TXOP_ge));
     (void)hv_stores(ops, STRINGIFY(function), newSViv(TXOP_function));
     (void)hv_stores(ops, STRINGIFY(call), newSViv(TXOP_call));
-    (void)hv_stores(ops, STRINGIFY(pc_inc), newSViv(TXOP_pc_inc));
+    (void)hv_stores(ops, STRINGIFY(goto), newSViv(TXOP_goto));
 } /* tx_register_ops() */

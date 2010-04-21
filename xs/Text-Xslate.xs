@@ -22,16 +22,19 @@ START_MY_CXT
 #define XSLATE_w_int(n) XSLATE(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
 #define XSLATE_w_key(n) XSLATE(n) /* has TX_op_arg as a keyword */
 #define XSLATE_w_var(n) XSLATE(n) /* has TX_op_arg as a local variable */
+#define XSLATE_goto(n)  XSLATE(n) /* does goto */
 
-#define TXARGf_SV  ((U8)(0x01))
-#define TXARGf_INT ((U8)(0x02))
-#define TXARGf_KEY ((U8)(0x04))
-#define TXARGf_VAR ((U8)(0x08))
+#define TXARGf_SV   ((U8)(0x01))
+#define TXARGf_INT  ((U8)(0x02))
+#define TXARGf_KEY  ((U8)(0x04))
+#define TXARGf_VAR  ((U8)(0x08))
+#define TXARGf_GOTO ((U8)(0x10))
 
 #define TXCODE_W_SV  (TXARGf_SV)
 #define TXCODE_W_INT (TXARGf_SV | TXARGf_INT)
 #define TXCODE_W_VAR (TXARGf_SV | TXARGf_INT | TXARGf_VAR)
 #define TXCODE_W_KEY (TXARGf_SV | TXARGf_KEY)
+#define TXCODE_GOTO  (TXARGf_SV | TXARGf_INT | TXARGf_GOTO)
 
 #define TX_st (txst)
 #define TX_op (&(TX_st->code[TX_st->pc]))
@@ -423,7 +426,7 @@ XSLATE_w_var(for_start) {
     TX_st->pc++;
 }
 
-XSLATE_w_var(for_next) {
+XSLATE_goto(for_next) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIVX(idsv); /* by literal_i */
     AV* const av   = (AV*)SvRV(TX_lvar(id  ));
@@ -434,7 +437,7 @@ XSLATE_w_var(for_next) {
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     if(++SvIVX(i) <= AvFILLp(av)) {
-        TX_st->pc += SvIVX(TX_op_arg); /* back to */
+        TX_st->pc = SvUVX(TX_op_arg); /* back to the loop head */
     }
     else {
         /* finish the for loop */
@@ -522,32 +525,32 @@ XSLATE(filt) {
     TX_st->pc++;
 }
 
-XSLATE_w_int(and) {
+XSLATE_goto(and) {
     if(sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
     else {
-        TX_st->pc += SvIVX(TX_op_arg);
+        TX_st->pc = SvUVX(TX_op_arg);
     }
 }
 
-XSLATE_w_int(or) {
+XSLATE_goto(or) {
     if(!sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
     else {
-        TX_st->pc += SvIVX(TX_op_arg);
+        TX_st->pc = SvUVX(TX_op_arg);
     }
 }
 
-XSLATE_w_int(dor) {
+XSLATE_goto(dor) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
     if(!SvOK(sv)) {
         TX_st->pc++;
     }
     else {
-        TX_st->pc += SvIVX(TX_op_arg);
+        TX_st->pc = SvUVX(TX_op_arg);
     }
 }
 
@@ -631,8 +634,8 @@ XSLATE(call) {
     TX_st->pc++;
 }
 
-XSLATE_w_int(pc_inc) {
-    TX_st->pc += SvIVX(TX_op_arg);
+XSLATE_goto(goto) {
+    TX_st->pc = SvUVX(TX_op_arg);
 }
 
 XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
@@ -1037,7 +1040,6 @@ CODE:
                 }
                 else if(tx_oparg[opnum] & TXARGf_INT) {
                     st.code[i].arg = newSViv(SvIV(*arg));
-                    SvREADONLY_on(st.code[i].arg);
 
                     if(tx_oparg[opnum] & TXARGf_VAR) { /* local variable id */
                         I32 const id = SvIVX(st.code[i].arg) + 1; /* for-loop requires +1 */
@@ -1045,6 +1047,17 @@ CODE:
                             lvar_id_max = id;
                         }
                     }
+
+                    if(tx_oparg[opnum] & TXARGf_GOTO) {
+                        /* calculate relational addresses to absolute addresses */
+                        UV const abs_addr = (UV)(i + SvIVX(st.code[i].arg));
+                        if(abs_addr > (UV)len) {
+                            croak("Oops: goto address %"IVdf" is out of range (must be 0 <= addr <= %"IVdf")",
+                                SvIVX(st.code[i].arg), (IV)len);
+                        }
+                        sv_setuv(st.code[i].arg, abs_addr);
+                    }
+                    SvREADONLY_on(st.code[i].arg);
                 }
                 else { /* normal sv */
                     st.code[i].arg = newSVsv(*arg);
