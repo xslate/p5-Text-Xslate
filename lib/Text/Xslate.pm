@@ -165,7 +165,7 @@ sub _compiler {
                 $@;
             };
             if($e) {
-                $self->throw_error("Xslate: Cannot load the compiler: $@");
+                $self->throw_error("Xslate: Cannot load the compiler: $e");
             }
         }
 
