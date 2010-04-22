@@ -20,7 +20,7 @@ my $x = Text::Xslate->new(string => <<'T' x $n);
 Hello, <:= $lang :> world!
 T
 
-my $tcs = Text::ClearSilver->new();
+my $tcs = Text::ClearSilver->new(VarEscapeMode => 'html');
 my $mt  = Text::MicroTemplate::build_mt(
     "Hello, <?= \$_[0]->{lang} ?> world!\n" x $n
 );
