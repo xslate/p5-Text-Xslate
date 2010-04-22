@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_07 Thu Apr 22 12:59:03 2010
+    - Fix a bug that for-loops for an empty array did not work
+
 0.001_06 Wed Apr 21 13:39:50 2010
     - Workaround multi-thread related problems
 
