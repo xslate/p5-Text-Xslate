@@ -122,35 +122,39 @@ sub _generate_command {
 
 sub _generate_proc {
     my($self, $node) = @_;
-    my $expr     = $node->first;
-    my $iter_var = $node->second;
-    my $block    = $node->third;
+    my $expr  = $node->first;
+    my $vars  = $node->second;
+    my $block = $node->third;
 
     my @code;
 
     given($node->id) {
         when("for") {
+            if(@{$vars} != 1) {
+                Carp::croak("For-loop requires single variable for each items");
+            }
+            my($iter_var) = @{$vars};
 
-        push @code, $self->_generate_expr($expr);
+            push @code, $self->_generate_expr($expr);
 
-        my $lvar_id   = $self->lvar_id;
-        my $lvar_name = $iter_var->id;
+            my $lvar_id   = $self->lvar_id;
+            my $lvar_name = $iter_var->id;
 
-        local $self->lvar->{$lvar_name} = $lvar_id;
+            local $self->lvar->{$lvar_name} = $lvar_id;
 
-        my $for_start = scalar @code;
-        push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
+            my $for_start = scalar @code;
+            push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
-        # a for statement uses three local variables (container, iterator, and item)
-        $self->_lvar_id_inc(3);
-        my @block_code = $self->_compile_ast($block);
-        $self->_lvar_id_dec(3);
+            # a for statement uses three local variables (container, iterator, and item)
+            $self->_lvar_id_inc(3);
+            my @block_code = $self->_compile_ast($block);
+            $self->_lvar_id_dec(3);
 
-        push @code,
-            [ literal_i => $lvar_id, $expr->line, $lvar_name ],
-            [ for_iter  => scalar(@block_code) + 2 ],
-            @block_code,
-            [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
+            push @code,
+                [ literal_i => $lvar_id, $expr->line, $lvar_name ],
+                [ for_iter  => scalar(@block_code) + 2 ],
+                @block_code,
+                [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
         }
         default {
             confess("Not yet implemented: '$node'");

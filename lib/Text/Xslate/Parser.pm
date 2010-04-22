@@ -716,24 +716,26 @@ sub _std_proc {
     $proc->first( $parser->expression(0) );
 
     $parser->advance("->");
-    $parser->advance("(");
-
-    my $t = $parser->token;
-    if($t->arity ne "variable") {
-        $parser->_parse_error("Expected a variable name, not $t");
-    }
-
-    my $iter_var = $t;
-    $proc->second( $iter_var );
-
-    $parser->advance();
-
-    $parser->advance(")");
-
-    $parser->advance("{");
 
     $parser->new_scope();
-    $parser->define($iter_var);
+
+    if($parser->token->id eq "(") {
+        $parser->advance("(");
+
+        my @vars;
+
+        while((my $t = $parser->token)->arity eq "variable") {
+            push @vars, $t;
+            $parser->define($t);
+            $parser->advance;
+        }
+
+        $proc->second( \@vars );
+
+        $parser->advance(")");
+    }
+
+    $parser->advance("{");
 
     $proc->third($parser->statements());
 
