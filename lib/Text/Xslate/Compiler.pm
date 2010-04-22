@@ -120,7 +120,7 @@ sub _generate_command {
     return @code;
 }
 
-sub _generate_for {
+sub _generate_proc {
     my($self, $node) = @_;
     my $expr     = $node->first;
     my $iter_var = $node->second;
@@ -128,27 +128,34 @@ sub _generate_for {
 
     my @code;
 
-    push @code, $self->_generate_expr($expr);
+    given($node->id) {
+        when("for") {
 
-    my $lvar_id   = $self->lvar_id;
-    my $lvar_name = $iter_var->id;
+        push @code, $self->_generate_expr($expr);
 
-    local $self->lvar->{$lvar_name} = $lvar_id;
+        my $lvar_id   = $self->lvar_id;
+        my $lvar_name = $iter_var->id;
 
-    my $for_start = scalar @code;
-    push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
+        local $self->lvar->{$lvar_name} = $lvar_id;
 
-    # a for statement uses three local variables (container, iterator, and item)
-    $self->_lvar_id_inc(3);
-    my @block_code = $self->_compile_ast($block);
-    $self->_lvar_id_dec(3);
+        my $for_start = scalar @code;
+        push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
-    push @code,
-        [ literal_i => $lvar_id, $expr->line, $lvar_name ],
-        [ for_iter  => scalar(@block_code) + 2 ],
-        @block_code,
-        [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
+        # a for statement uses three local variables (container, iterator, and item)
+        $self->_lvar_id_inc(3);
+        my @block_code = $self->_compile_ast($block);
+        $self->_lvar_id_dec(3);
 
+        push @code,
+            [ literal_i => $lvar_id, $expr->line, $lvar_name ],
+            [ for_iter  => scalar(@block_code) + 2 ],
+            @block_code,
+            [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
+        }
+        default {
+            confess("Not yet implemented: '$node'");
+        }
+    }
     return @code;
 }
 

@@ -298,7 +298,7 @@ sub BUILD {
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
     #$parser->symbol('var')      ->set_std(\&_std_var);
-    $parser->symbol('for')      ->set_std(\&_std_for);
+    $parser->symbol('for')      ->set_std(\&_std_proc);
     $parser->symbol('if')       ->set_std(\&_std_if);
 
     $parser->symbol('print')    ->set_std(\&_std_command);
@@ -306,14 +306,13 @@ sub BUILD {
 
     $parser->symbol('include')  ->set_std(\&_std_command);
 
-    # not yet
-    $parser->symbol('extend');
-    $parser->symbol('body');
-    $parser->symbol('override');
-    $parser->symbol('before');
-    $parser->symbol('after');
-    $parser->symbol('is');
-    $parser->symbol('abstract');
+    # template inheritance
+
+    $parser->symbol('extend')   ->set_std(\&_std_command);
+    $parser->symbol('block')    ->set_std(\&_std_proc);
+    $parser->symbol('override') ->set_std(\&_std_proc);
+    $parser->symbol('before')   ->set_std(\&_std_proc);
+    $parser->symbol('after')    ->set_std(\&_std_proc);
 
     return;
 }
@@ -709,12 +708,12 @@ sub _std_block {
 #    return @a;
 #}
 
-sub _std_for {
+sub _std_proc {
     my($parser, $symbol) = @_;
 
-    my $for = $symbol->clone(arity => "for");
+    my $proc = $symbol->clone(arity => "proc");
 
-    $for->first( $parser->expression(0) );
+    $proc->first( $parser->expression(0) );
 
     $parser->advance("->");
     $parser->advance("(");
@@ -725,7 +724,7 @@ sub _std_for {
     }
 
     my $iter_var = $t;
-    $for->second( $iter_var );
+    $proc->second( $iter_var );
 
     $parser->advance();
 
@@ -736,13 +735,13 @@ sub _std_for {
     $parser->new_scope();
     $parser->define($iter_var);
 
-    $for->third($parser->statements());
+    $proc->third($parser->statements());
 
     $parser->pop_scope();
 
     $parser->advance("}");
 
-    return $for;
+    return $proc;
 }
 
 sub _std_if {
