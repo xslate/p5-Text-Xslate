@@ -189,6 +189,9 @@ sub _generate_proc {
     my $params = $node->second;
     my $block  = $node->third;
 
+    if(exists $self->block_table->{$name}) {
+        Carp::croak("Redefinition of block $name is found");
+    }
 
     $self->block_table->{$name} = {
         type   => $node->id,

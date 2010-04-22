@@ -646,11 +646,12 @@ XSLATE(end_block) {
 
 XSLATE_w_key(function) {
     HE* he;
+
     if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
     }
     else {
-        croak("Function %s is not registered", tx_neat(aTHX_ TX_st_sa));
+        croak("Function %s is not registered", tx_neat(aTHX_ TX_op_arg));
     }
 
     TX_st->pc++;
@@ -985,6 +986,8 @@ CODE:
     SV* tobj;
     SV** svp;
 
+    Zero(&st, 1, tx_state_t);
+
     svp = hv_fetchs(self, "template", FALSE);
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
         croak("The xslate object has no template table");
@@ -1000,7 +1003,7 @@ CODE:
     if(svp && SvOK(*svp)) {
         if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
             st.function = (HV*)SvRV(*svp);
-            SvREFCNT_inc(st.function);
+            SvREFCNT_inc_simple_void_NN(st.function);
         }
         else {
             croak("Function table must be a HASH reference");
@@ -1024,8 +1027,6 @@ CODE:
     sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE), mtime );
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE), fullpath);
     sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE), name);
-
-    Zero(&st, 1, tx_state_t);
 
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);
