@@ -136,16 +136,18 @@ sub _generate_for {
     local $self->lvar->{$lvar_name} = $lvar_id;
 
     my $for_start = scalar @code;
-    push @code, [ for_start => $lvar_id, undef, $lvar_name ];
+    push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
-    # a for statement uses two local variables (container and iterator)
-    $self->_lvar_id_inc(2);
-    push @code, $self->_compile_ast($block);
-    $self->_lvar_id_dec(2);
+    # a for statement uses three local variables (container, iterator, and item)
+    $self->_lvar_id_inc(3);
+    my @block_code = $self->_compile_ast($block);
+    $self->_lvar_id_dec(3);
 
     push @code,
-        [ literal_i => $lvar_id, undef, $lvar_name ],
-        [ for_next  => -(scalar(@code) - $for_start) ];
+        [ literal_i => $lvar_id, $expr->line, $lvar_name ],
+        [ for_iter  => scalar(@block_code) + 2 ],
+        @block_code,
+        [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
 
     return @code;
 }
@@ -182,7 +184,7 @@ sub _generate_variable {
     my($self, $node) = @_;
 
     if(defined(my $lvar_id = $self->lvar->{$node->id})) {
-        return [ fetch_iter => $lvar_id, $node->line, $node->id ];
+        return [ fetch_lvar => $lvar_id, $node->line, $node->id ];
     }
     else {
         return [ fetch_s => $self->_variable_to_value($node), $node->line ];

@@ -85,6 +85,13 @@ world!'
 [Bool]
 >>"],
 
+    ['<<
+: for $empty -> ($t) {
+[<:=$t.name:>]
+: }
+>>', "<<
+>>"],
+
 );
 
 foreach my $pair(@data) {
@@ -98,6 +105,8 @@ foreach my $pair(@data) {
         types => [qw(Str Int Object)],
 
         Types => [{ name => 'Void' }, { name => 'Bool' }],
+
+        empty => [],
     );
     is $x->render(\%vars), $out, 'first';
     is $x->render(\%vars), $out, 'second';

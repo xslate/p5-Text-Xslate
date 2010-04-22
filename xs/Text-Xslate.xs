@@ -295,6 +295,14 @@ XSLATE_w_key(fetch_s) { /* fetch a field from the top */
     TX_st->pc++;
 }
 
+XSLATE_w_var(fetch_lvar) {
+    SV* const idsv = TX_op_arg;
+
+    TX_st_sa = TX_lvar(SvIVX(idsv));
+
+    TX_st->pc++;
+}
+
 XSLATE(fetch_field) { /* fetch a field from a variable (bin operator) */
     SV* const var = TX_st_sb;
     SV* const key = TX_st_sa;
@@ -420,52 +428,41 @@ XSLATE_w_var(for_start) {
             tx_neat(aTHX_ avref));
     }
 
-    sv_setsv(TX_lvar(id), avref);
-    sv_setiv(TX_lvar(id+1), 0); /* (re)set iterator */
+    /* id+0 for each item */
+    sv_setsv(TX_lvar(id+1), avref);
+    sv_setiv(TX_lvar(id+2), -1); /* (re)set iterator */
 
     TX_st->pc++;
 }
 
-XSLATE_goto(for_next) {
+XSLATE_goto(for_iter) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIVX(idsv); /* by literal_i */
-    AV* const av   = (AV*)SvRV(TX_lvar(id  ));
-    SV* const i    =           TX_lvar(id+1);
+    SV* const item =           TX_lvar(id+0);
+    AV* const av   = (AV*)SvRV(TX_lvar(id+1));
+    SV* const i    =           TX_lvar(id+2);
 
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    if(++SvIVX(i) <= AvFILLp(av)) {
-        TX_st->pc = SvUVX(TX_op_arg); /* back to the loop head */
+    if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
+        SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
+        sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
+        TX_st->pc++;
     }
     else {
         /* finish the for loop */
+        sv_setsv(item, &PL_sv_undef);
 
         /* don't need to clear iterator variables,
            they will be cleaned at the end of render() */
 
-        TX_st->pc++;
+        TX_st->pc = SvUVX(TX_op_arg);
     }
 
 }
 
-XSLATE_w_int(fetch_iter) {
-    SV* const idsv = TX_op_arg;
-    IV  const id   = SvIVX(idsv);
-    AV* const av   = (AV*)SvRV(TX_lvar(id  ));
-    SV* const i    =           TX_lvar(id+1);
-    SV** svp;
-
-    assert(SvTYPE(av) == SVt_PVAV);
-    assert(SvIOK(i));
-
-    //warn("fetch_iter[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    svp = av_fetch(av, SvIVX(i), FALSE);
-    TX_st_sa = svp ? *svp : &PL_sv_undef;
-
-    TX_st->pc++;
-}
 
 /* For arithmatic operators, SvIV_please() can make stringification faster,
    although I don't know why it is :)
@@ -1042,7 +1039,10 @@ CODE:
                     st.code[i].arg = newSViv(SvIV(*arg));
 
                     if(tx_oparg[opnum] & TXARGf_VAR) { /* local variable id */
-                        I32 const id = SvIVX(st.code[i].arg) + 1; /* for-loop requires +1 */
+                        I32 id = SvIVX(st.code[i].arg);
+                        if(opnum == TXOP_for_start) {
+                                id += 2;
+                        }
                         if(lvar_id_max < id) {
                             lvar_id_max = id;
                         }

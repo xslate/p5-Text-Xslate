@@ -13,6 +13,7 @@ XSLATE(nil);
 XSLATE_w_sv(literal);
 XSLATE_w_int(literal_i);
 XSLATE_w_key(fetch_s); /* fetch a field from the top */
+XSLATE_w_var(fetch_lvar);
 XSLATE(fetch_field); /* fetch a field from a variable (bin operator) */
 XSLATE_w_key(fetch_field_s); /* fetch a field from a variable (for literal) */
 XSLATE(print);
@@ -22,8 +23,7 @@ XSLATE_w_sv(print_raw_s);
 XSLATE(include);
 XSLATE_w_sv(include_s);
 XSLATE_w_var(for_start);
-XSLATE_goto(for_next);
-XSLATE_w_int(fetch_iter);
+XSLATE_goto(for_iter);
 XSLATE(add);
 XSLATE(sub);
 XSLATE(mul);
@@ -57,17 +57,17 @@ enum tx_opcode_t {
     TXOP_literal, /* 8 */
     TXOP_literal_i, /* 9 */
     TXOP_fetch_s, /* 10 */
-    TXOP_fetch_field, /* 11 */
-    TXOP_fetch_field_s, /* 12 */
-    TXOP_print, /* 13 */
-    TXOP_print_s, /* 14 */
-    TXOP_print_raw, /* 15 */
-    TXOP_print_raw_s, /* 16 */
-    TXOP_include, /* 17 */
-    TXOP_include_s, /* 18 */
-    TXOP_for_start, /* 19 */
-    TXOP_for_next, /* 20 */
-    TXOP_fetch_iter, /* 21 */
+    TXOP_fetch_lvar, /* 11 */
+    TXOP_fetch_field, /* 12 */
+    TXOP_fetch_field_s, /* 13 */
+    TXOP_print, /* 14 */
+    TXOP_print_s, /* 15 */
+    TXOP_print_raw, /* 16 */
+    TXOP_print_raw_s, /* 17 */
+    TXOP_include, /* 18 */
+    TXOP_include_s, /* 19 */
+    TXOP_for_start, /* 20 */
+    TXOP_for_iter, /* 21 */
     TXOP_add, /* 22 */
     TXOP_sub, /* 23 */
     TXOP_mul, /* 24 */
@@ -103,6 +103,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_literal,
     TXCODE_literal_i,
     TXCODE_fetch_s,
+    TXCODE_fetch_lvar,
     TXCODE_fetch_field,
     TXCODE_fetch_field_s,
     TXCODE_print,
@@ -112,8 +113,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_include,
     TXCODE_include_s,
     TXCODE_for_start,
-    TXCODE_for_next,
-    TXCODE_fetch_iter,
+    TXCODE_for_iter,
     TXCODE_add,
     TXCODE_sub,
     TXCODE_mul,
@@ -149,6 +149,7 @@ static const U8 tx_oparg[] = {
     TXCODE_W_SV, /* literal */
     TXCODE_W_INT, /* literal_i */
     TXCODE_W_KEY, /* fetch_s */
+    TXCODE_W_VAR, /* fetch_lvar */
     0U, /* fetch_field */
     TXCODE_W_KEY, /* fetch_field_s */
     0U, /* print */
@@ -158,8 +159,7 @@ static const U8 tx_oparg[] = {
     0U, /* include */
     TXCODE_W_SV, /* include_s */
     TXCODE_W_VAR, /* for_start */
-    TXCODE_GOTO, /* for_next */
-    TXCODE_W_INT, /* fetch_iter */
+    TXCODE_GOTO, /* for_iter */
     0U, /* add */
     0U, /* sub */
     0U, /* mul */
@@ -195,6 +195,7 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(literal), newSViv(TXOP_literal));
     (void)hv_stores(ops, STRINGIFY(literal_i), newSViv(TXOP_literal_i));
     (void)hv_stores(ops, STRINGIFY(fetch_s), newSViv(TXOP_fetch_s));
+    (void)hv_stores(ops, STRINGIFY(fetch_lvar), newSViv(TXOP_fetch_lvar));
     (void)hv_stores(ops, STRINGIFY(fetch_field), newSViv(TXOP_fetch_field));
     (void)hv_stores(ops, STRINGIFY(fetch_field_s), newSViv(TXOP_fetch_field_s));
     (void)hv_stores(ops, STRINGIFY(print), newSViv(TXOP_print));
@@ -204,8 +205,7 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(include), newSViv(TXOP_include));
     (void)hv_stores(ops, STRINGIFY(include_s), newSViv(TXOP_include_s));
     (void)hv_stores(ops, STRINGIFY(for_start), newSViv(TXOP_for_start));
-    (void)hv_stores(ops, STRINGIFY(for_next), newSViv(TXOP_for_next));
-    (void)hv_stores(ops, STRINGIFY(fetch_iter), newSViv(TXOP_fetch_iter));
+    (void)hv_stores(ops, STRINGIFY(for_iter), newSViv(TXOP_for_iter));
     (void)hv_stores(ops, STRINGIFY(add), newSViv(TXOP_add));
     (void)hv_stores(ops, STRINGIFY(sub), newSViv(TXOP_sub));
     (void)hv_stores(ops, STRINGIFY(mul), newSViv(TXOP_mul));
