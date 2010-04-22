@@ -79,6 +79,7 @@ struct tx_state_s {
     SV** pad;    /* AvARRAY(locals) */
 
     HV* function;
+    HV* block;
 
     U32 hint_size;
 
@@ -612,6 +613,37 @@ XSLATE(ge) {
     TX_st->pc++;
 }
 
+
+XSLATE_w_sv(insert_block) {
+    SV* const name = TX_op_arg;
+    HE* he;
+
+    if(TX_st->block && (he = hv_fetch_ent(TX_st->block, name, FALSE, 0U))) {
+        dSP;
+
+        ENTER;
+        SAVETMPS;
+        mXPUSHu(TX_st->pc + 1); /* return address */
+        PUTBACK;
+        /* XXX: should do something else? */
+        TX_st->pc = SvUV(hv_iterval(TX_st->block, he));
+    }
+    else {
+        croak("Block %s is not defined", tx_neat(aTHX_ name));
+    }
+}
+
+XSLATE_w_sv(begin_block) {
+    TX_st->pc++;
+}
+
+XSLATE(end_block) {
+    SV* const retaddr = TX_pop();
+    TX_st->pc = SvUVX(retaddr);
+    FREETMPS;
+    LEAVE;
+}
+
 XSLATE_w_key(function) {
     HE* he;
     if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
@@ -633,6 +665,10 @@ XSLATE(call) {
 
 XSLATE_goto(goto) {
     TX_st->pc = SvUVX(TX_op_arg);
+}
+
+XSLATE(exit) {
+    TX_st->pc = TX_st->code_len;
 }
 
 XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
@@ -736,6 +772,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     Safefree(st->lines);
 
     SvREFCNT_dec(st->function);
+    SvREFCNT_dec(st->block);
     SvREFCNT_dec(st->locals);
     SvREFCNT_dec(st->targ);
     SvREFCNT_dec(st->self);
@@ -774,6 +811,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     Copy(proto_lines, st->lines, len, U16);
 
     st->function = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->function, param);
+    st->block    = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->block,    param);
     st->locals   = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->locals, param);
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
     st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
@@ -957,6 +995,18 @@ CODE:
     tobj = hv_iterval((HV*)SvRV(*svp),
          hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U)
     );
+
+    svp = hv_fetchs(self, "function", FALSE);
+    if(svp && SvOK(*svp)) {
+        if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
+            st.function = (HV*)SvRV(*svp);
+            SvREFCNT_inc(st.function);
+        }
+        else {
+            croak("Function table must be a HASH reference");
+        }
+    }
+
     tmpl = newAV();
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
 
@@ -980,17 +1030,6 @@ CODE:
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);
     sv_rvweaken(st.self);
-
-    svp = hv_fetchs(self, "function", FALSE);
-    if(svp && SvOK(*svp)) {
-        if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
-            st.function = (HV*)SvRV(*svp);
-            SvREFCNT_inc(st.function);
-        }
-        else {
-            croak("Function table must be a HASH reference");
-        }
-    }
 
     st.hint_size = 64;
 
@@ -1075,6 +1114,16 @@ CODE:
                 l = (U16)SvIV(*line);
             }
             st.lines[i] = l;
+
+
+            /* special cases */
+            if(opnum == TXOP_begin_block) {
+                if(!st.block) {
+                    st.block = newHV();
+                    ((tx_state_t*)mg->mg_ptr)->block = st.block;
+                }
+                (void)hv_store_ent(st.block, st.code[i].arg, newSViv(i), 0U);
+            }
         }
         else {
             croak("Oops: Broken code found on [%d]", (int)i);

@@ -41,9 +41,13 @@ XSLATE(lt);
 XSLATE(le);
 XSLATE(gt);
 XSLATE(ge);
+XSLATE_w_sv(insert_block);
+XSLATE_w_sv(begin_block);
+XSLATE(end_block);
 XSLATE_w_key(function);
 XSLATE(call);
 XSLATE_goto(goto);
+XSLATE(exit);
 
 enum tx_opcode_t {
     TXOP_noop, /* 0 */
@@ -85,9 +89,13 @@ enum tx_opcode_t {
     TXOP_le, /* 36 */
     TXOP_gt, /* 37 */
     TXOP_ge, /* 38 */
-    TXOP_function, /* 39 */
-    TXOP_call, /* 40 */
-    TXOP_goto, /* 41 */
+    TXOP_insert_block, /* 39 */
+    TXOP_begin_block, /* 40 */
+    TXOP_end_block, /* 41 */
+    TXOP_function, /* 42 */
+    TXOP_call, /* 43 */
+    TXOP_goto, /* 44 */
+    TXOP_exit, /* 45 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -131,9 +139,13 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_le,
     TXCODE_gt,
     TXCODE_ge,
+    TXCODE_insert_block,
+    TXCODE_begin_block,
+    TXCODE_end_block,
     TXCODE_function,
     TXCODE_call,
     TXCODE_goto,
+    TXCODE_exit,
     NULL
 }; /* tx_opcode[] */
 
@@ -177,9 +189,13 @@ static const U8 tx_oparg[] = {
     0U, /* le */
     0U, /* gt */
     0U, /* ge */
+    TXCODE_W_SV, /* insert_block */
+    TXCODE_W_SV, /* begin_block */
+    0U, /* end_block */
     TXCODE_W_KEY, /* function */
     0U, /* call */
     TXCODE_GOTO, /* goto */
+    0U, /* exit */
 }; /* tx_oparg[] */
 
 static void
@@ -223,7 +239,11 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(le), newSViv(TXOP_le));
     (void)hv_stores(ops, STRINGIFY(gt), newSViv(TXOP_gt));
     (void)hv_stores(ops, STRINGIFY(ge), newSViv(TXOP_ge));
+    (void)hv_stores(ops, STRINGIFY(insert_block), newSViv(TXOP_insert_block));
+    (void)hv_stores(ops, STRINGIFY(begin_block), newSViv(TXOP_begin_block));
+    (void)hv_stores(ops, STRINGIFY(end_block), newSViv(TXOP_end_block));
     (void)hv_stores(ops, STRINGIFY(function), newSViv(TXOP_function));
     (void)hv_stores(ops, STRINGIFY(call), newSViv(TXOP_call));
     (void)hv_stores(ops, STRINGIFY(goto), newSViv(TXOP_goto));
+    (void)hv_stores(ops, STRINGIFY(exit), newSViv(TXOP_exit));
 } /* tx_register_ops() */

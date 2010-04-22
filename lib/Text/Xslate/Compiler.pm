@@ -62,6 +62,9 @@ has block_table => (
     is  => 'rw',
     isa => 'HashRef',
 
+    clearer => 'clear_block_table',
+
+    lazy    => 1,
     default => sub{ {} },
 );
 
@@ -83,6 +86,25 @@ sub compile {
     my $ast = $self->parse($str);
 
     my @code = $self->_compile_ast($ast);
+    push @code, ['exit'];
+
+    # sub blocks
+    foreach my $block(values %{ $self->block_table }) {
+        push @code, [ 'begin_block', $block->{name} ];
+
+        if($block->{name} eq 'after') {
+            push @code, ['super'];
+        }
+
+        push @code, @{ $block->{body} };
+
+        if($block->{name} eq 'before') {
+            push @code, ['super'];
+        }
+
+        push @code, [ 'end_block' ];
+    }
+    $self->clear_block_table();
 
     $self->_optimize(\@code) if $optimize // _OPTIMIZE // 1;
 
@@ -169,13 +191,14 @@ sub _generate_proc {
 
 
     $self->block_table->{$name} = {
-        name   => [ $name ],
+        type   => $node->id,
+        name   => $name,
         params => [ map{ $_->id } @{$params} ],
         body   => [ $self->_compile_ast($block) ],
     };
 
     if($node->id eq 'block') {
-        return [ exec_block => $name ];
+        return [ insert_block => $name ];
     }
     else {
         return;
