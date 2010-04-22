@@ -183,6 +183,8 @@ sub _compiler {
                 $symbol->value($name);
             }
         }
+
+        $self->{compiler} = $compiler;
     }
 
     return $compiler;

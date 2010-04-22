@@ -298,7 +298,7 @@ sub BUILD {
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
     #$parser->symbol('var')      ->set_std(\&_std_var);
-    $parser->symbol('for')      ->set_std(\&_std_proc);
+    $parser->symbol('for')      ->set_std(\&_std_for);
     $parser->symbol('if')       ->set_std(\&_std_if);
 
     $parser->symbol('print')    ->set_std(\&_std_command);
@@ -308,7 +308,7 @@ sub BUILD {
 
     # template inheritance
 
-    $parser->symbol('extend')   ->set_std(\&_std_command);
+    $parser->symbol('extends')  ->set_std(\&_std_command);
     $parser->symbol('block')    ->set_std(\&_std_proc);
     $parser->symbol('override') ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
@@ -708,22 +708,57 @@ sub _std_block {
 #    return @a;
 #}
 
+sub _std_for {
+    my($parser, $symbol) = @_;
+
+    my $proc = $symbol->clone(arity => "for");
+
+    $proc->first( $parser->expression(0) );
+
+    $parser->new_scope();
+
+    $parser->advance("->");
+    $parser->advance("(");
+
+    my @vars;
+
+    while((my $t = $parser->token)->arity eq "variable") {
+        push @vars, $t;
+        $parser->define($t);
+        $parser->advance;
+    }
+
+    $proc->second( \@vars );
+
+    $parser->advance(")");
+    $parser->advance("{");
+    $proc->third($parser->statements());
+    $parser->advance("}");
+
+    $parser->pop_scope();
+
+    return $proc;
+}
+
 sub _std_proc {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => "proc");
+    my $name = $parser->token;
+    if($name->arity ne "name") {
+        $parser->_parse_error("Expected name, but " . $parser->token . " is not");
+    }
 
-    $proc->first( $parser->expression(0) );
-
-    $parser->advance("->");
+    $parser->define($name);
+    $proc->first( $name->id );
+    $parser->advance();
 
     $parser->new_scope();
-
+    $parser->advance("->");
     if($parser->token->id eq "(") {
         $parser->advance("(");
 
         my @vars;
-
         while((my $t = $parser->token)->arity eq "variable") {
             push @vars, $t;
             $parser->define($t);
@@ -731,17 +766,13 @@ sub _std_proc {
         }
 
         $proc->second( \@vars );
-
         $parser->advance(")");
     }
 
     $parser->advance("{");
-
     $proc->third($parser->statements());
-
-    $parser->pop_scope();
-
     $parser->advance("}");
+    $parser->pop_scope();
 
     return $proc;
 }

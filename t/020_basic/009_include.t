@@ -1,5 +1,4 @@
 #!perl -w
-# NOTE: the optimizer could break goto addresses
 
 use strict;
 use Test::More;
