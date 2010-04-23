@@ -28,7 +28,7 @@ M
 
 clean_files qw(
     Text-Xslate-* *.stackdump
-    *.gcda *.gcno *.gcov
+    xs/*.gcda xs/*.gcno xs/*.gcov
     nytprof *.out
     cover_db
 );
