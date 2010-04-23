@@ -32,4 +32,12 @@ T
 is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(1)';
 is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(2)';
 
+# piling
+$tx = Text::Xslate->new(string => <<'T', cache => 0);
+: pile myapp::base
+: block hello -> {
+    Hello, <:= $lang :> world!
+: }
+T
+
 done_testing;

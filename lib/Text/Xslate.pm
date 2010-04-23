@@ -392,7 +392,9 @@ Operator precedence:
 Xslate templates may be recursively included, but including depth is
 limited to 100.
 
-=head2 Template inheritance
+=head2 Template Piling
+
+Also called as B<template inheritance>.
 
 (NOT YET IMPLEMENTED)
 

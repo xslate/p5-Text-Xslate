@@ -784,7 +784,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 }
 
 #ifdef USE_ITHREADS
-SV*
+static SV*
 tx_sv_dup_inc(pTHX_ const SV* const sv, CLONE_PARAMS* const param) {
     SV* const newsv = sv_dup(sv, param);
     SvREFCNT_inc_simple_void(newsv);

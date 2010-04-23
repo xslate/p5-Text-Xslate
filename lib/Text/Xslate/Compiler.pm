@@ -148,6 +148,15 @@ sub _generate_command {
     }
     return @code;
 }
+sub _generate_bare_command {
+    my($self, $node) = @_;
+
+    my @code;
+
+    Carp::croak("Not yet implemented: " . $node->dump);
+
+    return @code;
+}
 
 sub _generate_for {
     my($self, $node) = @_;
