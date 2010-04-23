@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_08 Fri Apr 23 13:33:14 2010
+    - Add escaped_string() to tell the engine that strings are escaped
+
 0.001_07 Thu Apr 22 12:59:03 2010
     - Fix a bug that for-loops for an empty array did not work
 

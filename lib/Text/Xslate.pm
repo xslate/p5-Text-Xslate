@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.001_07';
+our $VERSION = '0.001_08';
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -253,7 +253,7 @@ Text::Xslate - High performance template engine (ALPHA)
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.001_07.
+This document describes Text::Xslate version 0.001_08.
 
 =head1 SYNOPSIS
 
