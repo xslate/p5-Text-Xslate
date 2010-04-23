@@ -36,7 +36,7 @@ SKIP: {
     skip "todo", 1;
 # piling
 $tx = Text::Xslate->new(string => <<'T', cache => 0);
-: pile myapp::base
+: cascade myapp::base
 : block hello -> {
     Hello, <:= $lang :> world!
 : }

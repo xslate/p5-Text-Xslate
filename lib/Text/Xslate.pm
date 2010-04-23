@@ -422,7 +422,7 @@ Operator precedence:
 Xslate templates may be recursively included, but including depth is
 limited to 100.
 
-=head2 Template Piling
+=head2 Cascading templates
 
 Also called as B<template inheritance>.
 
@@ -438,7 +438,7 @@ Base templates F<mytmpl/base.tx>:
 
 Derived templates F<mytmpl/foo.tx>:
 
-    : extends base
+    : cascade base
     : # use default title
     : override body {
         My Template Body!
@@ -446,7 +446,7 @@ Derived templates F<mytmpl/foo.tx>:
 
 Derived templates F<mytmpl/bar.tx>:
 
-    : extends foo
+    : cascade foo
     : # use default title
     : before body {
         Before body!
@@ -467,24 +467,6 @@ Output:
         Before body!
         My Template Body!
         Before Body!
-
-=head1 TODO
-
-=over
-
-=item *
-
-Documentation
-
-=item *
-
-Template inheritance (like Text::MicroTemplate::Extended)
-
-=item *
-
-Opcode-to-XS compiler
-
-=back
 
 =head1 DEPENDENCIES
 

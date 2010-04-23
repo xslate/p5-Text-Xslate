@@ -311,7 +311,7 @@ sub BUILD {
 
     # template inheritance
 
-    $parser->symbol('pile')     ->set_std(\&_std_bare_command);
+    $parser->symbol('cascade')  ->set_std(\&_std_bare_command);
     $parser->symbol('block')    ->set_std(\&_std_proc);
     $parser->symbol('override') ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
