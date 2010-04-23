@@ -175,7 +175,6 @@ sub _generate_for {
 
     local $self->lvar->{$lvar_name} = $lvar_id;
 
-    my $for_start = scalar @code;
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
