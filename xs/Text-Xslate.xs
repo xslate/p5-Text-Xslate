@@ -9,8 +9,11 @@
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
     U32 depth;
+    HV* escaped_string_stash;
 } my_cxt_t;
 START_MY_CXT
+
+#define TX_ESC_CLASS "Text::Xslate::EscapedString"
 
 /* buffer size coefficient (bits), used for memory allocation */
 /* (1 << 6) * U16_MAX = about 4 MiB */
@@ -231,6 +234,26 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     return sv;
 }
 
+static SV*
+tx_escaped_string(pTHX_ SV* const str) {
+    dMY_CXT;
+    SV* const sv = sv_newmortal();
+    sv_copypv(sv, str);
+    return sv_2mortal(sv_bless(newRV_inc(sv), MY_CXT.escaped_string_stash));
+}
+
+static bool
+tx_str_is_escaped(pTHX_ const SV* const sv) {
+    if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
+        dMY_CXT;
+        if(!SvOK(SvRV(sv))) {
+            croak("Cannot use escaped string: not a reference to a string");
+        }
+        return SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
+    }
+    return FALSE;
+}
+
 XSLATE(noop) {
     TX_st->pc++;
 }
@@ -326,6 +349,9 @@ XSLATE(print) {
 
     if(SvNIOK(sv) && !SvPOK(sv)){
         sv_catsv_nomg(output, sv);
+    }
+    else if(tx_str_is_escaped(aTHX_ sv)) {
+        sv_catsv_nomg(output, SvRV(sv));
     }
     else {
         STRLEN len;
@@ -953,6 +979,7 @@ BOOT:
     HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
     MY_CXT_INIT;
     MY_CXT.depth = 0;
+    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
     tx_init_ops(aTHX_ ops);
 }
 
@@ -964,6 +991,7 @@ CODE:
 {
     MY_CXT_CLONE;
     MY_CXT.depth = 0;
+    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
     PERL_UNUSED_VAR(items);
 }
 
@@ -1179,3 +1207,40 @@ CODE:
     XSRETURN(1);
 }
 
+void
+escaped_string(SV* str)
+CODE:
+{
+    ST(0) = tx_escaped_string(aTHX_ str);
+    XSRETURN(1);
+}
+
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString
+
+FALLBACK: TRUE
+
+void
+new(SV* klass, SV* str)
+CODE:
+{
+    if(SvROK(klass)) {
+        croak("Cannot call %s->new as an instance method", TX_ESC_CLASS);
+    }
+    if(strNE(SvPV_nolen_const(klass), TX_ESC_CLASS)) {
+        croak("You cannot use a subclass from %s as a escaped string", TX_ESC_CLASS);
+    }
+    ST(0) = tx_escaped_string(aTHX_ str);
+    XSRETURN(1);
+}
+
+void
+as_string(SV* self, ...)
+OVERLOAD: \"\"
+CODE:
+{
+    if(!( SvROK(self) && SvOK(SvRV(self))) ) {
+        croak("Cannot call %s->as_string as a class method", TX_ESC_CLASS);
+    }
+    ST(0) = SvRV(self);
+    XSRETURN(1);
+}

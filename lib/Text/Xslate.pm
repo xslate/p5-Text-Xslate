@@ -9,6 +9,9 @@ our $VERSION = '0.001_07';
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
+use parent qw(Exporter);
+our @EXPORT_OK = qw(escaped_string);
+
 our $DEBUG;
 $DEBUG = $ENV{XSLATE} // $DEBUG // '';
 
@@ -287,6 +290,15 @@ This document describes Text::Xslate version 0.001_07.
 
     print $tx->render(\%vars);
 
+    # you can tell the engine that some strings are already escaped.
+    use Text::Xslate qw(escaped_string);
+
+    $vars{email} = escaped_string('gfx &lt;gfuji at cpan.org&gt;');
+    # or
+    $vars{email} = Text::Xslate::EscapedString->new(
+        'gfx &lt;gfuji at cpan.org&gt;',
+    ); # if you don't want to pollute your namespace.
+
 =head1 DESCRIPTION
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
@@ -323,6 +335,24 @@ Options:
 =head3 B<< $tx->render($name, \%vars) -> Str >>
 
 Renders a template with variables, and returns the result.
+
+=head3 Exportable functions
+
+=head3 C<< escaped_string($str :Str) -> EscapedString >>
+
+Mark I<$str> as escaped. Escaped strings won't escaped by the engine,
+so you must make sure that these strings are escaped.
+
+For example:
+
+    my $tx = Text::Xslate->new(
+        string => "Mailaddress: <:= $email :>",
+    );
+    my %vars = (
+        email => "Foo &lt;foo@example.com&gt;",
+    );
+    print $tx->render(\%email);
+    # => Mailaddress: Foo &lt;foo@example.com&gt;
 
 =head1 TEMPLATE SYNTAX
 
