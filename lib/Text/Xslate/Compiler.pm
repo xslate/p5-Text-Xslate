@@ -68,6 +68,14 @@ has block_table => (
     default => sub{ {} },
 );
 
+# cascading templates have no main
+has no_main => (
+    is  => 'rw',
+    isa => 'Bool',
+
+    init_arg => undef,
+);
+
 sub compile_str {
     my($self, $str) = @_;
 
