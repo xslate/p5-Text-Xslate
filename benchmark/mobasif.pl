@@ -14,13 +14,12 @@ my $vars      = {
     hoge => 1,
     fuga => "fuga",
 };
-my @load_path = qw(benchmark/template);
 
 my $mst_in  = "benchmark/template/simple.mst";
 my $mst_bin = "benchmark/template/simple.mst.out";
 MobaSiF::Template::Compiler::compile($mst_in, $mst_bin);
 
-my $tx = Text::Xslate->new(path => \@load_path);
+my $tx = Text::Xslate->new(cache => 2);
 
 $tx->render('simple.tx', $vars) eq MobaSiF::Template::insert($mst_bin, $vars)
     or MobaSiF::Template::insert($mst_bin, $vars);
