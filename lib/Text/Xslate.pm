@@ -123,7 +123,8 @@ sub _load_file {
         $string = <$in>;
     }
 
-    my $mtime = ( stat $fullpath )[9];
+    my $mtime;
+    $mtime = ( stat $fullpath )[9] if $self->{cache} < 2;
 
     if($is_assembly) {
         $self->_load_assembly($string, $file, $fullpath, $mtime);
@@ -143,7 +144,8 @@ sub _load_file {
                  unlink "${fullpath}c";
             }
             else {
-                 utime $mtime, $mtime, "${fullpath}c";
+                my $t = $mtime // ( stat $fullpath )[9];
+                utime $t, $t, "${fullpath}c";
             }
         }
 
@@ -328,7 +330,7 @@ Options:
 
 =item C<< function => \%functions >>
 
-=item C<< cache => $bool // true >>
+=item C<< cache => $level // 1 >>
 
 =back
 

@@ -67,6 +67,15 @@ rename "${x}~" => $x;
 
 is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "auto reload";
 
+$tx = Text::Xslate->new(cache => 2);
+
 unlink(@caches) or diag "Cannot unlink: $!";
+
+is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "cache => 2";
+is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "cache => 2";
+
+unlink(@caches) or diag "Cannot unlink: $!";
+
+
 
 done_testing;

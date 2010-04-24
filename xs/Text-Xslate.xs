@@ -947,6 +947,10 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
         SV* const mtime    = AvARRAY(tmpl)[TXo_MTIME];
         Stat_t f;
 
+        if(!SvOK(mtime)) { /* non-checking mode (or relese mode) */
+            return (tx_state_t*)mg->mg_ptr;
+        }
+
         if(PerlLIO_stat(SvPV_nolen_const(fullpath), &f) < 0) {
             why = "failed to stat(2)";
             goto err;
