@@ -1,0 +1,14 @@
+List:
+[% FOREACH item IN data -%]
+    * [% item.title %]
+[% END -%]
+
+List:
+[% FOREACH item IN data -%]
+    * [% item.title %]
+[% END -%]
+
+List:
+[% FOREACH item IN data -%]
+    * [% item.title %]
+[% END -%]

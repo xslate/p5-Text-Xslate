@@ -1,0 +1,26 @@
+<html>
+<head></head>
+<body>
+interpolation x 20
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+$ if (hoge) { $ $= h: fuga $ $ } $
+</body>
+</html>
