@@ -88,7 +88,7 @@ sub compile {
     my @code = $self->_compile_ast($ast);
     push @code, ['exit'];
 
-    # sub blocks
+    # subblocks
     foreach my $block(values %{ $self->block_table }) {
         push @code, [ 'begin_block', $block->{name} ];
 
