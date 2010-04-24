@@ -750,12 +750,15 @@ tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     }
 
     while(st.pc < code_len) {
+#ifdef DEBUGGING
         Size_t const old_pc = st.pc;
+#endif
         CALL_FPTR(st.code[st.pc].exec_code)(aTHX_ &st);
-
+#ifdef DEBUGGING
         if(UNLIKELY(old_pc == st.pc)) {
             croak("panic: pogram counter has not been changed on [%d]", (int)st.pc);
         }
+#endif
     }
 
     base->hint_size = SvCUR(st.output);
