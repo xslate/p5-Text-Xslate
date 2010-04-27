@@ -228,7 +228,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate - High performance template engine (ALPHA)
+Text::Xslate - High performance template engine
 
 =head1 VERSION
 
@@ -401,19 +401,7 @@ Operator precedence:
 Xslate templates may be recursively included, but including depth is
 limited to 100.
 
-=head2 Macro blocks
-
-    : macro add ->($x, $y) {
-    :   x + $y;
-    : }
-    := add(10, 20)
-
-    : macro signeture -> {
-        This is foo version <:= $VERSION :>
-    : }
-    : signeture()
-
-=head2 Cascading templates
+=head2 Template cascading
 
 Base templates F<mytmpl/base.tx>:
 
@@ -423,7 +411,7 @@ Base templates F<mytmpl/base.tx>:
 
     : block body -> {} # without default
 
-Derived templates F<mytmpl/foo.tx>:
+Another derived template F<mytmpl/foo.tx>:
 
     : cascade mytmpl::base
     : # use default title
@@ -431,7 +419,7 @@ Derived templates F<mytmpl/foo.tx>:
         My Template Body!
     : }
 
-Derived templates F<mytmpl/bar.tx>:
+Yet another derived template F<mytmpl/bar.tx>:
 
     : cascade mytmpl::foo
     : around title -> {
@@ -462,6 +450,18 @@ Output:
         Before Body!
 
 This is also called as B<template inheritance>.
+
+=head2 Macro blocks
+
+    : macro add ->($x, $y) {
+    :   x + $y;
+    : }
+    := add(10, 20)
+
+    : macro signeture -> {
+        This is foo version <:= $VERSION :>
+    : }
+    : signeture()
 
 =head1 DEPENDENCIES
 
