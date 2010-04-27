@@ -77,6 +77,14 @@ has input => (
     init_arg => undef,
 );
 
+has file => (
+    is  => 'rw',
+    isa => 'Str',
+
+    default  => '<input>',
+    required => 0,
+);
+
 has line => (
     is  => 'rw',
     isa => 'Int',
@@ -229,7 +237,6 @@ sub next_token {
 sub parse {
     my($parser, $input) = @_;
 
-    $parser->line(0);
     $parser->input( $parser->preprocess($input) );
 
     return $parser->statements();
@@ -317,7 +324,7 @@ sub BUILD {
     $parser->symbol('around')   ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
     $parser->symbol('after')    ->set_std(\&_std_proc);
-    $parser->symbol('super')    ->set_std(\&_std_command);
+    $parser->symbol('super')    ->set_nud(\&_nud_literal);
 
     return;
 }
@@ -916,7 +923,7 @@ sub _std_bare_command {
 sub _parse_error {
     my($self, $message) = @_;
 
-    Carp::croak("Xslate::Parser: $message at template line " . ($self->line + 1));
+    Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s', $self->file, $self->line+1, $message);
 }
 
 no Mouse;

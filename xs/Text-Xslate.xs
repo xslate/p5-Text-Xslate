@@ -463,27 +463,6 @@ XSLATE_w_key(include_s) {
 }
 
 
-XSLATE_w_key(cascade) {
-    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
-    dMARK; /* with ... */
-    PERL_UNUSED_VAR(MARK);
-
-    if(TX_st->next) {
-        croak("Cannot cascade a template twice");
-    }
-    TX_st->next = st;
-
-    ENTER;
-    SAVEVPTR(st->top);
-    st->top = TX_st;
-
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
-    LEAVE;
-
-    TX_st->pc++;
-}
-
-
 XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIVX(TX_op_arg);
@@ -678,32 +657,16 @@ XSLATE(ge) {
 }
 
 XSLATE(macrocall) {
-    tx_state_t* const st = (tx_state_t*)TX_st_sa;
-    U32 const addr       = (U32)  SvUVX(TX_st_sb);
+    U32 const addr = (U32)SvUVX(TX_st_sa);
     dSP;
-    SV* before;
-    SV* after;
 
     ENTER;
     SAVETMPS;
 
-    before = sv_2mortal(Perl_newSVpvf(aTHX_ "%s@before", SvPVX_const(TX_st->targ)));
-    after  = sv_2mortal(Perl_newSVpvf(aTHX_ "%s@after",  SvPVX_const(TX_st->targ)));
+    mXPUSHu(TX_st->pc + 1); /* return address */
+    PUTBACK;
 
-    /* before */
-
-    if(st->tmpl == TX_st->tmpl) {
-        mXPUSHu(TX_st->pc + 1); /* return address */
-        PUTBACK;
-
-        TX_st->pc = addr;
-    }
-    else {
-        mXPUSHu(addr + 1);
-        PUTBACK;
-
-        tx_exec(aTHX_ st, TX_st->output, TX_st->vars, addr);
-    }
+    TX_st->pc = addr;
 }
 
 XSLATE_w_key(macro_begin) {
@@ -723,24 +686,14 @@ XSLATE(macro_end) {
 XSLATE_w_key(macro) {
     SV* const name = TX_op_arg;
     HE* he;
-    tx_state_t* st = TX_st->top ? TX_st->top : TX_st;
-
-    TX_st_sa = &PL_sv_undef;
-
-    while(st) {
-        if(st->macro && (he = hv_fetch_ent(st->macro, name, FALSE, 0U))) {
-            TX_st_sa = (SV*)st; /* XXX: possibly unsafe */
-            TX_st_sb = hv_iterval(st->macro, he);
-            sv_copypv(TX_st->targ, name);
-            break;
-        }
-
-        st = st->next;
+    if(TX_st->macro && (he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
+        TX_st_sa = hv_iterval(TX_st->macro, he);
     }
 
-    if(!SvOK(TX_st_sb)) {
+    if(!SvOK(TX_st_sa)) {
         croak("Macro %s is not defined", tx_neat(aTHX_ name));
     }
+
     TX_st->pc++;
 }
 

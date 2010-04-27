@@ -24,6 +24,7 @@ my @blog_entries = map{ BlogEntry->new($_) } (
 my $tx = Text::Xslate->new(
     file  => 'child.tx',
     path  => ["$Bin/template"],
+    cache => 0,
 );
 
 print $tx->render('child.tx', { blog_entries => \@blog_entries });

@@ -50,4 +50,5 @@ TX
 is $tx->render({ data => [1 .. 100] }),
     join('', map{ sprintf "[%d]\n", $_ + 5 } 1 .. 100);
 
+
 done_testing;

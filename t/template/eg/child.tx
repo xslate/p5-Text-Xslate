@@ -1,4 +1,4 @@
-: cascade base
+: cascade eg::base
 
 <: around title ->{ :>My amazing blog<: } :>
 

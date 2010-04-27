@@ -113,7 +113,7 @@ sub load_file {
         $protocode = $self->_load_assembly($string, $file, $fullpath, $mtime);
     }
     else {
-        $protocode = $self->_compiler->compile($string);
+        $protocode = $self->_compiler->compile($string, file => $file);
 
         if($self->{cache}) {
             # compile templates into assemblies
@@ -412,34 +412,34 @@ limited to 100.
 
 =head2 Cascading templates
 
-Also called as B<template inheritance>.
-
-(NOT YET IMPLEMENTED)
-
 Base templates F<mytmpl/base.tx>:
 
     : block title -> { # with default
         [My Template!]
     : }
 
-    : block body is abstract # without default
+    : block body -> {} # without default
 
 Derived templates F<mytmpl/foo.tx>:
 
-    : cascade base
+    : cascade mytmpl::base
     : # use default title
-    : override body {
+    : around body -> {
         My Template Body!
     : }
 
 Derived templates F<mytmpl/bar.tx>:
 
-    : cascade foo
-    : # use default title
-    : before body {
+    : cascade mytmpl::foo
+    : around title -> {
+        --------------
+        : super
+        --------------
+    : }
+    : before body -> {
         Before body!
     : }
-    : after body {
+    : after body -> {
         After body!
     : }
 
@@ -450,11 +450,15 @@ Then, Perl code:
 
 Output:
 
+        --------------
         [My Template!]
+        --------------
 
         Before body!
         My Template Body!
         Before Body!
+
+This is also called as B<template inheritance>.
 
 =head1 DEPENDENCIES
 

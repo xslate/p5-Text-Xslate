@@ -79,7 +79,7 @@ has engine => (
 
 has cascading => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'Maybe[Str]',
 
     required => 0,
 );
@@ -100,6 +100,9 @@ sub compile_str {
 
 sub compile {
     my($self, $str, %args) = @_;
+
+    $self->file($args{file}) if defined $args{file};
+    $self->line(0);
 
     my $ast = $self->parse($str);
 
@@ -122,42 +125,7 @@ sub compile {
             }
         }
 
-        @code = @{$main}; # replace
-
-        for(my $i = 0; $i < @code; $i++) {
-            my $c = $code[$i];
-            if($c->[0] eq 'macro_begin') {
-                my $name = $c->[1];
-
-                if(exists $mtable->{$name}) {
-                    Carp::croak(
-                        "Xslate($mtable->{$name}{line}): " .
-                        "$name is already defined in " . $self->cascading . "\n" .
-                        "(you must use before/around/after to override blocks)",
-                    );
-                }
-
-                my $before = delete $mtable->{$name . '@before'};
-                my $around = delete $mtable->{$name . '@around'};
-                my $after  = delete $mtable->{$name . '@after'};
-
-                my @body;
-                $i++;
-                if(defined $before) {
-                    foreach my $m(@{$before}) {
-                        splice @code, $i, 0, @{$m->{body}};
-                    }
-                }
-
-                1 while($code[++$i][0] ne 'macro_end');
-
-                if(defined $after) {
-                    foreach my $m(@{$after}) {
-                        splice @code, $i, 0, @{$m->{body}};
-                    }
-                }
-            }
-        }
+        @code = $self->_compile_cascade($main);
     }
     else {
         push @code, ['exit'];
@@ -175,7 +143,10 @@ sub compile {
 
     $self->_optimize(\@code) if $args{optimize} // _OPTIMIZE // 1;
 
-    print "// xslate assembly\n", $self->as_assembly(\@code) if _DUMP_ASM;
+    print "// ", $self->file, "\n", $self->as_assembly(\@code) if _DUMP_ASM;
+
+    $self->file("<input>"); # reset
+
     return \@code;
 }
 
@@ -194,6 +165,72 @@ sub _compile_ast {
         push @code, $self->$generator($node);
     }
 
+    return @code;
+}
+
+sub _compile_cascade {
+    my($self, $main) = @_;
+    my $mtable = $self->macro_table;
+
+    my @code = @{$main};
+    for(my $i = 0; $i < @code; $i++) {
+        my $c = $code[$i];
+        if($c->[0] ne 'macro_begin') {
+            next;
+        }
+
+        # macro
+        my $name = $c->[1];
+        #warn "macro ", $name, "\n";
+
+        if(exists $mtable->{$name}) {
+            Carp::croak(
+                "Xslate($mtable->{$name}{line}): " .
+                "$name is already defined in " . $self->cascading . "\n" .
+                "(you must use before/around/after to override blocks)",
+            );
+        }
+
+        my $before = delete $mtable->{$name . '@before'};
+        my $around = delete $mtable->{$name . '@around'};
+        my $after  = delete $mtable->{$name . '@after'};
+
+        if(defined $before) {
+            my $n = scalar @code;
+            foreach my $m(@{$before}) {
+                splice @code, $i+1, 0, @{$m->{body}};
+            }
+            $i += scalar(@code) - $n;
+        }
+
+        my $macro_start = $i+1;
+        $i++ while($code[$i][0] ne 'macro_end'); # move to the end
+
+        if(defined $around) {
+            my @original = splice @code, $macro_start, ($i - $macro_start);
+            $i = $macro_start;
+
+            my @body;
+            foreach my $m(@{$around}) {
+                push @body, @{$m->{body}};
+            }
+            for(my $j = 0; $j < @body; $j++) {
+                if($body[$j][0] eq 'super') {
+                    splice @body, $j, 1, @original;
+                }
+            }
+            splice @code, $macro_start, 0, @body;
+
+            $i += scalar(@body);
+        }
+
+        if(defined $after) {
+            foreach my $m(@{$after}) {
+                splice @code, $i, 0, @{$m->{body}};
+            }
+        }
+    }
+    $self->cascading(undef);
     return @code;
 }
 
@@ -356,6 +393,12 @@ sub _generate_variable {
     }
     $fetch[2] = $node->line;
     return \@fetch;
+}
+
+sub _generate_name {
+    my($self, $node) = @_;
+
+    return [ $node->id => undef, $node->line ];
 }
 
 sub _generate_literal {
