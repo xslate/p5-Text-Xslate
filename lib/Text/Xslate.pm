@@ -20,7 +20,7 @@ my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $STRING  = qr/(?: $dquoted | $squoted )/xms;
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 
-my $IDENT   = qr/(?: [.]? [a-zA-Z_][a-zA-Z0-9_]* )/xms;
+my $IDENT   = qr/(?: [.]? [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 my $XSLATE_MAGIC = ".xslate $VERSION\n";
 
@@ -177,16 +177,7 @@ sub _compiler {
         $compiler = $compiler->new();
 
         if(my $funcs = $self->{function}) {
-            while(my $name = each %{$funcs}) {
-                my $symbol = $compiler->symbol($name);
-                $symbol->set_nud(sub {
-                    my($p, $s) = @_;
-                    my $f = $s->clone(arity => 'function');
-                    $p->reserve($f);
-                    return $f;
-                });
-                $symbol->value($name);
-            }
+            $compiler->define_function(keys %{$funcs});
         }
 
         $self->{compiler} = $compiler;

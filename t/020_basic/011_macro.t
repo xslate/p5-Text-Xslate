@@ -32,15 +32,15 @@ T
 is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(1)';
 is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(2)';
 
-SKIP: {
-    skip "todo", 1;
-# piling
 $tx = Text::Xslate->new(string => <<'T', cache => 0);
-: cascade myapp::base
-: block hello -> {
-    Hello, <:= $lang :> world!
+: macro add ->($x, $y) {
+: "[" ~ ($x + $y) ~ "]"
 : }
+:= add(10, 20) # 30
+:= add(11, 22) # 33
+:= add(15, 25) # 40
 T
-}
+
+is $tx->render({}), "[30][33][40]", 'macro';
 
 done_testing;

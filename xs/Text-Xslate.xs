@@ -82,7 +82,7 @@ struct tx_state_s {
     SV** pad;    /* AvARRAY(locals) */
 
     HV* function;
-    HV* block;
+    HV* macro;
 
     U32 hint_size;
 
@@ -323,6 +323,13 @@ XSLATE_w_var(fetch_lvar) {
     SV* const idsv = TX_op_arg;
 
     TX_st_sa = TX_lvar(SvIVX(idsv));
+
+    TX_st->pc++;
+}
+
+XSLATE_w_int(fetch_arg) {
+    //PerlIO_printf(PerlIO_stderr(), "topmark=%d, ix=%d\n", (int)TOPMARK, (int)SvIVX(TX_op_arg));
+    TX_st_sa = PL_stack_base[TOPMARK + SvIVX(TX_op_arg)];
 
     TX_st->pc++;
 }
@@ -639,51 +646,60 @@ XSLATE(ge) {
     TX_st->pc++;
 }
 
+XSLATE(macrocall) {
+    SV* const macro = TX_st_sa;
+    dSP;
 
-XSLATE_w_sv(insert_block) {
-    SV* const name = TX_op_arg;
-    HE* he;
+    ENTER;
+    SAVETMPS;
 
-    if(TX_st->block && (he = hv_fetch_ent(TX_st->block, name, FALSE, 0U))) {
-        dSP;
+    mXPUSHu(TX_st->pc + 1); /* return address */
+    PUTBACK;
 
-        ENTER;
-        SAVETMPS;
-        mXPUSHu(TX_st->pc + 1); /* return address */
-        PUTBACK;
-        /* XXX: should do something else? */
-        TX_st->pc = SvUV(hv_iterval(TX_st->block, he));
-    }
-    else {
-        croak("Block %s is not defined", tx_neat(aTHX_ name));
-    }
+    TX_st->pc = SvUV(macro);
 }
 
-XSLATE_w_sv(begin_block) {
+XSLATE_w_sv(macro_begin) {
     TX_st->pc++;
 }
 
-XSLATE(end_block) {
+XSLATE(macro_end) {
     SV* const retaddr = TX_pop();
     TX_st->pc = SvUVX(retaddr);
+
+    (void)POPMARK;
+
     FREETMPS;
     LEAVE;
 }
 
+XSLATE_w_key(macro) {
+    SV* const name = TX_op_arg;
+    HE* he;
+    if(TX_st->macro && (he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
+        TX_st_sa = hv_iterval(TX_st->macro, he);
+    }
+    else {
+        croak("Macro %s is not defined", tx_neat(aTHX_ name));
+    }
+    TX_st->pc++;
+}
+
 XSLATE_w_key(function) {
+    SV* const name = TX_op_arg;
     HE* he;
 
-    if(TX_st->function && (he = hv_fetch_ent(TX_st->function, TX_op_arg, FALSE, 0U))) {
+    if(TX_st->function && (he = hv_fetch_ent(TX_st->function, name, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
     }
     else {
-        croak("Function %s is not registered", tx_neat(aTHX_ TX_op_arg));
+        croak("Function %s is not registered", tx_neat(aTHX_ name));
     }
 
     TX_st->pc++;
 }
 
-XSLATE(call) {
+XSLATE(funcall) {
     /* PUSHMARK & PUSH must be done */
     TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "calling");
 
@@ -802,7 +818,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     Safefree(st->lines);
 
     SvREFCNT_dec(st->function);
-    SvREFCNT_dec(st->block);
+    SvREFCNT_dec(st->macro);
     SvREFCNT_dec(st->locals);
     SvREFCNT_dec(st->targ);
     SvREFCNT_dec(st->self);
@@ -841,7 +857,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     Copy(proto_lines, st->lines, len, U16);
 
     st->function = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->function, param);
-    st->block    = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->block,    param);
+    st->macro    = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->macro,    param);
     st->locals   = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->locals, param);
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
     st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
@@ -1153,12 +1169,12 @@ CODE:
 
 
             /* special cases */
-            if(opnum == TXOP_begin_block) {
-                if(!st.block) {
-                    st.block = newHV();
-                    ((tx_state_t*)mg->mg_ptr)->block = st.block;
+            if(opnum == TXOP_macro_begin) {
+                if(!st.macro) {
+                    st.macro = newHV();
+                    ((tx_state_t*)mg->mg_ptr)->macro = st.macro;
                 }
-                (void)hv_store_ent(st.block, st.code[i].arg, newSViv(i), 0U);
+                (void)hv_store_ent(st.macro, st.code[i].arg, newSViv(i), 0U);
             }
         }
         else {

@@ -58,11 +58,11 @@ has lvar => ( # local varialbe id table
     default => sub{ {} },
 );
 
-has block_table => (
+has macro_table => (
     is  => 'rw',
     isa => 'HashRef',
 
-    clearer => 'clear_block_table',
+    clearer => 'clear_macro_table',
 
     lazy    => 1,
     default => sub{ {} },
@@ -89,32 +89,23 @@ sub compile_str {
 }
 
 sub compile {
-    my($self, $str, $optimize) = @_;
+    my($self, $str, %args) = @_;
 
     my $ast = $self->parse($str);
 
+    # main
     my @code = $self->_compile_ast($ast);
     push @code, ['exit'];
 
-    # subblocks
-    foreach my $block(values %{ $self->block_table }) {
-        push @code, [ 'begin_block', $block->{name} ];
-
-        if($block->{name} eq 'after') {
-            push @code, ['super'];
-        }
-
-        push @code, @{ $block->{body} };
-
-        if($block->{name} eq 'before') {
-            push @code, ['super'];
-        }
-
-        push @code, [ 'end_block' ];
+    # macros
+    foreach my $macro(values %{ $self->macro_table }) {
+        push @code, [ 'macro_begin', $macro->{name} ];
+        push @code, @{ $macro->{body} };
+        push @code, [ 'macro_end' ];
     }
-    $self->clear_block_table();
+    $self->clear_macro_table();
 
-    $self->_optimize(\@code) if $optimize // _OPTIMIZE // 1;
+    $self->_optimize(\@code) if $args{optimize} // _OPTIMIZE // 1;
 
     print $self->as_assembly(\@code) if _DUMP_ASM;
     return \@code;
@@ -128,8 +119,9 @@ sub _compile_ast {
 
     confess("Not an ARRAY reference: $ast") if ref($ast) ne 'ARRAY';
     foreach my $node(@{$ast}) {
+        blessed($node) or Carp::confess("Not a node object: $node");
         my $generator = $self->can('_generate_' . $node->arity)
-            || Carp::croak("Cannot generate codes for " . $node->dump);
+            || Carp::croak("Cannot generate codes for " . $node->arity . ": " . $node->dump);
 
         push @code, $self->$generator($node);
     }
@@ -161,8 +153,19 @@ sub _generate_bare_command {
 
     my @code;
 
-    Carp::croak("Not yet implemented: " . $node->dump);
+    if($node->id eq 'cascade') {
+        my $macro_name     = $self->first;
+        my $components_ref = $self->second;
 
+        push @code, (
+            [pushmark => ()],
+            map{ [ push => $_ ] } @{$components_ref},
+        );
+        push @code, [ call_main => $macro_name ];
+    }
+    else {
+        Carp::croak("Unknown command $node");
+    }
     return @code;
 }
 
@@ -181,7 +184,7 @@ sub _generate_for {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
-    local $self->lvar->{$lvar_name} = $lvar_id;
+    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
@@ -199,29 +202,46 @@ sub _generate_for {
     return @code;
 }
 
-sub _generate_proc {
+sub _generate_proc { # block, before, around, after
     my($self, $node) = @_;
+    my $type   = $node->id;
     my $name   = $node->first;
-    my $params = $node->second;
+    my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
-    if(exists $self->block_table->{$name}) {
-        Carp::croak("Redefinition of block $name is found");
+    local @{ $self->lvar }{ @args };
+    my $arg_ix = 0;
+    foreach my $arg(@args) {
+        # to fetch ST(ix)
+        # note that ix must start 1, not 0
+        $self->lvar->{$arg} = [ fetch_arg => ++$arg_ix ];
     }
 
-    $self->block_table->{$name} = {
-        type   => $node->id,
+    my %macro = (
+        type   => $type,
         name   => $name,
-        params => [ map{ $_->id } @{$params} ],
         body   => [ $self->_compile_ast($block) ],
-    };
+    );
 
-    if($node->id eq 'block') {
-        return [ insert_block => $name ];
+    if($type ~~ [qw(macro block)]) {
+        if(exists $self->macro_table->{$name}) {
+            Carp::croak("Redefinition of $type $name is found.");
+        }
+        $self->macro_table->{$name} = \%macro;
+        if($type eq 'block') {
+            return(
+                [ pushmark  => () ],
+                [ macro     => $name ],
+                [ macrocall => () ],
+            );
+        }
     }
     else {
-        return;
+        my $fq_name = sprintf '%s@%s', $name, $type;
+        push @{ $self->macro_table->{ $fq_name } //= [] }, \%macro;
     }
+
+    return; # no code, only definition
 }
 
 sub _generate_if {
@@ -254,12 +274,15 @@ sub _generate_expr {
 sub _generate_variable {
     my($self, $node) = @_;
 
-    if(defined(my $lvar_id = $self->lvar->{$node->id})) {
-        return [ fetch_lvar => $lvar_id, $node->line, $node->id ];
+    my @fetch;
+    if(defined(my $lvar_code = $self->lvar->{$node->id})) {
+        @fetch = @{$lvar_code};
     }
     else {
-        return [ fetch_s => $self->_variable_to_value($node), $node->line ];
+        @fetch = ( fetch_s => $self->_variable_to_value($node) );
     }
+    $fetch[2] = $node->line;
+    return \@fetch;
 }
 
 sub _generate_literal {
@@ -350,21 +373,34 @@ sub _generate_ternary { # the conditional operator
 
 sub _generate_call {
     my($self, $node) = @_;
-    my $function = $node->first;
+    my $callable = $node->first; # function or macro
     my $args     = $node->second;
 
-    return(
+    my @code = (
         [ pushmark => () ],
-        ( map { $self->_generate_expr($_), [ 'push' ] } @{$args} ),
-        $self->_generate_expr($function),
-        [ call => undef, $node->line ],
+        (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
+        $self->_generate_expr($callable),
     );
+
+    if($code[-1][0] eq 'macro') {
+        push @code, [ macrocall => undef, $node->line ];
+    }
+    else {
+        push @code, [ funcall => undef, $node->line ];
+    }
+    return @code;
 }
 
 sub _generate_function {
     my($self, $node) = @_;
 
     return [ function => $node->value ];
+}
+
+sub _generate_macro {
+    my($self, $node) = @_;
+
+    return [ macro => $node->value ];
 }
 
 sub _variable_to_value {
@@ -457,7 +493,6 @@ sub _optimize {
 #    }
     return;
 }
-
 
 sub as_assembly {
     my($self, $code_ref) = @_;

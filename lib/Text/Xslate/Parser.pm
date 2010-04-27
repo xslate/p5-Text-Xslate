@@ -312,8 +312,9 @@ sub BUILD {
     # template inheritance
 
     $parser->symbol('cascade')  ->set_std(\&_std_bare_command);
+    $parser->symbol('macro')    ->set_std(\&_std_proc);
     $parser->symbol('block')    ->set_std(\&_std_proc);
-    $parser->symbol('override') ->set_std(\&_std_proc);
+    $parser->symbol('around')   ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
     $parser->symbol('after')    ->set_std(\&_std_proc);
 
@@ -487,8 +488,8 @@ sub _led_call {
 
     my $call = $symbol->clone(arity => 'call');
 
-    if(!( $left->arity ~~ [qw(function name variable literal)] )) {
-        $parser->_parse_error("Expected a function, not $left");
+    if(!( $left->arity ~~ [qw(function name variable macro literal)] )) {
+        $parser->_parse_error("Expected a function, not " . $left->arity . " ($left)");
     }
 
     $call->first($left);
@@ -603,6 +604,44 @@ sub define { # define a name to the scope
     #$symbol->scope($top);
     return $symbol;
 }
+
+
+sub _nud_function{
+    my($p, $s) = @_;
+    my $f = $s->clone(arity => 'function');
+    $p->reserve($f);
+    return $f;
+}
+
+sub define_function {
+    my($compiler, @names) = @_;
+
+    foreach my $name(@names) {
+        my $symbol = $compiler->symbol($name);
+        $symbol->set_nud(\&_nud_function);
+        $symbol->value($name);
+    }
+    return;
+}
+
+sub _nud_macro{
+    my($p, $s) = @_;
+    my $f = $s->clone(arity => 'macro');
+    $p->reserve($f);
+    return $f;
+}
+
+sub define_macro {
+    my($compiler, @names) = @_;
+
+    foreach my $name(@names) {
+        my $symbol = $compiler->symbol($name);
+        $symbol->set_nud(\&_nud_macro);
+        $symbol->value($name);
+    }
+    return;
+}
+
 
 sub pop_scope {
     my($parser) = @_;
@@ -751,25 +790,29 @@ sub _std_proc {
         $parser->_parse_error("Expected name, but " . $parser->token . " is not");
     }
 
-    $parser->define($name);
+    $parser->define_macro($name->id);
     $proc->first( $name->id );
     $parser->advance();
 
     $parser->new_scope();
     $parser->advance("->");
+    my @vars;
     if($parser->token->id eq "(") {
         $parser->advance("(");
 
-        my @vars;
         while((my $t = $parser->token)->arity eq "variable") {
             push @vars, $t;
             $parser->define($t);
             $parser->advance;
+
+            if($parser->token->id eq ",") {
+                $parser->advance(",");
+            }
         }
 
-        $proc->second( \@vars );
         $parser->advance(")");
     }
+    $proc->second( \@vars );
 
     $parser->advance("{");
     $proc->third($parser->statements());
