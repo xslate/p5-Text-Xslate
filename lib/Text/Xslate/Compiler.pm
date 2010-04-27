@@ -262,7 +262,7 @@ sub _generate_bare_command {
         my $engine         = $self->engine
             // Carp::croak("Cannot cascade without an Xslate engine");
         my $template_name  = $node->first;
-        my $components_ref = $node->second;
+        #my $components_ref = $node->second;
 
         my $file = $template_name . $engine->{suffix};
         $file =~ s{::}{/}g;
