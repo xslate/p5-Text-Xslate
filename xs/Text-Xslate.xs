@@ -84,8 +84,6 @@ struct tx_state_s {
     HV* function;
 
     HV* macro;
-    tx_state_t* top;
-    tx_state_t* next;
 
     U32 hint_size;
 
@@ -140,7 +138,7 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 #include "xslate_ops.h"
 
 static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv, U32 const start_pc);
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
@@ -446,7 +444,7 @@ XSLATE(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
     ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_st->pc++;
@@ -456,7 +454,7 @@ XSLATE_w_key(include_s) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
 
     ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_st->pc++;
@@ -749,7 +747,7 @@ XS(XS_Text__Xslate__error) {
 }
 
 static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv, U32 const pc_start) {
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
@@ -763,7 +761,6 @@ tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv, U32 const 
 
     st.output = output;
     st.vars   = hv;
-    st.pc     = pc_start;
 
     assert(st.tmpl != NULL);
 
@@ -1238,7 +1235,7 @@ CODE:
     sv_grow(RETVAL, st->hint_size);
     SvPOK_on(RETVAL);
 
-    tx_exec(aTHX_ st, RETVAL, vars, 0U);
+    tx_exec(aTHX_ st, RETVAL, vars);
 
     ST(0) = RETVAL;
     XSRETURN(1);
