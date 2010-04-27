@@ -77,12 +77,11 @@ has engine => (
     required => 0,
 );
 
-# cascading templates has no main routines
-has no_main => (
+has cascading => (
     is  => 'rw',
-    isa => 'Bool',
+    isa => 'Str',
 
-    init_arg => undef,
+    required => 0,
 );
 
 sub compile_str {
@@ -106,12 +105,68 @@ sub compile {
 
     # main
     my @code = $self->_compile_ast($ast);
-    push @code, ['exit'];
+
+    my $mtable = $self->macro_table;
+    my $main = delete $mtable->{'@main'}; # cascade
+
+    if(defined $main) {
+        # all the main code will be discarded
+        foreach my $c(@code) {
+            if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
+                if($c->[0] eq 'print_raw_s') {
+                    Carp::carp("Xslate: Uselses use of text '$c->[1]'");
+                }
+                else {
+                    Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // 'undef'));
+                }
+            }
+        }
+
+        @code = @{$main}; # replace
+
+        for(my $i = 0; $i < @code; $i++) {
+            my $c = $code[$i];
+            if($c->[0] eq 'macro_begin') {
+                my $name = $c->[1];
+
+                if(exists $mtable->{$name}) {
+                    Carp::croak(
+                        "Xslate($mtable->{$name}{line}): " .
+                        "$name is already defined in " . $self->cascading . "\n" .
+                        "(you must use before/around/after to override blocks)",
+                    );
+                }
+
+                my $before = delete $mtable->{$name . '@before'};
+                my $around = delete $mtable->{$name . '@around'};
+                my $after  = delete $mtable->{$name . '@after'};
+
+                my @body;
+                $i++;
+                if(defined $before) {
+                    foreach my $m(@{$before}) {
+                        splice @code, $i, 0, @{$m->{body}};
+                    }
+                }
+
+                1 while($code[++$i][0] ne 'macro_end');
+
+                if(defined $after) {
+                    foreach my $m(@{$after}) {
+                        splice @code, $i, 0, @{$m->{body}};
+                    }
+                }
+            }
+        }
+    }
+    else {
+        push @code, ['exit'];
+    }
 
     # macros
-    foreach my $macros(values %{ $self->macro_table }) {
+    foreach my $macros(values %{ $mtable }) {
         foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
-            push @code, [ 'macro_begin', $macro->{name} ];
+            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
             push @code, @{ $macro->{body} };
             push @code, [ 'macro_end' ];
         }
@@ -175,13 +230,8 @@ sub _generate_bare_command {
         my $file = $template_name . $engine->{suffix};
         $file =~ s{::}{/}g;
 
-        $engine->load_file($file); # ensure it exists
-
-        push @code, (
-            [pushmark => ()],
-            map{ [ push => $_ ] } @{$components_ref},
-        );
-        push @code, [ cascade => $file ];
+        $self->macro_table->{'@main'} = $engine->load_file($file);
+        $self->cascading($template_name);
     }
     else {
         Carp::croak("Unknown command $node");
@@ -242,6 +292,7 @@ sub _generate_proc { # block, before, around, after
         name   => $name,
         nargs  => $arg_ix,
         body   => [ $self->_compile_ast($block) ],
+        line   => $node->line,
     );
 
     if($type ~~ [qw(macro block)]) {

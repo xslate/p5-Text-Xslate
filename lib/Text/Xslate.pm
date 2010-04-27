@@ -108,11 +108,12 @@ sub load_file {
         $string = <$in>;
     }
 
+    my $protocode;
     if($is_compiled) {
-        $self->_load_assembly($string, $file, $fullpath, $mtime);
+        $protocode = $self->_load_assembly($string, $file, $fullpath, $mtime);
     }
     else {
-        my $protocode = $self->_compiler->compile($string);
+        $protocode = $self->_compiler->compile($string);
 
         if($self->{cache}) {
             # compile templates into assemblies
@@ -133,7 +134,7 @@ sub load_file {
 
         $self->_initialize($protocode, $file, $fullpath, $mtime);
     }
-    return;
+    return $protocode;
 }
 
 sub _compiler {
@@ -209,7 +210,7 @@ sub _load_assembly {
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);
 
     $self->_initialize(\@protocode, @args);
-    return;
+    return \@protocode;
 }
 
 sub throw_error {

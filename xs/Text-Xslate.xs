@@ -82,7 +82,10 @@ struct tx_state_s {
     SV** pad;    /* AvARRAY(locals) */
 
     HV* function;
+
     HV* macro;
+    tx_state_t* top;
+    tx_state_t* next;
 
     U32 hint_size;
 
@@ -106,9 +109,6 @@ tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, in
     if(UNLIKELY(*svp == NULL)) {
         croak("panic: %s is NULL at %s line %d.\n", name, f, l);
     }
-    else if(UNLIKELY(SvIS_FREED(*svp))) {
-        croak("panic: %s is a freed sv at %s line %d.\n", name, f, l);
-    }
     return svp;
 }
 
@@ -116,6 +116,7 @@ tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, in
 
 static SV**
 tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
+    assert(st);
     if(AvFILLp(st->locals) < lvar_id) {
         croak("panic: local variable storage is smaller (%d < %d)",
             (int)AvFILLp(st->locals), (int)lvar_id);
@@ -139,7 +140,7 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 #include "xslate_ops.h"
 
 static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv, U32 const start_pc);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
@@ -445,7 +446,7 @@ XSLATE(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
     ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
     LEAVE;
 
     TX_st->pc++;
@@ -455,7 +456,7 @@ XSLATE_w_key(include_s) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
 
     ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
     LEAVE;
 
     TX_st->pc++;
@@ -465,9 +466,18 @@ XSLATE_w_key(include_s) {
 XSLATE_w_key(cascade) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
     dMARK; /* with ... */
+    PERL_UNUSED_VAR(MARK);
 
-    ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
+    if(TX_st->next) {
+        croak("Cannot cascade a template twice");
+    }
+    TX_st->next = st;
+
+    ENTER;
+    SAVEVPTR(st->top);
+    st->top = TX_st;
+
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars, 0U);
     LEAVE;
 
     TX_st->pc++;
@@ -668,16 +678,32 @@ XSLATE(ge) {
 }
 
 XSLATE(macrocall) {
-    SV* const macro = TX_st_sa;
+    tx_state_t* const st = (tx_state_t*)TX_st_sa;
+    U32 const addr       = (U32)  SvUVX(TX_st_sb);
     dSP;
+    SV* before;
+    SV* after;
 
     ENTER;
     SAVETMPS;
 
-    mXPUSHu(TX_st->pc + 1); /* return address */
-    PUTBACK;
+    before = sv_2mortal(Perl_newSVpvf(aTHX_ "%s@before", SvPVX_const(TX_st->targ)));
+    after  = sv_2mortal(Perl_newSVpvf(aTHX_ "%s@after",  SvPVX_const(TX_st->targ)));
 
-    TX_st->pc = SvUV(macro);
+    /* before */
+
+    if(st->tmpl == TX_st->tmpl) {
+        mXPUSHu(TX_st->pc + 1); /* return address */
+        PUTBACK;
+
+        TX_st->pc = addr;
+    }
+    else {
+        mXPUSHu(addr + 1);
+        PUTBACK;
+
+        tx_exec(aTHX_ st, TX_st->output, TX_st->vars, addr);
+    }
 }
 
 XSLATE_w_key(macro_begin) {
@@ -697,10 +723,22 @@ XSLATE(macro_end) {
 XSLATE_w_key(macro) {
     SV* const name = TX_op_arg;
     HE* he;
-    if(TX_st->macro && (he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
-        TX_st_sa = hv_iterval(TX_st->macro, he);
+    tx_state_t* st = TX_st->top ? TX_st->top : TX_st;
+
+    TX_st_sa = &PL_sv_undef;
+
+    while(st) {
+        if(st->macro && (he = hv_fetch_ent(st->macro, name, FALSE, 0U))) {
+            TX_st_sa = (SV*)st; /* XXX: possibly unsafe */
+            TX_st_sb = hv_iterval(st->macro, he);
+            sv_copypv(TX_st->targ, name);
+            break;
+        }
+
+        st = st->next;
     }
-    else {
+
+    if(!SvOK(TX_st_sb)) {
         croak("Macro %s is not defined", tx_neat(aTHX_ name));
     }
     TX_st->pc++;
@@ -758,7 +796,7 @@ XS(XS_Text__Xslate__error) {
 }
 
 static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
+tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv, U32 const pc_start) {
     dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
@@ -772,6 +810,7 @@ tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
 
     st.output = output;
     st.vars   = hv;
+    st.pc     = pc_start;
 
     assert(st.tmpl != NULL);
 
@@ -1246,7 +1285,7 @@ CODE:
     sv_grow(RETVAL, st->hint_size);
     SvPOK_on(RETVAL);
 
-    tx_exec(aTHX_ st, RETVAL, vars);
+    tx_exec(aTHX_ st, RETVAL, vars, 0U);
 
     ST(0) = RETVAL;
     XSRETURN(1);
@@ -1289,3 +1328,4 @@ CODE:
     ST(0) = SvRV(self);
     XSRETURN(1);
 }
+
