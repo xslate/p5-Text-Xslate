@@ -451,7 +451,7 @@ XSLATE(include) {
     TX_st->pc++;
 }
 
-XSLATE_w_sv(include_s) {
+XSLATE_w_key(include_s) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
 
     ENTER; /* for error handlers */
@@ -460,6 +460,19 @@ XSLATE_w_sv(include_s) {
 
     TX_st->pc++;
 }
+
+
+XSLATE_w_key(cascade) {
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
+    dMARK; /* with ... */
+
+    ENTER; /* for error handlers */
+    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
+    LEAVE;
+
+    TX_st->pc++;
+}
+
 
 XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
@@ -902,7 +915,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name) {
     PUSHs(name);
     PUTBACK;
 
-    call_method("_load_file", G_EVAL | G_VOID);
+    call_method("load_file", G_EVAL | G_VOID);
 
     FREETMPS;
     LEAVE;

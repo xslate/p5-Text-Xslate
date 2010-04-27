@@ -1,5 +1,7 @@
 package Text::Xslate;
 
+# The Xslate engine class
+
 use 5.010_000;
 use strict;
 use warnings;
@@ -27,6 +29,7 @@ sub new {
     my $class = shift;
     my %args  = (@_ == 1 ? %{$_[0]} : @_);
 
+    $args{suffix}       //= '.tx';
     $args{path}         //= [ $class->default_path ];
     $args{input_layer}  //= ':utf8';
     $args{cache}        //= 1;
@@ -38,7 +41,7 @@ sub new {
     my $self = bless \%args, $class;
 
     if(my $file = $args{file}) {
-        $self->_load_file($_)
+        $self->load_file($_)
             for ref($file) ? @{$file} : $file;
     }
 
@@ -77,13 +80,13 @@ sub render;
 
 sub _initialize;
 
-sub _load_file {
+sub load_file {
     my($self, $file) = @_;
 
     my $f = Text::Xslate::Util::find_file($file, $self->{path});
 
     if(not defined $f) {
-        $self->throw_error("Cannot find $file (path: @{$self->{path}})");
+        $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
     my $fullpath    = $f->{fullpath};
@@ -93,13 +96,13 @@ sub _load_file {
     my $string;
     {
         open my($in), '<' . $self->{input_layer}, $fullpath
-            or $self->throw_error("Cannot open $fullpath for reading: $!");
+            or $self->throw_error("LoadError: Cannot open $fullpath for reading: $!");
 
         if($is_compiled && scalar(<$in>) ne $XSLATE_MAGIC) {
             # magic token is not matched
             close $in;
-            unlink $fullpath or Carp::croak("Cannot unlink $fullpath: $!");
-            goto &_load_file; # retry
+            unlink $fullpath or $self->throw_error("LoadError: Cannot unlink $fullpath: $!");
+            goto &load_file; # retry
         }
         local $/;
         $string = <$in>;
@@ -114,7 +117,7 @@ sub _load_file {
         if($self->{cache}) {
             # compile templates into assemblies
             open my($out), '>:raw:utf8', "${fullpath}c"
-                or $self->throw_error("Cannot open ${fullpath}c for writing: $!");
+                or $self->throw_error("LoadError: Cannot open ${fullpath}c for writing: $!");
 
             print $out $XSLATE_MAGIC;
             print $out $self->_compiler->as_assembly($protocode);
@@ -153,7 +156,7 @@ sub _compiler {
             }
         }
 
-        $compiler = $compiler->new();
+        $compiler = $compiler->new(engine => $self);
 
         if(my $funcs = $self->{function}) {
             $compiler->define_function(keys %{$funcs});

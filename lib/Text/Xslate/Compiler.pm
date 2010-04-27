@@ -68,7 +68,16 @@ has macro_table => (
     default => sub{ {} },
 );
 
-# cascading templates have no main
+has engine => (
+    is  => 'ro',
+    isa => 'Object',
+
+    weak_ref => 1,
+
+    required => 0,
+);
+
+# cascading templates has no main routines
 has no_main => (
     is  => 'rw',
     isa => 'Bool',
@@ -78,6 +87,8 @@ has no_main => (
 
 sub compile_str {
     my($self, $str) = @_;
+
+    require Text::Xslate;
 
     return Text::Xslate->new(
         protocode    => $self->compile($str),
@@ -109,7 +120,7 @@ sub compile {
 
     $self->_optimize(\@code) if $args{optimize} // _OPTIMIZE // 1;
 
-    print $self->as_assembly(\@code) if _DUMP_ASM;
+    print "// xslate assembly\n", $self->as_assembly(\@code) if _DUMP_ASM;
     return \@code;
 }
 
@@ -156,14 +167,21 @@ sub _generate_bare_command {
     my @code;
 
     if($node->id eq 'cascade') {
-        my $macro_name     = $node->first;
+        my $engine         = $self->engine
+            // Carp::croak("Cannot cascade without an Xslate engine");
+        my $template_name  = $node->first;
         my $components_ref = $node->second;
+
+        my $file = $template_name . $engine->{suffix};
+        $file =~ s{::}{/}g;
+
+        $engine->load_file($file); # ensure it exists
 
         push @code, (
             [pushmark => ()],
             map{ [ push => $_ ] } @{$components_ref},
         );
-        push @code, [ cascade => $macro_name ];
+        push @code, [ cascade => $file ];
     }
     else {
         Carp::croak("Unknown command $node");
