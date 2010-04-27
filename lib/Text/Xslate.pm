@@ -12,8 +12,7 @@ XSLoader::load(__PACKAGE__, $VERSION);
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string);
 
-our $DEBUG;
-$DEBUG = $ENV{XSLATE} // $DEBUG // '';
+use Text::Xslate::Util;
 
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
@@ -81,39 +80,22 @@ sub _initialize;
 sub _load_file {
     my($self, $file) = @_;
 
-    my $fullpath;
-    my $is_assembly = 0;
+    my $f = Text::Xslate::Util::find_file($file, $self->{path});
 
-    foreach my $p(@{ $self->{path} }) {
-        $fullpath = "$p/${file}";
-        if(-f "${fullpath}c") {
-            my $m1 = -M _;
-            my $m2 = -M $fullpath;
-
-            if($m1 == $m2) {
-                $fullpath     .= 'c';
-                $is_assembly   = 1;
-            }
-            last;
-        }
-        elsif(-f $fullpath) {
-            last;
-        }
-        else {
-            $fullpath = undef;
-        }
-    }
-
-    if(not defined $fullpath) {
+    if(not defined $f) {
         $self->throw_error("Cannot find $file (path: @{$self->{path}})");
     }
+
+    my $fullpath    = $f->{fullpath};
+    my $mtime       = $f->{mtime};
+    my $is_compiled = $f->{is_compiled};
 
     my $string;
     {
         open my($in), '<' . $self->{input_layer}, $fullpath
             or $self->throw_error("Cannot open $fullpath for reading: $!");
 
-        if($is_assembly && scalar(<$in>) ne $XSLATE_MAGIC) {
+        if($is_compiled && scalar(<$in>) ne $XSLATE_MAGIC) {
             # magic token is not matched
             close $in;
             unlink $fullpath or Carp::croak("Cannot unlink $fullpath: $!");
@@ -123,10 +105,7 @@ sub _load_file {
         $string = <$in>;
     }
 
-    my $mtime;
-    $mtime = ( stat $fullpath )[9] if $self->{cache} < 2;
-
-    if($is_assembly) {
+    if($is_compiled) {
         $self->_load_assembly($string, $file, $fullpath, $mtime);
     }
     else {

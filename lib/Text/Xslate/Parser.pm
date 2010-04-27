@@ -2,7 +2,7 @@ package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
 
-use Text::Xslate;
+use Text::Xslate::Util;
 use Text::Xslate::Symbol;
 
 use constant _DUMP_PROTO => ($Text::Xslate::DEBUG =~ /\b dump=proto \b/xmsi);

@@ -2,7 +2,7 @@ package Text::Xslate::Compiler;
 use 5.010;
 use Mouse;
 
-use Text::Xslate;
+use Text::Xslate::Util;
 use Scalar::Util ();
 
 use constant _DUMP_ASM => ($Text::Xslate::DEBUG =~ /\b dump=asm \b/xms);
