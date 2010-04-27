@@ -410,7 +410,7 @@ Operator precedence:
 
 =head2 Template inclusion
 
-    ? include "foo.tx"
+    : include "foo.tx"
 
 Xslate templates may be recursively included, but including depth is
 limited to 100.
