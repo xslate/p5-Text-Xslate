@@ -415,6 +415,18 @@ Operator precedence:
 Xslate templates may be recursively included, but including depth is
 limited to 100.
 
+=head2 Macro blocks
+
+    : macro add ->($x, $y) {
+    :   x + $y;
+    : }
+    := add(10, 20)
+
+    : macro signeture -> {
+        This is foo version <:= $VERSION :>
+    : }
+    : signeture()
+
 =head2 Cascading templates
 
 Also called as B<template inheritance>.
