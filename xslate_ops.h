@@ -43,7 +43,7 @@ XSLATE(le);
 XSLATE(gt);
 XSLATE(ge);
 XSLATE(macrocall);
-XSLATE_w_sv(macro_begin);
+XSLATE_w_key(macro_begin);
 XSLATE(macro_end);
 XSLATE_w_key(macro);
 XSLATE_w_key(function);
@@ -197,7 +197,7 @@ static const U8 tx_oparg[] = {
     0U, /* gt */
     0U, /* ge */
     0U, /* macrocall */
-    TXCODE_W_SV, /* macro_begin */
+    TXCODE_W_KEY, /* macro_begin */
     0U, /* macro_end */
     TXCODE_W_KEY, /* macro */
     TXCODE_W_KEY, /* function */

@@ -667,7 +667,7 @@ XSLATE(macrocall) {
     TX_st->pc = SvUV(macro);
 }
 
-XSLATE_w_sv(macro_begin) {
+XSLATE_w_key(macro_begin) {
     TX_st->pc++;
 }
 

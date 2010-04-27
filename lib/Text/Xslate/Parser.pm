@@ -317,6 +317,7 @@ sub BUILD {
     $parser->symbol('around')   ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
     $parser->symbol('after')    ->set_std(\&_std_proc);
+    $parser->symbol('super')    ->set_std(\&_std_command);
 
     return;
 }
@@ -843,13 +844,15 @@ sub _std_if {
 sub _std_command {
     my($parser, $symbol) = @_;
     my @args;
-    while(1) {
-        push @args, $parser->expression(0);
+    if($parser->token->id ne ";") {
+        while(1) {
+            push @args, $parser->expression(0);
 
-        if($parser->token->id ne ",") {
-            last;
+            if($parser->token->id ne ",") {
+                last;
+            }
+            $parser->advance(",");
         }
-        $parser->advance(",");
     }
     $parser->advance(";");
     return $symbol->clone(first => \@args, arity => 'command');

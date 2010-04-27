@@ -98,10 +98,12 @@ sub compile {
     push @code, ['exit'];
 
     # macros
-    foreach my $macro(values %{ $self->macro_table }) {
-        push @code, [ 'macro_begin', $macro->{name} ];
-        push @code, @{ $macro->{body} };
-        push @code, [ 'macro_end' ];
+    foreach my $macros(values %{ $self->macro_table }) {
+        foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
+            push @code, [ 'macro_begin', $macro->{name} ];
+            push @code, @{ $macro->{body} };
+            push @code, [ 'macro_end' ];
+        }
     }
     $self->clear_macro_table();
 
@@ -154,14 +156,14 @@ sub _generate_bare_command {
     my @code;
 
     if($node->id eq 'cascade') {
-        my $macro_name     = $self->first;
-        my $components_ref = $self->second;
+        my $macro_name     = $node->first;
+        my $components_ref = $node->second;
 
         push @code, (
             [pushmark => ()],
             map{ [ push => $_ ] } @{$components_ref},
         );
-        push @code, [ call_main => $macro_name ];
+        push @code, [ cascade => $macro_name ];
     }
     else {
         Carp::croak("Unknown command $node");
@@ -239,6 +241,7 @@ sub _generate_proc { # block, before, around, after
     }
     else {
         my $fq_name = sprintf '%s@%s', $name, $type;
+        $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } //= [] }, \%macro;
     }
 
