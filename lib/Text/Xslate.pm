@@ -93,6 +93,9 @@ sub load_file {
     my $mtime       = $f->{mtime};
     my $is_compiled = $f->{is_compiled};
 
+    # if $mtime is undef, the runtime does not check freshness of caches.
+    undef $mtime if $self->{cache} >= 2;
+
     my $string;
     {
         open my($in), '<' . $self->{input_layer}, $fullpath
