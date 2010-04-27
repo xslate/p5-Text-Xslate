@@ -54,4 +54,16 @@ T
 is $tx->render({ VERSION => '1.012' }), "    This is foo version 1.012\n", 'macro without args';
 is $tx->render({ VERSION => '1.012' }), "    This is foo version 1.012\n", 'macro without args';
 
+
+eval {
+    $tx = Text::Xslate->new(string => <<'T', cache => 0);
+    : macro foo ->($arg) {
+        Hello <:= $arg :>!
+    : }
+    : foo()
+T
+    diag $tx->render({});
+};
+like $@, qr/Too few arguments/, 'prototype mismatch';
+
 done_testing;

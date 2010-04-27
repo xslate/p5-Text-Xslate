@@ -328,8 +328,16 @@ XSLATE_w_var(fetch_lvar) {
 }
 
 XSLATE_w_int(fetch_arg) {
-    //PerlIO_printf(PerlIO_stderr(), "topmark=%d, ix=%d\n", (int)TOPMARK, (int)SvIVX(TX_op_arg));
-    TX_st_sa = PL_stack_base[TOPMARK + SvIVX(TX_op_arg)];
+    dSP;
+    SV** const topmark = PL_stack_base + TOPMARK;
+    IV const items     = SP - topmark;
+    IV const ix        = SvIVX(TX_op_arg);
+
+    if(items <= ix) {
+        croak("Too few arguments for macro");
+    }
+
+    TX_st_sa = *(topmark + ix);
 
     TX_st->pc++;
 }
@@ -698,6 +706,7 @@ XSLATE_w_key(function) {
 
     TX_st->pc++;
 }
+
 
 XSLATE(funcall) {
     /* PUSHMARK & PUSH must be done */

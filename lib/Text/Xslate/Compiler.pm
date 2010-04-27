@@ -220,6 +220,7 @@ sub _generate_proc { # block, before, around, after
     my %macro = (
         type   => $type,
         name   => $name,
+        nargs  => $arg_ix,
         body   => [ $self->_compile_ast($block) ],
     );
 
@@ -232,7 +233,7 @@ sub _generate_proc { # block, before, around, after
             return(
                 [ pushmark  => () ],
                 [ macro     => $name ],
-                [ macrocall => () ],
+                [ macrocall => undef ],
             );
         }
     }

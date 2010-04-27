@@ -84,6 +84,20 @@ eval {
 };
 
 like $@, qr/^Xslate\Q(<input>:2)/;
+$tx = Text::Xslate->new(
+    string => <<'T',
+: macro foo ->($bar) {
+    <:= $bar :>
+: }
+: foo(nil);
+T
+);
+
+eval {
+    $tx->render({});
+};
+
+like $@, qr/^Xslate\Q(<input>:2)/, 'in amacro';
 
 is $warn, '', "no warns";
 
