@@ -7,6 +7,8 @@ use Text::Xslate;
 use FindBin qw($Bin);
 use File::Copy qw(copy move);
 
+use t::lib::Util;
+
 my $original = "$Bin/../template/myapp/base.tx";
 END{
     move "$original.save" => $original if -e "$original.save";
@@ -16,7 +18,7 @@ note 'for strings';
 
 utime $^T, $^T, $original;
 
-my $tx = Text::Xslate->new(string => <<'T');
+my $tx = Text::Xslate->new(string => <<'T', path => [path]);
 : cascade myapp::base
 T
 

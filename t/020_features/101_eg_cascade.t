@@ -3,6 +3,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use t::lib::Util;
 
 {
     package BlogEntry;
@@ -24,6 +25,7 @@ my @blog_entries = map{ BlogEntry->new($_) } (
 
 my $tx = Text::Xslate->new(
     cache => 0,
+    path  => [path],
 );
 
 my $gold = <<'T';

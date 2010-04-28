@@ -32,7 +32,7 @@ sub new {
     my %args  = (@_ == 1 ? %{$_[0]} : @_);
 
     $args{suffix}       //= '.tx';
-    $args{path}         //= [ $class->default_path ];
+    $args{path}         //= [ '.' ];
     $args{input_layer}  //= ':utf8';
     $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
@@ -50,13 +50,6 @@ sub new {
     $self->_load_input();
 
     return $self;
-}
-
-sub default_path {
-    require FindBin;
-    require File::Basename;
-    no warnings 'once';
-    return( File::Basename::dirname($FindBin::Bin) . "/template" );
 }
 
 sub render;
@@ -330,9 +323,9 @@ Specifies the template string, which is called C<< <input> >> internally.
 
 Specifies file(s) to be preloaded.
 
-=item C<< path => \@path // ["$FindBin::Bin/../template"] >>
+=item C<< path => \@path // ["."] >>
 
-Specifies the include paths. Default to C<<["$FindBin::Bin/../template"]>>.
+Specifies the include paths. Default to C<<["."]>>.
 
 =item C<< function => \%functions >>
 

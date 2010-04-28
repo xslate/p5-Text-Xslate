@@ -4,6 +4,7 @@ use Test::More;
 
 use Text::Xslate;
 use FindBin qw($Bin);
+use t::lib::Util;
 
 my @caches = ("$Bin/../template/hello.txc", "$Bin/../template/for.txc");
 
@@ -12,6 +13,7 @@ ok !-e $_, "$_ does not exist" for @caches;
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
         file => [qw(hello.tx for.tx)],
+        path => [path],
     );
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
@@ -29,7 +31,7 @@ for(1 .. 10) {
 }
 
 for(1 .. 10) {
-    my $tx = Text::Xslate->new();
+    my $tx = Text::Xslate->new(path => [path]);
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
         "Hello, Xslate world!\n", "file (on demand)";
@@ -45,7 +47,7 @@ for(1 .. 10) {
 
 unlink @caches;
 
-my $tx = Text::Xslate->new();
+my $tx = Text::Xslate->new(path => [path]);
 
 is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
 
@@ -69,7 +71,7 @@ rename "${x}~" => $x;
 is $tx->render('hello.tx', { lang => 'Xslate' }),
     "Hello, Xslate world!\n", "auto reload" for 1 .. 2;
 
-$tx = Text::Xslate->new(cache => 2);
+$tx = Text::Xslate->new(cache => 2, path => [path]);
 
 unlink(@caches) or diag "Cannot unlink: $!";
 

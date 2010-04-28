@@ -4,8 +4,9 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use t::lib::Util;
 
-my $tx = Text::Xslate->new(cache => 0);
+my $tx = Text::Xslate->new(cache => 0, path => [path]);
 
 for(0 .. 5) { # to test including depth
     note $_;

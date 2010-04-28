@@ -4,9 +4,10 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use t::lib::Util;
 
 note 'cascade without components';
-my $tx = Text::Xslate->new(string => <<'T', cache => 0);
+my $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::base
 T
 
@@ -14,7 +15,7 @@ is $tx->render({}), "HEAD\n    Hello, world!\nFOOT\n", 'template cascading';
 is $tx->render({}), "HEAD\n    Hello, world!\nFOOT\n", 'template cascading';
 
 note 'cascade one-level';
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::base
 
 : before hello -> {
@@ -34,7 +35,7 @@ FOOT
 T
 
 note 'cascade two-level';
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::derived
 
 : before hello -> {
@@ -56,7 +57,7 @@ FOOT
 T
 
 note 'cascade one-level with around';
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::base
 
 : around hello -> {
@@ -84,7 +85,7 @@ FOOT
 T
 
 note 'cascade two-level with around';
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::derived
 
 : around hello -> {

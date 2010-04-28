@@ -7,6 +7,8 @@ use Text::Xslate;
 use FindBin qw($Bin);
 use File::Copy qw(copy move);
 
+use t::lib::Util;
+
 my $original = "$Bin/../template/myapp/base.tx";
 END{
     move "$original.save" => $original if -e "$original.save";
@@ -21,7 +23,7 @@ note 'for files';
 
 utime $^T, $^T, $original;
 
-my $tx = Text::Xslate->new(file => 'myapp/derived.tx');
+my $tx = Text::Xslate->new(file => 'myapp/derived.tx', path => [path]);
 
 #use Data::Dumper; print Dumper $tx;
 
