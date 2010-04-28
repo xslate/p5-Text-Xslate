@@ -34,6 +34,8 @@ XSLATE_goto(and);
 XSLATE_goto(or);
 XSLATE_goto(dor);
 XSLATE(not);
+XSLATE(plus); /* unary plus */
+XSLATE(minus); /* unary minus */
 XSLATE(eq);
 XSLATE(ne);
 XSLATE(lt);
@@ -82,20 +84,22 @@ enum tx_opcode_t {
     TXOP_or, /* 29 */
     TXOP_dor, /* 30 */
     TXOP_not, /* 31 */
-    TXOP_eq, /* 32 */
-    TXOP_ne, /* 33 */
-    TXOP_lt, /* 34 */
-    TXOP_le, /* 35 */
-    TXOP_gt, /* 36 */
-    TXOP_ge, /* 37 */
-    TXOP_macrocall, /* 38 */
-    TXOP_macro_begin, /* 39 */
-    TXOP_macro_end, /* 40 */
-    TXOP_macro, /* 41 */
-    TXOP_function, /* 42 */
-    TXOP_funcall, /* 43 */
-    TXOP_goto, /* 44 */
-    TXOP_exit, /* 45 */
+    TXOP_plus, /* 32 */
+    TXOP_minus, /* 33 */
+    TXOP_eq, /* 34 */
+    TXOP_ne, /* 35 */
+    TXOP_lt, /* 36 */
+    TXOP_le, /* 37 */
+    TXOP_gt, /* 38 */
+    TXOP_ge, /* 39 */
+    TXOP_macrocall, /* 40 */
+    TXOP_macro_begin, /* 41 */
+    TXOP_macro_end, /* 42 */
+    TXOP_macro, /* 43 */
+    TXOP_function, /* 44 */
+    TXOP_funcall, /* 45 */
+    TXOP_goto, /* 46 */
+    TXOP_exit, /* 47 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -132,6 +136,8 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_or,
     TXCODE_dor,
     TXCODE_not,
+    TXCODE_plus,
+    TXCODE_minus,
     TXCODE_eq,
     TXCODE_ne,
     TXCODE_lt,
@@ -182,6 +188,8 @@ static const U8 tx_oparg[] = {
     TXCODE_GOTO, /* or */
     TXCODE_GOTO, /* dor */
     0U, /* not */
+    0U, /* plus */
+    0U, /* minus */
     0U, /* eq */
     0U, /* ne */
     0U, /* lt */
@@ -232,6 +240,8 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(or), newSViv(TXOP_or));
     (void)hv_stores(ops, STRINGIFY(dor), newSViv(TXOP_dor));
     (void)hv_stores(ops, STRINGIFY(not), newSViv(TXOP_not));
+    (void)hv_stores(ops, STRINGIFY(plus), newSViv(TXOP_plus));
+    (void)hv_stores(ops, STRINGIFY(minus), newSViv(TXOP_minus));
     (void)hv_stores(ops, STRINGIFY(eq), newSViv(TXOP_eq));
     (void)hv_stores(ops, STRINGIFY(ne), newSViv(TXOP_ne));
     (void)hv_stores(ops, STRINGIFY(lt), newSViv(TXOP_lt));

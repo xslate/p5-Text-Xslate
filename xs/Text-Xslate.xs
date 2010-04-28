@@ -578,11 +578,22 @@ XSLATE_goto(dor) {
 }
 
 XSLATE(not) {
-    assert(TX_st_sa != NULL);
     TX_st_sa = boolSV( !sv_true(TX_st_sa) );
 
     TX_st->pc++;
 }
+
+XSLATE(plus) { /* unary plus */
+    sv_setnv(TX_st->targ, +SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+XSLATE(minus) { /* unary minus */
+    sv_setnv(TX_st->targ, -SvNVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+
 
 static I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b) {
@@ -998,9 +1009,7 @@ BOOT:
     MY_CXT_INIT;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    SvREADONLY_off(ops);
     tx_init_ops(aTHX_ ops);
-    SvREADONLY_on(ops);
 }
 
 #ifdef USE_ITHREADS

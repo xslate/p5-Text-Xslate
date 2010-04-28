@@ -6,6 +6,7 @@ use Text::Xslate::Util;
 use Text::Xslate::Symbol;
 
 use constant _DUMP_PROTO => ($Text::Xslate::DEBUG =~ /\b dump=proto \b/xmsi);
+use constant _DUMP_TOKEN => ($Text::Xslate::DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler);
 
@@ -13,7 +14,7 @@ my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $QUOTED  = qr/(?: $dquoted | $squoted )/xms;
 
-my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
+my $NUMBER  = qr/(?: [0-9]+ (?: \. [0-9]+)? )/xms;
 
 my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 
@@ -201,7 +202,7 @@ sub preprocess {
             }
         }
     }
-    print STDERR $code, "\n" if _DUMP_PROTO;
+    print STDOUT $code, "\n" if _DUMP_PROTO;
     return $code;
 }
 
@@ -218,14 +219,14 @@ sub next_token {
     elsif(s/\A ($QUOTED)//xmso){
         return [ string => $1 ];
     }
+    elsif(s/\A ($OPERATOR)//xmso){
+        return [ operator => $1 ];
+    }
     elsif(s/\A ($NUMBER)//xmso){
         return [ number => $1 ];
     }
     elsif(s/\A (\$ $ID)//xmso) {
         return [ variable => $1 ];
-    }
-    elsif(s/\A ($OPERATOR)//xmso){
-        return [ operator => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
         goto &next_token; # tail call
@@ -309,6 +310,8 @@ sub define_grammer {
     $parser->infixr('//', 30);
 
     $parser->prefix('!');
+    $parser->prefix('+');
+    $parser->prefix('-');
 
     $parser->prefix('(', \&_nud_paren);
 
@@ -373,6 +376,8 @@ sub advance {
     if(not defined $t) {
         return $parser->token( $symtab->{"(end)"} );
     }
+
+    print STDOUT "[@{$t}]\n" if _DUMP_TOKEN;
 
     my($arity, $value) = @{$t};
     my $proto;

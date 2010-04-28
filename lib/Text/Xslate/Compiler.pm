@@ -38,6 +38,12 @@ my %bin_r = (
     '//' => 'dor',
 );
 
+my %unary = (
+    '!' => 'not',
+    '+' => 'plus',
+    '-' => 'minus',
+);
+
 has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
@@ -437,13 +443,13 @@ sub _generate_unary {
     my($self, $node) = @_;
 
     given($node->id) {
-        when('!') {
+        when(%unary) {
             return
                 $self->_generate_expr($node->first),
-                [ not => () ];
+                [ $unary{$_} => () ];
         }
         default {
-            Carp::croak("Unary operator $_ is not yet implemented");
+            Carp::croak("Unary operator $_ is not implemented");
         }
     }
 }
