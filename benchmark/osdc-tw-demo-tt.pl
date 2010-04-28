@@ -3,12 +3,16 @@ use strict;
 use Text::Xslate;
 use Template;
 use Time::HiRes qw(time);
+use FindBin qw($Bin);
 
 my $tt = Template->new(
-    INCLUDE_PATH => ['template'],
+    INCLUDE_PATH => ["$Bin/template"],
     COMPILE_EXT  => '.out',
 );
-my $tx = Text::Xslate->new(cache => 2);
+my $tx = Text::Xslate->new(
+    path  => ["$Bin/template"],
+    cache => 2
+);
 
 my %vars = (
     data => [

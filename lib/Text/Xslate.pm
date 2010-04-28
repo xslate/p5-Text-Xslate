@@ -335,6 +335,10 @@ Specifies functions.
 
 Sets the cache level. If I<$level> E<gt>= 2, modified times will not be checked.
 
+=item C<< input_layer => $perliolayers // ":utf8" >>
+
+Specifies PerlIO layers for reading.
+
 =back
 
 =head3 B<< $tx->render($name, \%vars) -> Str >>

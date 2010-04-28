@@ -3,12 +3,16 @@ use strict;
 use Text::Xslate;
 use Text::MicroTemplate::File;
 use Time::HiRes qw(time);
+use FindBin qw($Bin);
 
 my $mt = Text::MicroTemplate::File->new(
-    include_path => [qw(template)],
+    include_path => ["$Bin/template"],
     cache        => 2,
 );
-my $tx = Text::Xslate->new(cache => 2);
+my $tx = Text::Xslate->new(
+    path  => ["$Bin/template"],
+    cache => 2,
+);
 
 my %vars = (
     data => [
