@@ -401,7 +401,7 @@ Relational operators (C<< == != < <= > >= >>):
 
 Arithmetic operators (C<< + - * / % >>):
 
-    := $var + 10
+    := $var * 10_000
     := ($var % 10) == 0
 
 Logical operators (C<< || && // >>)
