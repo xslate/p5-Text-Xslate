@@ -138,8 +138,8 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 
 #include "xslate_ops.h"
 
-static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
+static void
+tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
@@ -439,7 +439,7 @@ XSLATE(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
     ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
+    tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_st->pc++;
@@ -744,8 +744,8 @@ XS(XS_Text__Xslate__error) {
     XSRETURN_EMPTY; /* not reached */
 }
 
-static SV*
-tx_exec(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
+static void
+tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
@@ -972,6 +972,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     /* validation by modified time (mtime) */
 
+    /* my $ttable = $self->{template} */
     svp = hv_fetchs(hv, "template", FALSE);
     if(!svp) {
         why = "template table is not found";
@@ -986,6 +987,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     ttable = (HV*)SvRV(sv);
 
+    /* $tmpl = $ttable->{$name} */
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
         tx_invoke_load_file(aTHX_ self, name);
@@ -1290,7 +1292,7 @@ CODE:
     sv_grow(RETVAL, st->hint_size);
     SvPOK_on(RETVAL);
 
-    tx_exec(aTHX_ st, RETVAL, vars);
+    tx_execute(aTHX_ st, RETVAL, vars);
 
     ST(0) = RETVAL;
     XSRETURN(1);
