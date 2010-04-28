@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.1000 Wed Apr 28 21:50:29 2010
+    - First non-dev release!
+    - Change the default path to ["."]
+    - Fix a macrocall issue
+
 0.001_09 Wed Apr 28 18:01:42 2010
     - New keywords: cascade, macro, block, before, around and after
     - Add template cascading
