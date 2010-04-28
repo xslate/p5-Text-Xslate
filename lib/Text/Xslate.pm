@@ -510,6 +510,8 @@ to cpan-RT.  Patches are welcome :)
 
 L<Text::MicroTemplate>
 
+L<Text::MicroTemplate::Extended>
+
 L<Text::ClearSilver>
 
 L<Template-Toolkit>

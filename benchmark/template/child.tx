@@ -1,0 +1,10 @@
+: cascade base
+
+<: around title ->{ :>My amazing blog<: } :>
+
+: around content -> {
+: for $blog_entries -> ($entry) {
+    <h2><:= $entry.title :></h2>
+    <p><:= $entry.body :></p>
+: } # end for
+: } # end content
