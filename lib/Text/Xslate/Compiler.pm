@@ -287,16 +287,21 @@ sub _generate_bare_command {
     my @code;
 
     if($node->id eq 'cascade') {
-        my $engine         = $self->engine
+        my $engine = $self->engine
             // Carp::croak("Cannot cascade without an Xslate engine");
-        my $template_name  = $node->first;
+        my $file   = $node->first;
         #my $components_ref = $node->second;
 
-        my $file = $template_name . $engine->{suffix};
-        $file =~ s{::}{/}g;
+        if(ref($file) eq 'ARRAY') {
+            $file  = join '/', @{$file};
+            $file .= $engine->{suffix};
+        }
+        else {
+            $file = literal_to_value($file);
+        }
 
         my $c = $self->macro_table->{'@main'} = $engine->load_file($file);
-        $self->cascading($template_name);
+        $self->cascading($file);
 
         unshift @{$c}, [depend => find_file($file, $engine->{path})->{fullpath}];
     }

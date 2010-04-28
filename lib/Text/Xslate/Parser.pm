@@ -878,15 +878,22 @@ sub _std_command {
     return $symbol->clone(first => \@args, arity => 'command');
 }
 
-sub _get_namespaced_name {
+sub _get_bare_name {
     my($parser) = @_;
-    my @parts;
 
     my $t = $parser->token;
-    if($t->arity ne "name") {
+    if(!($t->arity ~~ [qw(name literal)])) {
         $parser->_parse_error("Expected name, but $t is not");
     }
 
+    # "string" is ok
+    if($t->arity eq 'literal') {
+        $parser->advance();
+        return $t->id;
+    }
+
+    # package::name
+    my @parts;
     push @parts, $t->id;
     $parser->advance();
 
@@ -907,23 +914,23 @@ sub _get_namespaced_name {
             last;
         }
     }
-    return join "::", @parts;
+    return \@parts;
 }
 
 sub _std_bare_command {
     my($parser, $symbol) = @_;
 
-    my $name = $parser->_get_namespaced_name();
+    my $name = $parser->_get_bare_name();
     my @components;
 
     if($parser->token->id eq 'with') {
         $parser->advance('with');
 
-        push @components, $parser->_get_namespaced_name();
+        push @components, $parser->_get_bare_name();
         while($parser->token->id eq ',') {
             $parser->advance(',');
 
-            push @components, $parser->_get_namespaced_name();
+            push @components, $parser->_get_bare_name();
         }
     }
     $parser->advance(";");

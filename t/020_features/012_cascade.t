@@ -11,8 +11,21 @@ my $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : cascade myapp::base
 T
 
-is $tx->render({}), "HEAD\n    Hello, world!\nFOOT\n", 'template cascading';
-is $tx->render({}), "HEAD\n    Hello, world!\nFOOT\n", 'template cascading';
+is $tx->render({lang => 'Xslate'}), <<'T', "template cascading" for 1 .. 2;
+HEAD
+    Hello, Xslate world!
+FOOT
+T
+
+$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+: cascade "myapp/base.tx"
+T
+
+is $tx->render({lang => 'Xslate'}), <<'T', "with filename" for 1 .. 2;
+HEAD
+    Hello, Xslate world!
+FOOT
+T
 
 note 'cascade one-level';
 $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
@@ -26,10 +39,10 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : }
 T
 
-is $tx->render({}), <<'T', "before & after" for 1 .. 2;
+is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
-    Hello, world!
+    Hello, Xslate world!
     AFTER
 FOOT
 T
@@ -46,11 +59,11 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : }
 T
 
-is $tx->render({}), <<'T', "before & after" for 1 .. 2;
+is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     D-BEFORE
-    Hello, world!
+    Hello, Xslate world!
     D-AFTER
     AFTER
 FOOT
@@ -74,11 +87,11 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : }
 T
 
-is $tx->render({}), <<'T', "before & after" for 1 .. 2;
+is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     AROUND[
-    Hello, world!
+    Hello, Xslate world!
     ]AROUND
     AFTER
 FOOT
@@ -102,12 +115,12 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
 : }
 T
 
-is $tx->render({}), <<'T', "before & after" for 1 .. 2;
+is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     AROUND[
     D-BEFORE
-    Hello, world!
+    Hello, Xslate world!
     D-AFTER
     ]AROUND
     AFTER
