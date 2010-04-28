@@ -14,7 +14,7 @@ HEAD
 
 say "/* forward decl */";
 while(<>) {
-    if(/^XSLATE(\w*) \s* \( (\w+) \)/xms) {
+    if(/^TXC(\w*) \s* \( (\w+) \)/xms) {
         push @ops, [$2, $1];
 
         s/\s*\{/;/;

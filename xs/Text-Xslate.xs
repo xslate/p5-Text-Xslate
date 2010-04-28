@@ -15,13 +15,13 @@ START_MY_CXT
 
 #define TX_ESC_CLASS "Text::Xslate::EscapedString"
 
-#define XSLATE(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
-/* XSLATE_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
-#define XSLATE_w_sv(n)  XSLATE(n) /* has TX_op_arg as a SV */
-#define XSLATE_w_int(n) XSLATE(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
-#define XSLATE_w_key(n) XSLATE(n) /* has TX_op_arg as a keyword */
-#define XSLATE_w_var(n) XSLATE(n) /* has TX_op_arg as a local variable */
-#define XSLATE_goto(n)  XSLATE(n) /* does goto */
+#define TXC(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
+/* TXC_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
+#define TXC_w_sv(n)  TXC(n) /* has TX_op_arg as a SV */
+#define TXC_w_int(n) TXC(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
+#define TXC_w_key(n) TXC(n) /* has TX_op_arg as a keyword */
+#define TXC_w_var(n) TXC(n) /* has TX_op_arg as a local variable */
+#define TXC_goto(n)  TXC(n) /* does goto */
 
 #define TXARGf_SV   ((U8)(0x01))
 #define TXARGf_INT  ((U8)(0x02))
@@ -135,8 +135,10 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
 
 #define TX_lvar(ix) TX_lvarx(TX_st, ix)
 
-#define TXCODE_literal_i TXCODE_literal
-#define TXCODE_depend    TXCODE_noop
+/* aliases */
+#define TXCODE_literal_i   TXCODE_literal
+#define TXCODE_depend      TXCODE_noop
+#define TXCODE_macro_begin TXCODE_noop
 
 #include "xslate_ops.h"
 
@@ -256,27 +258,27 @@ tx_str_is_escaped(pTHX_ SV* const sv) {
     return FALSE;
 }
 
-XSLATE(noop) {
+TXC(noop) {
     TX_st->pc++;
 }
 
-XSLATE(move_sa_to_sb) {
+TXC(move_sa_to_sb) {
     TX_st_sb = TX_st_sa;
 
     TX_st->pc++;
 }
 
-XSLATE_w_var(store_to_lvar) {
+TXC_w_var(store_to_lvar) {
     sv_setsv(TX_lvar(SvIVX(TX_op_arg)), TX_st_sa);
     TX_st->pc++;
 }
 
-XSLATE_w_var(load_lvar_to_sb) {
+TXC_w_var(load_lvar_to_sb) {
     TX_st_sb = TX_lvar(SvIVX(TX_op_arg));
     TX_st->pc++;
 }
 
-XSLATE(push) {
+TXC(push) {
     dSP;
     XPUSHs(TX_st_sa);
     PUTBACK;
@@ -284,35 +286,33 @@ XSLATE(push) {
     TX_st->pc++;
 }
 
-XSLATE(pop) {
+TXC(pop) {
     TX_st_sa = TX_pop();
 
     TX_st->pc++;
 }
 
-XSLATE(pushmark) {
+TXC(pushmark) {
     dSP;
     PUSHMARK(SP);
 
     TX_st->pc++;
 }
 
-XSLATE(nil) {
+TXC(nil) {
     TX_st_sa = &PL_sv_undef;
 
     TX_st->pc++;
 }
 
-XSLATE_w_sv(literal) {
+TXC_w_sv(literal) {
     TX_st_sa = TX_op_arg;
 
     TX_st->pc++;
 }
 
-/* the same as literal, but make sure its argument is an integer */
-XSLATE_w_int(literal_i);
 
-XSLATE_w_key(fetch_s) { /* fetch a field from the top */
+TXC_w_key(fetch_s) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
@@ -321,7 +321,7 @@ XSLATE_w_key(fetch_s) { /* fetch a field from the top */
     TX_st->pc++;
 }
 
-XSLATE_w_var(fetch_lvar) {
+TXC_w_var(fetch_lvar) {
     SV* const idsv = TX_op_arg;
 
     TX_st_sa = TX_lvar(SvIVX(idsv));
@@ -329,7 +329,7 @@ XSLATE_w_var(fetch_lvar) {
     TX_st->pc++;
 }
 
-XSLATE_w_int(fetch_arg) {
+TXC_w_int(fetch_arg) {
     dSP;
     SV** const topmark = PL_stack_base + TOPMARK;
     IV const items     = SP - topmark;
@@ -344,7 +344,7 @@ XSLATE_w_int(fetch_arg) {
     TX_st->pc++;
 }
 
-XSLATE(fetch_field) { /* fetch a field from a variable (bin operator) */
+TXC(fetch_field) { /* fetch a field from a variable (bin operator) */
     SV* const var = TX_st_sb;
     SV* const key = TX_st_sa;
 
@@ -352,7 +352,7 @@ XSLATE(fetch_field) { /* fetch a field from a variable (bin operator) */
     TX_st->pc++;
 }
 
-XSLATE_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
+TXC_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
     SV* const var = TX_st_sa;
     SV* const key = TX_op_arg;
 
@@ -360,7 +360,7 @@ XSLATE_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
     TX_st->pc++;
 }
 
-XSLATE(print) {
+TXC(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
 
@@ -425,19 +425,19 @@ XSLATE(print) {
     TX_st->pc++;
 }
 
-XSLATE(print_raw) {
+TXC(print_raw) {
     sv_catsv_nomg(TX_st->output, TX_st_sa);
 
     TX_st->pc++;
 }
 
-XSLATE_w_sv(print_raw_s) {
+TXC_w_sv(print_raw_s) {
     sv_catsv_nomg(TX_st->output, TX_op_arg);
 
     TX_st->pc++;
 }
 
-XSLATE(include) {
+TXC(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
     ENTER; /* for error handlers */
@@ -448,7 +448,7 @@ XSLATE(include) {
 }
 
 
-XSLATE_w_var(for_start) {
+TXC_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIVX(TX_op_arg);
 
@@ -465,7 +465,7 @@ XSLATE_w_var(for_start) {
     TX_st->pc++;
 }
 
-XSLATE_goto(for_iter) {
+TXC_goto(for_iter) {
     SV* const idsv = TX_st_sa;
     IV  const id   = SvIVX(idsv); /* by literal_i */
     SV* const item =           TX_lvar(id+0);
@@ -497,38 +497,38 @@ XSLATE_goto(for_iter) {
 /* For arithmatic operators, SvIV_please() can make stringification faster,
    although I don't know why it is :)
 */
-XSLATE(add) {
+TXC(add) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) + SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
-XSLATE(sub) {
+TXC(sub) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) - SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
-XSLATE(mul) {
+TXC(mul) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) * SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
-XSLATE(div) {
+TXC(div) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) / SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
-XSLATE(mod) {
+TXC(mod) {
     sv_setiv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 
-/* NOTE: XSLATE_w_sv will make it faster, but it may be unimportant */
-XSLATE_w_sv(concat) {
+/* NOTE: TXC_w_sv will make it faster, but it may be unimportant */
+TXC_w_sv(concat) {
     SV* const sv = TX_op_arg;
     sv_setsv_nomg(sv, TX_st_sb);
     sv_catsv_nomg(sv, TX_st_sa);
@@ -538,7 +538,7 @@ XSLATE_w_sv(concat) {
     TX_st->pc++;
 }
 
-XSLATE(filt) {
+TXC(filt) {
     SV* const arg    = TX_st_sb;
     SV* const filter = TX_st_sa;
     dSP;
@@ -552,7 +552,7 @@ XSLATE(filt) {
     TX_st->pc++;
 }
 
-XSLATE_goto(and) {
+TXC_goto(and) {
     if(sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
@@ -561,7 +561,7 @@ XSLATE_goto(and) {
     }
 }
 
-XSLATE_goto(or) {
+TXC_goto(or) {
     if(!sv_true(TX_st_sa)) {
         TX_st->pc++;
     }
@@ -570,7 +570,7 @@ XSLATE_goto(or) {
     }
 }
 
-XSLATE_goto(dor) {
+TXC_goto(dor) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
     if(!SvOK(sv)) {
@@ -581,18 +581,18 @@ XSLATE_goto(dor) {
     }
 }
 
-XSLATE(not) {
+TXC(not) {
     TX_st_sa = boolSV( !sv_true(TX_st_sa) );
 
     TX_st->pc++;
 }
 
-XSLATE(plus) { /* unary plus */
+TXC(plus) { /* unary plus */
     sv_setnv(TX_st->targ, +SvNVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
-XSLATE(minus) { /* unary minus */
+TXC(minus) { /* unary minus */
     sv_setnv(TX_st->targ, -SvNVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
@@ -624,36 +624,36 @@ tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     }
 }
 
-XSLATE(eq) {
+TXC(eq) {
     TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
     TX_st->pc++;
 }
 
-XSLATE(ne) {
+TXC(ne) {
     TX_st_sa = boolSV( !tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
     TX_st->pc++;
 }
 
-XSLATE(lt) {
+TXC(lt) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) < SvNVx(TX_st_sa) );
     TX_st->pc++;
 }
-XSLATE(le) {
+TXC(le) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) <= SvNVx(TX_st_sa) );
     TX_st->pc++;
 }
-XSLATE(gt) {
+TXC(gt) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) > SvNVx(TX_st_sa) );
     TX_st->pc++;
 }
-XSLATE(ge) {
+TXC(ge) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) >= SvNVx(TX_st_sa) );
     TX_st->pc++;
 }
 
-XSLATE(macrocall) {
+TXC(macrocall) {
     U32 const addr = (U32)SvUVX(TX_st_sa);
     dSP;
 
@@ -677,11 +677,9 @@ XSLATE(macrocall) {
     TX_st->pc = addr;
 }
 
-XSLATE_w_key(macro_begin) {
-    TX_st->pc++;
-}
+TXC_w_key(macro_begin); /* as markers, noop */
 
-XSLATE(macro_end) {
+TXC(macro_end) {
     SV* const retaddr = TX_pop();
     TX_st->pc = SvUVX(retaddr);
 
@@ -697,7 +695,7 @@ XSLATE(macro_end) {
     LEAVE;
 }
 
-XSLATE_w_key(macro) {
+TXC_w_key(macro) {
     SV* const name = TX_op_arg;
     HE* he;
     if(TX_st->macro && (he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
@@ -711,7 +709,7 @@ XSLATE_w_key(macro) {
     TX_st->pc++;
 }
 
-XSLATE_w_key(function) {
+TXC_w_key(function) {
     SV* const name = TX_op_arg;
     HE* he;
 
@@ -726,20 +724,20 @@ XSLATE_w_key(function) {
 }
 
 
-XSLATE(funcall) {
+TXC(funcall) {
     /* PUSHMARK & PUSH must be done */
     TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "calling");
 
     TX_st->pc++;
 }
 
-XSLATE_goto(goto) {
+TXC_goto(goto) {
     TX_st->pc = SvUVX(TX_op_arg);
 }
 
-XSLATE_w_sv(depend); /* indicate files for templates to depend on */
+TXC_w_sv(depend); /* indicate files for templates to depend on */
 
-XSLATE(exit) {
+TXC(exit) {
     TX_st->pc = TX_st->code_len;
 }
 
