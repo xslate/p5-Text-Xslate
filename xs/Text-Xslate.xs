@@ -789,8 +789,6 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     base->hint_size = SvCUR(st.output);
 
     MY_CXT.depth--;
-
-    return st.output;
 }
 
 
