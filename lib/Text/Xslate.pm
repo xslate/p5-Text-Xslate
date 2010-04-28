@@ -14,14 +14,12 @@ XSLoader::load(__PACKAGE__, $VERSION);
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string);
 
-use Text::Xslate::Util;
+use Text::Xslate::Util qw(
+    $NUMBER $STRING $DEBUG
+    find_file literal_to_value
+);
 
-use constant _DUMP_LOAD_FILE => ($Text::Xslate::DEBUG =~ /\b dump=load_file \b/xms);
-
-my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
-my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
-my $STRING  = qr/(?: $dquoted | $squoted )/xms;
-my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
+use constant _DUMP_LOAD_FILE => ($DEBUG =~ /\b dump=load_file \b/xms);
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
@@ -95,7 +93,7 @@ sub load_file {
         return $self->_load_input() // $self->throw_error("Template source <input> does not exist");
     }
 
-    my $f = Text::Xslate::Util::find_file($file, $self->{path});
+    my $f = find_file($file, $self->{path});
 
     if(not defined $f) {
         $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
@@ -212,17 +210,7 @@ sub _load_assembly {
         my $value = $2;
         my $line  = $3;
 
-        if(defined($value)) {
-            if($value =~ s/"(.*)"/$1/){
-                $value =~ s/\\n/\n/g;
-                $value =~ s/\\t/\t/g;
-                $value =~ s/\\(.)/$1/g;
-            }
-            elsif($value =~ s/'(.*)'/$1/) {
-                $value =~ s/\\(['\\])/$1/g; # ' for poor editors
-            }
-        }
-        push @protocode, [ $name, $value, $line ];
+        push @protocode, [ $name, literal_to_value($value), $line ];
     }
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);

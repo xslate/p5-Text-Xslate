@@ -2,19 +2,15 @@ package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
 
-use Text::Xslate::Util;
 use Text::Xslate::Symbol;
+use Text::Xslate::Util qw(
+    $NUMBER $STRING $DEBUG
+);
 
-use constant _DUMP_PROTO => ($Text::Xslate::DEBUG =~ /\b dump=proto \b/xmsi);
-use constant _DUMP_TOKEN => ($Text::Xslate::DEBUG =~ /\b dump=token \b/xmsi);
+use constant _DUMP_PROTO => ($DEBUG =~ /\b dump=proto \b/xmsi);
+use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler);
-
-my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
-my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
-my $QUOTED  = qr/(?: $dquoted | $squoted )/xms;
-
-my $NUMBER  = qr/(?: [0-9]+ (?: \. [0-9]+)? )/xms;
 
 my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 
@@ -44,7 +40,7 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
 
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
-my $CODE    = qr/ (?: (?: $QUOTED | [^'"] )*? ) /xms; # ' for poor editors
+my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
 has symbol_table => (
     is  => 'ro',
@@ -216,14 +212,16 @@ sub next_token {
     if(s/\A ($ID)//xmso){
         return [ name => $1 ];
     }
-    elsif(s/\A ($QUOTED)//xmso){
+    elsif(s/\A ($STRING)//xmso){
         return [ string => $1 ];
     }
     elsif(s/\A ($OPERATOR)//xmso){
         return [ operator => $1 ];
     }
     elsif(s/\A ($NUMBER)//xmso){
-        return [ number => $1 ];
+        my $value = $1;
+        $value =~ s/_//g;
+        return [ number => $value ];
     }
     elsif(s/\A (\$ $ID)//xmso) {
         return [ variable => $1 ];
