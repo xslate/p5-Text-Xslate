@@ -336,9 +336,11 @@ Specifies the include paths. Default to C<<["$FindBin::Bin/../template"]>>.
 
 =item C<< function => \%functions >>
 
-
+Specifies functions.
 
 =item C<< cache => $level // 1 >>
+
+Sets the cache level. If I<$level> E<gt>= 2, modified times will not be checked.
 
 =back
 
@@ -350,8 +352,8 @@ Renders a template with variables, and returns the result.
 
 =head3 C<< escaped_string($str :Str) -> EscapedString >>
 
-Mark I<$str> as escaped. Escaped strings won't escaped by the engine,
-so you must make sure that these strings are escaped.
+Mark I<$str> as escaped. Escaped strings will not be escaped by the engine,
+so you have to escape these strings.
 
 For example:
 
@@ -375,6 +377,7 @@ TODO
     <:= $var :>
     <:= $var.field :>
     <:= $var["field"] :>
+    <:= $var[0] :>
 
 Variables may be HASH references, ARRAY references, or objects.
 
@@ -494,6 +497,20 @@ This is also called as B<template inheritance>.
     : }
     : signeture()
 
+=head1 TODO
+
+=over
+
+=item *
+
+Template-Toolkit-like syntax
+
+=item *
+
+HTML::Template-like syntax
+
+=back
+
 =head1 DEPENDENCIES
 
 Perl 5.10.0 or later, and a C compiler.
@@ -502,7 +519,7 @@ Perl 5.10.0 or later, and a C compiler.
 
 All complex software has bugs lurking in it, and this module is no
 exception. If you find a bug please either email me, or add the bug
-to cpan-RT.
+to cpan-RT.  Patches are welcome :)
 
 =head1 SEE ALSO
 
