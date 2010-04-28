@@ -84,7 +84,7 @@ struct tx_state_s {
 
     U32 hint_size;
 
-    AV* tmpl; /* [name, fullpath, mtime, error_handler] */
+    AV* tmpl; /* [name, fullpath, mtime, error_handler, dependencies...] */
     SV* self;
     U16* lines;  /* code index -> line number */
 };
