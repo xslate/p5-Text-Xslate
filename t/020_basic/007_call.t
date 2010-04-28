@@ -18,8 +18,8 @@ my @data = (
     ['<:= sprintf("%s %s", uc($value), uc($value)) :>',  "FOO FOO"],
 );
 
-$tx->constant(uc      => sub{ uc $_[0] });
-$tx->constant(sprintf => sub{ sprintf shift, @_ });
+$tx->define_constant(uc      => sub{ uc $_[0] });
+$tx->define_constant(sprintf => sub{ sprintf shift, @_ });
 
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
