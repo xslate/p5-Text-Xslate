@@ -357,7 +357,7 @@ so you have to escape these strings.
 For example:
 
     my $tx = Text::Xslate->new(
-        string => "Mailaddress: <:= $email :>",
+        string => 'Mailaddress: <:= $email :>',
     );
     my %vars = (
         email => "Foo &lt;foo@example.com&gt;",
