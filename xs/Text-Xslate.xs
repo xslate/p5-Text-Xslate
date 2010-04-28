@@ -963,8 +963,9 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     tmpl = (AV*)SvRV(sv);
     mg   = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
 
-    if(AvFILLp(tmpl) >= (TXo_size-1)) {
-        why = "template entry is broken";
+    if(AvFILLp(tmpl) < (TXo_size-1)) {
+        why = form("template entry is broken (size:%d < %d)", AvFILLp(tmpl)+1, TXo_size);
+        goto err;
     }
 
     if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
