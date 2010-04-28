@@ -99,7 +99,7 @@ has line => (
 
 has line_start => (
     is      => 'ro',
-    isa     => 'RegexpRef',
+    isa     => 'Maybe[RegexpRef]',
     default => sub{ qr/\Q:/xms },
 );
 
@@ -134,19 +134,23 @@ sub split {
     my $tag_start     = $self->tag_start;
     my $tag_end       = $self->tag_end;
 
+    my $lex_line = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
+    my $lex_tag  = qr/\A ([^\n]*?) $tag_start ($CODE) $tag_end /xms;
+    my $lex_text = qr/\A ([^\n]* \n) /xms;
+
     while($_) {
-        if(s/\A ^ [ \t]* $line_start ([^\n]* \n?) //xms) {
+        if($lex_line && s/$lex_line//xms) {
             push @tokens,
                 [ code => _trim($1) ];
         }
-        elsif(s/\A ([^\n]*?) $tag_start ($CODE) $tag_end //xms) {
+        elsif(s/$lex_tag//xms) {
             if($1){
                 push @tokens, [ text => $1 ];
             }
             push @tokens,
                 [ code => _trim($2) ];
         }
-        elsif(s/\A ([^\n]* \n) //xms) {
+        elsif(s/$lex_text//xms) {
             push @tokens, [ text => $1 ];
         }
         else {
