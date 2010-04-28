@@ -286,10 +286,24 @@ This document describes Text::Xslate version 0.1000.
 B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate opcodes, and then executed by the xslate virtual machine
-just like as Perl does. Accordingly, Xslate is much faster than other template
-engines.
+just like as Perl does.
 
 Note that B<this software is under development>.
+
+=head2 Features
+
+=head3 Hight performance
+
+Xslate has an virtual machine written in XS, which is highly optimized.
+Accoding to benchmarks, Xslate is B<2-10> times faster than other template
+engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc).
+
+=head3 Template cascading
+
+Xslate supports template cascading, which allows one to extend
+templates with block modifiers.
+
+This mechanism is also called as template inheritance.
 
 =head1 INTERFACE
 
