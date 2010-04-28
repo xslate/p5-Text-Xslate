@@ -246,9 +246,15 @@ sub parse {
     return $parser->statements();
 }
 
+sub BUILD {
+    my($parser) = @_;
+    $parser->define_grammer();
+    return;
+}
+
 # The grammer
 
-sub BUILD {
+sub define_grammer {
     my($parser) = @_;
 
     # separators
