@@ -529,7 +529,6 @@ TXC(mod) {
     TX_st->pc++;
 }
 
-/* NOTE: TXC_w_sv will make it faster, but it may be unimportant */
 TXC_w_sv(concat) {
     SV* const sv = TX_op_arg;
     sv_setsv_nomg(sv, TX_st_sb);
