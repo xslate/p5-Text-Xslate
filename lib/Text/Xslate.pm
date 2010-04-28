@@ -281,11 +281,11 @@ This document describes Text::Xslate version 0.001_08.
 =head1 DESCRIPTION
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
-This engine introduces virtual machines. That is, templates are compiled
-into xslate opcodes, and then executed by the xslate virtual machine just
-like as Perl does.
+This engine introduces the virtual machine paradigm. That is, templates are
+compiled into xslate opcodes, and then executed by the xslate virtual machine
+just like as Perl does.
 
-This software is under development. Any interfaces will be changed.
+B<This software is under development>.
 
 =head1 INTERFACE
 
@@ -301,11 +301,19 @@ Options:
 
 =item C<< string => $template_string >>
 
+Specifies the template string, which is called C<< <input> >> internally.
+
 =item C<< file => $template_file | \@template_files >>
+
+Specifies file(s) to be preloaded.
 
 =item C<< path => \@path // ["$FindBin::Bin/../template"] >>
 
+Specifies the include paths. Default to C<<["$FindBin::Bin/../template"]>>.
+
 =item C<< function => \%functions >>
+
+
 
 =item C<< cache => $level // 1 >>
 

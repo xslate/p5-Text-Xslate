@@ -3,14 +3,14 @@ use 5.010;
 use Mouse;
 
 use Text::Xslate::Util;
+use Text::Xslate::Parser::Default;
+
 use Scalar::Util ();
 
 use constant _DUMP_ASM => ($Text::Xslate::DEBUG =~ /\b dump=asm \b/xms);
 use constant _OPTIMIZE => ($Text::Xslate::DEBUG =~ /\b optimize=(\d+) \b/xms);
 
-extends qw(Text::Xslate::Parser);
-
-our @CARP_NOT = qw(Text::Xslate);
+our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser::Default);
 
 my %bin = (
     '==' => 'eq',
@@ -70,9 +70,22 @@ has macro_table => (
 
 has engine => (
     is  => 'ro',
-    isa => 'Object',
+    isa => 'Object', # Text::Xslate
 
     weak_ref => 1,
+
+    required => 0,
+);
+
+has parser => (
+    is  => 'ro',
+    isa => 'Object', # Text::Xslate::Parser
+
+    handles => [qw(file line define_constant define_function)],
+
+    default => sub {
+        return Text::Xslate::Parser::Default->new();
+    },
 
     required => 0,
 );
@@ -101,10 +114,12 @@ sub compile_str {
 sub compile {
     my($self, $str, %args) = @_;
 
-    $self->file($args{file}) if defined $args{file};
-    $self->line(0);
+    my $parser = $self->parser;
 
-    my $ast = $self->parse($str);
+    $parser->file($args{file}) if defined $args{file};
+    $parser->line(0);
+
+    my $ast = $parser->parse($str);
 
     # main
     my @code = $self->_compile_ast($ast);
@@ -643,3 +658,9 @@ sub as_assembly {
 
 no Mouse;
 __PACKAGE__->meta->make_immutable;
+
+=head1 NAME
+
+Text::Xslate::Compiler - An Xslate compiler
+
+=cut

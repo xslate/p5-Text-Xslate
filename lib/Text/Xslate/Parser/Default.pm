@@ -1,4 +1,4 @@
-package Text::Xslate::Parser;
+package Text::Xslate::Parser::Default;
 use 5.010;
 use Mouse;
 
@@ -303,7 +303,7 @@ sub BUILD {
     $parser->prefix('(', \&_nud_paren);
 
     # constants
-    $parser->constant('nil', undef);
+    $parser->define_constant('nil', undef);
 
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
@@ -543,7 +543,7 @@ sub _nud_constant {
     return $c;
 }
 
-sub constant {
+sub define_constant {
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
@@ -928,3 +928,10 @@ sub _parse_error {
 
 no Mouse;
 __PACKAGE__->meta->make_immutable;
+__END__
+
+=head1 NAME
+
+Text::Xslate::Parser::Default - An Xslate template parser used by default
+
+=cut

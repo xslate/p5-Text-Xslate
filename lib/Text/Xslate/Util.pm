@@ -50,3 +50,10 @@ sub find_file {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+Text::Xslate::Util - A set of utilities for Xslate
+
+=cut

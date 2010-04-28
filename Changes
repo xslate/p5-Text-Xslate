@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+0.001_09
+    - New keywords: cascade, macro, block, before, around and after
+    - Add template cascading
+    - Add macro statement
+    - Add "cache => 2" mode (no mtime checks)
+
 0.001_08 Fri Apr 23 13:33:14 2010
     - Add escaped_string() to tell the engine that strings are escaped
 
