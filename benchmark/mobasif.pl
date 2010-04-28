@@ -15,8 +15,8 @@ my $vars      = {
     fuga => "fuga",
 };
 
-my $mst_in  = "benchmark/template/simple.mst";
-my $mst_bin = "benchmark/template/simple.mst.out";
+my $mst_in  = "template/simple.mst";
+my $mst_bin = "template/simple.mst.out";
 MobaSiF::Template::Compiler::compile($mst_in, $mst_bin);
 
 my $tx = Text::Xslate->new(cache => 2);
