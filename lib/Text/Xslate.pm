@@ -440,7 +440,7 @@ Base templates F<mytmpl/base.tx>:
         [My Template!]
     : }
 
-    : block body -> {} # without default
+    : block body -> {;} # without default
 
 Another derived template F<mytmpl/foo.tx>:
 
@@ -478,7 +478,7 @@ Output:
 
         Before body!
         My Template Body!
-        Before Body!
+        After Body!
 
 This is also called as B<template inheritance>.
 
