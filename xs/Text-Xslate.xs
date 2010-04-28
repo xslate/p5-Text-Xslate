@@ -80,6 +80,7 @@ struct tx_state_s {
     HV* vars;    /* template variables */
     AV* locals;  /* local variables */
     SV** pad;    /* AvARRAY(locals) */
+    I32 lvar_max;
 
     HV* function;
 
@@ -116,11 +117,16 @@ static SV**
 tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_id) {
     assert(st);
     if(AvFILLp(st->locals) < lvar_id) {
-        croak("panic: local variable storage is smaller (%d < %d)",
+        croak("panic[%d]: local variable storage is smaller (%d < %d)",
+            (int)st->pc,
             (int)AvFILLp(st->locals), (int)lvar_id);
     }
     if(!st->pad) {
-        croak("panic: no local variable storage");
+        croak("panic[%d]: no local variable storage", (int)st->pc);
+    }
+    if( SvREADONLY(st->pad[lvar_id]) ){
+        croak("panic[%d]: local variable 0x%p[%d] is read only",
+            (int)st->pc, st->pad, (int)lvar_id);
     }
     return &( (st->pad)[lvar_id] );
 }
@@ -657,6 +663,17 @@ XSLATE(macrocall) {
     ENTER;
     SAVETMPS;
 
+    if(TX_st->lvar_max > 0){
+        AV* const locals = TX_st->locals;
+        I32 const len = AvFILLp(locals) + TX_st->lvar_max + 1;
+        I32 i;
+        av_extend(locals, len);
+        for(i = AvFILLp(locals) + 1; i < len; i++) {
+            sv_setsv(*av_fetch(locals, i, TRUE), &PL_sv_undef);
+        }
+        TX_st->pad = AvARRAY(locals) + TX_st->lvar_max;
+    }
+
     mXPUSHu(TX_st->pc + 1); /* return address */
     PUTBACK;
 
@@ -670,6 +687,12 @@ XSLATE_w_key(macro_begin) {
 XSLATE(macro_end) {
     SV* const retaddr = TX_pop();
     TX_st->pc = SvUVX(retaddr);
+
+    if(TX_st->lvar_max > 0) {
+        AV* const locals = TX_st->locals;
+        av_fill(locals, AvFILLp(locals) - TX_st->lvar_max);
+        TX_st->pad -= TX_st->lvar_max;
+    }
 
     (void)POPMARK;
 
@@ -756,6 +779,8 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     }
 
     StructCopy(base, &st, tx_state_t);
+
+    st.pad = AvARRAY(st.locals) + AvFILLp(st.locals) + 1 - st.lvar_max;
 
     st.output = output;
     st.vars   = hv;
@@ -1093,7 +1118,7 @@ CODE:
     I32 const len = av_len(proto) + 1;
     I32 i;
     U16 l = 0;
-    I32 lvar_id_max = -1;
+    I32 lvar_max = -1;
     tx_state_t st;
     AV* tmpl;
     SV* tobj;
@@ -1196,8 +1221,8 @@ CODE:
                         if(opnum == TXOP_for_start) {
                                 id += 2;
                         }
-                        if(lvar_id_max < id) {
-                            lvar_id_max = id;
+                        if(lvar_max < id) {
+                            lvar_max = id;
                         }
                     }
 
@@ -1247,13 +1272,14 @@ CODE:
             croak("Oops: Broken code found on [%d]", (int)i);
         }
     } /* end for */
-    if(lvar_id_max >= 0) {
-        av_fill(st.locals, lvar_id_max);
-        lvar_id_max++;
-        for(i = 0; i < lvar_id_max; i++) {
+    if(lvar_max >= 0) {
+        av_extend(st.locals, lvar_max);
+        lvar_max++;
+        for(i = 0; i < lvar_max; i++) {
             av_store(st.locals, i, newSV(0));
         }
-        ((tx_state_t*)mg->mg_ptr)->pad = AvARRAY(st.locals);
+        ((tx_state_t*)mg->mg_ptr)->pad      = NULL; /* set by tx_execute() */
+        ((tx_state_t*)mg->mg_ptr)->lvar_max = lvar_max;
     }
 }
 
