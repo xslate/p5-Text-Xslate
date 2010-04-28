@@ -249,7 +249,7 @@ tx_escaped_string(pTHX_ SV* const str) {
 }
 
 static bool
-tx_str_is_escaped(pTHX_ const SV* const sv) {
+tx_str_is_escaped(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         dMY_CXT;
         if(!SvOK(SvRV(sv))) {
