@@ -34,7 +34,7 @@ sub new {
     $args{input_layer}  //= ':utf8';
     $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
-   #$args{functions}    //= {}; # see _compiler()
+   #$args{function}     //= {}; # see _compiler()
 
     $args{template}       = {};
 
