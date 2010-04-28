@@ -208,7 +208,7 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
     PERL_UNUSED_ARG(st);
-    if(sv_isobject(var)) {
+    if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
         dSP;
         PUSHMARK(SP);
         XPUSHs(var);
@@ -456,6 +456,7 @@ XSLATE_w_var(for_start) {
     SV* const avref = TX_st_sa;
     IV  const id    = SvIVX(TX_op_arg);
 
+    SvGETMAGIC(avref);
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
         croak("Iterator variables must be an ARRAY reference, not %s",
             tx_neat(aTHX_ avref));
