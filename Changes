@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.001_09
+0.001_09 Wed Apr 28 18:01:42 2010
     - New keywords: cascade, macro, block, before, around and after
     - Add template cascading
     - Add macro statement
