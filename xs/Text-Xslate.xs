@@ -311,6 +311,8 @@ TXC_w_sv(literal) {
     TX_st->pc++;
 }
 
+/* the same as literal, but make sure its argument is an integer */
+TXC_w_int(literal_i);
 
 TXC_w_key(fetch_s) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
