@@ -422,12 +422,6 @@ XSLATE(print) {
     TX_st->pc++;
 }
 
-XSLATE_w_sv(print_s) {
-    TX_st_sa = TX_op_arg;
-
-    TXCODE_print(aTHX_ TX_st);
-}
-
 XSLATE(print_raw) {
     sv_catsv_nomg(TX_st->output, TX_st_sa);
 
@@ -442,16 +436,6 @@ XSLATE_w_sv(print_raw_s) {
 
 XSLATE(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
-
-    ENTER; /* for error handlers */
-    tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
-    LEAVE;
-
-    TX_st->pc++;
-}
-
-XSLATE_w_key(include_s) {
-    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_op_arg);
 
     ENTER; /* for error handlers */
     tx_exec(aTHX_ st, TX_st->output, TX_st->vars);
@@ -1010,11 +994,13 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
-    HV* const ops = get_hv("Text::Xslate::_ops", GV_ADDMULTI);
+    HV* const ops = get_hv("Text::Xslate::OPS", GV_ADDMULTI);
     MY_CXT_INIT;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    SvREADONLY_off(ops);
     tx_init_ops(aTHX_ ops);
+    SvREADONLY_on(ops);
 }
 
 #ifdef USE_ITHREADS
@@ -1038,7 +1024,7 @@ _initialize(HV* self, AV* proto, SV* name = undef, SV* fullpath = undef, SV* mti
 CODE:
 {
     MAGIC* mg;
-    HV* const ops = get_hv("Text::Xslate::_ops", GV_ADD);
+    HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     I32 const len = av_len(proto) + 1;
     I32 i;
     U16 l = 0;

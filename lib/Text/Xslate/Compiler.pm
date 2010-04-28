@@ -156,7 +156,7 @@ sub compile {
     }
     $self->clear_macro_table();
 
-    $self->_optimize(\@code) if $args{optimize} // _OPTIMIZE // 1;
+    $self->_optimize(\@code) for 1 .. $args{optimize} // _OPTIMIZE // 2;
 
     print "// ", $self->file, "\n", $self->as_assembly(\@code) if _DUMP_ASM;
 
@@ -249,6 +249,11 @@ sub _compile_cascade {
     return @code;
 }
 
+{
+    package Text::Xslate;
+    our %OPS; # to avoid 'once' warnings;
+}
+
 sub _generate_command {
     my($self, $node) = @_;
 
@@ -256,7 +261,7 @@ sub _generate_command {
 
     my $proc = $node->id;
     foreach my $arg(@{ $node->first }){
-        if($arg->arity eq 'literal'){
+        if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
             my $value = $self->_literal_to_value($arg);
             push @code, [ $proc . '_s' => $value, $node->line ];
         }
@@ -420,10 +425,7 @@ sub _generate_literal {
     my($self, $node) = @_;
 
     my $value = $self->_literal_to_value($node);
-    if(Mouse::Util::TypeConstraints::Int($value)) {
-        return [ literal_i => $value ];
-    }
-    elsif(defined $value){
+    if(defined $value){
         return [ literal => $value ];
     }
     else {
@@ -581,7 +583,7 @@ sub _optimize {
 
                     my $op = $c->[$j];
                     $c->[$i][1] .= $op->[1];
-                    @{$op} = (noop => undef, undef, 'optimized away');
+                    @{$op} = (noop => undef, undef, "ex-$op->[0]");
                 }
             }
             when('store_to_lvar') {
@@ -599,10 +601,22 @@ sub _optimize {
                 if(defined($nn)
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
-                    @{$it} = ('move_sa_to_sb', undef, undef, 'optimized from store_to_lvar');
+                    @{$it} = ('move_sa_to_sb', undef, undef, "ex-$it->[0]");
+                    @{$nn} = (noop => undef, undef, "ex-$nn->[0]");
+                }
+            }
+            when('literal') {
+                if(Mouse::Util::TypeConstraints::Int($c->[$i][1])) {
+                    $c->[$i][0] = 'literal_i';
+                }
+            }
+            when('fetch_field') {
+                my $prev = $c->[$i-1];
+                if($prev->[0] =~ /^literal/) { # literal or literal_i
+                    $c->[$i][0] = 'fetch_field_s';
+                    $c->[$i][1] = $prev->[1];
 
-                    # replace to noop, need to adjust goto address
-                    @{$c->[$i+2]} = (noop => undef, undef, 'optimized away');
+                    @{$prev} = (noop => undef, undef, "ex-$prev->[0]");
                 }
             }
         }
@@ -629,7 +643,7 @@ sub _optimize {
 
             # mark ragens that goto family have its effects
             my @range = $addr > 0
-                ? ($i .. ($i+$addr))  # positive
+                ? ($i .. ($i+$addr-1))  # positive
                 : (($i+$addr) .. $i); # negative
 
             foreach my $j(@range) {
