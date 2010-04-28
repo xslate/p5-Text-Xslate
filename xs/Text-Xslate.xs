@@ -473,7 +473,7 @@ XSLATE_goto(for_iter) {
     assert(SvIOK(i));
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
+    if(LIKELY(++SvIVX(i) <= av_len(av))) {
         SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
         sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
         TX_st->pc++;
