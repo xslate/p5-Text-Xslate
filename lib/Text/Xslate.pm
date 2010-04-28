@@ -16,12 +16,14 @@ our @EXPORT_OK = qw(escaped_string);
 
 use Text::Xslate::Util;
 
+use constant _DUMP_LOAD_FILE => ($Text::Xslate::DEBUG =~ /\b dump=load_file \b/xms);
+
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 my $STRING  = qr/(?: $dquoted | $squoted )/xms;
 my $NUMBER  = qr/(?: [+-]? [0-9]+ (?: \. [0-9]+)? )/xms;
 
-my $IDENT   = qr/(?: [.]? [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
+my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 my $XSLATE_MAGIC = ".xslate $VERSION\n";
 
@@ -45,26 +47,7 @@ sub new {
             for ref($file) ? @{$file} : $file;
     }
 
-    my $source = 0;
-
-    if($args{string}) {
-        $source++;
-        $self->_load_string($args{string});
-    }
-
-    if($args{assembly}) {
-        $source++;
-        $self->_load_assembly($args{assembly});
-    }
-
-    if($args{protocode}) {
-        $source++;
-        $self->_initialize($args{protocode});
-    }
-
-    if($source > 1) {
-        $self->throw_error("Multiple template sources are specified");
-    }
+    $self->_load_input();
 
     return $self;
 }
@@ -80,8 +63,44 @@ sub render;
 
 sub _initialize;
 
+sub _load_input { # for <input>
+    my($self) = @_;
+
+    my $source = 0;
+    my $protocode;
+
+    if($self->{string}) {
+        $source++;
+        $protocode = $self->_load_string($self->{string});
+    }
+
+    if($self->{assembly}) {
+        $source++;
+        $protocode = $self->_load_assembly($self->{assembly});
+    }
+
+    if($self->{protocode}) {
+        $source++;
+        $self->_initialize($protocode = $self->{protocode});
+    }
+
+    if($source > 1) {
+        $self->throw_error("Multiple template sources are specified");
+    }
+
+    #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper $protocode;
+
+    return $protocode;
+}
+
 sub load_file {
     my($self, $file) = @_;
+
+    print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
+
+    if($file eq '<input>') { # simply reload it
+        return $self->_load_input() // $self->throw_error("Template source <input> does not exist");
+    }
 
     my $f = Text::Xslate::Util::find_file($file, $self->{path});
 
@@ -92,6 +111,8 @@ sub load_file {
     my $fullpath    = $f->{fullpath};
     my $mtime       = $f->{mtime};
     my $is_compiled = $f->{is_compiled};
+
+    print STDOUT "---> $fullpath\n" if _DUMP_LOAD_FILE;
 
     # if $mtime is undef, the runtime does not check freshness of caches.
     undef $mtime if $self->{cache} >= 2;
@@ -120,18 +141,19 @@ sub load_file {
 
         if($self->{cache}) {
             # compile templates into assemblies
-            open my($out), '>:raw:utf8', "${fullpath}c"
-                or $self->throw_error("LoadError: Cannot open ${fullpath}c for writing: $!");
+            my $pathc = "${fullpath}c";
+            open my($out), '>:raw:utf8', $pathc
+                or $self->throw_error("LoadError: Cannot open $pathc for writing: $!");
 
             print $out $XSLATE_MAGIC;
             print $out $self->_compiler->as_assembly($protocode);
             if(!close $out) {
-                 Carp::carp("Xslate: Cannot close ${fullpath}c (ignored): $!");
-                 unlink "${fullpath}c";
+                 Carp::carp("Xslate: Cannot close $pathc (ignored): $!");
+                 unlink $pathc;
             }
             else {
                 my $t = $mtime // ( stat $fullpath )[9];
-                utime $t, $t, "${fullpath}c";
+                utime $t, $t, $pathc;
             }
         }
 
@@ -177,7 +199,7 @@ sub _load_string {
 
     my $protocode = $self->_compiler->compile($string);
     $self->_initialize($protocode, @args);
-    return;
+    return $protocode;
 }
 
 sub _load_assembly {

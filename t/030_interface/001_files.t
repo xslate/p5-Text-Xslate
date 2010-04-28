@@ -60,19 +60,21 @@ utime $t, $t, $y;
 rename $x => "${x}~";
 rename $y => $x;
 
-is $tx->render('hello.tx', { lang => 'Xslate' }), "Hi, Xslate world!\n", "auto reload";
+is $tx->render('hello.tx', { lang => 'Xslate' }),
+    "Hi, Xslate world!\n", "auto reload" for 1 .. 2;
 
 rename $x => $y;
 rename "${x}~" => $x;
 
-is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "auto reload";
+is $tx->render('hello.tx', { lang => 'Xslate' }),
+    "Hello, Xslate world!\n", "auto reload" for 1 .. 2;
 
 $tx = Text::Xslate->new(cache => 2);
 
 unlink(@caches) or diag "Cannot unlink: $!";
 
-is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "cache => 2";
-is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "cache => 2";
+is $tx->render('hello.tx', { lang => 'Xslate' }),
+    "Hello, Xslate world!\n", "cache => 2" for 1 .. 2;
 
 unlink(@caches) or diag "Cannot unlink: $!";
 

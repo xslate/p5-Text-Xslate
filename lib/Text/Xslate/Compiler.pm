@@ -293,8 +293,10 @@ sub _generate_bare_command {
         my $file = $template_name . $engine->{suffix};
         $file =~ s{::}{/}g;
 
-        $self->macro_table->{'@main'} = $engine->load_file($file);
+        my $c = $self->macro_table->{'@main'} = $engine->load_file($file);
         $self->cascading($template_name);
+
+        unshift @{$c}, [depend => Text::Xslate::Util::find_file($file, $engine->{path})->{fullpath}];
     }
     else {
         Carp::croak("Unknown command $node");
