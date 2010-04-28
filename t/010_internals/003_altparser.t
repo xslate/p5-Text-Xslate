@@ -7,7 +7,7 @@ use Text::Xslate::Compiler;
 
 
 my $c = Text::Xslate::Compiler->new(
-    parser => Text::Xslate::Parser::Default->new(
+    parser => Text::Xslate::Parser->new(
         line_start => undef,
         tag_start  => qr/\Q[%/xms,
         tag_end    => qr/\Q%]/xms,

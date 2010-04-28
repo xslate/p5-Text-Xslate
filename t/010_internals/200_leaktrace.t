@@ -9,7 +9,7 @@ use Text::Xslate::Compiler;
 
 my $txc = Text::Xslate::Compiler->new();
 
-$txc->constant(uc => sub{ uc $_[0] });
+$txc->define_constant(uc => sub{ uc $_[0] });
 
 no_leaks_ok {
     my $x = $txc->compile_str(<<'TX');

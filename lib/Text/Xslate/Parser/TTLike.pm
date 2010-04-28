@@ -2,7 +2,7 @@ package Text::Xslate::Parser::TTLike;
 use 5.010;
 use Mouse;
 
-extends qw(Text::Xslate::Parser::Default);
+extends qw(Text::Xslate::Parser);
 
 sub grammer {
 

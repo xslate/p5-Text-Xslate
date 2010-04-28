@@ -1,4 +1,4 @@
-package Text::Xslate::Parser::Default;
+package Text::Xslate::Parser;
 use 5.010;
 use Mouse;
 
@@ -947,6 +947,6 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Parser::Default - An Xslate template parser used by default
+Text::Xslate::Parser - An Xslate template parser used by default
 
 =cut

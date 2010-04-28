@@ -3,14 +3,14 @@ use 5.010;
 use Mouse;
 
 use Text::Xslate::Util;
-use Text::Xslate::Parser::Default;
+use Text::Xslate::Parser;
 
 use Scalar::Util ();
 
 use constant _DUMP_ASM => ($Text::Xslate::DEBUG =~ /\b dump=asm \b/xms);
 use constant _OPTIMIZE => ($Text::Xslate::DEBUG =~ /\b optimize=(\d+) \b/xms);
 
-our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser::Default);
+our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
 my %bin = (
     '==' => 'eq',
@@ -90,7 +90,7 @@ has parser => (
     handles => [qw(file line define_constant define_function)],
 
     default => sub {
-        return Text::Xslate::Parser::Default->new();
+        return Text::Xslate::Parser->new();
     },
 
     required => 0,

@@ -7,7 +7,7 @@ use overload
     fallback => 1,
 ;
 
-our @CARP_NOT = qw(Text::Xslate::Parser::Default);
+our @CARP_NOT = qw(Text::Xslate::Parser);
 
 has id => (
     is       => 'ro',
