@@ -559,28 +559,28 @@ sub _literal_to_value {
     return $value;
 }
 
-#my %goto;
-#@goto{qw(
-#    for_next
-#    and
-#    or
-#    dor
-#    goto
-#)} = ();
+my %goto_family;
+@goto_family{qw(
+    for_iter
+    and
+    or
+    dor
+    goto
+)} = ();
 
 sub _optimize {
-    my($self, $cr) = @_;
+    my($self, $c) = @_;
 
-    for(my $i = 0; $i < @{$cr}; $i++) {
-        given($cr->[$i][0]) {
+    for(my $i = 0; $i < @{$c}; $i++) {
+        given($c->[$i][0]) {
             when('print_raw_s') {
                 # merge a set of print_raw_s into single command
                 for(my $j = $i + 1;
-                    $j < @{$cr} && $cr->[$j][0] eq 'print_raw_s';
+                    $j < @{$c} && $c->[$j][0] eq 'print_raw_s';
                     $j++) {
 
-                    my $op = $cr->[$j];
-                    $cr->[$i][1] .= $op->[1];
+                    my $op = $c->[$j];
+                    $c->[$i][1] .= $op->[1];
                     @{$op} = (noop => undef, undef, 'optimized away');
                 }
             }
@@ -594,43 +594,79 @@ sub _optimize {
                 # convert into:
                 #   move_sa_to_sb
                 #   blah blah blah
-                my $it = $cr->[$i];
-                my $nn = $cr->[$i+2]; # next next
+                my $it = $c->[$i];
+                my $nn = $c->[$i+2]; # next next
                 if(defined($nn)
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
                     @{$it} = ('move_sa_to_sb', undef, undef, 'optimized from store_to_lvar');
 
                     # replace to noop, need to adjust goto address
-                    @{$cr->[$i+2]} = (noop => undef, undef, 'optimized away');
+                    @{$c->[$i+2]} = (noop => undef, undef, 'optimized away');
                 }
             }
         }
     }
 
-    # TODO: recalculate goto address
-#    my @goto_addr;
-#    for(my $i = 0; $i < @{$cr}; $i++) {
-#        if(exists $goto{ $cr->[$i][0] }) { # goto family
-#            my $addr = $cr->[$i][1]; # relational addr
-#
-#            my @range = $addr > 0
-#                ? ($i .. ($i+$addr))
-#                : (($i+$addr) .. $i);
-#            foreach my $j(@range) {
-#                push @{$goto_addr[$j] //= []}, $cr->[$i];
-#            }
-#        }
-#    }
+    # recalculate goto addresses
+    # eg:
+    #
+    # goto +3
+    # foo
+    # noop
+    # bar // goto destination
+    #
+    # to be:
+    #
+    # goto +2
+    # foo
+    # bar // goto destination
+
+    my @goto_addr;
+    for(my $i = 0; $i < @{$c}; $i++) {
+        if(exists $goto_family{ $c->[$i][0] }) {
+            my $addr = $c->[$i][1]; # relational addr
+
+            # mark ragens that goto family have its effects
+            my @range = $addr > 0
+                ? ($i .. ($i+$addr))  # positive
+                : (($i+$addr) .. $i); # negative
+
+            foreach my $j(@range) {
+                push @{$goto_addr[$j] //= []}, $c->[$i];
+            }
+        }
+    }
+
+    # remove noop
+    for(my $i = 0; $i < @{$c}; $i++) {
+        if($c->[$i][0] eq 'noop') {
+            if(defined $goto_addr[$i]) {
+                foreach my $goto(@{ $goto_addr[$i] }) {
+                    # reduce its absolute value
+                    $goto->[1] > 0
+                        ? $goto->[1]--  # positive
+                        : $goto->[1]++; # negative
+                }
+            }
+            splice @{$c}, $i, 1;
+            # adjust @goto_addr, but it may be empty
+            splice @goto_addr, $i, 1 if @goto_addr > $i;
+        }
+    }
     return;
 }
 
 sub as_assembly {
     my($self, $code_ref) = @_;
 
+    my $addix = ($Text::Xslate::DEBUG =~ /\b addix \b/xms);
+
     my $as = "";
-    foreach my $op(@{$code_ref}) {
-        my($opname, $arg, $line, $comment) = @{$op};
+    foreach my $ix(0 .. (@{$code_ref}-1)) {
+        my($opname, $arg, $line, $comment) = @{$code_ref->[$ix]};
+        $as .= "$ix:" if $addix;
+
         $as .= $opname;
         if(defined $arg) {
             $as .= " ";
