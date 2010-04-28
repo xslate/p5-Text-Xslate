@@ -305,9 +305,10 @@ This document describes Text::Xslate version 0.001_08.
 B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate opcodes, and then executed by the xslate virtual machine
-just like as Perl does.
+just like as Perl does. Accordingly, Xslate is much faster than other template
+engines.
 
-B<This software is under development>.
+Note that B<this software is under development>.
 
 =head1 INTERFACE
 
@@ -509,7 +510,7 @@ L<Text::MicroTemplate>
 
 L<Text::ClearSilver>
 
-L<Template>
+L<Template-Toolkit>
 
 L<HTML::Template>
 
