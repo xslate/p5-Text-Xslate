@@ -15,10 +15,6 @@ START_MY_CXT
 
 #define TX_ESC_CLASS "Text::Xslate::EscapedString"
 
-/* buffer size coefficient (bits), used for memory allocation */
-/* (1 << 6) * U16_MAX = about 4 MiB */
-#define TX_BUFFER_SIZE_C 6
-
 #define XSLATE(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
 /* XSLATE_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
 #define XSLATE_w_sv(n)  XSLATE(n) /* has TX_op_arg as a SV */
