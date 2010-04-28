@@ -576,6 +576,12 @@ my %goto_family;
     goto
 )} = ();
 
+sub _noop {
+    my($op) = @_;
+    @{$op} = (noop => undef, undef, "ex-$op->[0]");
+    return;
+}
+
 sub _optimize {
     my($self, $c) = @_;
 
@@ -587,9 +593,9 @@ sub _optimize {
                     $j < @{$c} && $c->[$j][0] eq 'print_raw_s';
                     $j++) {
 
-                    my $op = $c->[$j];
-                    $c->[$i][1] .= $op->[1];
-                    @{$op} = (noop => undef, undef, "ex-$op->[0]");
+                    $c->[$i][1] .= $c->[$j][1];
+
+                    _noop($c->[$j]);
                 }
             }
             when('store_to_lvar') {
@@ -608,7 +614,8 @@ sub _optimize {
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
                     @{$it} = ('move_sa_to_sb', undef, undef, "ex-$it->[0]");
-                    @{$nn} = (noop => undef, undef, "ex-$nn->[0]");
+
+                    _noop($nn);
                 }
             }
             when('literal') {
@@ -622,7 +629,7 @@ sub _optimize {
                     $c->[$i][0] = 'fetch_field_s';
                     $c->[$i][1] = $prev->[1];
 
-                    @{$prev} = (noop => undef, undef, "ex-$prev->[0]");
+                    _noop($prev);
                 }
             }
         }
