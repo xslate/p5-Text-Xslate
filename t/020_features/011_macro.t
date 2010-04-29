@@ -33,27 +33,38 @@ is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(1)';
 is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(2)';
 
 $tx = Text::Xslate->new(string => <<'T', cache => 0);
+: macro foo -> {
+FOO
+: }
+:= foo()
+T
+
+is $tx->render({}), "FOO\n", 'simplext macrocall' for 1 .. 2;
+
+$tx = Text::Xslate->new(string => <<'T', cache => 0);
 : macro add ->($x, $y) {
-: "[" ~ ($x + $y) ~ "]"
+    [<:= ($x + $y) :>]
 : }
 := add(10, 20) # 30
 := add(11, 22) # 33
 := add(15, 25) # 40
 T
 
-is $tx->render({}), "[30][33][40]", 'macro with args';
-is $tx->render({}), "[30][33][40]", 'macro with args';
+is $tx->render({}), <<'T', 'macro with args' for 1 .. 2;
+    [30]
+    [33]
+    [40]
+T
 
 $tx = Text::Xslate->new(string => <<'T', cache => 0);
 : macro signeture -> {
     This is foo version <:= $VERSION :>
 : }
-: signeture()
+:= "*" ~ signeture()
 T
 
-is $tx->render({ VERSION => '1.012' }), "    This is foo version 1.012\n", 'macro without args';
-is $tx->render({ VERSION => '1.012' }), "    This is foo version 1.012\n", 'macro without args';
-
+is $tx->render({ VERSION => '1.012' }), "*    This is foo version 1.012\n", 'macro without args';
+is $tx->render({ VERSION => '1.012' }), "*    This is foo version 1.012\n", 'macro without args';
 
 eval {
     $tx = Text::Xslate->new(string => <<'T', cache => 0);

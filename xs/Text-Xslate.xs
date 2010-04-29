@@ -53,7 +53,8 @@ enum txo_ix {
 };
 
 enum txframeo_ix {
-    TXframe_MACRONAME,
+    TXframe_NAME,
+    TXframe_OUTPUT,
     TXframe_RETADDR,
 
     TXframe_START_LVAR
@@ -380,7 +381,7 @@ TXC_w_var(fetch_lvar) {
 
     /* XXX: is there a better way? */
     if(AvFILLp(cframe) < (id + TXframe_START_LVAR)) {
-        croak("Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_MACRONAME]);
+        croak("Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
     }
 
     TX_st_sa = TX_lvar_get(id);
@@ -418,6 +419,8 @@ TXC(print) {
         STRLEN len;
         const char*       cur = SvPV_const(sv, len);
         const char* const end = cur + len;
+
+        (void)SvGROW(output, SvCUR(output) + len);
 
         while(cur != end) {
             const char* parts;
@@ -702,12 +705,18 @@ TXC(macrocall) {
     dSP;
     dMARK;
     I32 i;
+    SV* tmp;
 
     ENTER;
     SAVETMPS;
 
     /* push a new frame */
     cframe = tx_push_frame(aTHX_ TX_st);
+
+    tmp                             = *av_fetch(cframe, TXframe_OUTPUT, TRUE);
+    AvARRAY(cframe)[TXframe_OUTPUT] = TX_st->output;
+    TX_st->output                   = tmp;
+    sv_setpvs(tmp, "");
 
     /* macroname will be set by macro_begin */
     sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), TX_st->pc + 1);
@@ -731,7 +740,7 @@ TXC(macrocall) {
 TXC_w_key(macro_begin) {
     AV* const cframe  = TX_current_frame();
 
-    sv_setsv(*av_fetch(cframe, TXframe_MACRONAME, TRUE), TX_op_arg);
+    sv_setsv(*av_fetch(cframe, TXframe_NAME, TRUE), TX_op_arg);
 
     TX_st->pc++;
 }
@@ -740,8 +749,16 @@ TXC(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame];
     SV* const retaddr = AvARRAY(oldframe)[TXframe_RETADDR];
+    SV* tmp;
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
+
+    sv_setsv(TX_st->targ, tx_escaped_string(aTHX_ TX_st->output)); 
+    TX_st_sa = TX_st->targ; /* retval */
+
+    tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];
+    AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
+    TX_st->output                     = tmp;
 
     TX_st->pc = SvUVX(retaddr);
 
@@ -801,6 +818,7 @@ XS(XS_Text__Xslate__error) {
     dMY_CXT;
     tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
     AV* const cframe     = TX_current_framex(st);
+    SV* const name       = AvARRAY(cframe)[TXframe_NAME];
 
     PERL_UNUSED_ARG(items);
 
@@ -812,9 +830,22 @@ XS(XS_Text__Xslate__error) {
 
     assert(st);
 
+    /* unroll the stack frame */
+    /* to fix TXframe_OUTPUT */
+    while(st->current_frame > 0) {
+        AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
+        SV* tmp;
+        st->current_frame--;
+
+        /* swap st->output and TXframe_OUTPUT */
+        tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
+        AvARRAY(frame)[TXframe_OUTPUT] = st->output;
+        st->output                     = tmp;
+    }
+
     croak("Xslate(%s:%d &%"SVf"[%d]): %"SVf,
         tx_file(aTHX_ st), tx_line(aTHX_ st),
-        AvARRAY(cframe)[TXframe_MACRONAME], (int)st->pc, ST(0));
+        name, (int)st->pc, ST(0));
     XSRETURN_EMPTY; /* not reached */
 }
 
@@ -1230,8 +1261,8 @@ CODE:
     st.current_frame = -1;
 
     mainframe = tx_push_frame(aTHX_ &st);
-    av_store(mainframe, TXframe_MACRONAME, newSVpvs_share("main"));
-    av_store(mainframe, TXframe_RETADDR,   newSVuv(len));
+    av_store(mainframe, TXframe_NAME,    newSVpvs_share("main"));
+    av_store(mainframe, TXframe_RETADDR, newSVuv(len));
 
     Newxz(st.lines, len, U16);
 

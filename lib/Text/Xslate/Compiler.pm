@@ -379,6 +379,7 @@ sub _generate_proc { # block, before, around, after
                 [ pushmark  => () ],
                 [ macro     => $name ],
                 [ macrocall => undef ],
+                [ print     => undef ],
             );
         }
     }
