@@ -1066,6 +1066,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     HV* ttable;
     AV* tmpl;
     MAGIC* mg;
+    SV* cache_mtime;
     int retried = 0;
 
     //PerlIO_stdoutf("load_template(%"SVf")\n", name);
@@ -1128,37 +1129,22 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     /* check mtime */
 
-    if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
-        SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
+    cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
 
-        if(!SvIOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
-            return (tx_state_t*)mg->mg_ptr;
-        }
-
-        //PerlIO_stdoutf("###%d %d >= %d\n", (int)retried, (int)SvIVX(cache_mtime), (int)f.st_mtime);
-
-        if(retried > 0 /* if already retried, it should be valid */
-                || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
-            return (tx_state_t*)mg->mg_ptr;
-        }
-        else {
-            tx_invoke_load_file(aTHX_ self, name);
-            retried++;
-            goto retry;
-        }
-
+    if(!SvIOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
+        return (tx_state_t*)mg->mg_ptr;
     }
-    else { /* for strings (i.e. <input>) */
-        SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
-        if(retried > 0  /* if already retried, it should be valid */
-                || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
-            return (tx_state_t*)mg->mg_ptr;
-        }
-        else {
-            tx_invoke_load_file(aTHX_ self, name);
-            retried++;
-            goto retry;
-        }
+
+    //PerlIO_stdoutf("###%d %d >= %d\n", (int)retried, (int)SvIVX(cache_mtime), (int)f.st_mtime);
+
+    if(retried > 0 /* if already retried, it should be valid */
+            || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
+        return (tx_state_t*)mg->mg_ptr;
+    }
+    else {
+        tx_invoke_load_file(aTHX_ self, name);
+        retried++;
+        goto retry;
     }
 
     err:
