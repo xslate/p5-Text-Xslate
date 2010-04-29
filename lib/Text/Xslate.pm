@@ -440,6 +440,8 @@ limited to 100.
 
 =head2 Template cascading
 
+You can extend templates with block modifiers.
+
 Base templates F<mytmpl/base.tx>:
 
     : block title -> { # with default
@@ -492,14 +494,19 @@ This is also called as B<template inheritance>.
 =head2 Macro blocks
 
     : macro add ->($x, $y) {
-    :   x + $y;
+    :=   $x + $y;
     : }
     := add(10, 20)
 
     : macro signeture -> {
         This is foo version <:= $VERSION :>
     : }
-    : signeture()
+    := signeture()
+
+Note that return values of macros are values that their routines renders.
+That is, macros themselves output nothing.
+
+
 
 =head1 TODO
 
