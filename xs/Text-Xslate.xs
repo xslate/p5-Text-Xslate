@@ -527,36 +527,28 @@ TXC_goto(for_iter) {
     assert(SvIOK(i));
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    if(SvRMAGICAL(av)) {
+    if(LIKELY(SvRMAGICAL(av) == 0)) {
+        if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
+            sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
+            TX_st->pc++;
+            return;
+        }
+    }
+    else { /* magical variables */
         if(LIKELY(++SvIVX(i) <= av_len(av))) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
             sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
-        }
-        else {
-            goto finish_loop;
-        }
-    }
-    else {
-        if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
-            sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
-        }
-        else {
-            goto finish_loop;
+            TX_st->pc++;
+            return;
         }
     }
 
-    TX_st->pc++;
-
-    return;
-
-    finish_loop:
-
-    /* finish the for loop */
+    /* the loop finished */
     sv_setsv(item,  &PL_sv_undef);
     sv_setsv(avref, &PL_sv_undef);
     /* don't need to clear the iterator, it's only an integer */
 
-    TX_st->pc = SvUVX(TX_op_arg);
+    TX_st->pc = SvUVX(TX_op_arg); /* goto */
 }
 
 
