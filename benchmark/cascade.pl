@@ -7,6 +7,8 @@ use Benchmark qw(:all);
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
 use FindBin qw($Bin);
+use Test::More;
+
 {
     package BlogEntry;
     use Mouse;
@@ -45,12 +47,15 @@ my $mt = Text::MicroTemplate::Extended->new(
     template_args => { blog_entries => \@blog_entries },
 );
 
-my $x = $tx->render('child.tx', { blog_entries => \@blog_entries });
-my $y = $mt->render('child');
-$x =~ s/\s//g;
-$y =~ s/\s//g;
+{
+    plan tests => 1;
+    my $x = $tx->render('child.tx', { blog_entries => \@blog_entries });
+    my $y = $mt->render('child');
+    $x =~ s/\s//g;
+    $y =~ s/\s//g;
 
-$x eq $y or die $x, $y;
+    is $x, $y or exit 1;
+}
 
 print "Benchmarks for template cascading\n";
 cmpthese -1 => {
