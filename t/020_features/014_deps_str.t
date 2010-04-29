@@ -24,9 +24,9 @@ T
 
 #use Data::Dumper; print Dumper $tx;
 
-is $tx->render({}), <<'T';
+is $tx->render({lang => 'Xslate'}), <<'T';
 HEAD
-    Hello, world!
+    Hello, Xslate world!
 FOOT
 T
 
@@ -44,9 +44,9 @@ T
 
 move "$original.save" => $original;
 
-is $tx->render({}), <<'T';
+is $tx->render({lang => 'Perl'}), <<'T';
 HEAD
-    Hello, world!
+    Hello, Perl world!
 FOOT
 T
 

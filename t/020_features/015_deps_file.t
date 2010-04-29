@@ -27,10 +27,10 @@ my $tx = Text::Xslate->new(file => 'myapp/derived.tx', path => [path]);
 
 #use Data::Dumper; print Dumper $tx;
 
-is $tx->render('myapp/derived.tx', {}), <<'T';
+is $tx->render('myapp/derived.tx', {lang => 'Xslate'}), <<'T';
 HEAD
     D-BEFORE
-    Hello, world!
+    Hello, Xslate world!
     D-AFTER
 FOOT
 T
@@ -50,10 +50,10 @@ T
 
 move "$original.save" => $original;
 
-is $tx->render('myapp/derived.tx', {}), <<'T';
+is $tx->render('myapp/derived.tx', {lang => 'Perl'}), <<'T';
 HEAD
     D-BEFORE
-    Hello, world!
+    Hello, Perl world!
     D-AFTER
 FOOT
 T
