@@ -496,8 +496,7 @@ TXC_w_var(for_start) {
             tx_neat(aTHX_ avref));
     }
 
-    /* id+0 for each item */
-    (void)   TX_lvar(id+0); /* allocate an sv */
+    (void)   TX_lvar(id+0); /* for each item, ensure to allocate a sv */
     sv_setsv(TX_lvar(id+1), avref);
     sv_setiv(TX_lvar(id+2), -1); /* (re)set iterator */
 
