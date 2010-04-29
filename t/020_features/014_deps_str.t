@@ -9,14 +9,18 @@ use File::Copy qw(copy move);
 
 use t::lib::Util;
 
-my $original = "$Bin/../template/myapp/base.tx";
+my $base    = path . "/myapp/base.tx";
+#my $derived = path . "/myapp/derived.tx";
 END{
-    move "$original.save" => $original if -e "$original.save";
+    move "$base.save" => $base if -e "$base.save";
+
+    unlink $base    . "c";
+#    unlink $derived . "c";
 }
 
 note 'for strings';
 
-utime $^T, $^T, $original;
+utime $^T-120, $^T-120, $base;
 
 my $tx = Text::Xslate->new(string => <<'T', path => [path]);
 : cascade myapp::base
@@ -30,19 +34,19 @@ HEAD
 FOOT
 T
 
-move $original => "$original.save";
-copy "$original.mod" => $original;
+move $base => "$base.save";
+copy "$base.mod" => $base;
 
-utime $^T+10, $^T+10, $original;
-utime $^T+10, $^T+10, $original."c";
+utime $^T+60, $^T+60, $base, $base . "c";
 
-is $tx->render({}), <<'T';
+is $tx->render({lang => 'Foo'}), <<'T';
 HEAD
     Modified version of base.tx
 FOOT
 T
 
-move "$original.save" => $original;
+move "$base.save" => $base;
+utime $^T+120, $^T+120, $base, $base . "c";
 
 is $tx->render({lang => 'Perl'}), <<'T';
 HEAD

@@ -168,7 +168,9 @@ sub compile {
 
     $self->_optimize(\@code) for 1 .. $args{optimize} // _OPTIMIZE // 2;
 
-    print "// ", $self->file, "\n", $self->as_assembly(\@code) if _DUMP_ASM;
+    print "// ", $self->file, "\n",
+        $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
+            if _DUMP_ASM;
 
     $self->file("<input>"); # reset
 
@@ -682,9 +684,7 @@ sub _optimize {
 }
 
 sub as_assembly {
-    my($self, $code_ref) = @_;
-
-    my $addix = ($DEBUG =~ /\b addix \b/xms);
+    my($self, $code_ref, $addix) = @_;
 
     my $as = "";
     foreach my $ix(0 .. (@{$code_ref}-1)) {

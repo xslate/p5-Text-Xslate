@@ -42,18 +42,17 @@ sub find_file {
     my($file, $path) = @_;
 
     my $fullpath;
-    my $mtime;
+    my $orig_mtime;
+    my $cache_mtime;
     my $is_compiled;
 
     foreach my $p(@{$path}) {
         $fullpath = "$p/${file}";
-        $mtime = (stat($fullpath))[9] // next; # does not exist
+        $orig_mtime = (stat($fullpath))[9] // next; # does not exist
 
         if(-f "${fullpath}c") {
-            my $m2 = (stat(_))[9]; # compiled
-
-            if($mtime == $m2) {
-                $fullpath     .= 'c';
+            $cache_mtime = (stat(_))[9]; # compiled
+            if($cache_mtime >= $orig_mtime) {
                 $is_compiled   = 1;
             }
             else {
@@ -66,10 +65,11 @@ sub find_file {
         }
     }
 
-    if(defined $mtime) {
+    if(defined $orig_mtime) {
         return {
             fullpath    => $fullpath,
-            mtime       => $mtime,
+            orig_mtime  => $orig_mtime,
+            cache_mtime => $cache_mtime,
             is_compiled => $is_compiled,
         };
     }

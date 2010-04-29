@@ -62,7 +62,7 @@ sub _load_input { # for <input>
 
     if($self->{string}) {
         $source++;
-        $protocode = $self->_load_string($self->{string});
+        $protocode = $self->_compiler->compile($self->{string});
     }
 
     if($self->{assembly}) {
@@ -72,11 +72,15 @@ sub _load_input { # for <input>
 
     if($self->{protocode}) {
         $source++;
-        $self->_initialize($protocode = $self->{protocode});
+        $protocode = $self->{protocode};
     }
 
     if($source > 1) {
         $self->throw_error("Multiple template sources are specified");
+    }
+
+    if(defined $protocode) {
+        $self->_initialize($protocode);
     }
 
     #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper $protocode;
@@ -90,7 +94,8 @@ sub load_file {
     print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
 
     if($file eq '<input>') { # simply reload it
-        return $self->_load_input() // $self->throw_error("Template source <input> does not exist");
+        return $self->_load_input()
+            // $self->throw_error("LoadError: Template source <input> does not exist");
     }
 
     my $f = find_file($file, $self->{path});
@@ -100,56 +105,64 @@ sub load_file {
     }
 
     my $fullpath    = $f->{fullpath};
-    my $mtime       = $f->{mtime};
     my $is_compiled = $f->{is_compiled};
 
-    print STDOUT "---> $fullpath\n" if _DUMP_LOAD_FILE;
+    print STDOUT "---> $fullpath ($is_compiled)\n" if _DUMP_LOAD_FILE;
 
-    # if $mtime is undef, the runtime does not check freshness of caches.
-    undef $mtime if $self->{cache} >= 2;
+    my $pathc = $fullpath . "c";
 
     my $string;
     {
-        open my($in), '<' . $self->{input_layer}, $fullpath
+        open my($in), '<' . $self->{input_layer}, $is_compiled ? $pathc : $fullpath
             or $self->throw_error("LoadError: Cannot open $fullpath for reading: $!");
 
         if($is_compiled && scalar(<$in>) ne $XSLATE_MAGIC) {
             # magic token is not matched
             close $in;
-            unlink $fullpath or $self->throw_error("LoadError: Cannot unlink $fullpath: $!");
+            unlink $pathc or $self->throw_error("LoadError: Cannot unlink $pathc: $!");
             goto &load_file; # retry
         }
+
         local $/;
         $string = <$in>;
     }
 
     my $protocode;
     if($is_compiled) {
-        $protocode = $self->_load_assembly($string, $file, $fullpath, $mtime);
+        $protocode = $self->_load_assembly($string);
     }
     else {
         $protocode = $self->_compiler->compile($string, file => $file);
 
         if($self->{cache}) {
             # compile templates into assemblies
-            my $pathc = "${fullpath}c";
             open my($out), '>:raw:utf8', $pathc
                 or $self->throw_error("LoadError: Cannot open $pathc for writing: $!");
 
             print $out $XSLATE_MAGIC;
             print $out $self->_compiler->as_assembly($protocode);
+
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $pathc (ignored): $!");
                  unlink $pathc;
             }
             else {
-                my $t = $mtime // ( stat $fullpath )[9];
-                utime $t, $t, $pathc;
+                $is_compiled = 1;
             }
         }
-
-        $self->_initialize($protocode, $file, $fullpath, $mtime);
     }
+    # if $mtime is undef, the runtime does not check freshness of caches.
+    my $mtime;
+    if($self->{cache} < 2) {
+        if($is_compiled) {
+            $mtime = $f->{cache_mtime} // ( stat $pathc )[9];
+        }
+        else {
+            $mtime = 0; # no compiled cache, always need to reload
+        }
+    }
+
+    $self->_initialize($protocode, $file, $fullpath, $mtime);
     return $protocode;
 }
 
@@ -185,16 +198,8 @@ sub _compiler {
     return $compiler;
 }
 
-sub _load_string {
-    my($self, $string, @args) = @_;
-
-    my $protocode = $self->_compiler->compile($string);
-    $self->_initialize($protocode, @args);
-    return $protocode;
-}
-
 sub _load_assembly {
-    my($self, $assembly, @args) = @_;
+    my($self, $assembly) = @_;
 
     # name ?arg comment
     my @protocode;
@@ -213,9 +218,6 @@ sub _load_assembly {
         push @protocode, [ $name, literal_to_value($value), $line ];
     }
 
-    #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper(\@protocode);
-
-    $self->_initialize(\@protocode, @args);
     return \@protocode;
 }
 

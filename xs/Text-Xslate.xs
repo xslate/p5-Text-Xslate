@@ -872,10 +872,6 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     tx_state_t st;
     SV* eh;
 
-    if(++MY_CXT.depth > 100) {
-        croak("Execution is too deep (> 100)");
-    }
-
     StructCopy(base, &st, tx_state_t);
 
     st.output = output;
@@ -893,6 +889,10 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     if(SvROK(eh) && SvTYPE(SvRV(eh)) == SVt_PVCV
         && CvXSUB((CV*)SvRV(eh)) == XS_Text__Xslate__error) {
         CvXSUBANY((CV*)SvRV(eh)).any_ptr = &st;
+    }
+
+    if(++MY_CXT.depth > 100) {
+        croak("Execution is too deep (> 100)");
     }
 
     while(st.pc < code_len) {
@@ -1028,38 +1028,32 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name) {
 }
 
 static bool
-tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const mtime) {
+tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
     I32 const len = AvFILLp(tmpl) + 1;
     if(len > TXo_size) { /* cascading templates have dependencies */
         I32 i;
         Stat_t f;
 
         for(i = TXo_size; i < len; i++) {
-            SV* const path = AvARRAY(tmpl)[i];
+            SV* const deppath = AvARRAY(tmpl)[i];
+
             //PerlIO_stdoutf("check deps: %"SVf" ... ", path); // */
-            if(PerlLIO_stat(SvPV_nolen_const(path), &f) < 0
-                   || f.st_mtime > mtime) {
+            if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
+                   || f.st_mtime > cache_mtime) {
                 SV* const mainpath = AvARRAY(tmpl)[TXo_FULLPATH];
-                STRLEN l;
-                const char* s = SvPV_const(path, l);
 
                 /* compiled files are no longer fresh, so it must be discarded */
-                if(s[l-1] == 'c') {
-                    PerlLIO_unlink(SvPV_nolen_const(path));
-                }
+                PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", deppath));
 
                 if(SvOK(mainpath)) {
-                    s = SvPV_const(mainpath, l);
-                    if(s[l-1] == 'c') {
-                        PerlLIO_unlink(s);
-                    }
+                    PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", mainpath));
                 }
 
-                //PerlIO_stdoutf("too old\n", path); // */
+                //PerlIO_stdoutf("%"SVf": too old (%d > %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
                 return FALSE;
             }
             else {
-                //PerlIO_stdoutf("fresh enough\n", path); // */
+                //PerlIO_stdoutf("%"SVf": fresh enough\n", deppath); // */
             }
         }
     }
@@ -1088,7 +1082,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     retry:
     if(retried > 1) {
-        why = "something's wrong";
+        why = "retried reloading, but failed";
         goto err;
     }
 
@@ -1139,21 +1133,26 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     /* check mtime */
 
     if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
-        SV* const fullpath = AvARRAY(tmpl)[TXo_FULLPATH];
-        SV* const mtime    = AvARRAY(tmpl)[TXo_MTIME];
+        SV* const fullpath    = AvARRAY(tmpl)[TXo_FULLPATH];
+        SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
         Stat_t f;
 
-        if(!SvOK(mtime)) { /* non-checking mode (i.e. release mode) */
+        if(!SvIOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
             return (tx_state_t*)mg->mg_ptr;
         }
 
-        if(PerlLIO_stat(SvPV_nolen_const(fullpath), &f) < 0 && errno != ENOENT) {
+        if(PerlLIO_stat(SvPV_nolen_const(fullpath), &f) < 0) {
             why = form("failed to stat(2) for %"SVf, fullpath);
             goto err;
         }
+        //PerlIO_stdoutf("###%d %d >= %d\n", (int)retried, (int)SvIVX(cache_mtime), (int)f.st_mtime);
 
-        if(SvIV(mtime) == (IV)f.st_mtime
-                && (retried > 0 || tx_all_deps_are_fresh(aTHX_ tmpl, f.st_mtime))) {
+        if(retried > 0) { /* if already retried, it must be valid */
+            return (tx_state_t*)mg->mg_ptr;
+        }
+
+        if(SvIVX(cache_mtime) >= (IV)f.st_mtime /* fresh enough? */
+                && tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
             return (tx_state_t*)mg->mg_ptr;
         }
         else {
@@ -1164,7 +1163,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     }
     else { /* for strings (i.e. <input>) */
-        if(retried > 0 || tx_all_deps_are_fresh(aTHX_ tmpl, PL_basetime /* $^T */)) {
+        SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
+        if(retried > 0 || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
             return (tx_state_t*)mg->mg_ptr;
         }
         else {
@@ -1229,9 +1229,12 @@ CODE:
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
         croak("The xslate object has no template table");
     }
-    if(!SvOK(name)) {
-        name = newSVpvs_flags("<input>", SVs_TEMP);
+
+    if(!SvOK(name)) { /* for strings */
+        name  = newSVpvs_flags("<input>", SVs_TEMP);
+        mtime = sv_2mortal(newSViv( time(NULL) ));
     }
+
     tobj = hv_iterval((HV*)SvRV(*svp),
          hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U)
     );

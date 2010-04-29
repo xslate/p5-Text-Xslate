@@ -8,7 +8,7 @@ use t::lib::Util;
 
 my $tx = Text::Xslate->new(cache => 0, path => [path]);
 
-for(0 .. 5) { # to test including depth
+for(0 .. 3) { # to test including depth
     note $_;
     for(1 .. 100){
         is $tx->render('include.tx', { lang => "Xslate" }),

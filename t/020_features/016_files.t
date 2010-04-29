@@ -5,10 +5,11 @@ use Test::More;
 use Text::Xslate;
 use FindBin qw($Bin);
 use t::lib::Util;
+use File::Copy qw(copy move);
 
-my @caches = ("$Bin/../template/hello.txc", "$Bin/../template/for.txc");
+my @caches = (path."/hello.txc", path."/for.txc");
 
-ok !-e $_, "$_ does not exist" for @caches;
+unlink @caches; # ensure not to exist
 
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
@@ -51,35 +52,41 @@ my $tx = Text::Xslate->new(path => [path]);
 
 is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
 
-my $x = "$Bin/../template/hello.tx";
-my $y = "$Bin/../template/hello2.tx";
+my $x = path."/hello.tx";
 
-my $t = time;
-utime $t, $t, $x;
-$t += 10;
-utime $t, $t, $y;
+# change the content
+move  $x      => "$x.save";
+copy "$x.mod" =>  $x;
 
-rename $x => "${x}~";
-rename $y => $x;
+utime $^T+10, $^T+10, $x;
 
-is $tx->render('hello.tx', { lang => 'Xslate' }),
-    "Hi, Xslate world!\n", "auto reload" for 1 .. 2;
+is $tx->render('hello.tx', { lang => 'Perl' }),
+    "Hi, Perl.\n", "auto reload" for 1 .. 2;
 
-rename $x => $y;
-rename "${x}~" => $x;
+move "$x.save" => $x or diag "cannot move $x.save to $x: $!";
 
-is $tx->render('hello.tx', { lang => 'Xslate' }),
-    "Hello, Xslate world!\n", "auto reload" for 1 .. 2;
+unlink @caches;
+
+note 'cache => 2 (release mode)';
 
 $tx = Text::Xslate->new(cache => 2, path => [path]);
 
-unlink(@caches) or diag "Cannot unlink: $!";
+utime $^T, $^T, $x;
 
 is $tx->render('hello.tx', { lang => 'Xslate' }),
-    "Hello, Xslate world!\n", "cache => 2" for 1 .. 2;
+    "Hello, Xslate world!\n", "first" for 1 .. 2;
+
+# change the content
+move  $x      => "$x.save";
+copy "$x.mod" =>  $x;
+
+utime $^T+10, $^T+10, $x;
+
+is $tx->render('hello.tx', { lang => 'Xslate' }),
+    "Hello, Xslate world!\n", "second (modified, but not reloaded)" for 1 .. 2;
+
+move "$x.save" => $x;
 
 unlink(@caches) or diag "Cannot unlink: $!";
-
-
 
 done_testing;
