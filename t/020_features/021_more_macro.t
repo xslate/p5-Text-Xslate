@@ -68,7 +68,7 @@ T
 
 $tx = Text::Xslate->new(string => <<'T', cache => 0);
 : macro foo ->($x) {
-        <strong><:=$x:></strong>
+    <strong><:=$x:></strong>
 : }
 : macro bar ->($x) {
 :=   foo($x)
@@ -78,10 +78,29 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0);
 T
 
 is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T', "t$_" for 1 .. 2;
-        <strong>FOO</strong>
-        <strong>BAR</strong>
+    <strong>FOO</strong>
+    <strong>BAR</strong>
 T
 
+# XXX: is it useful?
+#
+#$tx = Text::Xslate->new(string => <<'T', cache => 0);
+#: macro foo ->($x) {
+#        <strong><:=$x:></strong>
+#: }
+#: around foo ->($x) {
+#    --------------------
+#    : super
+#    --------------------
+#: }
+#:= foo("FOO")
+#T
+#
+#is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T', "t$_" for 1 .. 2;
+#    --------------------
+#    <strong>FOO</strong>
+#    --------------------
+#T
 
 
 done_testing;
