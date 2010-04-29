@@ -309,11 +309,11 @@ This mechanism is also called as template inheritance.
 
 =head2 Methods
 
-=head3 B<< Text::Xslate->new(%options) -> TX >>
+=head3 B<< Text::Xslate->new(%options) -> Xslate >>
 
-Creates a new xslate template code.
+Creates a new xslate template engine.
 
-Options:
+Possible options ares:
 
 =over
 
@@ -422,6 +422,10 @@ Logical operators (C<< || && // >>)
 
     := $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
     := $var // "foo" # as a default value
+
+String operators (C<< ~ >>)
+
+    := "[" ~ $var ~ "]" # concatination
 
 Operator precedence:
 
