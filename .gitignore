@@ -18,7 +18,7 @@ ppport.h
 nytprof*
 cover_db*
 *.gcda
-*.gno
+*.gcno
 *.gcov
 *.stackdump
 *.c
