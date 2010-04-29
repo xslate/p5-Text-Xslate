@@ -1,8 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
 0.1001
-    - Fix a macrocall issue, again
-    - Allow a literal string in cascade()
+    - Fix macrocall issues, again
+    - Allow a literal string for cascade()
     - Allow underbars in literal numbers
 
 0.1000 Wed Apr 28 21:50:29 2010
