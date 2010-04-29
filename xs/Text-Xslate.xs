@@ -43,13 +43,14 @@ START_MY_CXT
 #define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
 #define TX_current_frame()    TX_current_framex(TX_st)
 
-enum txo_ix {
+enum txtmplo_ix {
     TXo_NAME,
-    TXo_FULLPATH,
-    TXo_MTIME,
     TXo_ERROR_HANDLER,
+    TXo_MTIME,
 
-    TXo_size
+    TXo_FULLPATH,
+    /* dependencies here */
+    TXo_least_size
 };
 
 enum txframeo_ix {
@@ -57,7 +58,9 @@ enum txframeo_ix {
     TXframe_OUTPUT,
     TXframe_RETADDR,
 
-    TXframe_START_LVAR
+    TXframe_START_LVAR,
+    /* local variables here */
+    TXframe_least_size = TXframe_START_LVAR
 };
 
 struct tx_code_s;
@@ -87,7 +90,7 @@ struct tx_state_s {
     HV* vars;    /* template variables */
 
     /* stack frame */
-    AV* frame;         /* [ macroname (or 'main'), return-address, local-variables ... ] */
+    AV* frame;         /* see enum txframeo_ix */
     I32 current_frame; /* current frame index */
     SV** pad;          /* AvARRAY(frame[current_frame]) + 3 */
 
@@ -96,7 +99,7 @@ struct tx_state_s {
 
     U32 hint_size; /* suggested template size (bytes) */
 
-    AV* tmpl; /* [name, fullpath, mtime, error_handler, dependencies...] */
+    AV* tmpl; /* see enum txtmplo_ix */
     SV* self;
     U16* lines;  /* code index -> line number */
 };
@@ -1030,31 +1033,32 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name) {
 static bool
 tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
     I32 const len = AvFILLp(tmpl) + 1;
-    if(len > TXo_size) { /* cascading templates have dependencies */
-        I32 i;
-        Stat_t f;
+    I32 i;
+    Stat_t f;
 
-        for(i = TXo_size; i < len; i++) {
-            SV* const deppath = AvARRAY(tmpl)[i];
+    for(i = TXo_FULLPATH; i < len; i++) {
+        SV* const deppath = AvARRAY(tmpl)[i];
 
-            //PerlIO_stdoutf("check deps: %"SVf" ... ", path); // */
-            if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
-                   || f.st_mtime > cache_mtime) {
-                SV* const mainpath = AvARRAY(tmpl)[TXo_FULLPATH];
+        if(!SvOK(deppath)) {
+            continue;
+        }
 
-                /* compiled files are no longer fresh, so it must be discarded */
-                PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", deppath));
+        //PerlIO_stdoutf("check deps: %"SVf" ... ", path); // */
+        if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
+               || f.st_mtime > cache_mtime) {
+            SV* const mainpath = AvARRAY(tmpl)[TXo_FULLPATH];
+            /* compiled files are no longer fresh, so it must be discarded */
 
-                if(SvOK(mainpath)) {
-                    PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", mainpath));
-                }
-
-                //PerlIO_stdoutf("%"SVf": too old (%d > %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
-                return FALSE;
+            if(i != TXo_FULLPATH && SvOK(mainpath)) {
+                PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", mainpath));
             }
-            else {
-                //PerlIO_stdoutf("%"SVf": fresh enough\n", deppath); // */
-            }
+            PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", deppath));
+
+            //PerlIO_stdoutf("%"SVf": too old (%d > %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
+            return FALSE;
+        }
+        else {
+            //PerlIO_stdoutf("%"SVf": fresh enough\n", deppath); // */
         }
     }
     return TRUE;
@@ -1125,34 +1129,24 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     tmpl = (AV*)SvRV(sv);
     mg   = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
 
-    if(AvFILLp(tmpl) < (TXo_size-1)) {
-        why = form("template entry is broken (size:%d < %d)", AvFILLp(tmpl)+1, TXo_size);
+    if(AvFILLp(tmpl) < (TXo_least_size-1)) {
+        why = form("template entry is broken (size:%d < %d)", AvFILLp(tmpl)+1, TXo_least_size);
         goto err;
     }
 
     /* check mtime */
 
     if(SvOK(AvARRAY(tmpl)[TXo_FULLPATH])) { /* for files */
-        SV* const fullpath    = AvARRAY(tmpl)[TXo_FULLPATH];
         SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
-        Stat_t f;
 
         if(!SvIOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
             return (tx_state_t*)mg->mg_ptr;
         }
 
-        if(PerlLIO_stat(SvPV_nolen_const(fullpath), &f) < 0) {
-            why = form("failed to stat(2) for %"SVf, fullpath);
-            goto err;
-        }
         //PerlIO_stdoutf("###%d %d >= %d\n", (int)retried, (int)SvIVX(cache_mtime), (int)f.st_mtime);
 
-        if(retried > 0) { /* if already retried, it must be valid */
-            return (tx_state_t*)mg->mg_ptr;
-        }
-
-        if(SvIVX(cache_mtime) >= (IV)f.st_mtime /* fresh enough? */
-                && tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
+        if(retried > 0 /* if already retried, it should be valid */
+                || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
             return (tx_state_t*)mg->mg_ptr;
         }
         else {
@@ -1164,7 +1158,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     }
     else { /* for strings (i.e. <input>) */
         SV* const cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
-        if(retried > 0 || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
+        if(retried > 0  /* if already retried, it should be valid */
+                || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
             return (tx_state_t*)mg->mg_ptr;
         }
         else {
@@ -1252,6 +1247,7 @@ CODE:
 
     tmpl = newAV();
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
+    av_extend(tmpl, TXo_least_size - 1);
 
     /* tmpl = [name, fullpath, mtime of the file, error_handler] */
 
@@ -1264,9 +1260,9 @@ CODE:
         sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
     }
 
+    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE), name);
     sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE), mtime );
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE), fullpath);
-    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE), name);
 
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);
