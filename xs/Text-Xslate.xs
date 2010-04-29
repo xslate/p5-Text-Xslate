@@ -205,7 +205,13 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX
 
 static AV*
 tx_push_frame(pTHX_ tx_state_t* const st) {
-    AV* const newframe = (AV*)*av_fetch(st->frame, ++st->current_frame, TRUE);
+    AV* newframe;
+
+    if(++st->current_frame > 100) {
+        croak("Macro call is too deep (> 100)");
+    }
+
+    newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
 
     SvUPGRADE((SV*)newframe, SVt_PVAV);
     if(AvFILLp(newframe) < TXframe_START_LVAR) {
