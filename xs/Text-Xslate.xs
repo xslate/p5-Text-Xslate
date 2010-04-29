@@ -1040,13 +1040,16 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const mtime) {
             if(PerlLIO_stat(SvPV_nolen_const(path), &f) < 0
                    || f.st_mtime > mtime) {
                 SV* const mainpath = AvARRAY(tmpl)[TXo_FULLPATH];
+                STRLEN l;
+                const char* s = SvPV_const(path, l);
 
                 /* compiled files are no longer fresh, so it must be discarded */
-                PerlLIO_unlink(SvPV_nolen_const(path));
+                if(s[l-1] == 'c') {
+                    PerlLIO_unlink(SvPV_nolen_const(path));
+                }
 
                 if(SvOK(mainpath)) {
-                    STRLEN l;
-                    const char* const s = SvPV_const(mainpath, l);
+                    s = SvPV_const(mainpath, l);
                     if(s[l-1] == 'c') {
                         PerlLIO_unlink(s);
                     }
