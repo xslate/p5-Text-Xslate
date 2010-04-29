@@ -137,6 +137,8 @@ sub compile {
     my $main = delete $mtable->{'@main'}; # cascade
 
     if(defined $main) {
+        my @new_code = $self->_compile_cascade($main);
+
         # all the main code will be discarded
         foreach my $c(@code) {
             if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
@@ -144,12 +146,11 @@ sub compile {
                     Carp::carp("Xslate: Uselses use of text '$c->[1]'");
                 }
                 else {
-                    Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // 'undef'));
+                    Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
                 }
             }
         }
-
-        @code = $self->_compile_cascade($main);
+        @code = @new_code;
     }
     else {
         push @code, ['exit'];
@@ -208,10 +209,9 @@ sub _compile_cascade {
         #warn "macro ", $name, "\n";
 
         if(exists $mtable->{$name}) {
-            Carp::croak(
-                "Xslate($mtable->{$name}{line}): " .
-                "$name is already defined in " . $self->cascading . "\n" .
-                "(you must use before/around/after to override blocks)",
+            $self->_error($mtable->{$name}{line},
+                "Redefinition of macro/block $name in " . $self->cascading
+                . " (you must use before/around/after to override macros/blocks)",
             );
         }
 
@@ -288,7 +288,7 @@ sub _generate_bare_command {
 
     if($node->id eq 'cascade') {
         my $engine = $self->engine
-            // Carp::croak("Cannot cascade without an Xslate engine");
+            // $self->_error($node, "Cannot cascade without an Xslate engine");
         my $file   = $node->first;
         #my $components_ref = $node->second;
 
@@ -306,7 +306,7 @@ sub _generate_bare_command {
         unshift @{$c}, [depend => find_file($file, $engine->{path})->{fullpath}];
     }
     else {
-        Carp::croak("Unknown command $node");
+        $self->_error($node, "Unknown command $node");
     }
     return @code;
 }
@@ -317,7 +317,7 @@ sub _generate_for {
     my $vars  = $node->second;
     my $block = $node->third;
     if(@{$vars} != 1) {
-        Carp::croak("For-loop requires single variable for each items");
+        $self->_error($node, "For-loop requires single variable for each items");
     }
     my($iter_var) = @{$vars};
 
@@ -369,7 +369,7 @@ sub _generate_proc { # block, before, around, after
 
     if($type ~~ [qw(macro block)]) {
         if(exists $self->macro_table->{$name}) {
-            Carp::croak("Redefinition of $type $name is found.");
+            $self->_error($node, "Redefinition of $type $name is found");
         }
         $self->macro_table->{$name} = \%macro;
         if($type eq 'block') {
@@ -458,7 +458,7 @@ sub _generate_unary {
                 [ $unary{$_} => () ];
         }
         default {
-            Carp::croak("Unary operator $_ is not implemented");
+            $self->_error($node, "Unary operator $_ is not implemented");
         }
     }
 }
@@ -496,7 +496,7 @@ sub _generate_binary {
                 @right;
         }
         default {
-            Carp::croak("Binary operator $_ is not yet implemented");
+            $self->_error($node, "Binary operator $_ is not yet implemented");
         }
     }
     return;
@@ -710,6 +710,13 @@ sub as_assembly {
         $as .= "\n";
     }
     return $as;
+}
+
+sub _error {
+    my($self, $node, $message) = @_;
+
+    my $line = ref($node) ? $node->line : $node;
+    Carp::croak(sprintf 'Xslate::Compiler(%s:%d): %s', $self->file, $line, $message);
 }
 
 no Mouse;

@@ -3,6 +3,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use t::lib::Util;
 
 my $tx = Text::Xslate->new(
     string => <<'TX',
@@ -84,6 +85,7 @@ eval {
 };
 
 like $@, qr/^Xslate\Q(<input>:2)/;
+
 $tx = Text::Xslate->new(
     string => <<'T',
 : macro foo ->($bar) {
@@ -97,7 +99,59 @@ eval {
     $tx->render({});
 };
 
-like $@, qr/^Xslate\Q(<input>:2)/, 'in amacro';
+like $@, qr/^Xslate\Q(<input>:2)/, 'in a macro';
+
+eval {
+    $tx = Text::Xslate->new(
+        string => <<'T',
+    : macro foo ->($bar) {
+        <:= $bar :>
+    : }
+    : macro foo ->($bar) {
+        <:= $bar :>
+    : }
+T
+    );
+
+    $tx->render({});
+};
+
+like $@, qr/^Xslate::Compiler\Q(<input>:4): Redefinition of macro/, 'macro redefinition';
+
+eval {
+    $tx = Text::Xslate->new(
+        string => <<'T',
+    : block foo ->($bar) {
+        <:= $bar :>
+    : }
+
+    : block foo ->($bar) {
+        <:= $bar :>
+    : }
+T
+    );
+
+    $tx->render({});
+};
+
+like $@, qr/^Xslate::Compiler\Q(<input>:5): Redefinition of block/, 'block redefinition';
+
+eval {
+    $tx = Text::Xslate->new(
+        path   => [path],
+        string => <<'T',
+    : cascade myapp::base
+
+    : block hello ->($bar) {
+        <:= $bar :>
+    : }
+T
+    );
+
+    $tx->render({});
+};
+
+like $@, qr/^Xslate::Compiler\Q(<input>:3): Redefinition/, 'block redefinition';
 
 is $warn, '', "no warns";
 

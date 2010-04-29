@@ -446,6 +446,7 @@ Base templates F<mytmpl/base.tx>:
 
 Another derived template F<mytmpl/foo.tx>:
 
+    : # cascade "mytmpl/base.tx" is also okey
     : cascade mytmpl::base
     : # use default title
     : around body -> {
