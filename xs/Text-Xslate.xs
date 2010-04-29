@@ -513,31 +513,47 @@ TXC_w_var(for_start) {
 }
 
 TXC_goto(for_iter) {
-    SV* const idsv = TX_st_sa;
-    IV  const id   = SvIVX(idsv); /* by literal_i */
-    SV* const item =           TX_lvar_get(id+0);
-    AV* const av   = (AV*)SvRV(TX_lvar_get(id+1));
-    SV* const i    =           TX_lvar_get(id+2);
+    SV* const idsv  = TX_st_sa;
+    IV  const id    = SvIVX(idsv); /* by literal_i */
+    SV* const item  = TX_lvar_get(id+0);
+    SV* const avref = TX_lvar_get(id+1);
+    SV* const i     = TX_lvar_get(id+2);
+    AV* const av    = (AV*)SvRV(avref);
 
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    if(LIKELY(++SvIVX(i) <= av_len(av))) {
-        SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
-        sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
-        TX_st->pc++;
+    if(SvRMAGICAL(av)) {
+        if(LIKELY(++SvIVX(i) <= av_len(av))) {
+            SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
+            sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
+        }
+        else {
+            goto finish_loop;
+        }
     }
     else {
-        /* finish the for loop */
-        sv_setsv(item, &PL_sv_undef);
-
-        /* don't need to clear iterator variables,
-           they will be cleaned at the end of render() */
-
-        TX_st->pc = SvUVX(TX_op_arg);
+        if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
+            sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
+        }
+        else {
+            goto finish_loop;
+        }
     }
 
+    TX_st->pc++;
+
+    return;
+
+    finish_loop:
+
+    /* finish the for loop */
+    sv_setsv(item,  &PL_sv_undef);
+    sv_setsv(avref, &PL_sv_undef);
+    /* don't need to clear the iterator, it's only an integer */
+
+    TX_st->pc = SvUVX(TX_op_arg);
 }
 
 
