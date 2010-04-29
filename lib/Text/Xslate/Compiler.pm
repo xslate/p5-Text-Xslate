@@ -53,8 +53,8 @@ has lvar_id => ( # local varialbe id
 
     traits  => [qw(Counter)],
     handles => {
-        _lvar_id_inc => 'inc',
-        _lvar_id_dec => 'dec',
+        _lvar_use     => 'inc',
+        _lvar_release => 'dec',
     },
 
     default => 0,
@@ -331,9 +331,9 @@ sub _generate_for {
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->_lvar_id_inc(3);
+    $self->_lvar_use(3);
     my @block_code = $self->_compile_ast($block);
-    $self->_lvar_id_dec(3);
+    $self->_lvar_release(3);
 
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
@@ -355,9 +355,11 @@ sub _generate_proc { # block, before, around, after
     my $arg_ix = 0;
     foreach my $arg(@args) {
         # to fetch ST(ix)
-        # note that ix must start 1, not 0
-        $self->lvar->{$arg} = [ fetch_arg => ++$arg_ix ];
+        # Note that arg_ix must be start from 1
+        $self->lvar->{$arg} = [ fetch_lvar => $arg_ix++, $node->line, $arg ];
     }
+
+    $self->_lvar_use($arg_ix);
 
     my %macro = (
         type   => $type,
@@ -385,6 +387,8 @@ sub _generate_proc { # block, before, around, after
         $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } //= [] }, \%macro;
     }
+
+    $self->_lvar_release($arg_ix);
 
     return; # no code, only definition
 }
@@ -479,9 +483,9 @@ sub _generate_binary {
                 [ store_to_lvar => $lvar ],
             );
 
-            $self->_lvar_id_inc(1);
+            $self->_lvar_use(1);
             push @code, $self->_generate_expr($node->second);
-            $self->_lvar_id_dec(1);
+            $self->_lvar_release(1);
 
             push @code,
                 [ load_lvar_to_sb => $lvar ],

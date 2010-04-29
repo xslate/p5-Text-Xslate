@@ -16,7 +16,7 @@ my $tx = Text::Xslate->new(string => <<'T', cache => 0);
 : }
 T
 
-is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T' for 1 .. 2;
+is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T', "t$_" for 1 .. 2;
         Hello, Perl world!
         Hello, Xslate world!
 T
@@ -33,7 +33,29 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0);
 : }
 T
 
-is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T' for 1 .. 2;
+is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T', "t$_" for 1 .. 2;
+        Hello, Perl world!
+        Hello, Xslate world!
+        Hello, Perl world!
+        Hello, Xslate world!
+T
+
+$tx = Text::Xslate->new(string => <<'T', cache => 0);
+: macro foo ->($x) {
+:   for $x -> ($item) {
+        Hello, <:= $item :> world!
+:   }
+: }
+: macro bar ->($x) {
+:   foo($x)
+: }
+: for $data -> ($item) {
+:   bar($item)
+:   bar($item)
+: }
+T
+
+is $tx->render({ data => [[qw(Perl Xslate)]] }), <<'T', "t$_" for 1 .. 2;
         Hello, Perl world!
         Hello, Xslate world!
         Hello, Perl world!

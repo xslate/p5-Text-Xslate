@@ -19,19 +19,19 @@ $SIG{__WARN__} = sub{ $warn .= join '', @_ };
 eval {
     $tx->render({one => 1, two => 2});
 };
-like $@, qr/^Xslate\Q(<input>:3)/;
+like $@, qr/^Xslate\Q(<input>:3/;
 
 eval {
     $tx->render({one => 1, three => 3});
 };
 
-like $@, qr/^Xslate\Q(<input>:2)/;
+like $@, qr/^Xslate\Q(<input>:2/;
 
 eval {
     $tx->render({two => 2, three => 3});
 };
 
-like $@, qr/^Xslate\Q(<input>:1)/;
+like $@, qr/^Xslate\Q(<input>:1/;
 
 $tx = Text::Xslate->new(
     string => <<'TX',
@@ -46,13 +46,13 @@ TX
 eval {
     $tx->render({one => 1, three => 3});
 };
-like $@, qr/^Xslate\Q(<input>:5)/;
+like $@, qr/^Xslate\Q(<input>:5/;
 
 eval {
     $tx->render({one => 1, five => 5});
 };
 
-like $@, qr/^Xslate\Q(<input>:3)/;
+like $@, qr/^Xslate\Q(<input>:3/;
 
 $tx = Text::Xslate->new(
     string => <<'TX',
@@ -69,7 +69,7 @@ TX
 eval {
     $tx->render({data => "foo"});
 };
-like $@, qr/^Xslate\Q(<input>:2)/;
+like $@, qr/^Xslate\Q(<input>:2/;
 
 {
     package Foo;
@@ -84,7 +84,7 @@ eval {
     $tx->render({foo => bless {}, 'Foo'});
 };
 
-like $@, qr/^Xslate\Q(<input>:2)/;
+like $@, qr/^Xslate\Q(<input>:2/;
 
 $tx = Text::Xslate->new(
     string => <<'T',
@@ -99,7 +99,7 @@ eval {
     $tx->render({});
 };
 
-like $@, qr/^Xslate\Q(<input>:2)/, 'in a macro';
+like $@, qr/^Xslate\Q(<input>:2/, 'in a macro';
 
 eval {
     $tx = Text::Xslate->new(
@@ -116,7 +116,8 @@ T
     $tx->render({});
 };
 
-like $@, qr/^Xslate::Compiler\Q(<input>:4): Redefinition of macro/, 'macro redefinition';
+like $@, qr/^Xslate::Compiler\Q(<input>:4/;
+like $@, qr/Redefinition of macro/, 'macro redefinition';
 
 eval {
     $tx = Text::Xslate->new(
@@ -134,7 +135,8 @@ T
     $tx->render({});
 };
 
-like $@, qr/^Xslate::Compiler\Q(<input>:5): Redefinition of block/, 'block redefinition';
+like $@, qr/^Xslate::Compiler\Q(<input>:5/;
+like $@, qr/Redefinition of block/, 'block redefinition';
 
 eval {
     $tx = Text::Xslate->new(
@@ -151,7 +153,8 @@ T
     $tx->render({});
 };
 
-like $@, qr/^Xslate::Compiler\Q(<input>:3): Redefinition/, 'block redefinition';
+like $@, qr/^Xslate::Compiler\Q(<input>:3/;
+like $@, qr/Redefinition/, 'block redefinition';
 
 is $warn, '', "no warns";
 
