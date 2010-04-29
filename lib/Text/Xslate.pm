@@ -292,10 +292,10 @@ Note that B<this software is under development>.
 
 =head2 Features
 
-=head3 Hight performance
+=head3 High performance
 
 Xslate has an virtual machine written in XS, which is highly optimized.
-Accoding to benchmarks, Xslate is B<2-10> times faster than other template
+According to benchmarks, Xslate is B<2-10> times faster than other template
 engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc).
 
 =head3 Template cascading
