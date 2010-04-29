@@ -1302,13 +1302,6 @@ CODE:
                 else if(tx_oparg[opnum] & TXARGf_INT) {
                     st.code[i].arg = newSViv(SvIV(*arg));
 
-                    if(tx_oparg[opnum] & TXARGf_VAR) { /* local variable id */
-                        I32 id = SvIVX(st.code[i].arg);
-                        if(opnum == TXOP_for_start) {
-                                id += 2;
-                        }
-                    }
-
                     if(tx_oparg[opnum] & TXARGf_GOTO) {
                         /* calculate relational addresses to absolute addresses */
                         UV const abs_addr = (UV)(i + SvIVX(st.code[i].arg));
