@@ -124,7 +124,10 @@ sub nud {
     my($self, $parser) = @_;
 
     if(!$self->has_nud) {
-        Carp::croak(sprintf 'Xslate::Symbol: Undefined symbol (%s): %s', $self->arity, $self->id);
+        $parser->near_token($parser->token);
+        $parser->_error(
+            sprintf 'Undefined symbol (%s): %s',
+            $self->arity, $self->id);
     }
 
     return $self->get_nud()->($parser, $self);
@@ -134,7 +137,10 @@ sub led {
     my($self, $parser, $left) = @_;
 
     if(!$self->has_led) {
-        Carp::croak(sprintf 'Xslate::Symbol: Missing operator (%s): %s', $self->arity, $self->id);
+        $parser->near_token($parser->token);
+        $parser->_error(
+            sprintf 'Missing operator (%s): %s',
+            $self->arity, $self->id);
     }
 
     return $self->get_led()->($parser, $self, $left);
@@ -144,7 +150,9 @@ sub std {
     my($self, $parser) = @_;
 
     if(!$self->has_std) {
-        Carp::croak(sprintf 'Xslate::Symbol: Not a statement (%s): %s', $self->arity, $self->id);
+        $parser->_error(
+            sprintf 'Not a statement (%s): %s',
+            $self->arity, $self->id);
     }
 
     return $self->get_std()->($parser, $self);

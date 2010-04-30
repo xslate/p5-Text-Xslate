@@ -17,7 +17,6 @@ my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ...
     ..
-    -- ++
     == != <=> <= >=
     << >>
     && || //
@@ -74,25 +73,6 @@ has input => (
     init_arg => undef,
 );
 
-has file => (
-    is  => 'rw',
-    isa => 'Str',
-
-    default  => '<input>',
-    required => 0,
-);
-
-has line => (
-    is  => 'rw',
-    isa => 'Int',
-
-    traits  => [qw(Counter)],
-    handles => {
-        line_inc => 'inc',
-    },
-
-    required => 0,
-);
 
 has line_start => (
     is      => 'ro',
@@ -112,6 +92,34 @@ has tag_end => (
     default => sub{ qr/\Q:>/xms },
 );
 
+# attributes for error messages
+
+has near_token => (
+    is  => 'rw',
+
+    default  => '(start)',
+    init_arg => undef,
+);
+
+has file => (
+    is  => 'rw',
+    isa => 'Str',
+
+    default  => '<input>',
+    required => 0,
+);
+
+has line => (
+    is  => 'rw',
+    isa => 'Int',
+
+    traits  => [qw(Counter)],
+    handles => {
+        line_inc => 'inc',
+    },
+
+    required => 0,
+);
 
 sub _trim {
     my($s) = @_;
@@ -194,7 +202,7 @@ sub preprocess {
                 }
             }
             default {
-                $self->_parse_error("Unknown token: $_");
+                $self->_error("Unknown token: $_");
             }
         }
     }
@@ -230,7 +238,7 @@ sub next_token {
         goto &next_token; # tail call
     }
     elsif(s/\A (\S+)//xms) {
-        $self->_parse_error("Unexpected symbol '$1'");
+        $self->_error("Unexpected symbol '$1'");
     }
     else { # empty
         return undef;
@@ -242,7 +250,12 @@ sub parse {
 
     $parser->input( $parser->preprocess($input) );
 
-    return $parser->statements();
+    my $ast = $parser->statements();
+    if($parser->input ne '') {
+        $parser->near_token($parser->token);
+        $parser->_error("Syntax error");
+    }
+    return $ast;
 }
 
 sub BUILD {
@@ -363,13 +376,16 @@ sub symbol {
 sub advance {
     my($parser, $id) = @_;
 
-    if($id && $parser->token->id ne $id) {
-        $parser->_parse_error("Expected '$id', but " . $parser->token);
+    my $t = $parser->token;
+    if($id && $t->id ne $id) {
+        $parser->_error("Expected '$id', but '$t'");
     }
+
+    $parser->near_token($t);
 
     my $symtab = $parser->symbol_table;
 
-    my $t = $parser->next_token();
+    $t = $parser->next_token();
 
     if(not defined $t) {
         return $parser->token( $symtab->{"(end)"} );
@@ -394,7 +410,7 @@ sub advance {
         when("operator") {
             $proto = $symtab->{$value};
             if(!$proto) {
-                $parser->_parse_error("Unknown operator '$value'");
+                $parser->_error("Unknown operator '$value'");
             }
         }
         when("string") {
@@ -408,7 +424,7 @@ sub advance {
     }
 
     if(!$proto) {
-        $parser->_parse_error("Unexpected token: $value ($arity)");
+        $parser->_error("Unexpected token: $value ($arity)");
     }
 
     return $parser->token( $proto->clone( id => $value, arity => $arity, line => $parser->line + 1 ) );
@@ -480,7 +496,7 @@ sub _led_dot {
 
     my $t = $parser->token;
     if($t->arity ne 'name') {
-        $parser->_parse_error("Expected a field name");
+        $parser->_error("Expected a field name");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -804,7 +820,7 @@ sub _std_proc {
     my $proc = $symbol->clone(arity => "proc");
     my $name = $parser->token;
     if($name->arity ne "name") {
-        $parser->_parse_error("Expected name, but " . $parser->token . " is not");
+        $parser->_error("Expected name, but " . $parser->token . " is not");
     }
 
     $parser->define_macro($name->id);
@@ -879,7 +895,7 @@ sub _get_bare_name {
 
     my $t = $parser->token;
     if(!($t->arity ~~ [qw(name literal)])) {
-        $parser->_parse_error("Expected name, but $t is not");
+        $parser->_error("Expected name, but $t is not");
     }
 
     # "string" is ok
@@ -900,7 +916,7 @@ sub _get_bare_name {
             $t = $parser->advance("::");
 
             if($t->arity ne "name") {
-                $parser->_parse_error("Expected name, but $t is not");
+                $parser->_error("Expected name, but $t is not");
             }
 
             push @parts, $t->id;
@@ -936,10 +952,12 @@ sub _std_bare_command {
         arity  => 'bare_command');
 }
 
-sub _parse_error {
+sub _error {
     my($self, $message) = @_;
 
-    Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s', $self->file, $self->line+1, $message);
+    Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s',
+        $self->file, $self->line+1, $message,
+        $self->near_token ne ';' ? ", near '" . $self->near_token . "'" : '');
 }
 
 no Mouse;
