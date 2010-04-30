@@ -49,8 +49,6 @@ has symbol_class => (
     isa => 'Str',
 
     default => 'Text::Xslate::Symbol',
-
-    required => 0,
 );
 
 has symbol_table => (
@@ -68,7 +66,7 @@ has scope => (
 
     default => sub{ [ {} ] },
 
-    required => 0,
+    init_arg => undef,
 );
 
 has token => (
@@ -85,30 +83,33 @@ has input => (
     init_arg => undef,
 );
 
-
 has line_start => (
     is      => 'ro',
     isa     => 'Maybe[RegexpRef]',
-    default => sub{ qr/\Q:/xms },
+    builder => '_build_line_start',
 );
+sub _build_line_start { qr/\Q:/xms }
 
 has tag_start => (
     is      => 'ro',
     isa     => 'RegexpRef',
-    default => sub{ qr/\Q<:/xms },
+    builder => '_build_tag_start',
 );
+sub _build_tag_start { qr/\Q<:/xms }
 
 has tag_end => (
     is      => 'ro',
     isa     => 'RegexpRef',
-    default => sub{ qr/\Q:>/xms },
+    builder => '_build_tag_end',
 );
+sub _build_tag_end { qr/\Q:>/xms }
 
 has shortcut_table => (
     is      => 'ro',
     isa     => 'HashRef[Str]',
-    default => sub { \%shortcut_table },
+    builder => '_build_shortcut_table',
 );
+sub _build_shortcut_table { \%shortcut_table }
 
 # attributes for error messages
 
