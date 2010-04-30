@@ -328,7 +328,8 @@ Specifies the template string, which is called C<< <input> >> internally.
 
 =item C<< file => $template_file | \@template_files >>
 
-Specifies file(s) to be preloaded.
+Specifies file(s) to be preloaded. Note that C<render()> loads files
+automatically, so this option is not necessarily required.
 
 =item C<< path => \@path // ["."] >>
 
