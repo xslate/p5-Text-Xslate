@@ -391,7 +391,7 @@ sub advance {
     $t = $parser->next_token();
 
     if(not defined $t) {
-        return $parser->token( $symtab->{"(end)"} );
+        return $parser->token( $symtab->{"(end)"}->clone() );
     }
 
     print STDOUT "[@{$t}]\n" if _DUMP_TOKEN;
@@ -898,7 +898,7 @@ sub _get_bare_name {
 
     my $t = $parser->token;
     if(!($t->arity ~~ [qw(name literal)])) {
-        $parser->_error("Expected name, but $t is not");
+        $parser->_error("Expected name or string literal");
     }
 
     # "string" is ok
