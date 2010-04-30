@@ -11,9 +11,84 @@ sub _build_line_start { undef       }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
+sub define_symbols {
+    my($parser) = @_;
 
-sub grammer {
+    $parser->symbol('END') ->is_end(1);
+    $parser->symbol('ELSE')->is_end(1);
+    $parser->symbol('IN');
 
+    $parser->symbol('IF')      ->set_std(\&_std_if);
+    $parser->symbol('FOREACH') ->set_std(\&_std_foreach);
+
+    $parser->infix('.', 100, $parser->can('_led_dot'));
+
+    # operators
+    $parser->infix('*', 80);
+    $parser->infix('/', 80);
+    $parser->infix('%', 80);
+
+    $parser->infix('+', 70);
+    $parser->infix('-', 70);
+    $parser->infix('~', 70); # connect
+
+    $parser->infix('<',  60);
+    $parser->infix('<=', 60);
+    $parser->infix('>',  60);
+    $parser->infix('>=', 60);
+
+    $parser->infix('==', 50);
+    $parser->infix('!=', 50);
+
+    $parser->infix('|',  40); # filter
+
+    $parser->infixr('&&', 35);
+    $parser->infixr('||', 30);
+    $parser->infixr('//', 30);
+
+    $parser->prefix('!');
+    $parser->prefix('+');
+    $parser->prefix('-');
+
+}
+
+sub _std_if {
+    my($parser, $symbol) = @_;
+    my $if = $symbol->clone(arity => "if");
+
+    $if->first(  $parser->expression(0) );
+    $if->second( $parser->statements() );
+
+    if($parser->token->id eq "ELSE") {
+        $parser->reserve($parser->token);
+        $parser->advance("ELSE");
+        $if->third( $parser->token->id eq "IF"
+            ? $parser->statement()
+            : $parser->statements());
+    }
+    $parser->advance("END");
+    return $if;
+}
+
+sub _std_foreach {
+    my($parser, $symbol) = @_;
+
+    my $proc = $symbol->clone(arity => "for");
+
+    if($parser->token->arity ne "name") {
+        $parser->_error("Expected a variable name");
+    }
+
+    my $var = $parser->token;
+    $parser->advance();
+    $parser->advance("IN");
+
+    $proc->first( $parser->expression(0) );
+    $proc->second([$var]);
+    $proc->third( $parser->statements() );
+
+    $parser->advance("END");
+    return $proc;
 }
 
 no Mouse;
@@ -26,7 +101,9 @@ extends qw(Text::Xslate::Symbol);
 
 sub _nud_default {
     my($parser, $symbol) = @_;
-    return $symbol;
+
+    # undefined symbols are considiered variables
+    return $symbol->clone(arity => 'variable');
 }
 
 no Mouse;

@@ -2,28 +2,50 @@
 use strict;
 use Test::More;
 
+use Text::Xslate;
 use Text::Xslate::Parser::TTLike;
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
 
-my $tx = Text::Xslate::Compiler->new();
+my $parser = Text::Xslate::Parser::TTLike->new();
 
 my @data = (
-    ['Hello, world!' => 'Hello, world!'],
-    ['Hello, [% lang %] world!' => 'Hello, Xslate world!'],
-    ['Hello, [% foo %] world!'  => 'Hello, &lt;bar&gt; world!'],
-    ['Hello, [% lang %] [% foo %] world!'
-                                 => 'Hello, Xslate &lt;bar&gt; world!']
+    ['Hello, world!' => qr/Hello, world!/],
+    ['Hello, [% lang %] world!' => qr/Hello/, qr/\b lang \b/xms, qr/world/],
+    ['Hello, [% foo %] world!'  => qr/\b foo \b/xms],
+    ['Hello, [% lang %] [% foo %] world!', qr/\b lang \b/xms, qr/\b foo \b/xms],
+
+    [<<'T', qr/\b foo \b/xms, qr/\b if \b/xms],
+[% IF foo %]
+    This is true
+[% END %]
+T
+    [<<'T', qr/\b foo \b/xms, qr/\b if \b/xms],
+[% IF foo %]
+    This is true
+[% ELSE %]
+    This is false
+[% END %]
+T
+
+    [<<'T', qr/\b item \b/xms, qr/\b foo \b/xms, qr/\b for \b/xms],
+[% FOREACH item IN foo %]
+    This is true
+[% END %]
+T
+
 );
 
-foreach my $pair(@data) {
-    my($in, $out) = @$pair;
+foreach my $d(@data) {
+    my($str, @patterns) = @{$d};
 
-    my $x = $tx->compile_str($in);
+    #note($str);
+    my $code = Dumper($parser->parse($str));
+    #note($code);
 
-    my %vars = (lang => 'Xslate', foo => "<bar>");
-
-    is $x->render(\%vars), $out, 'first';
-    is $x->render(\%vars), $out, 'second';
+    foreach my $pat(@patterns) {
+        like $code, $pat;
+    }
 }
 
 done_testing;

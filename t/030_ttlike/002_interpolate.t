@@ -2,11 +2,11 @@
 use strict;
 use Test::More;
 
-use Text::Xslate;
-use Data::Dumper;
+use Text::Xslate::Compiler;
+use Text::Xslate::Parser::TTLike;
 
-my $tx = Text::Xslate->new(
-    syntax => 'TTLike',
+my $tx = Text::Xslate::Compiler->new(
+    parser => Text::Xslate::Parser::TTLike->new(),
 );
 
 my @data = (
@@ -24,8 +24,7 @@ foreach my $pair(@data) {
 
     my %vars = (lang => 'Xslate', foo => "<bar>");
 
-    is $x->render(\%vars), $out, 'first';
-    is $x->render(\%vars), $out, 'second';
+    is $x->render(\%vars), $out, $in for 1 .. 2;
 }
 
 done_testing;
