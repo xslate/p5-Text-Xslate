@@ -294,7 +294,7 @@ This document describes Text::Xslate version 0.1004.
 
 
     # if you want Template-Toolkit syntx:
-    my $tx = Text::Xslate->new(syntax => 'TTiny');
+    my $tx = Text::Xslate->new(syntax => 'TTerse');
     # ...
 
 =head1 DESCRIPTION
@@ -326,7 +326,7 @@ This mechanism is also called as template inheritance.
 The Xslate engine and parser/compiler are completely separeted so that
 one can use alternative parsers.
 
-Currently, C<TTiny>, a Template-Toolkit-like parser, is supported as an
+Currently, C<TTerse>, a Template-Toolkit-like parser, is supported as an
 alternative.
 
 =head1 INTERFACE
@@ -608,7 +608,7 @@ to cpan-RT.  Patches are welcome :)
 
 =head1 SEE ALSO
 
-L<Text::Xslate::Parser::TTiny>
+L<Text::Xslate::Parser::TTerse>
 
 L<Text::MicroTemplate>
 
