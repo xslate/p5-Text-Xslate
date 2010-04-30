@@ -1,4 +1,4 @@
-package Text::Xslate::Parser::TTLike;
+package Text::Xslate::Parser::TTiny;
 use 5.010;
 use Mouse;
 
@@ -94,7 +94,7 @@ sub _std_foreach {
 no Mouse;
 __PACKAGE__->meta->make_immutable();
 
-package Text::Xslate::Parser::TTLike::Symbol;
+package Text::Xslate::Parser::TTiny::Symbol;
 use Mouse;
 
 extends qw(Text::Xslate::Symbol);
@@ -112,7 +112,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Parser::TTLike - An Xslate parser to Template-Toolkit-like syntax (STUB)
+Text::Xslate::Parser::TTiny - An alternative Xslate parser to Template-Toolkit-like syntax
 
 =head1 SUMMARY OF SYNTAX
 

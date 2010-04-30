@@ -3,10 +3,10 @@ use strict;
 use Test::More;
 
 use Text::Xslate::Compiler;
-use Text::Xslate::Parser::TTLike;
+use Text::Xslate::Parser::TTiny;
 
 my $tx = Text::Xslate::Compiler->new(
-    parser => Text::Xslate::Parser::TTLike->new(),
+    parser => Text::Xslate::Parser::TTiny->new(),
 );
 
 my @data = (

@@ -3,11 +3,11 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-use Text::Xslate::Parser::TTLike;
+use Text::Xslate::Parser::TTiny;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-my $parser = Text::Xslate::Parser::TTLike->new();
+my $parser = Text::Xslate::Parser::TTiny->new();
 
 my @data = (
     ['Hello, world!' => qr/Hello, world!/],

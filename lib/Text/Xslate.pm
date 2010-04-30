@@ -292,6 +292,11 @@ This document describes Text::Xslate version 0.1004.
         'gfx &lt;gfuji at cpan.org&gt;',
     ); # if you don't want to pollute your namespace.
 
+
+    # if you want Template-Toolkit syntx:
+    my $tx = Text::Xslate->new(syntax => 'TTiny');
+    # ...
+
 =head1 DESCRIPTION
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
@@ -315,6 +320,14 @@ Xslate supports template cascading, which allows one to extend
 templates with block modifiers.
 
 This mechanism is also called as template inheritance.
+
+=head3 Syntax alternation
+
+The Xslate engine and parser/compiler are completely separeted so that
+one can use alternative parsers.
+
+Currently, C<TTiny>, a Template-Toolkit-like parser, is supported as an
+alternative.
 
 =head1 INTERFACE
 
@@ -362,6 +375,12 @@ I<$level> == 0 creates no caches. It's only for testing.
 =item C<< input_layer => $perliolayers // ":utf8" >>
 
 Specifies PerlIO layers for reading templates.
+
+=item C<< syntax => $moniker >>
+
+Specifies the template syntax.
+
+If I<$moniker> is undefined, the default parser will be used.
 
 =back
 
@@ -588,6 +607,8 @@ exception. If you find a bug please either email me, or add the bug
 to cpan-RT.  Patches are welcome :)
 
 =head1 SEE ALSO
+
+L<Text::Xslate::Parser::TTiny>
 
 L<Text::MicroTemplate>
 
