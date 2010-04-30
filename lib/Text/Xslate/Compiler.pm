@@ -435,7 +435,7 @@ sub _generate_variable {
     return \@fetch;
 }
 
-sub _generate_name {
+sub _generate_super {
     my($self, $node) = @_;
 
     return [ $node->id => undef, $node->line ];

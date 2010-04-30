@@ -30,6 +30,13 @@ has value => (
     default => sub{ $_[0]->id },
 );
 
+has is_end => (
+    is  => 'rw',
+    isa => 'Bool',
+
+    required => 0,
+);
+
 has nud => ( # null denotation
     is  => 'bare',
     isa => 'CodeRef',

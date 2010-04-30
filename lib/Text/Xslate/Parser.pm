@@ -10,7 +10,7 @@ use Text::Xslate::Util qw(
 use constant _DUMP_PROTO => ($DEBUG =~ /\b dump=proto \b/xmsi);
 use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi);
 
-our @CARP_NOT = qw(Text::Xslate::Compiler);
+our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
 my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
 
@@ -284,33 +284,42 @@ sub parse {
 
 sub BUILD {
     my($parser) = @_;
-    $parser->define_grammer();
+    $parser->_define_basic_symbols();
+    $parser->define_symbols();
     return;
 }
 
 # The grammer
 
-sub define_grammer {
+sub _define_basic_symbols {
     my($parser) = @_;
 
-    # separators
-    $parser->symbol(':');
-    $parser->symbol(';');
-    $parser->symbol(',');
-    $parser->symbol(')');
-    $parser->symbol(']');
-    $parser->symbol('}');
-    $parser->symbol('->');
-    $parser->symbol('else');
-    $parser->symbol('with');
-    $parser->symbol('::');
-
-    # meta symbols
-    $parser->symbol('(end)');
+    $parser->symbol('(end)')->is_end(1); # EOF
     $parser->symbol('(name)');
 
     $parser->symbol('(literal)')->set_nud(\&_nud_literal);
     $parser->symbol('(variable)')->set_nud(\&_nud_literal);
+
+    $parser->symbol(';');
+
+    $parser->symbol('print')    ->set_std(\&_std_command);
+    $parser->symbol('print_raw')->set_std(\&_std_command);
+    return;
+}
+
+sub define_symbols {
+    my($parser) = @_;
+
+    # separators
+    $parser->symbol(':');
+    $parser->symbol(',');
+    $parser->symbol(')');
+    $parser->symbol(']');
+    $parser->symbol('}')->is_end(1); # block end
+    $parser->symbol('->');
+    $parser->symbol('else');
+    $parser->symbol('with');
+    $parser->symbol('::');
 
     # operators
 
@@ -359,9 +368,6 @@ sub define_grammer {
     $parser->symbol('for')      ->set_std(\&_std_for);
     $parser->symbol('if')       ->set_std(\&_std_if);
 
-    $parser->symbol('print')    ->set_std(\&_std_command);
-    $parser->symbol('print_raw')->set_std(\&_std_command);
-
     $parser->symbol('include')  ->set_std(\&_std_command);
 
     # template inheritance
@@ -372,7 +378,7 @@ sub define_grammer {
     $parser->symbol('around')   ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
     $parser->symbol('after')    ->set_std(\&_std_proc);
-    $parser->symbol('super')    ->set_nud(\&_nud_literal);
+    $parser->symbol('super')    ->set_std(\&_std_super);
 
     return;
 }
@@ -412,7 +418,7 @@ sub advance {
     $t = $parser->next_token();
 
     if(not defined $t) {
-        return $parser->token( $symtab->{"(end)"}->clone() );
+        return $parser->token( $symtab->{"(end)"}->clone(arity => "end") );
     }
 
     print STDOUT "[@{$t}]\n" if _DUMP_TOKEN;
@@ -519,8 +525,11 @@ sub _led_dot {
     my($parser, $symbol, $left) = @_;
 
     my $t = $parser->token;
-    if($t->arity ne 'name') {
-        $parser->_error("Expected a field name");
+    if($t->arity ne "name") {
+        if(!($t->arity eq "literal"
+                && Mouse::Util::TypeConstraints::Int($t->id))) {
+            $parser->_error("Expected a field name, but $t");
+        }
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -726,7 +735,13 @@ sub statement { # process one or more statements
 #        confess("Bad expression statement");
 #    }
     $parser->advance(";");
-    return $expr;
+    return $parser->symbol_class->new(
+        arity  => 'command',
+        id     => 'print',
+        first  => [$expr],
+        line   => $expr->line,
+    );
+    #return $expr;
 }
 
 sub statements { # process statements
@@ -736,7 +751,7 @@ sub statements { # process statements
     $parser->advance();
     while(1) {
         my $t = $parser->token;
-        if($t->id eq "}" || $t->id eq "(end)") {
+        if($t->is_end) {
             last;
         }
 
@@ -974,6 +989,12 @@ sub _std_bare_command {
         first  => $name,
         second => \@components,
         arity  => 'bare_command');
+}
+
+sub _std_super {
+    my($parser, $symbol) = @_;
+    $parser->advance(';');
+    return $symbol->clone(arity => 'super');
 }
 
 sub _error {
