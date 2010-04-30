@@ -97,7 +97,6 @@ has tag_end => (
 has near_token => (
     is  => 'rw',
 
-    default  => '(start)',
     init_arg => undef,
 );
 
@@ -105,7 +104,6 @@ has file => (
     is  => 'rw',
     isa => 'Str',
 
-    default  => '<input>',
     required => 0,
 );
 
@@ -246,15 +244,20 @@ sub next_token {
 }
 
 sub parse {
-    my($parser, $input) = @_;
+    my($parser, $input, %args) = @_;
 
     $parser->input( $parser->preprocess($input) );
+
+    $parser->file( $args{file} // '<input>' );
+    $parser->line( $args{line} // 0 );
+    $parser->near_token('(start)');
 
     my $ast = $parser->statements();
     if($parser->input ne '') {
         $parser->near_token($parser->token);
         $parser->_error("Syntax error");
     }
+    $parser->near_token(undef);
     return $ast;
 }
 

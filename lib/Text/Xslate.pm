@@ -107,6 +107,10 @@ sub load_file {
     my $fullpath    = $f->{fullpath};
     my $is_compiled = $f->{is_compiled};
 
+    if($self->{cache} == 0) {
+        $is_compiled = 0;
+    }
+
     print STDOUT "---> $fullpath ($is_compiled)\n" if _DUMP_LOAD_FILE;
 
     my $pathc = $fullpath . "c";

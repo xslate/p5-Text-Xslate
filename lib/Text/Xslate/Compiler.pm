@@ -125,10 +125,7 @@ sub compile {
 
     my $parser = $self->parser;
 
-    $parser->file($args{file}) if defined $args{file};
-    $parser->line(0);
-
-    my $ast = $parser->parse($str);
+    my $ast = $parser->parse($str, %args);
 
     # main
     my @code = $self->_compile_ast($ast);
