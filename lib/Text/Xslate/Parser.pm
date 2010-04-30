@@ -509,10 +509,6 @@ sub _led_call {
 
     my $call = $symbol->clone(arity => 'call');
 
-    if(!( $left->arity ~~ [qw(function name variable macro literal)] )) {
-        $parser->_parse_error("Expected a function, not " . $left->arity . " ($left)");
-    }
-
     $call->first($left);
 
     my @args;

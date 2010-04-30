@@ -445,6 +445,35 @@ Operator precedence:
 
     (TODO)
 
+=head2 Functions and filters
+
+Once you have registered functions, you can call them with C<()> or C<|>.
+
+    := f()        # without args
+    := f(1, 2, 3) # with args
+    := 42 | f     # the same as f(42)
+
+Dynamic functions/filters:
+
+    # code
+    sub mk_indent {
+        my($prefix) = @_;
+        return sub {
+            my($str) = @_;
+            $str =~ s/^/$prefix/xmsg;
+            return $str;
+        }
+    }
+    my $tx = Text::Xslate->new(
+        function => {
+            indent => \&mk_indent,
+        },
+    );
+
+    :# template
+    := $value | indent("> ")
+    := indent("> ")($value)
+
 =head2 Template inclusion
 
     : include "foo.tx"
