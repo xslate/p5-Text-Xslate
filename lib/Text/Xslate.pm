@@ -269,10 +269,10 @@ This document describes Text::Xslate version 0.1004.
 
     # for strings
     my $template = q{
-        <h1><:= $title :></h1>
+        <h1><: $title :></h1>
         <ul>
         : for $books ->($book) {
-            <li><:= $book.title :></li>
+            <li><: $book.title :></li>
         : } # for
         </ul>
     };
@@ -402,7 +402,7 @@ so you have to escape these strings.
 For example:
 
     my $tx = Text::Xslate->new(
-        string => 'Mailaddress: <:= $email :>',
+        string => 'Mailaddress: <: $email :>',
     );
     my %vars = (
         email => "Foo &lt;foo@example.com&gt;",
@@ -418,17 +418,17 @@ TODO
 
 =head2 Variable access
 
-    <:= $var :>
-    <:= $var.field :>
-    <:= $var["field"] :>
-    <:= $var[0] :>
+    <: $var :>
+    <: $var.field :>
+    <: $var["field"] :>
+    <: $var[0] :>
 
 Variables may be HASH references, ARRAY references, or objects.
 
 =head2 Loop (C<for>)
 
     : for $data ->($item) {
-        [<:= $item.field =>]
+        [<: $item.field :>]
     : }
 
 Iterating data may be ARRAY references.
@@ -449,28 +449,28 @@ Iterating data may be ARRAY references.
         $var is 1 .. 10
     : }
 
-    := $var.value == nil ? "nil" : $var.value
+    : $var.value == nil ? "nil" : $var.value
 
 =head2 Expressions
 
 Relational operators (C<< == != < <= > >= >>):
 
-    := $var == 10 ? "10"     : "not 10"
-    := $var != 10 ? "not 10" : "10"
+    : $var == 10 ? "10"     : "not 10"
+    : $var != 10 ? "not 10" : "10"
 
 Arithmetic operators (C<< + - * / % >>):
 
-    := $var * 10_000
-    := ($var % 10) == 0
+    : $var * 10_000
+    : ($var % 10) == 0
 
 Logical operators (C<< || && // >>)
 
-    := $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
-    := $var // "foo" # as a default value
+    : $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
+    : $var // "foo" # as a default value
 
 String operators (C<< ~ >>)
 
-    := "[" ~ $var ~ "]" # concatination
+    : "[" ~ $var ~ "]" # concatination
 
 Operator precedence:
 
@@ -480,9 +480,9 @@ Operator precedence:
 
 Once you have registered functions, you can call them with C<()> or C<|>.
 
-    := f()        # without args
-    := f(1, 2, 3) # with args
-    := 42 | f     # the same as f(42)
+    : f()        # without args
+    : f(1, 2, 3) # with args
+    : 42 | f     # the same as f(42)
 
 Dynamic functions/filters:
 
@@ -502,8 +502,8 @@ Dynamic functions/filters:
     );
 
     :# template
-    := $value | indent("> ")
-    := indent("> ")($value)
+    : $value | indent("> ")
+    : indent("> ")($value)
 
 =head2 Template inclusion
 
@@ -568,14 +568,14 @@ This is also called as B<template inheritance>.
 =head2 Macro blocks
 
     : macro add ->($x, $y) {
-    :=   $x + $y;
+    :   $x + $y;
     : }
-    := add(10, 20)
+    : add(10, 20)
 
     : macro signeture -> {
-        This is foo version <:= $VERSION :>
+        This is foo version <: $VERSION :>
     : }
-    := signeture()
+    : signeture()
 
 Note that return values of macros are values that their routines renders.
 That is, macros themselves output nothing.
