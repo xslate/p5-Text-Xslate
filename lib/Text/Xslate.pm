@@ -359,7 +359,7 @@ Specifies PerlIO layers for reading templates.
 
 Renders a template with variables, and returns the result.
 
-If I<$name> is ommited, C<< <input> >> is used. See the C<string> option for C<new>.
+If I<$name> is omitted, C<< <input> >> is used. See the C<string> option for C<new>.
 
 =head3 Exportable functions
 
