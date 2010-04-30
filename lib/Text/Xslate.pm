@@ -359,11 +359,13 @@ Specifies PerlIO layers for reading templates.
 
 =back
 
-=head3 B<< $tx->render($name, \%vars) -> Str >>
+=head3 B<< $tx->render($file, \%vars) -> Str >>
 
 Renders a template with variables, and returns the result.
 
-If I<$name> is omitted, C<< <input> >> is used. See the C<string> option for C<new>.
+If I<$file> is omitted, C<< <input> >> is used. See the C<string> option for C<new>.
+
+Note that I<$file> may be cached according to the cache level.
 
 =head3 Exportable functions
 
