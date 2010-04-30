@@ -40,6 +40,8 @@ my %shortcut_table = (
     '=' => 'print',
 );
 
+my $CHOMP_FLAGS = qr/-/xms; # should support [-=~+] like Template-Toolkit?
+
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
@@ -152,7 +154,7 @@ sub split {
     my $tag_end       = $self->tag_end;
 
     my $lex_line = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
-    my $lex_tag  = qr/\A ([^\n]*?) $tag_start ($CODE) $tag_end /xms;
+    my $lex_tag  = qr/\A ([^\n]*?) $tag_start ($CHOMP_FLAGS?) ($CODE) ($CHOMP_FLAGS?) $tag_end /xms;
     my $lex_text = qr/\A ([^\n]* \n) /xms;
 
     while($_) {
@@ -161,11 +163,18 @@ sub split {
                 [ code => _trim($1) ];
         }
         elsif(s/$lex_tag//xms) {
-            if($1){
-                push @tokens, [ text => $1 ];
+            my($text, $prechomp, $code, $postchomp) = ($1, $2, $3, $4);
+            if($text){
+                push @tokens, [ text => $text ];
             }
-            push @tokens,
-                [ code => _trim($2) ];
+            if($prechomp) {
+                push @tokens, [ 'prechomp' ];
+            }
+            push @tokens, [ code => _trim($code) ];
+
+            if($postchomp) {
+                push @tokens, [ 'postchomp' ];
+            }
         }
         elsif(s/$lex_text//xms) {
             push @tokens, [ text => $1 ];
@@ -189,18 +198,41 @@ sub preprocess {
     my $shortcut       = join('|', map{ quotemeta } keys %shortcut_table);
     my $shortcut_rx    = qr/\A ($shortcut)/xms;
 
-    foreach my $token(@{$tokens_ref}) {
+    for(my $i = 0; $i < @{$tokens_ref}; $i++) {
+        my $token = $tokens_ref->[$i];
         given($token->[0]) {
             when('text') {
                 my $s = $token->[1];
+
                 $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
 
-                if($s =~ s/\n/\\n/xms) {
-                    $code .= qq{print_raw "$s";\n};
+                # $s may have  single new line
+                my $nl = ($s =~ s/\n/\\n/xms);
+
+                my $p = $tokens_ref->[$i-1]; # pre-token
+                if(defined($p) && $p->[0] eq 'postchomp') {
+                    # <: ... -:>  \nfoobar
+                    #           ^^^^
+                    $s =~ s/\A [ \t]* \\n//xms;
                 }
-                else {
-                    $code .= qq{print_raw "$s";};
+
+                if($nl && defined($p = $tokens_ref->[$i+1])) {
+                    if($p->[0] eq 'prechomp') {
+                        # \n  <:- ... -:>
+                        # ^^^^
+                        $s =~ s/\\n [ \t]* \z//xms;
+                    }
+                    elsif($p->[1] =~ /\A [ \t]+ \z/xms){
+                        my $nn = $tokens_ref->[$i+2];
+                        if(defined($nn) && $nn->[0] eq 'prechomp') {
+                            $p->[1] = '';               # chomp the next
+                            $s =~ s/\\n [ \t]* \z//xms; # chomp this
+                        }
+                    }
                 }
+
+                $code .= qq{print_raw "$s";};
+                $code .= qq{\n} if $nl;
             }
             when('code') {
                 my $s = $token->[1];
@@ -219,6 +251,12 @@ sub preprocess {
                 else {
                     $code .= qq{$s;};
                 }
+            }
+            when('prechomp') {
+                # noop, just a marker
+            }
+            when('postchomp') {
+                # noop, just a marker
             }
             default {
                 $self->_error("Unknown token: $_");
@@ -302,8 +340,10 @@ sub _define_basic_symbols {
 
     $parser->symbol(';');
 
+    # basic commands
     $parser->symbol('print')    ->set_std(\&_std_command);
     $parser->symbol('print_raw')->set_std(\&_std_command);
+
     return;
 }
 
@@ -378,7 +418,7 @@ sub define_symbols {
     $parser->symbol('around')   ->set_std(\&_std_proc);
     $parser->symbol('before')   ->set_std(\&_std_proc);
     $parser->symbol('after')    ->set_std(\&_std_proc);
-    $parser->symbol('super')    ->set_std(\&_std_super);
+    $parser->symbol('super')    ->set_std(\&_std_marker);
 
     return;
 }
@@ -991,10 +1031,11 @@ sub _std_bare_command {
         arity  => 'bare_command');
 }
 
-sub _std_super {
+# markers for the compiler
+sub _std_marker {
     my($parser, $symbol) = @_;
     $parser->advance(';');
-    return $symbol->clone(arity => 'super');
+    return $symbol->clone(arity => 'marker');
 }
 
 sub _error {
