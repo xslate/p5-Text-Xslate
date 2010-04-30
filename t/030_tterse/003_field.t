@@ -2,12 +2,7 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
-use Text::Xslate::Parser::TTerse;
-
-my $tx = Text::Xslate::Compiler->new(
-    parser => Text::Xslate::Parser::TTerse->new(),
-);
+use t::lib::TTSimple;
 
 my @data = (
     ['[% var.attr %]', 'value'],
@@ -33,8 +28,6 @@ my @data = (
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         var => { attr => 'value' },
 
@@ -47,8 +40,7 @@ foreach my $pair(@data) {
         foo => 'foo',
     );
 
-    is $x->render(\%vars), $out, 'first:' . $in;
-    is $x->render(\%vars), $out, 'second';
+    is render_str($in, \%vars), $out;
 }
 
 done_testing;
