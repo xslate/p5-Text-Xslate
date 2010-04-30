@@ -44,13 +44,6 @@ my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
-has symbol_class => (
-    is  => 'ro',
-    isa => 'Str',
-
-    default => 'Text::Xslate::Symbol',
-);
-
 has symbol_table => (
     is  => 'ro',
     isa => 'HashRef',
@@ -137,6 +130,8 @@ has line => (
 
     required => 0,
 );
+
+sub symbol_class() { 'Text::Xslate::Symbol' }
 
 sub _trim {
     my($s) = @_;

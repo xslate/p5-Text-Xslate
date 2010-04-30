@@ -24,10 +24,10 @@ my @data = (
 
     # no default
     ['Hello, <: $lang :> world!' => 'Hello, <: $lang :> world!'],
-    ["%= \$lang\n", "%= \$lang\n"],
+    [":= \$lang\n", ":= \$lang\n"],
 
     # no line code
-    [":= \$lang\n", ":= \$lang\n"],
+    ["%= \$lang\n", "%= \$lang\n"],
 );
 
 foreach my $pair(@data) {

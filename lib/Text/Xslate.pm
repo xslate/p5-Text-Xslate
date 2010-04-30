@@ -38,6 +38,13 @@ sub new {
 
     $args{template}       = {};
 
+    if(defined($args{syntax})) {
+        if(defined $args{parser}) {
+            $class->throw_error("Cannot set both 'parser' and 'syntax'");
+        }
+        $args{parser} = "Text::Xslate::Parser::" . delete $args{syntax};
+    }
+
     my $self = bless \%args, $class;
 
     if(my $file = $args{file}) {
@@ -175,22 +182,21 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        if(!$compiler->can('new')){
-            my $f = $compiler;
-            $f =~ s{::}{/}g;
-            $f .= ".pm";
-
-            my $e = do {
-                local $@;
-                eval { require $f };
-                $@;
-            };
-            if($e) {
-                $self->throw_error("Xslate: Cannot load the compiler: $e");
-            }
+        if(!$compiler->can('new')) {
+            require Mouse::Util;
+            Mouse::Util::load_class($compiler);
         }
 
         $compiler = $compiler->new(engine => $self);
+        if(defined(my $parser = $self->{parser})) {
+            if(!$parser->can('new')) {
+                require Mouse::Util;
+                Mouse::Util::load_class($parser);
+            }
+            $compiler->parser(ref($parser)
+                ? $parser
+                : $parser->new());
+        }
 
         if(my $funcs = $self->{function}) {
             $compiler->define_function(keys %{$funcs});

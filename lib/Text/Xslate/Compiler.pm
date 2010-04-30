@@ -87,11 +87,12 @@ has engine => (
 );
 
 has parser => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Object', # Text::Xslate::Parser
 
     handles => [qw(file line define_constant define_function)],
 
+    lazy    => 1,
     default => sub {
         return Text::Xslate::Parser->new();
     },
