@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.1002 Fri Apr 30 11:17:15 2010
+    - Fix template reloading issues
+
 0.1001 Thu Apr 29 17:58:33 2010
     - Fix macrocall issues, again
     - Allow a literal string for cascade()
