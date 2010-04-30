@@ -267,7 +267,7 @@ sub preprocess {
     return $code;
 }
 
-sub next_token {
+sub lex {
     my($self) = @_;
 
     local *_ = \$self->{input};
@@ -292,7 +292,7 @@ sub next_token {
         return [ variable => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
-        goto &next_token; # tail call
+        goto &lex; # tail call
     }
     elsif(s/\A (\S+)//xms) {
         $self->_error("Unexpected symbol '$1'");
@@ -453,7 +453,7 @@ sub advance {
 
     my $symtab = $parser->symbol_table;
 
-    $t = $parser->next_token();
+    $t = $parser->lex();
 
     if(not defined $t) {
         return $parser->token( $symtab->{"(end)"}->clone(arity => "end") );
