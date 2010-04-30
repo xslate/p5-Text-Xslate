@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.1003 Fri Apr 30 12:30:21 2010
+    - Disable leaktrace testing temporarily
+
 0.1002 Fri Apr 30 11:17:15 2010
     - Fix template reloading issues
 
