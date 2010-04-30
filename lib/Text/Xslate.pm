@@ -205,7 +205,6 @@ sub _compiler {
 sub _load_assembly {
     my($self, $assembly) = @_;
 
-    # name ?arg comment
     my @protocode;
     while($assembly =~ m{
             ^[ \t]*
