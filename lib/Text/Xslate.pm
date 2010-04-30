@@ -335,19 +335,31 @@ Specifies the include paths. Default to C<<["."]>>.
 
 Specifies functions.
 
+Functions may be called as C<f($arg)> or C<$arg | f>.
+
 =item C<< cache => $level // 1 >>
 
-Sets the cache level. If I<$level> E<gt>= 2, modified times will not be checked.
+Sets the cache level.
+
+If I<$level> == 1 (default), Xslate caches compiled templates on the disk, and
+checks the freshness of the original templates every time.
+
+If I<$level> E<gt>= 2, caches will be created but the freshness
+will not be checked.
+
+I<$level> == 0 creates no caches. It's only for testing.
 
 =item C<< input_layer => $perliolayers // ":utf8" >>
 
-Specifies PerlIO layers for reading.
+Specifies PerlIO layers for reading templates.
 
 =back
 
 =head3 B<< $tx->render($name, \%vars) -> Str >>
 
 Renders a template with variables, and returns the result.
+
+If I<$name> is ommited, C<< <input> >> is used. See the C<string> option for C<new>.
 
 =head3 Exportable functions
 
