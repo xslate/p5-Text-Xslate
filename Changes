@@ -1,9 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
 0.2000
-    - Introduce TTerse, Template-Toolkit-like template parser
+    - Introduce TTerse syntax, a Template-Toolkit-like template parser
     - Change print command (<:= ... :>) to be implicitly enabled
       i.e. you need not to put =; <: $foo :> is enough
+    - Add TT-like chomp command ("<:-" for prechomp, "-:>" for postchomp)
 
 0.1004 Fri Apr 30 14:32:47 2010
     - Fix an over-optimizing issue (revealed by Template::Benchmark)
