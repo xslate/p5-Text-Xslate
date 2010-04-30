@@ -363,15 +363,17 @@ sub define_symbols {
 
     # operators
 
+    $parser->infix('.', 100, \&_led_dot);
+    $parser->infix('[', 100, \&_led_fetch);
+    $parser->infix('(', 100, \&_led_call);
+
     $parser->infix('*', 80);
     $parser->infix('/', 80);
     $parser->infix('%', 80);
 
     $parser->infix('+', 70);
     $parser->infix('-', 70);
-
-    $parser->infix('~',  70); # connect
-
+    $parser->infix('~', 70); # connect
 
     $parser->infix('<',  60);
     $parser->infix('<=', 60);
@@ -383,15 +385,11 @@ sub define_symbols {
 
     $parser->infix('|',  40); # filter
 
-    $parser->infix('?', 20, \&_led_ternary);
-
-    $parser->infix('.', 100, \&_led_dot);
-    $parser->infix('[', 100, \&_led_fetch);
-    $parser->infix('(', 100, \&_led_call);
-
     $parser->infixr('&&', 35);
     $parser->infixr('||', 30);
     $parser->infixr('//', 30);
+
+    $parser->infix('?', 20, \&_led_ternary);
 
     $parser->prefix('!');
     $parser->prefix('+');
