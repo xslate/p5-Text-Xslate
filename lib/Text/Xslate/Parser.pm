@@ -607,7 +607,7 @@ sub reserve { # reserve a name to the scope
     }
 
     my $top = $parser->scope->[-1];
-    my $t = $top->{$symbol->value};
+    my $t = $top->{$symbol->id};
     if($t) {
         if($t->reserved) {
             return;
@@ -616,7 +616,7 @@ sub reserve { # reserve a name to the scope
            confess("Already defined: $symbol");
         }
     }
-    $top->{$symbol->value} = $symbol;
+    $top->{$symbol->id} = $symbol;
     $symbol->reserved(1);
     return;
 }
@@ -625,12 +625,12 @@ sub define { # define a name to the scope
     my($parser, $symbol) = @_;
     my $top = $parser->scope->[-1];
 
-    my $t = $top->{$symbol->value};
+    my $t = $top->{$symbol->id};
     if(defined $t) {
         confess($t->reserved ? "Already reserved: $t" : "Already defined: $t");
     }
 
-    $top->{$symbol->value} = $symbol;
+    $top->{$symbol->id} = $symbol;
 
     $symbol->reserved(0);
     $symbol->set_nud(\&_nud_literal);
