@@ -1,4 +1,4 @@
-package Text::Xslate::Parser::Foo;
+package Text::Xslate::Syntax::Foo;
 use 5.010;
 use Mouse;
 

@@ -32,7 +32,7 @@ foreach my $pair(@data) {
     is $x->render(\%vars), $out, $in;
 
     $x = Text::Xslate->new(
-        parser => 'Text::Xslate::Parser::Foo', # need fullname
+        syntax => 'Text::Xslate::Syntax::Foo', # fullname is ok
         string => $in,
     );
 

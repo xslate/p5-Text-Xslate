@@ -34,16 +34,10 @@ sub new {
     $args{input_layer}  //= ':utf8';
     $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
-   #$args{function}     //= {}; # see _compiler()
+    $args{syntax}       //= 'Kolon'; # passed directly to the compiler
+   #$args{function}     //= {};      # see _compiler()
 
     $args{template}       = {};
-
-    if(defined($args{syntax})) {
-        if(defined $args{parser}) {
-            $class->throw_error("Cannot set both 'parser' and 'syntax'");
-        }
-        $args{parser} = "Text::Xslate::Parser::" . delete $args{syntax};
-    }
 
     my $self = bless \%args, $class;
 
@@ -187,16 +181,10 @@ sub _compiler {
             Mouse::Util::load_class($compiler);
         }
 
-        $compiler = $compiler->new(engine => $self);
-        if(defined(my $parser = $self->{parser})) {
-            if(!$parser->can('new')) {
-                require Mouse::Util;
-                Mouse::Util::load_class($parser);
-            }
-            $compiler->parser(ref($parser)
-                ? $parser
-                : $parser->new());
-        }
+        $compiler = $compiler->new(
+            engine => $self,
+            syntax => $self->{syntax},
+        );
 
         if(my $funcs = $self->{function}) {
             $compiler->define_function(keys %{$funcs});

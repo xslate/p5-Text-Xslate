@@ -57,14 +57,16 @@ has lvar_id => ( # local varialbe id
         _lvar_release => 'dec',
     },
 
-    default => 0,
+    default  => 0,
+    init_arg => undef,
 );
 
 has lvar => ( # local varialbe id table
     is  => 'rw',
     isa => 'HashRef[Int]',
 
-    default => sub{ {} },
+    default  => sub{ {} },
+    init_arg => undef,
 );
 
 has macro_table => (
@@ -73,8 +75,9 @@ has macro_table => (
 
     clearer => 'clear_macro_table',
 
-    lazy    => 1,
-    default => sub{ {} },
+    lazy     => 1,
+    default  => sub{ {} },
+    init_arg => undef,
 );
 
 has engine => (
@@ -86,6 +89,14 @@ has engine => (
     required => 0,
 );
 
+has syntax => (
+    is  => 'rw',
+    isa => 'Str',
+
+    default  => 'Kolon',
+    required => 0,
+);
+
 has parser => (
     is  => 'rw',
     isa => 'Object', # Text::Xslate::Parser
@@ -94,7 +105,12 @@ has parser => (
 
     lazy    => 1,
     default => sub {
-        return Text::Xslate::Parser->new();
+        my($self) = @_;
+        my $parser_class = Mouse::Util::load_first_existing_class(
+            "Text::Xslate::Syntax::" . $self->syntax,
+            $self->syntax,
+        );
+        return $parser_class->new();
     },
 
     required => 0,

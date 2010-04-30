@@ -2,12 +2,11 @@
 use strict;
 use Test::More;
 
-use Text::Xslate;
-use Text::Xslate::Parser::TTerse;
+use Text::Xslate::Syntax::TTerse;
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
 
-my $parser = Text::Xslate::Parser::TTerse->new();
+my $parser = Text::Xslate::Syntax::TTerse->new();
 
 my @data = (
     ['Hello, world!' => qr/Hello, world!/],

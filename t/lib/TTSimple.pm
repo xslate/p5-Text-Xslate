@@ -15,10 +15,9 @@ if(USE_TT) {
 }
 else {
     require Text::Xslate::Compiler;
-    require Text::Xslate::Parser::TTerse;
 
     $tt = Text::Xslate::Compiler->new(
-        parser => Text::Xslate::Parser::TTerse->new(),
+        syntax => 'TTerse',
     );
 }
 

@@ -1,4 +1,4 @@
-package Text::Xslate::Parser::TTerse;
+package Text::Xslate::Syntax::TTerse;
 use 5.010;
 use Mouse;
 
@@ -94,7 +94,7 @@ sub _std_foreach {
 no Mouse;
 __PACKAGE__->meta->make_immutable();
 
-package Text::Xslate::Parser::TTerse::Symbol;
+package Text::Xslate::Syntax::TTerse::Symbol;
 use Mouse;
 
 extends qw(Text::Xslate::Symbol);
@@ -112,9 +112,9 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Parser::TTerse - An alternative Xslate parser to Template-Toolkit-like syntax
+Text::Xslate::Syntax::TTerse - An alternative Xslate parser to Template-Toolkit-like syntax
 
-=head1 SUMMARY OF SYNTAX
+=head1 DESCRIPTION
 
 This parser supports a subset of the Template-Tookit 2 syntax.
 
@@ -140,6 +140,8 @@ conditional statements:
     [% END %]
 
 =head1 SEE ALSO
+
+L<Text::Xslate>
 
 L<Template::Toolkit>
 
