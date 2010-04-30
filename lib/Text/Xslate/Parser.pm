@@ -36,10 +36,22 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ;
 ), ',');
 
+my %shortcut_table = (
+    '=' => 'print',
+);
 
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
+
+has symbol_class => (
+    is  => 'ro',
+    isa => 'Str',
+
+    default => 'Text::Xslate::Symbol',
+
+    required => 0,
+);
 
 has symbol_table => (
     is  => 'ro',
@@ -90,6 +102,12 @@ has tag_end => (
     is      => 'ro',
     isa     => 'RegexpRef',
     default => sub{ qr/\Q:>/xms },
+);
+
+has shortcut_table => (
+    is      => 'ro',
+    isa     => 'HashRef[Str]',
+    default => sub { \%shortcut_table },
 );
 
 # attributes for error messages
@@ -171,6 +189,10 @@ sub preprocess {
     my $tokens_ref = $self->split(@_);
     my $code = '';
 
+    my $shortcut_table = $self->shortcut_table;
+    my $shortcut       = join('|', map{ quotemeta } keys %shortcut_table);
+    my $shortcut_rx    = qr/\A ($shortcut)/xms;
+
     foreach my $token(@{$tokens_ref}) {
         given($token->[0]) {
             when('text') {
@@ -186,7 +208,10 @@ sub preprocess {
             }
             when('code') {
                 my $s = $token->[1];
-                $s =~ s/\A =/print/xms;
+
+                # shortcut commands
+                $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
+                    if $shortcut;
 
                 #if($s =~ /[\{\}\[\]]\n?\z/xms){ # ???
                 if($s =~ /[\}]\n?\z/xms){
@@ -367,7 +392,7 @@ sub symbol {
         }
     }
     else {
-        $s = Text::Xslate::Symbol->new(id => $id);
+        $s = $parser->symbol_class->new(id => $id);
         $s->lbp($bp) if $bp;
         $parser->symbol_table->{$id} = $s;
     }
