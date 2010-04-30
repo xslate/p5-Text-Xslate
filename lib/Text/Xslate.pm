@@ -304,7 +304,9 @@ This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate opcodes, and then executed by the xslate virtual machine
 just like as Perl does.
 
-Note that B<this software is under development>.
+B<This software is under development>.
+Version 0.1xxx is a developing stage, which may include radical changes.
+Version 0.2xxx and more will be somewhat stable.
 
 =head2 Features
 

@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.2000
+0.1005
     - Introduce TTerse syntax, a Template-Toolkit-like template parser
     - Change print command (<:= ... :>) to be implicitly enabled
       i.e. you need not to put =; <: $foo :> is enough
