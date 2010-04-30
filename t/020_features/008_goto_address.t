@@ -54,6 +54,21 @@ T
     [<:= "*" ~ $value :>]
 : }
 T
+    [<<'T', "\ntrue\n\n"],
+<: if 1 { :>
+true
+<: } else { :>
+false
+<: } :>
+T
+    [<<'T', "\nfalse\n\n"],
+<: if 0 { :>
+true
+<: } else { :>
+false
+<: } :>
+T
+
 );
 
 
@@ -65,7 +80,12 @@ foreach my $pair(@data) {
     my %vars = (
         value => 'foo',
     );
-    is $x->render(\%vars), $out, $in;
+    #use Data::Dumper; $Data::Dumper::Useqq = 1;
+    #is Dumper($x->render(\%vars)), Dumper($out);
+    is $x->render(\%vars), $out or do {
+        require Data::Dumper;
+        diag( Data::Dumper->new([$x->render(\%vars)])->Useqq(1)->Dump );
+    };
 }
 
 done_testing;

@@ -584,17 +584,49 @@ sub _noop {
 sub _optimize {
     my($self, $c) = @_;
 
+    # calculate goto addresses
+    # eg:
+    #
+    # goto +3
+    # foo
+    # noop
+    # bar // goto destination
+    #
+    # to be:
+    #
+    # goto +2
+    # foo
+    # bar // goto destination
+
+    my @goto_addr;
+    for(my $i = 0; $i < @{$c}; $i++) {
+        if(exists $goto_family{ $c->[$i][0] }) {
+            my $addr = $c->[$i][1]; # relational addr
+
+            # mark ragens that goto family have its effects
+            my @range = $addr > 0
+                ? ($i .. ($i+$addr-1))  # positive
+                : (($i+$addr) .. $i); # negative
+
+            foreach my $j(@range) {
+                push @{$goto_addr[$j] //= []}, $c->[$i];
+            }
+        }
+    }
+
     for(my $i = 0; $i < @{$c}; $i++) {
         given($c->[$i][0]) {
             when('print_raw_s') {
                 # merge a set of print_raw_s into single command
-                for(my $j = $i + 1;
-                    $j < @{$c} && $c->[$j][0] eq 'print_raw_s';
-                    $j++) {
+                my $j = $i + 1; # from the next op
+                while($j < @{$c}
+                        && $c->[$j][0] eq 'print_raw_s'
+                        && "@{$goto_addr[$i] // []}" eq "@{$goto_addr[$j] // []}") {
 
                     $c->[$i][1] .= $c->[$j][1];
 
                     _noop($c->[$j]);
+                    $j++;
                 }
             }
             when('store_to_lvar') {
@@ -630,36 +662,6 @@ sub _optimize {
 
                     _noop($prev);
                 }
-            }
-        }
-    }
-
-    # recalculate goto addresses
-    # eg:
-    #
-    # goto +3
-    # foo
-    # noop
-    # bar // goto destination
-    #
-    # to be:
-    #
-    # goto +2
-    # foo
-    # bar // goto destination
-
-    my @goto_addr;
-    for(my $i = 0; $i < @{$c}; $i++) {
-        if(exists $goto_family{ $c->[$i][0] }) {
-            my $addr = $c->[$i][1]; # relational addr
-
-            # mark ragens that goto family have its effects
-            my @range = $addr > 0
-                ? ($i .. ($i+$addr-1))  # positive
-                : (($i+$addr) .. $i); # negative
-
-            foreach my $j(@range) {
-                push @{$goto_addr[$j] //= []}, $c->[$i];
             }
         }
     }
