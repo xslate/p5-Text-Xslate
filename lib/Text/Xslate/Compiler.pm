@@ -327,13 +327,16 @@ sub _generate_bare_command {
     return @code;
 }
 
-sub _generate_for {
+sub _generate_loop {
     my($self, $node) = @_;
     my $expr  = $node->first;
     my $vars  = $node->second;
     my $block = $node->third;
-    if(@{$vars} != 1) {
-        $self->_error($node, "For-loop requires single variable for each items");
+
+    my $is_for = $node->id eq 'for'; # or 'while'
+
+    if($is_for && @{$vars} != 1) {
+        $self->_error($node, "A loop requires single variable for each items");
     }
     my($iter_var) = @{$vars};
 

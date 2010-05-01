@@ -425,8 +425,9 @@ sub define_symbols {
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
     #$parser->symbol('var')      ->set_std(\&_std_var);
-    $parser->symbol('for')      ->set_std(\&_std_for);
     $parser->symbol('if')       ->set_std(\&_std_if);
+    $parser->symbol('for')      ->set_std(\&_std_loop);
+    $parser->symbol('while')    ->set_std(\&_std_loop);
 
     $parser->symbol('include')  ->set_std(\&_std_command);
 
@@ -896,35 +897,48 @@ sub _std_block {
 #    return @a;
 #}
 
-sub _std_for {
+# -> (VARS) { STATEMENTS }
+# ->        { STATEMENTS }
+sub _lambda_block {
+    my($parser, $node) = @_;
+
+    $parser->advance("->");
+
+    $parser->new_scope();
+    my @vars;
+    if($parser->token->id eq "(") {
+        $parser->advance("(");
+
+        while((my $t = $parser->token)->arity eq "variable") {
+            push @vars, $t;
+            $parser->define($t);
+            $parser->advance();
+
+            if($parser->token->id eq ",") {
+                $parser->advance(",");
+            }
+        }
+
+        $parser->advance(")");
+    }
+    $node->second( \@vars );
+
+    $parser->advance("{");
+    $node->third($parser->statements());
+    $parser->advance("}");
+    $parser->pop_scope();
+
+    return;
+}
+
+sub _std_loop {
     my($parser, $symbol) = @_;
 
-    my $proc = $symbol->clone(arity => "for");
+    my $proc = $symbol->clone(arity => "loop");
 
     $proc->first( $parser->expression(0) );
 
-    $parser->new_scope();
-
-    $parser->advance("->");
-    $parser->advance("(");
-
-    my @vars;
-
-    while((my $t = $parser->token)->arity eq "variable") {
-        push @vars, $t;
-        $parser->define($t);
-        $parser->advance;
-    }
-
-    $proc->second( \@vars );
-
-    $parser->advance(")");
-    $parser->advance("{");
-    $proc->third($parser->statements());
-    $parser->advance("}");
-
-    $parser->pop_scope();
-
+    $parser->_lambda_block($proc);
     return $proc;
 }
 
@@ -941,31 +955,7 @@ sub _std_proc {
     $proc->first( $name->id );
     $parser->advance();
 
-    $parser->new_scope();
-    $parser->advance("->");
-    my @vars;
-    if($parser->token->id eq "(") {
-        $parser->advance("(");
-
-        while((my $t = $parser->token)->arity eq "variable") {
-            push @vars, $t;
-            $parser->define($t);
-            $parser->advance;
-
-            if($parser->token->id eq ",") {
-                $parser->advance(",");
-            }
-        }
-
-        $parser->advance(")");
-    }
-    $proc->second( \@vars );
-
-    $parser->advance("{");
-    $proc->third($parser->statements());
-    $parser->advance("}");
-    $parser->pop_scope();
-
+    $parser->_lambda_block($proc);
     return $proc;
 }
 
