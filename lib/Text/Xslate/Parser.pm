@@ -353,25 +353,8 @@ sub _define_basic_symbols {
     return;
 }
 
-sub define_symbols {
+sub define_basic_operators {
     my($parser) = @_;
-
-    # separators
-    $parser->symbol(':');
-    $parser->symbol(',');
-    $parser->symbol(')');
-    $parser->symbol(']');
-    $parser->symbol('}')->is_end(1); # block end
-    $parser->symbol('->');
-    $parser->symbol('else');
-    $parser->symbol('with');
-    $parser->symbol('::');
-
-    # operators
-
-    $parser->infix('.', 100, \&_led_dot);
-    $parser->infix('[', 100, \&_led_fetch);
-    $parser->infix('(', 100, \&_led_call);
 
     $parser->infix('*', 80);
     $parser->infix('/', 80);
@@ -411,6 +394,28 @@ sub define_symbols {
     $parser->prefix('!');
     $parser->prefix('+');
     $parser->prefix('-');
+}
+
+sub define_symbols {
+    my($parser) = @_;
+
+    # separators
+    $parser->symbol(':');
+    $parser->symbol(',');
+    $parser->symbol(')');
+    $parser->symbol(']');
+    $parser->symbol('}')->is_end(1); # block end
+    $parser->symbol('->');
+    $parser->symbol('else');
+    $parser->symbol('with');
+    $parser->symbol('::');
+
+    # operators
+    $parser->define_basic_operators();
+
+    $parser->infix('.', 100, \&_led_dot);
+    $parser->infix('[', 100, \&_led_fetch);
+    $parser->infix('(', 100, \&_led_call);
 
     $parser->prefix('(', \&_nud_paren);
 

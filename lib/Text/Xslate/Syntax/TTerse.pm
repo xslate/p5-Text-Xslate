@@ -21,34 +21,10 @@ sub define_symbols {
     $parser->symbol('IF')      ->set_std(\&_std_if);
     $parser->symbol('FOREACH') ->set_std(\&_std_foreach);
 
-    $parser->infix('.', 100, \&_led_dot);
 
     # operators
-    $parser->infix('*', 80);
-    $parser->infix('/', 80);
-    $parser->infix('%', 80);
-
-    $parser->infix('+', 70);
-    $parser->infix('-', 70);
-    $parser->infix('~', 70); # connect
-
-    $parser->infix('<',  60);
-    $parser->infix('<=', 60);
-    $parser->infix('>',  60);
-    $parser->infix('>=', 60);
-
-    $parser->infix('==', 50);
-    $parser->infix('!=', 50);
-
-    $parser->infix('|',  40); # filter
-
-    $parser->infixr('&&', 35);
-    $parser->infixr('||', 30);
-    $parser->infixr('//', 30);
-
-    $parser->prefix('!');
-    $parser->prefix('+');
-    $parser->prefix('-');
+    $parser->infix('.', 100, \&_led_dot);
+    $parser->define_basic_operators();
 
 }
 
