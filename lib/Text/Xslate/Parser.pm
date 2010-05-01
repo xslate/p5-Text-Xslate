@@ -292,7 +292,7 @@ sub lex {
         goto &lex; # tail call
     }
     elsif(s/\A (\S+)//xms) {
-        $self->_error("Unexpected symbol '$1'");
+        $self->_error("Unexpected lex symbol '$1'");
     }
     else { # empty
         return undef;
