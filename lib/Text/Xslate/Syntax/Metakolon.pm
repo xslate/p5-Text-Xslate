@@ -33,7 +33,7 @@ Text::Xslate::Syntax::Metakolon - The same as Kolon but using [% ... %] tags
 Metakolon is the same as Kolon except for using C<< [% ... %] >> tags and
 C<< % ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 
-This may be useful when you want to produce Xslate templates with Xslate itself.
+This may be useful when you want to produce Xslate templates by itself.
 
 See L<Text::Xslate::Syntax::Kolon> for details.
 

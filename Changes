@@ -2,6 +2,7 @@ Revision history for Perl extension Text::Xslate
 
 0.1005
     - Introduce TTerse syntax, a Template-Toolkit-like template parser
+    - Introduce Metakolon syntax to produce Xslate templates by itself
     - Change print command (<:= ... :>) to be implicitly enabled
       i.e. you need not to put =; <: $foo :> is enough
     - Add TT-like chomp command ("<:-" for prechomp, "-:>" for postchomp)
