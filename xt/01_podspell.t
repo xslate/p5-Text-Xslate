@@ -23,3 +23,7 @@ Opcode
 gfx
 cpan
 render
+Kolon
+Metakolon
+TTerse
+syntaxes

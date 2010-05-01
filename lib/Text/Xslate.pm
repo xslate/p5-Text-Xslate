@@ -282,7 +282,7 @@ This document describes Text::Xslate version 0.1004.
 
 
     # if you want Template-Toolkit syntx:
-    my $tx = Text::Xslate->new(syntax => 'TTerse');
+    $tx = Text::Xslate->new(syntax => 'TTerse');
     # ...
 
 =head1 DESCRIPTION
@@ -313,7 +313,7 @@ This mechanism is also called as template inheritance.
 
 =head3 Syntax alternation
 
-The Xslate engine and parser/compiler are completely separeted so that
+The Xslate engine and parser/compiler are completely separated so that
 one can use alternative parsers.
 
 Currently, C<TTerse>, a Template-Toolkit-like parser, is supported as an
@@ -409,7 +409,7 @@ There are syntaxes you can use:
 =item Kolon
 
 B<Kolon> is the default syntax, using C<< <: ... :> >> tags and
-C<< : ... >> line code, which is explaind in L<Text::Xslate::Syntax::Kolon>.
+C<< : ... >> line code, which is explained in L<Text::Xslate::Syntax::Kolon>.
 
 =item Metakolon
 
@@ -419,7 +419,7 @@ C<< % ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 =item TTerse
 
 B<TTerse> is a syntax that is a subset of Template-Toolkit 2, called B<TTerse>,
-which is explaind in L<Text::Xslate::Syntax::TTerse>.
+which is explained in L<Text::Xslate::Syntax::TTerse>.
 
 =back
 

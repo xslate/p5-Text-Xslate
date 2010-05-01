@@ -29,7 +29,7 @@ sub define_symbols {
 }
 
 sub undefined_name {
-    my($parser, $name) = @_;
+    my($parser) = @_;
     # undefined names are always variables
     return $parser->symbol_table->{'(variable)'};
 }
@@ -135,7 +135,7 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
 
 =head1 DESCRIPTION
 
-TTerse is a subset of the Template-Tookit 2 syntax,
+TTerse is a subset of the Template-Toolkit 2 syntax,
 using C<< [% ... %] >> tags.
 
 =head1 EXAMPLES
