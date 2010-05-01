@@ -1051,6 +1051,6 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Parser - An Xslate template parser used by default
+Text::Xslate::Parser - The base class of template parsers
 
 =cut

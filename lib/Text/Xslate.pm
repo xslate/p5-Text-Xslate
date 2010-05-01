@@ -429,7 +429,13 @@ to cpan-RT.  Patches are welcome :)
 
 =head1 SEE ALSO
 
+Template syntaxes:
+
+L<Text::Xslate::Parser::Kolon>
+
 L<Text::Xslate::Parser::TTerse>
+
+Other template modules:
 
 L<Text::MicroTemplate>
 
@@ -442,6 +448,10 @@ L<Template-Toolkit>
 L<HTML::Template>
 
 L<HTML::Template::Pro>
+
+Benchmarks:
+
+L<Template::Benchmark>
 
 =head1 AUTHOR
 
