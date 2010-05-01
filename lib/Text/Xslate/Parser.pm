@@ -532,6 +532,22 @@ sub expression {
     return $left;
 }
 
+sub expression_list {
+    my($parser) = @_;
+
+    my @args;
+    if($parser->token->id ne ")") {
+        while(1) {
+            push @args, $parser->expression(0);
+            if($parser->token->id ne ",") {
+                last;
+            }
+            $parser->advance(",");
+        }
+    }
+    return \@args;
+}
+
 sub _led_infix {
     my($parser, $symbol, $left) = @_;
     my $bin = $symbol->clone(arity => 'binary');
@@ -606,6 +622,14 @@ sub _led_dot {
     $dot->second($t->clone(arity => 'literal'));
 
     $parser->advance();
+
+    if($parser->token->id eq "(") {
+        $parser->advance("(");
+        $dot->third( $parser->expression_list() );
+        $parser->advance(")");
+        $dot->arity("methodcall");
+    }
+
     return $dot;
 }
 
@@ -625,22 +649,10 @@ sub _led_call {
     my($parser, $symbol, $left) = @_;
 
     my $call = $symbol->clone(arity => 'call');
-
     $call->first($left);
 
-    my @args;
-    if($parser->token->id ne ")") {
-        while(1) {
-            push @args, $parser->expression(0);
-            if($parser->token->id ne ",") {
-                last;
-            }
-            $parser->advance(",");
-        }
-    }
+    $call->second( $parser->expression_list() );
     $parser->advance(")");
-
-    $call->second(\@args);
 
     return $call;
 }
@@ -986,19 +998,12 @@ sub _std_if {
 
 sub _std_command {
     my($parser, $symbol) = @_;
-    my @args;
+    my $args;
     if($parser->token->id ne ";") {
-        while(1) {
-            push @args, $parser->expression(0);
-
-            if($parser->token->id ne ",") {
-                last;
-            }
-            $parser->advance(",");
-        }
+        $args = $parser->expression_list();
     }
     $parser->advance(";");
-    return $symbol->clone(first => \@args, arity => 'command');
+    return $symbol->clone(first => $args, arity => 'command');
 }
 
 sub _get_bare_name {

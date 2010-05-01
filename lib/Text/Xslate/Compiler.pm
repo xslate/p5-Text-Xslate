@@ -563,18 +563,27 @@ sub _generate_binary {
 
 sub _generate_ternary { # the conditional operator
     my($self, $node) = @_;
-
     my @expr = $self->_generate_expr($node->first);
     my @then = $self->_generate_expr($node->second);
-
     my @else = $self->_generate_expr($node->third);
-
     return(
         @expr,
         [ and  => scalar(@then) + 2, $node->line, 'ternary' ],
         @then,
         [ goto => scalar(@else) + 1 ],
         @else,
+    );
+}
+
+sub _generate_methodcall {
+    my($self, $node) = @_;
+    my $args = $node->third;
+    return (
+        [ pushmark => () ],
+        $self->_generate_expr($node->first),
+        [ 'push' ],
+        (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
+        [ methodcall_s => $node->second->id ],
     );
 }
 

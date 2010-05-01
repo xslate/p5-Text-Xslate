@@ -47,6 +47,7 @@ TXC(macro_end);
 TXC_w_key(macro);
 TXC_w_key(function);
 TXC(funcall);
+TXC_w_key(methodcall_s);
 TXC_goto(goto);
 TXC_w_sv(depend); /* indicate files for templates to depend on */
 TXC(end);
@@ -97,9 +98,10 @@ enum tx_opcode_t {
     TXOP_macro, /* 42 */
     TXOP_function, /* 43 */
     TXOP_funcall, /* 44 */
-    TXOP_goto, /* 45 */
-    TXOP_depend, /* 46 */
-    TXOP_end, /* 47 */
+    TXOP_methodcall_s, /* 45 */
+    TXOP_goto, /* 46 */
+    TXOP_depend, /* 47 */
+    TXOP_end, /* 48 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -149,6 +151,7 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_macro,
     TXCODE_function,
     TXCODE_funcall,
+    TXCODE_methodcall_s,
     TXCODE_goto,
     TXCODE_depend,
     TXCODE_end,
@@ -201,6 +204,7 @@ static const U8 tx_oparg[] = {
     TXCODE_W_KEY, /* macro */
     TXCODE_W_KEY, /* function */
     0U, /* funcall */
+    TXCODE_W_KEY, /* methodcall_s */
     TXCODE_GOTO, /* goto */
     TXCODE_W_SV, /* depend */
     0U, /* end */
@@ -253,6 +257,7 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(macro), newSViv(TXOP_macro));
     (void)hv_stores(ops, STRINGIFY(function), newSViv(TXOP_function));
     (void)hv_stores(ops, STRINGIFY(funcall), newSViv(TXOP_funcall));
+    (void)hv_stores(ops, STRINGIFY(methodcall_s), newSViv(TXOP_methodcall_s));
     (void)hv_stores(ops, STRINGIFY(goto), newSViv(TXOP_goto));
     (void)hv_stores(ops, STRINGIFY(depend), newSViv(TXOP_depend));
     (void)hv_stores(ops, STRINGIFY(end), newSViv(TXOP_end));

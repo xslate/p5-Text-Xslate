@@ -43,4 +43,15 @@ TX
 is $tx->render({ value => 'XSLATE' }), "Hello, Xslate world!\n";
 is $tx->render({ value => 'PERL' }),   "Hello, Perl world!\n";
 
+$tx = Text::Xslate->new(
+    string => <<'TX',
+Hello, <:= foo() :> world!
+TX
+    function => {
+        foo => sub{ "FOO" },
+    },
+);
+
+is $tx->render({ value => 'XSLATE' }), "Hello, FOO world!\n", "funcall without args";
+
 done_testing;

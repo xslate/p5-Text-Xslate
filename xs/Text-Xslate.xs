@@ -808,7 +808,14 @@ TXC_w_key(function) {
 
 TXC(funcall) {
     /* PUSHMARK & PUSH must be done */
-    TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "calling");
+    TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");
+
+    TX_st->pc++;
+}
+
+TXC_w_key(methodcall_s) {
+    /* PUSHMARK & PUSH must be done */
+    TX_st_sa = tx_call(aTHX_ TX_st, TX_op_arg, G_METHOD, "method call");
 
     TX_st->pc++;
 }
