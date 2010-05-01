@@ -167,7 +167,7 @@ sub compile {
         @code = @new_code;
     }
     else {
-        push @code, ['exit'];
+        push @code, ['end'];
     }
 
     # macros

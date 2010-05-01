@@ -69,7 +69,7 @@ struct tx_state_s;
 typedef struct tx_code_s  tx_code_t;
 typedef struct tx_state_s tx_state_t;
 
-typedef void (*tx_exec_t)(pTHX_ tx_state_t*);
+typedef void (*tx_exec_t)(pTHX_ tx_state_t* const);
 
 struct tx_state_s {
     U32 pc;       /* the program counter */
@@ -819,7 +819,7 @@ TXC_goto(goto) {
 
 TXC_w_sv(depend); /* indicate files for templates to depend on */
 
-TXC(exit) {
+TXC(end) {
     TX_st->pc = TX_st->code_len;
 }
 
