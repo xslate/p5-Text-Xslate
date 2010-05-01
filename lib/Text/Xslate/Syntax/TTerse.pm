@@ -149,7 +149,7 @@ using C<< [% ... %] >> tags.
 
 Variables may be HASH references, ARRAY references, or objects.
 
-=head2 Loop for array references
+=head2 Loops
 
     [% FOREACH item IN arrayref %]
         * [% item %]

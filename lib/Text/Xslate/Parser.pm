@@ -424,10 +424,9 @@ sub define_symbols {
 
     # statements
     $parser->symbol('{')        ->set_std(\&_std_block);
-    #$parser->symbol('var')      ->set_std(\&_std_var);
     $parser->symbol('if')       ->set_std(\&_std_if);
-    $parser->symbol('for')      ->set_std(\&_std_loop);
-    $parser->symbol('while')    ->set_std(\&_std_loop);
+    $parser->symbol('for')      ->set_std(\&_std_for);
+    $parser->symbol('while' )   ->set_std(\&_std_while);
 
     $parser->symbol('include')  ->set_std(\&_std_command);
 
@@ -897,17 +896,19 @@ sub _std_block {
 #    return @a;
 #}
 
-# -> (VARS) { STATEMENTS }
-# ->        { STATEMENTS }
-sub _lambda_block {
+# -> VARS { STATEMENTS }
+# ->      { STATEMENTS }
+sub _pointy {
     my($parser, $node) = @_;
 
     $parser->advance("->");
 
     $parser->new_scope();
     my @vars;
-    if($parser->token->id eq "(") {
-        $parser->advance("(");
+    if($parser->token->id ne "{") {
+        my $paren = ($parser->token->id eq "(");
+
+        $parser->advance("(") if $paren;
 
         while((my $t = $parser->token)->arity eq "variable") {
             push @vars, $t;
@@ -919,7 +920,7 @@ sub _lambda_block {
             }
         }
 
-        $parser->advance(")");
+        $parser->advance(")") if $paren;
     }
     $node->second( \@vars );
 
@@ -931,14 +932,21 @@ sub _lambda_block {
     return;
 }
 
-sub _std_loop {
+sub _std_for {
     my($parser, $symbol) = @_;
 
-    my $proc = $symbol->clone(arity => "loop");
-
+    my $proc = $symbol->clone(arity => 'for');
     $proc->first( $parser->expression(0) );
+    $parser->_pointy($proc);
+    return $proc;
+}
 
-    $parser->_lambda_block($proc);
+sub _std_while {
+    my($parser, $symbol) = @_;
+
+    my $proc = $symbol->clone(arity => 'while');
+    $proc->first( $parser->expression(0) );
+    $parser->_pointy($proc);
     return $proc;
 }
 
@@ -954,8 +962,7 @@ sub _std_proc {
     $parser->define_macro($name->id);
     $proc->first( $name->id );
     $parser->advance();
-
-    $parser->_lambda_block($proc);
+    $parser->_pointy($proc);
     return $proc;
 }
 

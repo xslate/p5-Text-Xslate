@@ -327,21 +327,18 @@ sub _generate_bare_command {
     return @code;
 }
 
-sub _generate_loop {
+sub _generate_for {
     my($self, $node) = @_;
     my $expr  = $node->first;
     my $vars  = $node->second;
     my $block = $node->third;
 
-    my $is_for = $node->id eq 'for'; # or 'while'
-
-    if($is_for && @{$vars} != 1) {
-        $self->_error($node, "A loop requires single variable for each items");
+    if(@{$vars} != 1) {
+        $self->_error($node, "A for-loop requires single variable for each items");
     }
-    my($iter_var) = @{$vars};
-
     my @code = $self->_generate_expr($expr);
 
+    my($iter_var) = @{$vars};
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
@@ -359,6 +356,44 @@ sub _generate_loop {
         [ for_iter  => scalar(@block_code) + 2 ],
         @block_code,
         [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
+
+    return @code;
+}
+
+sub _generate_while {
+    my($self, $node) = @_;
+    my $expr  = $node->first;
+    my $vars  = $node->second;
+    my $block = $node->third;
+
+    if(@{$vars} > 1) {
+        $self->_error($node, "A while-loop requires one or zero variable for each items");
+    }
+    my @code = $self->_generate_expr($expr);
+
+    my($iter_var) = @{$vars};
+    my($lvar_id, $lvar_name);
+
+    if(@{$vars}) {
+        $lvar_id   = $self->lvar_id;
+        $lvar_name = $iter_var->id;
+    }
+
+    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ]
+        if @{$vars};
+
+    # a for statement uses three local variables (container, iterator, and item)
+    $self->_lvar_use(scalar @{$vars});
+    my @block_code = $self->_compile_ast($block);
+    $self->_lvar_release(scalar @{$vars});
+
+    push @code, [ store_to_lvar => $lvar_id, $expr->line, $lvar_name ]
+        if @{$vars};
+
+    push @code,
+        [ and  => scalar(@block_code) + 2, undef, "while" ],
+        @block_code,
+        [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
 
     return @code;
 }

@@ -41,9 +41,17 @@ Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line c
 
 Variables may be HASH references, ARRAY references, or objects.
 
-=head2 Loop for array references
+=head2 Loops
 
-    : for $data ->($item) {
+There are C<for> and C<while> loops.
+
+    : # $data must be an ARRAY reference
+    : for $data -> $item {
+        [<: $item.field :>]
+    : }
+
+    : # $obj must be an iteratable object
+    : while $obj.fetch -> $item {
         [<: $item.field :>]
     : }
 
