@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+0.1007
+    - Add while statement:
+        while $obj.fetch -> $row {
+            print $row;
+        }
+
 0.1006 Sat May  1 13:36:06 2010
     - Workaround MSVC problems
 
