@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.1006 Sat May  1 13:36:06 2010
+    - Workaround MSVC problems
+
 0.1005 Sat May  1 13:21:24 2010
     - Introduce TTerse syntax, a Template-Toolkit-like template parser
     - Introduce Metakolon syntax to produce Xslate templates by itself
