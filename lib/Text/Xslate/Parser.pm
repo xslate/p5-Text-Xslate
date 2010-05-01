@@ -478,7 +478,7 @@ sub advance {
     $t = $parser->lex();
 
     if(not defined $t) {
-        return $parser->token( $symtab->{"(end)"}->clone(arity => "end") );
+        return $parser->token( $symtab->{"(end)"} );
     }
 
     print STDOUT "[@{$t}]\n" if _DUMP_TOKEN;
