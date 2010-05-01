@@ -1368,8 +1368,8 @@ CODE:
         vars_ref = ST(2);
     }
 
-    if(!(SvROK(vars_ref) && SvTYPE(SvRV(vars_ref)))) {
-        croak("Xslate: Template variables must be a HASH ref");
+    if(!(SvROK(vars_ref) && SvTYPE(SvRV(vars_ref)) == SVt_PVHV)) {
+        croak("Xslate: Template variables must be a HASH reference");
     }
     vars = (HV*)SvRV(vars_ref);
 
