@@ -98,7 +98,7 @@ has arity => (
     isa => 'Str',
 
     lazy    => 1,
-    default => 'symbol',
+    default => 'name',
 
     required => 0.
 );

@@ -12,7 +12,7 @@ use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $ID      = qr/(?: [A-Za-z_][A-Za-z0-9_]* )/xms;
+my $ID      = qr/(?: [A-Za-z_\$][A-Za-z0-9_]* )/xms;
 
 my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ...
@@ -288,9 +288,6 @@ sub lex {
         $value =~ s/_//g;
         return [ number => $value ];
     }
-    elsif(s/\A (\$ $ID)//xmso) {
-        return [ variable => $1 ];
-    }
     elsif(s/\A $COMMENT //xmso) {
         goto &lex; # tail call
     }
@@ -333,10 +330,13 @@ sub _define_basic_symbols {
     my($parser) = @_;
 
     $parser->symbol('(end)')->is_end(1); # EOF
+
     $parser->symbol('(name)');
+    my $s = $parser->symbol('(variable)');
+    $s->arity('variable');
+    $s->set_nud(\&_nud_literal);
 
     $parser->symbol('(literal)')->set_nud(\&_nud_literal);
-    $parser->symbol('(variable)')->set_nud(\&_nud_literal);
 
     $parser->symbol(';');
 
@@ -446,7 +446,7 @@ sub advance {
 
     my $t = $parser->token;
     if($id && $t->id ne $id) {
-        $parser->_error("Expected '$id', but '$t'");
+        $parser->_error("Expected '$id' but '$t'");
     }
 
     $parser->near_token($t);
@@ -467,13 +467,7 @@ sub advance {
     given($arity) {
         when("name") {
             $proto = $parser->find($value);
-        }
-        when("variable") {
-            $proto = $parser->find($value);
-
-            if($proto->id eq '(name)') { # undefined variable
-                $proto = $symtab->{'(variable)'};
-            }
+            $arity = $proto->arity;
         }
         when("operator") {
             $proto = $symtab->{$value};
@@ -566,7 +560,7 @@ sub _led_dot {
     if($t->arity ne "name") {
         if(!($t->arity eq "literal"
                 && Mouse::Util::TypeConstraints::Int($t->id))) {
-            $parser->_error("Expected a field name, but $t");
+            $parser->_error("Expected a field name but $t");
         }
     }
 
@@ -654,18 +648,25 @@ sub new_scope {
     return;
 }
 
+sub undefined_name {
+    my($parser, $name) = @_;
+    if($name =~ /\A \$/xms) {
+        return $parser->symbol_table->{'(variable)'};
+    }
+    else {
+        return $parser->symbol_table->{'(name)'};
+    }
+}
+
 sub find { # find a name from all the scopes
     my($parser, $name) = @_;
-
     foreach my $scope(reverse @{$parser->scope}){
         my $o = $scope->{$name};
         if($o) {
             return $o;
         }
     }
-
-    my $symtab = $parser->symbol_table;
-    return $symtab->{$name} || $symtab->{'(name)'};
+    return $parser->symbol_table->{$name} // $parser->undefined_name($name);
 }
 
 sub reserve { # reserve a name to the scope
@@ -897,7 +898,7 @@ sub _std_proc {
     my $proc = $symbol->clone(arity => "proc");
     my $name = $parser->token;
     if($name->arity ne "name") {
-        $parser->_error("Expected name, but " . $parser->token . " is not");
+        $parser->_error("Expected a name but " . $parser->token);
     }
 
     $parser->define_macro($name->id);
@@ -993,7 +994,7 @@ sub _get_bare_name {
             $t = $parser->advance("::");
 
             if($t->arity ne "name") {
-                $parser->_error("Expected name, but $t is not");
+                $parser->_error("Expected a name but $t");
             }
 
             push @parts, $t->id;

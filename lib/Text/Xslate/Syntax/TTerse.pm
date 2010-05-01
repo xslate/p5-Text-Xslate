@@ -4,8 +4,6 @@ use Mouse;
 
 extends qw(Text::Xslate::Parser);
 
-sub symbol_class() { __PACKAGE__ . '::Symbol' }
-
 # [% ... %]
 sub _build_line_start { undef       }
 sub _build_tag_start  { qr/\Q[%/xms }
@@ -21,7 +19,7 @@ sub define_symbols {
     $parser->symbol('IF')      ->set_std(\&_std_if);
     $parser->symbol('FOREACH') ->set_std(\&_std_foreach);
 
-    $parser->infix('.', 100, $parser->can('_led_dot'));
+    $parser->infix('.', 100, \&_led_dot);
 
     # operators
     $parser->infix('*', 80);
@@ -52,6 +50,32 @@ sub define_symbols {
 
 }
 
+sub undefined_name {
+    my($parser, $name) = @_;
+    # undefined names are always variables
+    return $parser->symbol_table->{'(variable)'};
+}
+
+sub _led_dot {
+    my($parser, $symbol, $left) = @_;
+
+    my $t = $parser->token;
+    if($t->arity ne "variable") {
+        if(!($t->arity eq "literal"
+                && Mouse::Util::TypeConstraints::Int($t->id))) {
+            $parser->_error("Expected a field name but $t");
+        }
+    }
+
+    my $dot = $symbol->clone(arity => 'binary');
+
+    $dot->first($left);
+    $dot->second($t->clone(arity => 'literal'));
+
+    $parser->advance();
+    return $dot;
+}
+
 sub _std_if {
     my($parser, $symbol) = @_;
     my $if = $symbol->clone(arity => "if");
@@ -75,11 +99,12 @@ sub _std_foreach {
 
     my $proc = $symbol->clone(arity => "for");
 
-    if($parser->token->arity ne "name") {
-        $parser->_error("Expected a variable name");
+    my $t = $parser->token;
+    if($t->arity ne "variable") {
+        $parser->_error("Expected a variable name but $t");
     }
 
-    my $var = $parser->token;
+    my $var = $t;
     $parser->advance();
     $parser->advance("IN");
 
@@ -89,21 +114,6 @@ sub _std_foreach {
 
     $parser->advance("END");
     return $proc;
-}
-
-no Mouse;
-__PACKAGE__->meta->make_immutable();
-
-package Text::Xslate::Syntax::TTerse::Symbol;
-use Mouse;
-
-extends qw(Text::Xslate::Symbol);
-
-sub _nud_default {
-    my($parser, $symbol) = @_;
-
-    # undefined symbols are considiered variables
-    return $symbol->clone(arity => 'variable');
 }
 
 no Mouse;
