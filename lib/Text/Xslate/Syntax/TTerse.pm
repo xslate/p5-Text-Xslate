@@ -145,32 +145,70 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Syntax::TTerse - An alternative Xslate parser to Template-Toolkit-like syntax
+Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
+
+=head1 SYNOPSIS
+
+    use Text::Xslate;
+    my $tx = Text::Xslate->new(syntax => 'TTerse');
 
 =head1 DESCRIPTION
 
-This parser supports a subset of the Template-Tookit 2 syntax.
+TTerse is a subset of the Template-Tookit 2 syntax,
+using C<< [% ... %] >> tags.
 
-variables:
+=head1 EXAMPLES
 
-    [% value %]
-    [% hashref.field %]
-    [% arrayref.0 %]
-    [% obj.method %]
+=head2 Variable access
 
-loops:
+    [% var %]
+    [% var.0 %]
+    [% var.field %]
+    [% var.accessor %]
+
+Variables may be HASH references, ARRAY references, or objects.
+
+=head2 Loop for array references
 
     [% FOREACH item IN arrayref %]
         * [% item %]
     [% END %]
 
-conditional statements:
+=head2 Conditional statements
 
-    [% IF variable %]
+    [% IF expression %]
         This is true
     [% ELSE %]
         Tis is false
     [% END %]
+
+    [% IF expression %]
+        Case 1
+    [% ELSIF expression %]
+        Case 2
+    [% ELSE %]
+        Case 3
+    [% END %]
+
+=head2 Expressions
+
+(TODO)
+
+=head2 Functions and filters
+
+Not supported.
+
+=head2 Template inclusion
+
+Not supported.
+
+=head2 Template cascading
+
+Not supported.
+
+=head2 Macro blocks
+
+Not supported.
 
 =head1 SEE ALSO
 
