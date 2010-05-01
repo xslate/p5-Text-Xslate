@@ -395,6 +395,8 @@ sub define_basic_operators {
     $parser->prefix('!');
     $parser->prefix('+');
     $parser->prefix('-');
+
+    return;
 }
 
 sub define_symbols {
