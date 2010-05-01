@@ -9,8 +9,8 @@ use Text::Xslate::Compiler;
 my $tx = Text::Xslate::Compiler->new();
 
 my @data = (
-    ['<: "foo" :>',    "foo"],
-    ['<: 'bar' :>',    "bar"],
+    [ '<: "foo" :>',    "foo"],
+    [q{<: 'bar' :>},    "bar"],
 
     ['<: 42 :>',       42],
     ['<: 1.23 :>',     1.23 ],
