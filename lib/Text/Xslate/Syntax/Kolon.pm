@@ -41,6 +41,11 @@ Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line c
 
 Variables may be HASH references, ARRAY references, or objects.
 
+If I<$var> is an object instance, you can call its methods.
+
+    <: $var.foo() :>
+    <: $var.foo(1, 2, 3) :>
+
 =head2 Loops
 
 There are C<for> and C<while> loops.
