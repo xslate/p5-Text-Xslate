@@ -251,7 +251,7 @@ This document describes Text::Xslate version 0.1004.
         ],
     );
 
-    # for multiple files
+    # for files
     my $tx = Text::Xslate->new();
     print $tx->render_file('hello.tx', \%vars);
 
@@ -408,12 +408,18 @@ There are syntaxes you can use:
 
 =item Kolon
 
-The default syntax, called B<Kolon>, is explaind in L<Text::Xslate::Syntax::Kolon>.
+B<Kolon> is the default syntax, using C<< <: ... :> >> tags and
+C<< : ... >> line code, which is explaind in L<Text::Xslate::Syntax::Kolon>.
+
+=item Metakolon
+
+B<Metakolon> is the same as Kolon except for using C<< [% ... %] >> tags and
+C<< % ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 
 =item TTerse
 
-A syntax that is a subset of Template-Toolkit 2, called B<TTerse>, is explaind
-in L<Text::Xslate::Syntax::TTerse>.
+B<TTerse> is a syntax that is a subset of Template-Toolkit 2, called B<TTerse>,
+which is explaind in L<Text::Xslate::Syntax::TTerse>.
 
 =back
 
@@ -429,11 +435,13 @@ to cpan-RT.  Patches are welcome :)
 
 =head1 SEE ALSO
 
-Template syntaxes:
+Xslate template syntaxes:
 
-L<Text::Xslate::Parser::Kolon>
+L<Text::Xslate::Syntax::Kolon>
 
-L<Text::Xslate::Parser::TTerse>
+L<Text::Xslate::Syntax::Metakolon>
+
+L<Text::Xslate::Syntax::TTerse>
 
 Other template modules:
 

@@ -16,7 +16,12 @@ Text::Xslate::Syntax::Kolon - The default template syntax
 =head1 SYNOPSIS
 
     use Text::Xslate;
-    my $tx = Text::Xslate->new(syntax => 'Kolon'); # This is the default
+    my $tx = Text::Xslate->new(
+        syntax => 'Kolon',                         # This is the default
+        string => 'Hello, <: $dialect :> world!',
+    );
+
+    print $tx->render({ dialect => 'Kolon' });
 
 =head1 DESCRIPTION
 
