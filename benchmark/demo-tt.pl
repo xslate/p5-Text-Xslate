@@ -1,9 +1,17 @@
 #!perl -w
+use 5.010;
 use strict;
+
 use Text::Xslate;
 use Template;
+
 use Time::HiRes qw(time);
 use FindBin qw($Bin);
+
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
+foreach my $mod(qw(Text::Xslate Template)){
+    say $mod, '/', $mod->VERSION;
+}
 
 my $tt = Template->new(
     INCLUDE_PATH => ["$Bin/template"],

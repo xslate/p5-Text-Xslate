@@ -1,12 +1,13 @@
 #!perl
 use strict;
-use Benchmark qw(:all);
-use Config; printf "Perl/%vd on %s\n", $^V, $Config{archname};
 
 use Text::Xslate;
 use MobaSiF::Template;
-use FindBin qw($Bin);
 
+use FindBin qw($Bin);
+use Benchmark qw(:all);
+
+use Config; printf "Perl/%vd on %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate MobaSiF::Template)) {
     print $mod, "/", $mod->VERSION, "\n";
 }

@@ -1,9 +1,17 @@
 #!perl -w
+use 5.010;
 use strict;
+
 use Text::Xslate;
 use Text::MicroTemplate::File;
+
 use Time::HiRes qw(time);
 use FindBin qw($Bin);
+
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
+foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
+    say $mod, '/', $mod->VERSION;
+}
 
 my $mt = Text::MicroTemplate::File->new(
     include_path => ["$Bin/template"],

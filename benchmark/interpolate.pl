@@ -6,8 +6,8 @@ use Text::Xslate;
 use Text::MicroTemplate qw(build_mt);
 
 use Benchmark qw(:all);
-use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
     say $mod, '/', $mod->VERSION;
 }

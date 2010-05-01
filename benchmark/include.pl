@@ -7,10 +7,9 @@ use Text::MicroTemplate::Extended;
 use HTML::Template::Pro;
 
 use Benchmark qw(:all);
-use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
-
 use FindBin qw($Bin);
 
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro)){
     say $mod, '/', $mod->VERSION;
 }

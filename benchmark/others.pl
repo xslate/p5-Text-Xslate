@@ -8,10 +8,9 @@ use Text::MicroTemplate;
 use Template;
 
 use Test::More;
-
 use Benchmark qw(:all);
-use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate Text::ClearSilver Template)){
     say $mod, '/', $mod->VERSION;
 }

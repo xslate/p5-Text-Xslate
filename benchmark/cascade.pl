@@ -1,13 +1,18 @@
 #!perl -w
+use 5.010;
 use strict;
+
 use Text::Xslate;
 use Text::MicroTemplate::Extended;
 
 use Benchmark qw(:all);
-use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
-
 use FindBin qw($Bin);
 use Test::More;
+
+use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
+foreach my $mod(qw(Text::Xslate Text::MicroTemplate Text::MicroTemplate::Extended)){
+    say $mod, '/', $mod->VERSION;
+}
 
 my %args = @ARGV;
 
