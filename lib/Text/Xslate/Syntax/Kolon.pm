@@ -144,7 +144,7 @@ Another derived template F<mytmpl/foo.tx>:
     : cascade mytmpl::base
     : # use default title
     : around body -> {
-        My Template Body!
+        My template body!
     : }
 
 Yet another derived template F<mytmpl/bar.tx>:
@@ -174,8 +174,8 @@ Output:
         --------------
 
         Before body!
-        My Template Body!
-        After Body!
+        My template tody!
+        After body!
 
 This is also called as B<template inheritance>.
 
