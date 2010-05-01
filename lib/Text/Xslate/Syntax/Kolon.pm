@@ -62,6 +62,8 @@ There are C<for> and C<while> loops.
 
 =head2 Conditional statements
 
+if-then-else statement:
+
     : if $var == nil {
         $var is nil.
     : }
@@ -77,6 +79,20 @@ There are C<for> and C<while> loops.
     : }
 
     : $var.value == nil ? "nil" : $var.value
+
+switch statement:
+
+    : given $var -> $it {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when $it == "bar" or $it == "baz" {
+            it is bar or baz.
+    :   }
+    :   default {
+            it is not foo nor bar.
+        }
+    :
 
 =head2 Expressions
 
