@@ -14,6 +14,8 @@ sub define_symbols {
 
     $parser->symbol('END') ->is_end(1);
     $parser->symbol('ELSE')->is_end(1);
+    $parser->symbol('ELSIF')->is_end(1);
+
     $parser->symbol('IN');
 
     $parser->symbol('IF')      ->set_std(\&_std_if);
@@ -83,15 +85,36 @@ sub _std_if {
     $if->first(  $parser->expression(0) );
     $if->second( $parser->statements() );
 
-    if($parser->token->id eq "ELSE") {
-        $parser->reserve($parser->token);
+    my $t = $parser->token;
+
+    my $top_if = $if;
+
+    while($t->id eq "ELSIF") {
+        $parser->reserve($t);
+        $parser->advance("ELSIF");
+
+        my $elsif = $t->clone(arity => "if");
+        $elsif->first(  $parser->expression(0) );
+        $elsif->second( $parser->statements() );
+
+        $if->third([$elsif]);
+
+        $if = $elsif;
+
+        $t = $parser->token;
+    }
+
+    if($t->id eq "ELSE") {
+        $parser->reserve($t);
         $parser->advance("ELSE");
+
         $if->third( $parser->token->id eq "IF"
             ? $parser->statement()
             : $parser->statements());
     }
+
     $parser->advance("END");
-    return $if;
+    return $top_if;
 }
 
 sub _std_foreach {

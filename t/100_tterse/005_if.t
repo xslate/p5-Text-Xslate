@@ -40,6 +40,42 @@ T
     bar
 X
 
+    [<<'T', <<'X', "if-elsif-end (1)"],
+[% IF lang == "Xslate" -%]
+    foo
+[% ELSIF value == 10 -%]
+    bar
+[% ELSE -%]
+    baz
+[% END -%]
+T
+    foo
+X
+
+    [<<'T', <<'X', "if-elsif-end (2)"],
+[% IF lang != "Xslate" -%]
+    foo
+[% ELSIF value == 10 -%]
+    bar
+[% ELSE -%]
+    baz
+[% END -%]
+T
+    bar
+X
+
+    [<<'T', <<'X', "if-elsif-end (false)"],
+[% IF lang != "Xslate" -%]
+    foo
+[% ELSIF value != 10 -%]
+    bar
+[% ELSE -%]
+    baz
+[% END -%]
+T
+    baz
+X
+
 );
 
 foreach my $d(@data) {
