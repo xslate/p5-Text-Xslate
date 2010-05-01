@@ -378,6 +378,7 @@ sub define_basic_operators {
     $parser->infixr('||', 30);
     $parser->infixr('//', 30);
 
+    $parser->symbol(':');
     $parser->infix('?', 20, \&_led_ternary);
 
     $parser->assignment('=');
@@ -400,7 +401,6 @@ sub define_symbols {
     my($parser) = @_;
 
     # separators
-    $parser->symbol(':');
     $parser->symbol(',');
     $parser->symbol(')');
     $parser->symbol(']');
