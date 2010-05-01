@@ -4,6 +4,8 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use Text::Xslate::Compiler;
+use Text::Xslate::Parser;
 
 eval {
     my $tx = Text::Xslate->new(string => <<'T');
@@ -64,23 +66,26 @@ T
 };
 like $@, qr/Parser/;
 
+foreach my $assign(qw(= += -= *= /= %= ~= &&= ||= //=)) {
+    eval {
+        my $tx = Text::Xslate->new(string => <<"T");
+        Hello, <: \$foo $assign 42 :> world!
+T
+    };
+    like $@, qr/Parser/, "assignment ($assign)";
+    like $@, qr/\Q$assign/;
+    like $@, qr/\$foo/;
+}
+
 eval {
     my $tx = Text::Xslate->new(string => <<'T');
-    Hello, <: $foo = 42 :> world!
+    Hello, <: foo() :> world!
 T
 
     $tx->render({});
 };
 like $@, qr/Parser/;
-
-eval {
-    my $tx = Text::Xslate->new(string => <<'T');
-    Hello, <: $foo = 42 :> world!
-T
-
-    $tx->render({});
-};
-like $@, qr/Parser/;
+like $@, qr/\b foo \b/xms;
 
 # success
 my $out = eval {

@@ -19,11 +19,17 @@ my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ..
     == != <=> <= >=
     << >>
+    += -= *= /= %= ~=
+    &&= ||= //=
+    ~~ =~
+
     && || //
     -> =>
     ::
 
+
     < >
+    =
     + - * / %
     & | ^ 
     !
@@ -391,6 +397,17 @@ sub define_symbols {
 
     $parser->infix('?', 20, \&_led_ternary);
 
+    $parser->assignment('=');
+    $parser->assignment('+=');
+    $parser->assignment('-=');
+    $parser->assignment('*=');
+    $parser->assignment('/=');
+    $parser->assignment('%=');
+    $parser->assignment('~=');
+    $parser->assignment('&&=');
+    $parser->assignment('||=');
+    $parser->assignment('//=');
+
     $parser->prefix('!');
     $parser->prefix('+');
     $parser->prefix('-');
@@ -538,6 +555,20 @@ sub infixr {
     my($parser, $id, $bp, $led) = @_;
 
     $parser->symbol($id, $bp)->set_led($led || \&_led_infixr);
+    return;
+}
+
+sub _led_assignment {
+    my($parser, $symbol, $left) = @_;
+
+    $parser->near_token($left);
+    $parser->_error("Assignment ($symbol) is forbidden");
+}
+
+sub assignment {
+    my($parser, $id) = @_;
+
+    $parser->symbol($id, 10)->set_led(\&_led_assignment);
     return;
 }
 
