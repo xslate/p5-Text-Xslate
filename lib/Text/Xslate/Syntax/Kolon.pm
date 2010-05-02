@@ -80,7 +80,7 @@ if-then-else statement:
 
     : $var.value == nil ? "nil" : $var.value
 
-switch statement:
+switch statement (B<not yet implemented>):
 
     : given $var -> $it {
     :   when "foo" {
