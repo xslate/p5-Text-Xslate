@@ -1,5 +1,5 @@
 # auto-generated shipit config file.
-steps = FindVersion, ChangeAllVersions, CheckVersionsMatch, CheckChangeLog, DistTest, Commit, Tag, MakeDist, UploadCPAN
+steps = FindVersion, ChangeAllVersions, CheckChangeLog, DistTest, Commit, Tag, MakeDist, UploadCPAN
 
 git.tagpattern = %v
 git.push_to = origin
