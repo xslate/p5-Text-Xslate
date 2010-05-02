@@ -101,12 +101,16 @@ Relational operators (C<< == != < <= > >= >>):
     : $var == 10 ? "10"     : "not 10"
     : $var != 10 ? "not 10" : "10"
 
+Note that C<==> and C<!=> are similar to Perl's C<eq> and C<ne> except that
+C<$var == nil> is true B<iff> I<$var> is uninitialized, while other
+relational operators are numerical operators.
+
 Arithmetic operators (C<< + - * / % >>):
 
     : $var * 10_000
     : ($var % 10) == 0
 
-Logical operators (C<< || && // >>)
+Logical operators (C<< ! && || // not and or>>)
 
     : $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
     : $var // "foo" # as a default value
@@ -115,9 +119,20 @@ String operators (C<< ~ >>)
 
     : "[" ~ $var ~ "]" # concatination
 
-Operator precedence:
+Operator precedence is the same as Perl's:
 
-    (TODO)
+    . () []
+    * / %
+    + - ~
+    < <= > >=
+    == !=
+    |
+    &&
+    || //
+    ?:
+    not
+    and
+    or
 
 =head2 Functions and filters
 
