@@ -561,6 +561,12 @@ Benchmarks:
 
 L<Template::Benchmark>
 
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to lestrrat for the suggestion to the interface of C<render()>.
+
+Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug-finding.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
