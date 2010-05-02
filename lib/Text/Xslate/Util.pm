@@ -39,7 +39,7 @@ sub literal_to_value {
 }
 
 sub find_file {
-    my($file, $path) = @_;
+    my($file, $path, $cache_dir) = @_;
 
     my $fullpath;
     my $orig_mtime;
@@ -49,6 +49,9 @@ sub find_file {
     foreach my $p(@{$path}) {
         $fullpath = "$p/${file}";
         $orig_mtime = (stat($fullpath))[9] // next; # does not exist
+
+        # find the cache
+        # TODO
 
         if(-f "${fullpath}c") {
             $cache_mtime = (stat(_))[9]; # compiled

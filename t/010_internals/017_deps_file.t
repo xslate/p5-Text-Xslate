@@ -24,7 +24,7 @@ note 'for files';
 
 utime $^T - 120, $^T - 120, $base, $derived;
 
-my $tx = Text::Xslate->new(file => 'myapp/derived.tx', path => [path]);
+my $tx = Text::Xslate->new(path => [path]);
 
 #use Data::Dumper; print Dumper $tx;
 

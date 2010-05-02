@@ -22,7 +22,6 @@ is $tx->render({ value => "Xslate" }),
 
 for(1 .. 2) {
     $tx = Text::Xslate->new(
-        file => "hello_utf8.tx",
         path => [path],
     );
 
@@ -32,7 +31,6 @@ for(1 .. 2) {
 
 for(1 .. 2) {
     $tx = Text::Xslate->new(
-        file        => "hello_utf8.tx",
         path        => [path],
         input_layer => ":encoding(utf-8)",
     );

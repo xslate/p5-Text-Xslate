@@ -13,7 +13,6 @@ unlink @caches; # ensure not to exist
 
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
-        file => [qw(hello.tx for.tx)],
         path => [path],
     );
 

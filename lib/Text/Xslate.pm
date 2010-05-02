@@ -41,9 +41,8 @@ sub new {
 
     my $self = bless \%args, $class;
 
-    if(my $file = $args{file}) {
-        $self->load_file($_)
-            for ref($file) ? @{$file} : $file;
+    if(exists $args{file}) {
+        Carp::carp('"file" option makes no sense. Use render($file, \%vars) directly');
     }
 
     $self->_load_input();
@@ -253,7 +252,7 @@ This document describes Text::Xslate version 0.1006.
 
     # for files
     my $tx = Text::Xslate->new();
-    print $tx->render_file('hello.tx', \%vars);
+    print $tx->render('hello.tx', \%vars);
 
     # for strings
     my $template = q{
@@ -334,11 +333,6 @@ Possible options ares:
 =item C<< string => $template_string >>
 
 Specifies the template string, which is called C<< <input> >> internally.
-
-=item C<< file => $template_file | \@template_files >>
-
-Specifies file(s) to be preloaded. Note that C<render()> loads files
-automatically, so this option is not necessarily required.
 
 =item C<< path => \@path // ["."] >>
 
