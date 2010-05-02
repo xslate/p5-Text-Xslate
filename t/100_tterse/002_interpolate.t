@@ -9,7 +9,10 @@ my @data = (
     ['Hello, [% lang %] world!' => 'Hello, Xslate world!'],
     ['Hello, [% foo %] world!'  => 'Hello, &lt;bar&gt; world!'],
     ['Hello, [% lang %] [% foo %] world!'
-                                 => 'Hello, Xslate &lt;bar&gt; world!']
+                                 => 'Hello, Xslate &lt;bar&gt; world!'],
+
+    ['Hello, [% $lang %] world!' => 'Hello, Xslate world!'],
+
 );
 
 foreach my $pair(@data) {

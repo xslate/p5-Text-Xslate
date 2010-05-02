@@ -23,3 +23,4 @@ cover_db*
 *.stackdump
 *.c
 *.txc
+*.ttc

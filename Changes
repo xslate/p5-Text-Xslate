@@ -15,6 +15,7 @@ Revision history for Perl extension Text::Xslate
             print $row;
         }
     - New "cache_dir" option to new()
+    - INCLUDE command in TTerse
 
 0.1006 Sat May  1 13:36:06 2010
     - Workaround MSVC problems

@@ -21,6 +21,7 @@ sub define_symbols {
     $parser->symbol('IF')      ->set_std(\&_std_if);
     $parser->symbol('FOREACH') ->set_std(\&_std_foreach);
 
+    $parser->symbol('INCLUDE') ->set_std(\&_std_command);
 
     # operators
     $parser->infix('.', 100, \&_led_dot);
@@ -115,6 +116,14 @@ sub _std_foreach {
     return $proc;
 }
 
+sub _std_command {
+    my($parser, $symbol) = @_;
+    my $command = $parser->SUPER::_std_command($symbol);
+    $command->id( lc( $command->id ) );
+    return $command;
+}
+
+
 no Mouse;
 __PACKAGE__->meta->make_immutable();
 __END__
@@ -142,7 +151,13 @@ using C<< [% ... %] >> tags.
 
 =head2 Variable access
 
-    [% var %]
+Scalar access:
+
+    [%  var %]
+    [% $var %]
+
+Field acces:
+
     [% var.0 %]
     [% var.field %]
     [% var.accessor %]
@@ -181,7 +196,8 @@ Not supported.
 
 =head2 Template inclusion
 
-Not supported.
+    [% INCLUDE "file.tt" %]
+    [% INCLUDE $var %]
 
 =head2 Template cascading
 
