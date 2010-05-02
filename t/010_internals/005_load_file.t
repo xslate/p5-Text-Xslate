@@ -12,7 +12,7 @@ use t::lib::Util;
 my $tx = Text::Xslate->new(path => [path], cache_dir => '.');
 
 unlink './hello.txc';
-END{ './hello.txc' }
+END{ unlink './hello.txc' }
 
 eval {
     $tx->load_file("hello.tx");
