@@ -1,12 +1,20 @@
 Revision history for Perl extension Text::Xslate
 
 0.1007
-    - Add while statement:
-        while $obj.fetch -> $row {
+    [BUG FIXES]
+    - Nested function call could cause problems.
+    - Blessed references ware not printable.
+    - The "file" option to new() was confusing. Now it has been removed.
+
+    [NEW FEATURE]
+    - New operators: "and", "or", "not", "min", "max"
+    - New method call syntax:
+        $obj.method(...)
+    - New while statement:
+        while $obj.fetch() -> $row {
             print $row;
         }
-    - Add method call syntax:
-        $obj.method(...)
+    - New "cache_dir" option to new()
 
 0.1006 Sat May  1 13:36:06 2010
     - Workaround MSVC problems
