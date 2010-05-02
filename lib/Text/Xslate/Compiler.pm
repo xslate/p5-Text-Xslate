@@ -301,6 +301,9 @@ sub _generate_command {
                 [ $proc => undef, $node->line ];
         }
     }
+    if(!@code) {
+        $self->_error($node, "$node requires at least one argument");
+    }
     return @code;
 }
 sub _generate_bare_command {
