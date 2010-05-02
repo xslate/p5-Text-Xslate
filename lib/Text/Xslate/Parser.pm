@@ -379,8 +379,11 @@ sub define_basic_operators {
     $parser->infix('|',  140); # filter
 
     $parser->infixr('&&', 130);
+
     $parser->infixr('||', 120);
     $parser->infixr('//', 120);
+    $parser->infix('min', 120);
+    $parser->infix('max', 120);
 
     $parser->symbol(':');
     $parser->infix('?', 110, \&_led_ternary);

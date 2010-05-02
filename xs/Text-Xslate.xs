@@ -319,13 +319,16 @@ TXC(noop) {
     TX_st->pc++;
 }
 
-TXC(move_sa_to_sb) {
+TXC(move_to_sb) {
     TX_st_sb = TX_st_sa;
-
+    TX_st->pc++;
+}
+TXC(move_from_sb) {
+    TX_st_sa = TX_st_sb;
     TX_st->pc++;
 }
 
-TXC_w_var(store_to_lvar) {
+TXC_w_var(save_to_lvar) {
     SV* const sv = TX_lvar(SvIVX(TX_op_arg));
     sv_setsv(sv, TX_st_sa);
     TX_st_sa = sv;

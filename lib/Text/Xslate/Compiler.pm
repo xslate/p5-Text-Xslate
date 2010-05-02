@@ -33,6 +33,9 @@ my %bin = (
 
     '|'  => 'filt',
 
+    'min' => 'lt', # a < b ? a : b
+    'max' => 'gt', # a > b ? a : b
+
     '['  => 'fetch_field',
 );
 my %logical_bin = (
@@ -390,7 +393,7 @@ sub _generate_while {
     my @block_code = $self->_compile_ast($block);
     $self->_lvar_release(scalar @{$vars});
 
-    push @code, [ store_to_lvar => $lvar_id, $expr->line, $lvar_name ]
+    push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ]
         if @{$vars};
 
     push @code,
@@ -535,19 +538,27 @@ sub _generate_binary {
                 [ fetch_field_s => $node->second->id ];
         }
         when(%bin) {
-            my $lvar = $self->lvar_id;
-            my @code = (
-                $self->_generate_expr($node->first),
-                [ store_to_lvar => $lvar ],
-            );
-
+            my @code = $self->_generate_expr($node->first);
+            push @code, [ save_to_lvar => $self->lvar_id ];
             $self->_lvar_use(1);
+
             push @code, $self->_generate_expr($node->second);
             $self->_lvar_release(1);
 
             push @code,
-                [ load_lvar_to_sb => $lvar ],
+                [ load_lvar_to_sb => $self->lvar_id ],
                 [ $bin{$_}   => undef ];
+
+            if($_ ~~ [qw(min max)]) {
+                # swap operands before comparison
+                splice @code, -1, 0,
+                    [save_to_lvar => $self->lvar_id ]; # save lhs
+                push @code,
+                    [ or              => +2 , undef, undef, $_ ],
+                    [ load_lvar_to_sb => $self->lvar_id ], # on false
+                    # fall through
+                    [ move_from_sb    => () ],             # on true
+            }
             return @code;
         }
         when(%logical_bin) {
@@ -694,22 +705,22 @@ sub _optimize {
                     $j++;
                 }
             }
-            when('store_to_lvar') {
+            when('save_to_lvar') {
                 # use registers, instead of local variables
                 #
                 # given:
-                #   store_to_lvar $n
-                #   blah blah blah
+                #   save_to_lvar $n
+                #   <single-op>
                 #   load_lvar_to_sb $n
                 # convert into:
-                #   move_sa_to_sb
-                #   blah blah blah
+                #   move_to_sb
+                #   <single-op>
                 my $it = $c->[$i];
                 my $nn = $c->[$i+2]; # next next
                 if(defined($nn)
                     && $nn->[0] eq 'load_lvar_to_sb'
                     && $nn->[1] == $it->[1]) {
-                    @{$it} = ('move_sa_to_sb', undef, undef, "ex-$it->[0]");
+                    @{$it} = ('move_to_sb', undef, undef, "ex-$it->[0]");
 
                     _noop($nn);
                 }
