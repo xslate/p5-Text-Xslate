@@ -44,9 +44,10 @@ my %logical_bin = (
 );
 
 my %unary = (
-    '!' => 'not',
-    '+' => 'plus',
-    '-' => 'minus',
+    '!'   => 'not',
+    'not' => 'not',
+    '+'   => 'plus',
+    '-'   => 'minus',
 );
 
 has lvar_id => ( # local varialbe id
