@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1007
+0.1007 Sun May  2 22:26:09 2010
     [BUG FIXES]
     - Nested function call could cause problems.
     - Blessed references ware not printable.
