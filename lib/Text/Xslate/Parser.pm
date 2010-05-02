@@ -356,45 +356,45 @@ sub _define_basic_symbols {
 sub define_basic_operators {
     my($parser) = @_;
 
-    $parser->infix('*', 80);
-    $parser->infix('/', 80);
-    $parser->infix('%', 80);
+    $parser->prefix('!', 200);
+    $parser->prefix('+', 200);
+    $parser->prefix('-', 200);
 
-    $parser->infix('+', 70);
-    $parser->infix('-', 70);
-    $parser->infix('~', 70); # connect
+    $parser->infix('*', 180);
+    $parser->infix('/', 180);
+    $parser->infix('%', 180);
 
-    $parser->infix('<',  60);
-    $parser->infix('<=', 60);
-    $parser->infix('>',  60);
-    $parser->infix('>=', 60);
+    $parser->infix('+', 170);
+    $parser->infix('-', 170);
+    $parser->infix('~', 170); # connect
 
-    $parser->infix('==', 50);
-    $parser->infix('!=', 50);
+    $parser->infix('<',  160);
+    $parser->infix('<=', 160);
+    $parser->infix('>',  160);
+    $parser->infix('>=', 160);
 
-    $parser->infix('|',  40); # filter
+    $parser->infix('==', 150);
+    $parser->infix('!=', 150);
 
-    $parser->infixr('&&', 35);
-    $parser->infixr('||', 30);
-    $parser->infixr('//', 30);
+    $parser->infix('|',  140); # filter
+
+    $parser->infixr('&&', 130);
+    $parser->infixr('||', 120);
+    $parser->infixr('//', 120);
 
     $parser->symbol(':');
-    $parser->infix('?', 20, \&_led_ternary);
+    $parser->infix('?', 110, \&_led_ternary);
 
-    $parser->assignment('=');
-    $parser->assignment('+=');
-    $parser->assignment('-=');
-    $parser->assignment('*=');
-    $parser->assignment('/=');
-    $parser->assignment('%=');
-    $parser->assignment('~=');
-    $parser->assignment('&&=');
-    $parser->assignment('||=');
-    $parser->assignment('//=');
-
-    $parser->prefix('!');
-    $parser->prefix('+');
-    $parser->prefix('-');
+    $parser->assignment('=',   100);
+    $parser->assignment('+=',  100);
+    $parser->assignment('-=',  100);
+    $parser->assignment('*=',  100);
+    $parser->assignment('/=',  100);
+    $parser->assignment('%=',  100);
+    $parser->assignment('~=',  100);
+    $parser->assignment('&&=', 100);
+    $parser->assignment('||=', 100);
+    $parser->assignment('//=', 100);
 
     return;
 }
@@ -415,11 +415,11 @@ sub define_symbols {
     # operators
     $parser->define_basic_operators();
 
-    $parser->infix('.', 100, \&_led_dot);
-    $parser->infix('[', 100, \&_led_fetch);
-    $parser->infix('(', 100, \&_led_call);
+    $parser->infix('.', 256, \&_led_dot);
+    $parser->infix('[', 256, \&_led_fetch);
+    $parser->infix('(', 256, \&_led_call);
 
-    $parser->prefix('(', \&_nud_paren);
+    $parser->prefix('(', 200, \&_nud_paren);
 
     # constants
     $parser->define_constant('nil', undef);
@@ -589,9 +589,9 @@ sub _led_assignment {
 }
 
 sub assignment {
-    my($parser, $id) = @_;
+    my($parser, $id, $bp) = @_;
 
-    $parser->symbol($id, 10)->set_led(\&_led_assignment);
+    $parser->symbol($id, $bp)->set_led(\&_led_assignment);
     return;
 }
 
@@ -663,14 +663,16 @@ sub _nud_prefix {
     my($parser, $symbol) = @_;
     my $un = $symbol->clone(arity => 'unary');
     $parser->reserve($un);
-    $un->first($parser->expression(90));
+    $un->first($parser->expression($symbol->ubp));
     return $un;
 }
 
 sub prefix {
-    my($parser, $id, $nud) = @_;
+    my($parser, $id, $bp, $nud) = @_;
 
-    $parser->symbol($id)->set_nud($nud || \&_nud_prefix);
+    my $symbol = $parser->symbol($id);
+    $symbol->ubp($bp);
+    $symbol->set_nud($nud || \&_nud_prefix);
     return;
 }
 
