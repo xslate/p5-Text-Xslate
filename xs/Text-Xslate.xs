@@ -307,10 +307,8 @@ static bool
 tx_str_is_escaped(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         dMY_CXT;
-        if(!SvOK(SvRV(sv))) {
-            croak("Cannot use escaped string: not a reference to a string");
-        }
-        return SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
+        return SvOK(SvRV(sv))
+            && SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
     }
     return FALSE;
 }

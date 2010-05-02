@@ -28,11 +28,14 @@ my @data = (
     ['<:= $ary[0] :>', 10],
     ['<:= $ary[1] :>', 20],
     ['<:= $ary[2] :>', 30],
+
+    ['<: $a :>', 'as_string'],
 );
 
 {
     package A;
     use Mouse;
+    use overload '""' => sub{ "as_string" };
 
     has foo => (
         is => 'rw',
