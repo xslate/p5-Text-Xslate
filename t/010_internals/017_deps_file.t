@@ -24,7 +24,7 @@ note 'for files';
 
 utime $^T - 120, $^T - 120, $base, $derived;
 
-my $tx = Text::Xslate->new(path => [path]);
+my $tx = Text::Xslate->new(path => [path], cache_dir => path);
 
 #use Data::Dumper; print Dumper $tx;
 

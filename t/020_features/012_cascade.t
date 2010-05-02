@@ -136,7 +136,7 @@ HEAD
 FOOT
 T
 
-$tx = Text::Xslate->new(path => [path]);
+$tx = Text::Xslate->new(path => [path], cache => 0);
 is $tx->render('myapp/derived.tx', {lang => 'Xslate'}), <<'T', "file again ($_)" for 1 .. 2;
 HEAD
     D-BEFORE

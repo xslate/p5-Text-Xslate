@@ -140,6 +140,7 @@ like $@, qr/Redefinition of block/, 'block redefinition';
 
 eval {
     $tx = Text::Xslate->new(
+        cache  => 0,
         path   => [path],
         string => <<'T',
     : cascade myapp::base

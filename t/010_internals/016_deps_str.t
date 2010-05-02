@@ -22,7 +22,7 @@ note 'for strings';
 
 utime $^T-120, $^T-120, $base;
 
-my $tx = Text::Xslate->new(string => <<'T', path => [path]);
+my $tx = Text::Xslate->new(string => <<'T', path => [path], cache_dir => path);
 : cascade myapp::base
 T
 

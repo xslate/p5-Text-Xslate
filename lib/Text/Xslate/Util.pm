@@ -7,7 +7,7 @@ use Scalar::Util ();
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
-    literal_to_value find_file
+    literal_to_value
     $STRING $NUMBER $DEBUG
 );
 
@@ -36,49 +36,6 @@ sub literal_to_value {
     }
 
     return $value;
-}
-
-sub find_file {
-    my($file, $path, $cache_dir) = @_;
-
-    my $fullpath;
-    my $orig_mtime;
-    my $cache_mtime;
-    my $is_compiled;
-
-    foreach my $p(@{$path}) {
-        $fullpath = "$p/${file}";
-        $orig_mtime = (stat($fullpath))[9] // next; # does not exist
-
-        # find the cache
-        # TODO
-
-        if(-f "${fullpath}c") {
-            $cache_mtime = (stat(_))[9]; # compiled
-            if($cache_mtime >= $orig_mtime) {
-                $is_compiled   = 1;
-            }
-            else {
-                $is_compiled = 0;
-            }
-            last;
-        }
-        else {
-            $is_compiled = 0;
-        }
-    }
-
-    if(defined $orig_mtime) {
-        return {
-            fullpath    => $fullpath,
-            orig_mtime  => $orig_mtime,
-            cache_mtime => $cache_mtime,
-            is_compiled => $is_compiled,
-        };
-    }
-    else {
-        return undef;
-    }
 }
 
 1;

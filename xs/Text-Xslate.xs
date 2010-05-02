@@ -48,7 +48,8 @@ enum txtmplo_ix {
     TXo_ERROR_HANDLER,
     TXo_MTIME,
 
-    TXo_FULLPATH,
+    TXo_CACHEPATH,
+    TXo_FULLPATH, /* TXo_FULLPATH must be the last one */
     /* dependencies here */
     TXo_least_size
 };
@@ -58,7 +59,7 @@ enum txframeo_ix {
     TXframe_OUTPUT,
     TXframe_RETADDR,
 
-    TXframe_START_LVAR,
+    TXframe_START_LVAR, /* TXframe_START_LVAR must be the last one */
     /* local variables here */
     TXframe_least_size = TXframe_START_LVAR
 };
@@ -1021,15 +1022,18 @@ static MGVTBL xslate_vtbl = { /* for identity */
 
 
 static void
-tx_invoke_load_file(pTHX_ SV* const self, SV* const name) {
+tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
-    EXTEND(SP, 2);
+    EXTEND(SP, 3);
     PUSHs(self);
     PUSHs(name);
+    if(mtime) {
+        PUSHs(mtime);
+    }
     PUTBACK;
 
     call_method("load_file", G_EVAL | G_VOID);
@@ -1054,13 +1058,13 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
         //PerlIO_stdoutf("check deps: %"SVf" ... ", path); // */
         if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
                || f.st_mtime > cache_mtime) {
-            SV* const mainpath = AvARRAY(tmpl)[TXo_FULLPATH];
-            /* compiled files are no longer fresh, so it must be discarded */
+            SV* const main_cache = AvARRAY(tmpl)[TXo_CACHEPATH];
+            /* compiled caches are no longer fresh, so it must be discarded */
 
-            if(i != TXo_FULLPATH && SvOK(mainpath)) {
-                PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", mainpath));
+            if(i != TXo_FULLPATH && SvOK(main_cache)) {
+                PerlLIO_unlink(SvPV_nolen_const(main_cache));
             }
-            PerlLIO_unlink(Perl_form(aTHX_ "%"SVf"c", deppath));
+            //PerlLIO_unlink(SvPV_nolen_const(AvARRAY(tmpl);
 
             //PerlIO_stdoutf("%"SVf": too old (%d > %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
             return FALSE;
@@ -1119,7 +1123,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     /* $tmpl = $ttable->{$name} */
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        tx_invoke_load_file(aTHX_ self, name);
+        tx_invoke_load_file(aTHX_ self, name, NULL);
         if(sv_true(ERRSV)){
             why = SvPVx_nolen_const(ERRSV);
             goto err;
@@ -1158,7 +1162,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
         return (tx_state_t*)mg->mg_ptr;
     }
     else {
-        tx_invoke_load_file(aTHX_ self, name);
+        tx_invoke_load_file(aTHX_ self, name, cache_mtime);
         retried++;
         goto retry;
     }
@@ -1195,10 +1199,8 @@ CODE:
 
 #endif
 
-#define undef &PL_sv_undef
-
 void
-_initialize(HV* self, AV* proto, SV* name = undef, SV* fullpath = undef, SV* mtime = undef)
+_initialize(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
     MAGIC* mg;
@@ -1220,8 +1222,9 @@ CODE:
     }
 
     if(!SvOK(name)) { /* for strings */
-        name  = newSVpvs_flags("<input>", SVs_TEMP);
-        mtime = sv_2mortal(newSViv( time(NULL) ));
+        name     = newSVpvs_flags("<input>", SVs_TEMP);
+        fullpath = cachepath = &PL_sv_undef;
+        mtime    = sv_2mortal(newSViv( time(NULL) ));
     }
 
     tobj = hv_iterval((HV*)SvRV(*svp),
@@ -1254,9 +1257,10 @@ CODE:
         sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
     }
 
-    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE), name);
-    sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE), mtime );
-    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE), fullpath);
+    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE),  name);
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE),  mtime );
+    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE), cachepath);
+    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE),  fullpath);
 
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);

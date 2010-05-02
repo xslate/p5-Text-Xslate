@@ -7,13 +7,15 @@ use FindBin qw($Bin);
 use t::lib::Util;
 use File::Copy qw(copy move);
 
+my @files  = (path."/hello.tx",  path."/for.tx");
 my @caches = (path."/hello.txc", path."/for.txc");
 
 unlink @caches; # ensure not to exist
 
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
-        path => [path],
+        path      => [path],
+        cache_dir => path,
     );
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
@@ -31,7 +33,7 @@ for(1 .. 10) {
 }
 
 for(1 .. 10) {
-    my $tx = Text::Xslate->new(path => [path]);
+    my $tx = Text::Xslate->new(path => [path], cache_dir => path);
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
         "Hello, Xslate world!\n", "file (on demand)";
@@ -40,14 +42,14 @@ for(1 .. 10) {
         "[Foo]\n[Bar]\n", "file (on demand)";
 
     if(($_ % 3) == 0) {
-        my $t = time + $_;
-        utime $t, $t, @caches;
+        my $t = time() + $_*10;
+        utime $t, $t, @files;
     }
 }
 
 unlink @caches;
 
-my $tx = Text::Xslate->new(path => [path]);
+my $tx = Text::Xslate->new(path => [path], cache_dir => path);
 
 is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
 
@@ -68,7 +70,7 @@ unlink @caches;
 
 note 'cache => 2 (release mode)';
 
-$tx = Text::Xslate->new(cache => 2, path => [path]);
+$tx = Text::Xslate->new(cache => 2, path => [path], cache_dir => path);
 
 utime $^T, $^T, $x;
 

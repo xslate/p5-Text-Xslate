@@ -5,7 +5,7 @@ use Mouse;
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
-    literal_to_value find_file
+    literal_to_value
 );
 
 use Scalar::Util ();
@@ -328,7 +328,7 @@ sub _generate_bare_command {
         my $c = $self->macro_table->{'@main'} = $engine->load_file($file);
         $self->cascading($file);
 
-        unshift @{$c}, [depend => find_file($file, $engine->{path})->{fullpath}];
+        unshift @{$c}, [depend => $engine->find_file($file)->{fullpath}];
     }
     else {
         $self->_error($node, "Unknown command $node");
