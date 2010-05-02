@@ -37,7 +37,7 @@ T
 move $base => "$base.save";
 copy "$base.mod" => $base;
 
-utime $^T+60, $^T+60, $base, $base . "c";
+utime $^T+60, $^T+60, $base;
 
 is $tx->render({lang => 'Foo'}), <<'T';
 HEAD
@@ -46,7 +46,7 @@ FOOT
 T
 
 move "$base.save" => $base;
-utime $^T+120, $^T+120, $base, $base . "c";
+utime $^T+120, $^T+120, $base;
 
 is $tx->render({lang => 'Perl'}), <<'T';
 HEAD
