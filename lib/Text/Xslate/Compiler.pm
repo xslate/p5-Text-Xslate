@@ -579,13 +579,14 @@ sub _generate_ternary { # the conditional operator
 
 sub _generate_methodcall {
     my($self, $node) = @_;
-    my $args = $node->third;
+    my $args   = $node->third;
+    my $method = $node->second->id;
     return (
-        [ pushmark => () ],
+        [ pushmark => undef, undef, $method ],
         $self->_generate_expr($node->first),
         [ 'push' ],
         (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
-        [ methodcall_s => $node->second->id ],
+        [ methodcall_s => $method ],
     );
 }
 
@@ -595,7 +596,7 @@ sub _generate_call {
     my $args     = $node->second;
 
     my @code = (
-        [ pushmark => () ],
+        [ pushmark => undef, undef, $callable->id ],
         (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
         $self->_generate_expr($callable),
     );

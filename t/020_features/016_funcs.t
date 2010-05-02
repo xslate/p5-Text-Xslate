@@ -6,52 +6,64 @@ use Text::Xslate;
 
 use FindBin qw($Bin);
 
-my $tx = Text::Xslate->new(
-    string => <<'TX',
-Hello, <:= $value | uc :> world!
-TX
-    function => {
-        uc => sub{ uc $_[0] },
-    },
+my %funcs = (
+    uc      => sub{ uc $_[0] },
+    sprintf => sub{ sprintf shift, @_ },
+    pi      => sub{ 3.14 },
 );
 
-is $tx->render({ value => 'Xslate' }), "Hello, XSLATE world!\n";
-is $tx->render({ value => 'Perl' }),   "Hello, PERL world!\n";
-
-$tx = Text::Xslate->new(
-    string => <<'TX',
-Hello, <:= uc($value) :> world!
-TX
-    function => {
-        uc => sub{ uc $_[0] },
-    },
+my @set = (
+    [
+        q{Hello, <:= $value | uc :> world!},
+        { value => 'Xslate' },
+        "Hello, XSLATE world!",
+    ],
+    [
+        q{Hello, <:= uc($value) :> world!},
+        { value => 'Xslate' },
+        "Hello, XSLATE world!",
+    ],
+    [
+        q{Hello, <:= uc($value) :> world!},
+        { value => '<Xslate>' },
+        "Hello, &lt;XSLATE&gt; world!",
+    ],
+    [
+        q{Hello, <:= sprintf('<%s>', $value) :> world!},
+        { value => 'Xslate' },
+        "Hello, &lt;Xslate&gt; world!",
+    ],
+    [
+        q{Hello, <:= sprintf('<%s>', $value | uc) :> world!},
+        { value => 'Xslate' },
+        "Hello, &lt;XSLATE&gt; world!",
+    ],
+    [
+        q{Hello, <:= sprintf('<%s>', uc($value)) :> world!},
+        { value => 'Xslate' },
+        "Hello, &lt;XSLATE&gt; world!",
+    ],
+    [
+        q{Hello, <:= sprintf('%s and %s', $a, $b) :> world!},
+        { a => 'Xslate', b => 'Perl' },
+        "Hello, Xslate and Perl world!",
+    ],
+    [
+        q{Hello, <:= sprintf('%s and %s', uc($a), uc($b)) :> world!},
+        { a => 'Xslate', b => 'Perl' },
+        "Hello, XSLATE and PERL world!",
+    ],
+    [
+        q{Hello, <:= pi() :> world!},
+        { value => 'Xslate' },
+        "Hello, 3.14 world!",
+    ],
 );
 
-is $tx->render({ value => 'Xslate' }), "Hello, XSLATE world!\n";
-is $tx->render({ value => 'Perl' }),   "Hello, PERL world!\n";
-
-$tx = Text::Xslate->new(
-    string => <<'TX',
-Hello, <:= ucfirst(lc($value)) :> world!
-TX
-    function => {
-        lc      => sub{ lc $_[0] },
-        ucfirst => sub{ ucfirst $_[0] },
-    },
-);
-
-is $tx->render({ value => 'XSLATE' }), "Hello, Xslate world!\n";
-is $tx->render({ value => 'PERL' }),   "Hello, Perl world!\n";
-
-$tx = Text::Xslate->new(
-    string => <<'TX',
-Hello, <:= foo() :> world!
-TX
-    function => {
-        foo => sub{ "FOO" },
-    },
-);
-
-is $tx->render({ value => 'XSLATE' }), "Hello, FOO world!\n", "funcall without args";
+foreach my $d(@set) {
+    my($in, $vars, $out) = @$d;
+    my $tx = Text::Xslate->new(string => $in, function => \%funcs);
+    is $tx->render($vars), $out, $in or die;
+}
 
 done_testing;

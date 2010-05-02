@@ -199,7 +199,7 @@ tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX
 
     assert(SvTYPE(cframe) == SVt_PVAV);
 
-    if(AvFILLp(cframe) < real_ix) {
+    if(AvFILLp(cframe) < real_ix || SvREADONLY(AvARRAY(cframe)[real_ix])) {
         av_store(cframe, real_ix, newSV(0));
     }
     st->pad = AvARRAY(cframe) + TXframe_START_LVAR;
@@ -228,8 +228,7 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 
 static SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
-    ENTER;
-    SAVETMPS;
+    /* ENTER & SAVETMPS must be done */
 
     if(!(flags & G_METHOD)) {
         HV* dummy_stash;
@@ -263,6 +262,9 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
         dSP;
+        ENTER;
+        SAVETMPS;
+
         PUSHMARK(SP);
         XPUSHs(var);
         PUTBACK;
@@ -324,7 +326,10 @@ TXC(move_sa_to_sb) {
 }
 
 TXC_w_var(store_to_lvar) {
-    sv_setsv(TX_lvar(SvIVX(TX_op_arg)), TX_st_sa);
+    SV* const sv = TX_lvar(SvIVX(TX_op_arg));
+    sv_setsv(sv, TX_st_sa);
+    TX_st_sa = sv;
+
     TX_st->pc++;
 }
 
@@ -335,7 +340,7 @@ TXC_w_var(load_lvar_to_sb) {
 
 TXC(push) {
     dSP;
-    XPUSHs(TX_st_sa);
+    XPUSHs(sv_mortalcopy(TX_st_sa));
     PUTBACK;
 
     TX_st->pc++;
@@ -349,6 +354,9 @@ TXC(pop) {
 
 TXC(pushmark) {
     dSP;
+    ENTER;
+    SAVETMPS;
+
     PUSHMARK(SP);
 
     TX_st->pc++;
@@ -599,6 +607,9 @@ TXC(filt) {
     SV* const filter = TX_st_sa;
     dSP;
 
+    ENTER;
+    SAVETMPS;
+
     PUSHMARK(SP);
     XPUSHs(arg);
     PUTBACK;
@@ -717,9 +728,6 @@ TXC(macrocall) {
     I32 i;
     SV* tmp;
 
-    ENTER;
-    SAVETMPS;
-
     /* push a new frame */
     cframe = tx_push_frame(aTHX_ TX_st);
 
@@ -772,6 +780,7 @@ TXC(macro_end) {
 
     TX_st->pc = SvUVX(retaddr);
 
+    /* ENTER & SAVETMPS will be done by TXC(pushmark) */
     FREETMPS;
     LEAVE;
 }
