@@ -396,6 +396,10 @@ sub define_basic_operators {
     $parser->assignment('||=', 100);
     $parser->assignment('//=', 100);
 
+    $parser->prefix('not', 70);
+    $parser->infix('and',  60);
+    $parser->infix('or',   50);
+
     return;
 }
 

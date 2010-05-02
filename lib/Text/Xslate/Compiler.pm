@@ -35,10 +35,12 @@ my %bin = (
 
     '['  => 'fetch_field',
 );
-my %bin_r = (
-    '&&' => 'and',
-    '||' => 'or',
-    '//' => 'dor',
+my %logical_bin = (
+    '&&'  => 'and',
+    'and' => 'and',
+    '||'  => 'or',
+    'or'  => 'or',
+    '//'  => 'dor',
 );
 
 my %unary = (
@@ -547,11 +549,11 @@ sub _generate_binary {
                 [ $bin{$_}   => undef ];
             return @code;
         }
-        when(%bin_r) {
+        when(%logical_bin) {
             my @right = $self->_generate_expr($node->second);
             return
                 $self->_generate_expr($node->first),
-                [ $bin_r{$_} => scalar(@right) + 1 ],
+                [ $logical_bin{$_} => scalar(@right) + 1 ],
                 @right;
         }
         default {
