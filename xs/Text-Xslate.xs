@@ -428,10 +428,7 @@ TXC(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
 
-    if(SvNIOK(sv) && !SvPOK(sv)){
-        sv_catsv_nomg(output, sv);
-    }
-    else if(tx_str_is_escaped(aTHX_ sv)) {
+    if(tx_str_is_escaped(aTHX_ sv)) {
         sv_catsv_nomg(output, SvRV(sv));
     }
     else {
