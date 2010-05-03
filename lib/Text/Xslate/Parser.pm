@@ -7,8 +7,8 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
 );
 
-use constant _DUMP_PROTO => ($DEBUG =~ /\b dump=proto \b/xmsi);
-use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi);
+use constant _DUMP_PROTO => ($DEBUG =~ /\b dump=proto \b/xmsi)[0];
+use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi)[0];
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
@@ -283,19 +283,19 @@ sub lex {
     if(s/\A ($ID)//xmso){
         return [ name => $1 ];
     }
-    elsif(s/\A ($STRING)//xmso){
-        return [ string => $1 ];
-    }
     elsif(s/\A ($OPERATOR)//xmso){
         return [ operator => $1 ];
+    }
+    elsif(s/\A $COMMENT //xmso) {
+        goto &lex; # tail call
     }
     elsif(s/\A ($NUMBER)//xmso){
         my $value = $1;
         $value =~ s/_//g;
         return [ number => $value ];
     }
-    elsif(s/\A $COMMENT //xmso) {
-        goto &lex; # tail call
+    elsif(s/\A ($STRING)//xmso){
+        return [ string => $1 ];
     }
     elsif(s/\A (\S+)//xms) {
         $self->_error("Unexpected lex symbol '$1'");
@@ -502,7 +502,7 @@ sub advance {
         }
         when("operator") {
             $proto = $symtab->{$value};
-            if(!$proto) {
+            if(not defined $proto) {
                 $parser->_error("Unknown operator '$value'");
             }
         }
@@ -516,7 +516,7 @@ sub advance {
         }
     }
 
-    if(!$proto) {
+    if(not defined $proto) {
         $parser->_error("Unexpected token: $value ($arity)");
     }
 
@@ -551,7 +551,7 @@ sub expression_list {
             if($parser->token->id ne ",") {
                 last;
             }
-            $parser->advance(",");
+            $parser->advance(); # ","
         }
     }
     return \@args;
@@ -633,7 +633,7 @@ sub _led_dot {
     $parser->advance();
 
     if($parser->token->id eq "(") {
-        $parser->advance("(");
+        $parser->advance(); # "("
         $dot->third( $parser->expression_list() );
         $parser->advance(")");
         $dot->arity("methodcall");
@@ -721,7 +721,7 @@ sub find { # find a name from all the scopes
     my($parser, $name) = @_;
     foreach my $scope(reverse @{$parser->scope}){
         my $o = $scope->{$name};
-        if($o) {
+        if(defined $o) {
             return $o;
         }
     }
@@ -818,7 +818,7 @@ sub statement { # process one or more statements
     my $t = $parser->token;
 
     if($t->id eq ";"){
-        $parser->advance(";");
+        $parser->advance(); # ";"
         return;
     }
 
@@ -870,7 +870,7 @@ sub block {
 
 sub _nud_literal {
     my($parser, $symbol) = @_;
-    return $symbol->clone();
+    return $symbol; # as is
 }
 
 sub _nud_paren {
@@ -939,7 +939,7 @@ sub _pointy {
             $parser->advance();
 
             if($parser->token->id eq ",") {
-                $parser->advance(",");
+                $parser->advance(); # ","
             }
         }
 
@@ -998,8 +998,8 @@ sub _std_if {
     $if->second( $parser->block() );
 
     if($parser->token->id eq "else") {
+        $parser->advance(); # "else"
         $parser->reserve($parser->token);
-        $parser->advance("else");
         $if->third( $parser->token->id eq "if"
             ? $parser->statement()
             : $parser->block ());
@@ -1040,7 +1040,7 @@ sub _get_bare_name {
         my $t = $parser->token;
 
         if($t->id eq "::") {
-            $t = $parser->advance("::");
+            $t = $parser->advance(); # "::"
 
             if($t->arity ne "name") {
                 $parser->_error("Expected a name but $t");
@@ -1062,12 +1062,12 @@ sub _std_bare_command {
     my $name = $parser->_get_bare_name();
     my @components;
 
-    if($parser->token->id eq 'with') {
-        $parser->advance('with');
+    if($parser->token->id eq "with") {
+        $parser->advance(); # "with"
 
         push @components, $parser->_get_bare_name();
-        while($parser->token->id eq ',') {
-            $parser->advance(',');
+        while($parser->token->id eq ",") {
+            $parser->advance(); # ","
 
             push @components, $parser->_get_bare_name();
         }

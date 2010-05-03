@@ -17,7 +17,7 @@ use Text::Xslate::Util qw(
     literal_to_value
 );
 
-use constant _DUMP_LOAD_FILE => ($DEBUG =~ /\b dump=load_file \b/xms);
+use constant _DUMP_LOAD_FILE => ($DEBUG =~ /\b dump=load_file \b/xms)[0];
 
 use File::Spec;
 
