@@ -42,6 +42,8 @@ Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line c
     <: $var[0] :>
 
 Variables may be HASH references, ARRAY references, or objects.
+Because C<$var.field> and C<$var["field"]> are the same semantics,
+C<< $obj["accessor"] >> syntax may be call object methods.
 
 If I<$var> is an object instance, you can call its methods.
 
