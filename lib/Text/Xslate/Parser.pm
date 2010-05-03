@@ -7,8 +7,8 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
 );
 
-use constant _DUMP_PROTO => ($DEBUG =~ /\b dump=proto \b/xmsi)[0];
-use constant _DUMP_TOKEN => ($DEBUG =~ /\b dump=token \b/xmsi)[0];
+use constant _DUMP_PROTO => scalar($DEBUG =~ /\b dump=proto \b/xmsi);
+use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 

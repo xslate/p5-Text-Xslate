@@ -10,8 +10,8 @@ use Text::Xslate::Util qw(
 
 use Scalar::Util ();
 
-use constant _DUMP_ASM => ($DEBUG =~ /\b dump=asm \b/xms)[0];
-use constant _OPTIMIZE => ($DEBUG =~ /\b optimize=(\d+) \b/xms)[0];
+use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
+use constant _OPTIMIZE => scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
@@ -183,7 +183,7 @@ sub compile {
         }
     }
 
-    $self->_optimize(\@code) for 1 .. $args{optimize} // _OPTIMIZE // 2;
+    $self->_optimize(\@code) for 1 .. _OPTIMIZE // 2;
 
     print "// ", $self->file, "\n",
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
