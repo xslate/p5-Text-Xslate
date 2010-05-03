@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1008 Mon May  3 18:36:52 2010
+    [CHANGES]
+    - Deprecate "string" option for new() and render(\%vars). Use render_string()
+      instead.
+
+    [NEW FEATURE]
+    - render_string($str, \%vars), which is provided mainly for testing
+
 0.1007 Sun May  2 22:26:09 2010
     [BUG FIXES]
     - Nested function call could cause problems.
