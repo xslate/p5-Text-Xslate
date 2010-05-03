@@ -72,11 +72,6 @@ sub _load_input { # for <input>
         $protocode = $self->_compiler->compile($self->{string});
     }
 
-    if($self->{assembly}) {
-        $source++;
-        $protocode = $self->_load_assembly($self->{assembly});
-    }
-
     if($self->{protocode}) {
         $source++;
         $protocode = $self->{protocode};
