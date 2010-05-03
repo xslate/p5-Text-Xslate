@@ -1375,17 +1375,16 @@ CODE:
     HV* vars;
     tx_state_t* st;
 
-    if(items < 2) {
-        croak_xs_usage(cv,  "self, name, vars");
-    }
-
-    if(items == 2) {
+    if(items == 2) { /* render(\%vars) }*/
         name     = newSVpvs_flags("<input>", SVs_TEMP);
         vars_ref = ST(1);
     }
-    else {
+    else if(items == 3) { /* render($file, \%vars) */
         name     = ST(1);
         vars_ref = ST(2);
+    }
+    else {
+        croak_xs_usage(cv,  "self, name, vars");
     }
 
     if(!(SvROK(vars_ref) && SvTYPE(SvRV(vars_ref)) == SVt_PVHV)) {
