@@ -501,7 +501,11 @@ which is explained in L<Text::Xslate::Syntax::TTerse>.
 
 =head1 NOTES
 
-In Xslate templates, you cannot use C<undef> as a valid value.
+There are common notes in the Xslate virtual machine.
+
+=head2 Nil handling
+
+You cannot use C<undef> as a valid value.
 The use of C<undef> will cause fatal errors as if
 C<use warnings FALTAL => "all"> was specified.
 However, unlike Perl, you can use equal operators to check whether
@@ -521,7 +525,6 @@ Or, you can also use defined-or operator (//):
 
     [% # on TTerse syntax %]
     Hello, [% $value // "Xslate" %] world!
-
 
 =head1 DEPENDENCIES
 
