@@ -4,12 +4,13 @@ use Test::More;
 
 use Text::Xslate;
 
-use FindBin qw($Bin);
-
 my %funcs = (
     uc      => sub{ uc $_[0] },
     sprintf => sub{ sprintf shift, @_ },
     pi      => sub{ 3.14 },
+);
+my $tx = Text::Xslate->new(
+    function => \%funcs,
 );
 
 my @set = (
@@ -62,8 +63,7 @@ my @set = (
 
 foreach my $d(@set) {
     my($in, $vars, $out) = @$d;
-    my $tx = Text::Xslate->new(string => $in, function => \%funcs);
-    is $tx->render($vars), $out, $in or die;
+    is $tx->render_string($in, $vars), $out, $in or die;
 }
 
 done_testing;

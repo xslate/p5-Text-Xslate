@@ -5,75 +5,94 @@ use Test::More;
 
 use Text::Xslate;
 
-my $tx = Text::Xslate->new(string => <<'T', cache => 0);
-A
-: block foo -> {
-    Hello, world!
-: }
-B
+my $tx = Text::Xslate->new();
+
+my @set = (
+    [<<'T', {lang => 'Xslate'}, <<'X', 'template with a block'],
+    A
+    : block foo -> {
+        Hello, <: $lang :> world!
+    : }
+    B
 T
+    A
+        Hello, Xslate world!
+    B
+X
 
-is $tx->render({}), "A\n    Hello, world!\nB\n", 'template with a block(1)';
-is $tx->render({}), "A\n    Hello, world!\nB\n", 'template with a block(2)';
-
-
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
-A
-: block foo -> {
-FOO
-: }
-B
-: block bar -> {
-BAR
-: }
-C
+    [<<'T', {}, <<'X', 'template with bocks'],
+    A
+    : block foo -> {
+        FOO
+    : }
+    B
+    : block bar -> {
+        BAR
+    : }
+    C
 T
+    A
+        FOO
+    B
+        BAR
+    C
+X
 
-is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(1)';
-is $tx->render({}), "A\nFOO\nB\nBAR\nC\n", 'template with blocks(2)';
-
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+    [<<'T', {}, <<'X', 'simplest macro'],
 : macro foo -> {
-FOO
+    FOO
 : }
-:= foo()
+: foo()
 T
+    FOO
+X
 
-is $tx->render({}), "FOO\n", 'simplext macrocall' for 1 .. 2;
-
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
-: macro add ->($x, $y) {
-    [<:= ($x + $y) :>]
+    [<<'T', {x => "foo"}, <<'X', 'with an arg'],
+: macro foo -> ($x) {
+    FOO(<:$x:>)
 : }
-:= add(10, 20) # 30
-:= add(11, 22) # 33
-:= add(15, 25) # 40
+: foo(42)
 T
+    FOO(42)
+X
 
-is $tx->render({}), <<'T', 'macro with args' for 1 .. 2;
+    [<<'T', {}, <<'X', 'macro with args'],
+: macro add -> $x, $y {
+    [<: ($x + $y) :>]
+: }
+:add(10, 20) # 30
+:add(11, 22) # 33
+:add(15, 25) # 40
+T
     [30]
     [33]
     [40]
-T
+X
 
-$tx = Text::Xslate->new(string => <<'T', cache => 0);
+    [<<'T', { VERSION => '1.012' }, <<'X', 'returns string'],
 : macro signeture -> {
     This is foo version <:= $VERSION :>
 : }
-:= "*" ~ signeture()
+: "*" ~ signeture()
 T
+*    This is foo version 1.012
+X
+);
 
-is $tx->render({ VERSION => '1.012' }), "*    This is foo version 1.012\n", 'macro without args';
-is $tx->render({ VERSION => '1.012' }), "*    This is foo version 1.012\n", 'macro without args';
+foreach my $d(@set) {
+    my($in, $vars, $out, $msg) = @$d;
+    is $tx->render_string($in, $vars), $out, $msg || $in
+        for 1 .. 2;
+}
+
 
 eval {
-    $tx = Text::Xslate->new(string => <<'T', cache => 0);
-    : macro foo ->($arg) {
+    diag $tx->render_string(<<'T', {});
+    : macro foo -> $arg {
         Hello <:= $arg :>!
     : }
     : foo()
 T
-    diag $tx->render({});
 };
 like $@, qr/Too few arguments/, 'prototype mismatch';
 

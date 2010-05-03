@@ -4,18 +4,38 @@ use Test::More;
 
 use Text::Xslate qw(escaped_string);
 
-my $x = Text::Xslate->new(string => 'Hello, <:= $lang :> world!');
+my $tx = Text::Xslate->new(string => 'Hello, <:= $lang :> world!');
 
-is $x->render({ lang => '<Xslate>' }), 'Hello, &lt;Xslate&gt; world!';
+my @set = (
+    [<<'T', {lang => '<Xslate>'}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
 
-is $x->render({ lang => Text::Xslate::EscapedString->new('&lt;Xslate&gt;') }),
-    'Hello, &lt;Xslate&gt; world!', 'escaped';
+    [<<'T', {lang => Text::Xslate::EscapedString->new('&lt;Xslate&gt;')}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
 
-is $x->render({ lang => escaped_string('&lt;Xslate&gt;') }),
-    'Hello, &lt;Xslate&gt; world!', 'escaped';
+    [<<'T', {lang => escaped_string('&lt;Xslate&gt;')}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
 
-is $x->render({ lang => escaped_string(escaped_string('&lt;Xslate&gt;')) }),
-    'Hello, &lt;Xslate&gt; world!', 'double escaped';
+    [<<'T', {lang => escaped_string(escaped_string('&lt;Xslate&gt;'))}, <<'X', "nested"],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+);
+
+foreach my $d(@set) {
+    my($in, $vars, $out, $msg) = @$d;
+    is $tx->render_string($in, $vars), $out, $msg || $in;
+}
 
 is escaped_string('&lt;Xslate&gt;'), '&lt;Xslate&gt;', "escaped strings can be stringified";
 cmp_ok escaped_string('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "escaped strings are comparable";

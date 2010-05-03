@@ -6,29 +6,26 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
-note 'cascade without components';
-my $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+my $tx = Text::Xslate->new(path => [path]);
+
+my @set = (
+    [<<'T', { lang => 'Xslate' }, <<'X', 'without other components (bare name)'],
 : cascade myapp::base
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T', "template cascading" for 1 .. 2;
 HEAD
     Hello, Xslate world!
 FOOT
-T
+X
 
-$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
-: cascade "myapp/base.tx"
+    [<<'T', { lang => 'Xslate' }, <<'X', 'without other components (string)'],
+: cascade myapp::base
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T', "with filename" for 1 .. 2;
 HEAD
     Hello, Xslate world!
 FOOT
-T
+X
 
-note 'cascade one-level';
-$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+    [<<'T', { lang => 'Xslate' }, <<'X', 'one-level'],
 : cascade myapp::base
 
 : before hello -> {
@@ -38,17 +35,24 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
     AFTER
 : }
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     Hello, Xslate world!
     AFTER
 FOOT
-T
+X
 
-note 'cascade two-level';
-$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+    [<<'T', { lang => 'Xslate' }, <<'X', 'two-level without other components'],
+: cascade myapp::derived
+T
+HEAD
+    D-BEFORE
+    Hello, Xslate world!
+    D-AFTER
+FOOT
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X', 'two-level'],
 : cascade myapp::derived
 
 : before hello -> {
@@ -58,8 +62,6 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
     AFTER
 : }
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     D-BEFORE
@@ -67,10 +69,9 @@ HEAD
     D-AFTER
     AFTER
 FOOT
-T
+X
 
-note 'cascade one-level with around';
-$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+    [<<'T', { lang => 'Xslate' }, <<'X', 'one-level, around'],
 : cascade myapp::base
 
 : around hello -> {
@@ -86,8 +87,6 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
     AFTER
 : }
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     AROUND[
@@ -95,10 +94,9 @@ HEAD
     ]AROUND
     AFTER
 FOOT
-T
+X
 
-note 'cascade two-level with around';
-$tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
+    [<<'T', { lang => 'Xslate' }, <<'X', 'two-level, around'],
 : cascade myapp::derived
 
 : around hello -> {
@@ -114,8 +112,6 @@ $tx = Text::Xslate->new(string => <<'T', cache => 0, path => [path]);
     AFTER
 : }
 T
-
-is $tx->render({lang => 'Xslate'}), <<'T' for 1 .. 2;
 HEAD
     BEFORE
     AROUND[
@@ -125,24 +121,15 @@ HEAD
     ]AROUND
     AFTER
 FOOT
-T
+X
 
-note "file";
-is $tx->render('myapp/derived.tx', {lang => 'Xslate'}), <<'T', "file ($_)" for 1 .. 2;
-HEAD
-    D-BEFORE
-    Hello, Xslate world!
-    D-AFTER
-FOOT
-T
+);
 
-$tx = Text::Xslate->new(path => [path], cache => 0);
-is $tx->render('myapp/derived.tx', {lang => 'Xslate'}), <<'T', "file again ($_)" for 1 .. 2;
-HEAD
-    D-BEFORE
-    Hello, Xslate world!
-    D-AFTER
-FOOT
-T
+foreach my $d(@set) {
+    my($in, $vars, $out, $msg) = @$d;
+    is $tx->render_string($in, $vars), $out, $msg || $in
+        for 1 .. 2;
+}
+
 
 done_testing;
