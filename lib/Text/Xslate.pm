@@ -1,7 +1,5 @@
 package Text::Xslate;
-
 # The Xslate engine class
-
 use 5.010_000;
 use strict;
 use warnings;
@@ -42,8 +40,6 @@ sub new {
 
     $args{template}       = {};
 
-    my $self = bless \%args, $class;
-
     if(exists $args{file}) {
         Carp::carp('"file" option makes no sense. Use render($file, \%vars) directly');
     }
@@ -52,8 +48,8 @@ sub new {
         $args{path} = [$args{path}];
     }
 
+    my $self = bless \%args, $class;
     $self->_load_input();
-
     return $self;
 }
 
@@ -85,8 +81,6 @@ sub _load_input { # for <input>
         $self->_initialize($protocode, undef, undef, undef, undef);
     }
 
-    #use Data::Dumper;$Data::Dumper::Indent=1;print Dumper $protocode;
-
     return $protocode;
 }
 
@@ -110,13 +104,9 @@ sub find_file {
         if(-f $cachepath) {
             $cache_mtime = (stat(_))[9]; # compiled
 
-            # see tx_load_template() in xs/Text-Xslate.xs
-            if(($mtime // $cache_mtime) >= $orig_mtime) {
-                $is_compiled   = 1;
-            }
-            else {
-                $is_compiled = 0;
-            }
+            # mtime indicates the threshold time.
+            # see also tx_load_template() in xs/Text-Xslate.xs
+            $is_compiled = (($mtime // $cache_mtime) >= $orig_mtime);
             last;
         }
         else {
@@ -235,12 +225,8 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        if(!$compiler->can('new')) {
-            require Mouse::Util;
-            Mouse::Util::load_class($compiler);
-        }
-
-        $compiler = $compiler->new(
+        require Mouse::Util;
+        $compiler = Mouse::Util::load_class($compiler)->new(
             engine => $self,
             syntax => $self->{syntax},
         );
