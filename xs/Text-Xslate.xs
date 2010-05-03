@@ -314,6 +314,12 @@ tx_str_is_escaped(pTHX_ SV* const sv) {
     return FALSE;
 }
 
+/*********************
+
+ Xslate opcodes TXC(xxx)
+
+ *********************/
+
 TXC(noop) {
     TX_st->pc++;
 }
@@ -877,6 +883,9 @@ XS(XS_Text__Xslate__error) {
     XSRETURN_EMPTY; /* not reached */
 }
 
+/* End of opcodes */
+
+/* The virtual machine code interpreter */
 static void
 tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
