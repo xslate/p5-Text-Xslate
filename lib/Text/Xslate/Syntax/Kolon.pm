@@ -105,14 +105,14 @@ Note that C<==> and C<!=> are similar to Perl's C<eq> and C<ne> except that
 C<$var == nil> is true B<iff> I<$var> is uninitialized, while other
 relational operators are numerical operators.
 
-Arithmetic operators (C<< + - * / % min max>>):
+Arithmetic operators (C<< + - * / % min max >>):
 
     : $var * 10_000
     : ($var % 10) == 0
     : 10 min 20 min 30 # 10
     : 10 max 20 max 30 # 30
 
-Logical operators (C<< ! && || // not and or>>)
+Logical operators (C<< ! && || // not and or >>)
 
     : $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
     : $var // "foo" # as a default value
