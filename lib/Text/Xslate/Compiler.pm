@@ -79,10 +79,6 @@ has macro_table => (
     is  => 'rw',
     isa => 'HashRef',
 
-    clearer => 'clear_macro_table',
-
-    lazy     => 1,
-    default  => sub{ {} },
     init_arg => undef,
 );
 
@@ -146,6 +142,9 @@ sub compile_str {
 sub compile {
     my($self, $str, %args) = @_;
 
+    local $self->{macro_table} = {};
+    my $mtable = $self->macro_table;
+
     my $parser = $self->parser;
 
     my $ast = $parser->parse($str, %args);
@@ -153,7 +152,6 @@ sub compile {
     # main
     my @code = $self->_compile_ast($ast);
 
-    my $mtable = $self->macro_table;
     my $main = delete $mtable->{'@main'}; # cascade
 
     if(defined $main) {
@@ -184,7 +182,6 @@ sub compile {
             push @code, [ 'macro_end' ];
         }
     }
-    $self->clear_macro_table();
 
     $self->_optimize(\@code) for 1 .. $args{optimize} // _OPTIMIZE // 2;
 

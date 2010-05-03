@@ -4,7 +4,7 @@ use Test::More;
 
 use Text::Xslate qw(escaped_string);
 
-my $tx = Text::Xslate->new(string => 'Hello, <:= $lang :> world!');
+my $tx = Text::Xslate->new();
 
 my @set = (
     [<<'T', {lang => '<Xslate>'}, <<'X'],

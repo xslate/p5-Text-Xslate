@@ -11,7 +11,9 @@ use Tie::Hash;
 my @a;
 tie @a, 'Tie::StdArray';
 
-my $tx = Text::Xslate->new(string => <<'T');
+my $tx = Text::Xslate->new();
+
+my $tmpl = <<'T';
 : for $data ->($item) {
     [<:=$item.first:>][<:=$item.second:>]
 : }
@@ -22,10 +24,10 @@ T
     { first => 'hoge', second => 'fuga' },
 );
 
-is $tx->render({ data => \@a }), <<'T', "tied array" for 1 .. 2;
+is $tx->render_string($tmpl, { data => \@a }), <<'X', "tied array" for 1 .. 2;
     [foo][bar]
     [hoge][fuga]
-T
+X
 
 @a = (
     { first => 'aaa', second => 'bbb' },
@@ -36,7 +38,7 @@ tie %h, 'Tie::StdHash';
 
 %h = (data => \@a);
 
-is $tx->render(\%h), <<'T', "tied hash" for 1 .. 2;
+is $tx->render_string($tmpl, \%h), <<'T', "tied hash" for 1 .. 2;
     [aaa][bbb]
     [ccc][ddd]
 T

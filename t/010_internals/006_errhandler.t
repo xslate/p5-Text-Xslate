@@ -5,17 +5,15 @@ use Test::More;
 
 use Text::Xslate;
 
-use Fatal qw(open);
-
-use t::lib::Util;
-
 my $err = '';
-my $tx = Text::Xslate->new(string => <<'T', error_handler => sub{ $err = "@_" });
-Hello, <:= $lang :> world!
-T
+my $tx = Text::Xslate->new( error_handler => sub{ $err = "@_" });
 
-is $tx->render({ lang => undef }), "Hello,  world!\n", "error handler" for 1 .. 2;
+is $tx->render_string(
+    'Hello, <:= $lang :> world!',
+    { lang => undef }), "Hello,  world!", "error handler" for 1 .. 2;
 
-like $err, qr/Use of uninitialized value/, 'warnings are ignored';
+like $err, qr/Use of uninitialized value/, 'warnings are produced';
+
+# TODO more tests
 
 done_testing;

@@ -5,57 +5,55 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
-my $tx = Text::Xslate->new(
-    string => <<'TX',
+my $tx = Text::Xslate->new(cache => 0, path => [path]);
+
+my $template = <<'T';
 <:= $one :>
 <:= $two :>
 <:= $three :>
-TX
-);
+T
 
 my $warn = '';
 $SIG{__WARN__} = sub{ $warn .= join '', @_ };
 
 eval {
-    $tx->render({one => 1, two => 2});
+    $tx->render_string($template, {one => 1, two => 2});
 };
 like $@, qr/^Xslate\Q(<input>:3/;
 
 eval {
-    $tx->render({one => 1, three => 3});
+    $tx->render_string($template, {one => 1, three => 3});
 };
 
 like $@, qr/^Xslate\Q(<input>:2/;
 
 eval {
-    $tx->render({two => 2, three => 3});
+    $tx->render_string($template, {two => 2, three => 3});
 };
 
 like $@, qr/^Xslate\Q(<input>:1/;
 
-$tx = Text::Xslate->new(
-    string => <<'TX',
+$template = <<'T';
 <:= $one :>
 
 <:= $three :>
 
 <:= $five :>
-TX
-);
+T
 
 eval {
-    $tx->render({one => 1, three => 3});
+    $tx->render_string($template, {one => 1, three => 3});
 };
 like $@, qr/^Xslate\Q(<input>:5/;
 
 eval {
-    $tx->render({one => 1, five => 5});
+    $tx->render_string($template, {one => 1, five => 5});
 };
 
 like $@, qr/^Xslate\Q(<input>:3/;
 
-$tx = Text::Xslate->new(
-    string => <<'TX',
+eval {
+    $tx->render_string(<<'T', {data => "foo"});
 
 : for $data ->($item) {
 
@@ -63,11 +61,7 @@ $tx = Text::Xslate->new(
 
 : }
 
-TX
-);
-
-eval {
-    $tx->render({data => "foo"});
+T
 };
 like $@, qr/^Xslate\Q(<input>:2/;
 
@@ -76,34 +70,29 @@ like $@, qr/^Xslate\Q(<input>:2/;
     sub bar { die 42 };
 }
 
-$tx = Text::Xslate->new(
-    string => "\n<:= \$foo.bar :>",
-);
-
 eval {
-    $tx->render({foo => bless {}, 'Foo'});
+    $tx->render_string(<<'T', {foo => bless {}, 'Foo'});
+
+<: $foo.bar :>
+
+T
 };
 
 like $@, qr/^Xslate\Q(<input>:2/;
 
-$tx = Text::Xslate->new(
-    string => <<'T',
+eval {
+    $tx->render_string(<<'T', {});
 : macro foo ->($bar) {
     <:= $bar :>
 : }
 : foo(nil);
 T
-);
-
-eval {
-    $tx->render({});
 };
 
 like $@, qr/^Xslate\Q(<input>:2/, 'in a macro';
 
 eval {
-    $tx = Text::Xslate->new(
-        string => <<'T',
+    $tx->render_string(<<'T', {});
     : macro foo ->($bar) {
         <:= $bar :>
     : }
@@ -111,17 +100,13 @@ eval {
         <:= $bar :>
     : }
 T
-    );
-
-    $tx->render({});
 };
 
 like $@, qr/^Xslate::Compiler\Q(<input>:4/;
 like $@, qr/Redefinition of macro/, 'macro redefinition';
 
 eval {
-    $tx = Text::Xslate->new(
-        string => <<'T',
+    $tx->render_string(<<'T', {});
     : block foo ->($bar) {
         <:= $bar :>
     : }
@@ -130,28 +115,19 @@ eval {
         <:= $bar :>
     : }
 T
-    );
-
-    $tx->render({});
 };
 
 like $@, qr/^Xslate::Compiler\Q(<input>:5/;
 like $@, qr/Redefinition of block/, 'block redefinition';
 
 eval {
-    $tx = Text::Xslate->new(
-        cache  => 0,
-        path   => [path],
-        string => <<'T',
+    $tx->render_string(<<'T', {});
     : cascade myapp::base
 
     : block hello ->($bar) {
         <:= $bar :>
     : }
 T
-    );
-
-    $tx->render({});
 };
 
 like $@, qr/^Xslate::Compiler\Q(<input>:3/;

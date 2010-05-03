@@ -41,6 +41,7 @@ sub new {
     $args{template}       = {};
 
     if(exists $args{file}) {
+        require Carp;
         Carp::carp('"file" option makes no sense. Use render($file, \%vars) directly');
     }
 
@@ -64,6 +65,8 @@ sub _load_input { # for <input>
     my $protocode;
 
     if($self->{string}) {
+        require Carp;
+        Carp::carp('"string" option has been deprecated. Use render_string() instead');
         $source++;
         $protocode = $self->_compiler->compile($self->{string});
     }
@@ -307,6 +310,13 @@ This document describes Text::Xslate version 0.1007.
     use Text::Xslate;
     use FindBin qw($Bin);
 
+    my $tx = Text::Xslate->new(
+        # the fillowing options are optional.
+        path       => ['.'],
+        cache_path => File::Spec->tmpdir,
+        cache      => 1,
+    );
+
     my %vars = (
         title => 'A list of books',
         books => [
@@ -318,7 +328,6 @@ This document describes Text::Xslate version 0.1007.
     );
 
     # for files
-    my $tx = Text::Xslate->new();
     print $tx->render('hello.tx', \%vars);
 
     # for strings
@@ -331,11 +340,7 @@ This document describes Text::Xslate version 0.1007.
         </ul>
     };
 
-    $tx = Text::Xslate->new(
-        string => $template,
-    );
-
-    print $tx->render(\%vars);
+    print $tx->render_string($template, \%vars);
 
     # you can tell the engine that some strings are already escaped.
     use Text::Xslate qw(escaped_string);
@@ -397,10 +402,6 @@ Possible options ares:
 
 =over
 
-=item C<< string => $template_string >>
-
-Specifies the template string, which is called C<< <input> >> internally.
-
 =item C<< path => \@path // ["."] >>
 
 Specifies the include paths. Default to C<<["."]>>.
@@ -421,7 +422,11 @@ checks the freshness of the original templates every time.
 If I<$level> E<gt>= 2, caches will be created but the freshness
 will not be checked.
 
-I<$level> == 0 creates no caches. It's only for testing.
+I<$level> == 0 creates no caches. It's provided for testing.
+
+=item C<< cache_dir => $dir // File::Spec->tmpdir >>
+
+Specifies the directry used for caches.
 
 =item C<< input_layer => $perliolayers // ":utf8" >>
 
@@ -437,11 +442,15 @@ If I<$moniker> is undefined, the default parser will be used.
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
 
-Renders a template with variables, and returns the result.
-
-If I<$file> is omitted, C<< <input> >> is used. See the C<string> option for C<new>.
+Renders a template file with variables, and returns the result.
 
 Note that I<$file> may be cached according to the cache level.
+
+=head3 B<< $tx->render_string($string, \%vars) :Str >>
+
+Renders a template string with variables, and returns the result.
+
+Note that I<$string> is never cached so that this method is suitable for testing.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
