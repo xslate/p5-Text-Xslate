@@ -23,10 +23,12 @@ Text::Xslate::Syntax::Metakolon - The same as Kolon but using [% ... %] tags
     use Text::Xslate;
     my $tx = Text::Xslate->new(
         syntax => 'Metakolon',
-        string => 'Hello, [% $dialect %] world!',
     );
 
-    print $tx->render({ dialect => 'Metakolon' });
+    print $tx->render_string(
+        'Hello, [% $dialect %] world!',
+        { dialect => 'Metakolon' }
+    );
 
 =head1 DESCRIPTION
 

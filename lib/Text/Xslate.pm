@@ -404,7 +404,7 @@ Possible options ares:
 
 =item C<< path => \@path // ["."] >>
 
-Specifies the include paths. Default to C<<["."]>>.
+Specifies the include paths.
 
 =item C<< function => \%functions >>
 
@@ -468,13 +468,12 @@ so you have to escape these strings.
 
 For example:
 
-    my $tx = Text::Xslate->new(
-        string => 'Mailaddress: <: $email :>',
-    );
+    my $tx   = Text::Xslate->new();
+    my $tmpl = 'Mailaddress: <: $email :>';
     my %vars = (
         email => "Foo &lt;foo@example.com&gt;",
     );
-    print $tx->render(\%email);
+    print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
 =head1 TEMPLATE SYNTAX

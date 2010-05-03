@@ -137,10 +137,12 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
     use Text::Xslate;
     my $tx = Text::Xslate->new(
         syntax => 'TTerse',
-        string => 'Hello, [% dialect %] world!',
     );
 
-    print $tx->render({ dialect => 'TTerse' });
+    print $tx->render_string(
+        'Hello, [% dialect %] world!',
+        { dialect => 'TTerse' }
+    );
 
 =head1 DESCRIPTION
 
