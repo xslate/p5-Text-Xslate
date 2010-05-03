@@ -20,6 +20,12 @@ if(USE_TT) {
 else {
     require Text::Xslate;
     require Text::Xslate::Syntax::TTerse;
+    $tt = Text::Xslate->new(
+            path      => [path],
+            cache_dir =>  path,
+            cache     =>  0,
+            syntax    => 'TTerse',
+    );
 }
 
 sub render_file {
@@ -34,12 +40,6 @@ sub render_file {
         return $out;
     }
     else {
-        $tt //= Text::Xslate->new(
-            path      => [path],
-            cache_dir =>  path,
-            cache     =>  0,
-            syntax    => 'TTerse',
-        );
         return $tt->render($in, $vars);
     }
 }
@@ -53,14 +53,7 @@ sub render_str {
         return $out;
     }
     else {
-        my $tx = Text::Xslate->new(
-            string    => $in,
-            path      => [path],
-            cache_dir =>  path,
-            cache     =>  0,
-            syntax    => 'TTerse',
-        );
-        return $tx->render($vars);
+        return $tt->render_string($in, $vars);
     }
 }
 
