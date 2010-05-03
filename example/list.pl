@@ -4,7 +4,6 @@ use Text::Xslate;
 use FindBin qw($Bin);
 
 my $tx = Text::Xslate->new(
-    file  => 'list.tx',
     path  => ["$Bin/template"],
 );
 
