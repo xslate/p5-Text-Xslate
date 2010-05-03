@@ -21,7 +21,11 @@ my $mst_in  = "$Bin/template/simple.mst";
 my $mst_bin = "$Bin/template/simple.mst.out";
 MobaSiF::Template::Compiler::compile($mst_in, $mst_bin);
 
-my $tx = Text::Xslate->new(cache => 2, path => ["$Bin/template"]);
+my $tx = Text::Xslate->new(
+    path      => ["$Bin/template"],
+    cache_dir => "$Bin/template",
+    cache     => 2,
+);
 
 $tx->render('simple.tx', $vars) eq MobaSiF::Template::insert($mst_bin, $vars)
     or MobaSiF::Template::insert($mst_bin, $vars);
