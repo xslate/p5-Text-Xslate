@@ -84,6 +84,17 @@ sub _load_input { # for <input>
     return $protocode;
 }
 
+sub render_string {
+    my($self, $str, $vars) = @_;
+
+    # because render_string() is provided for testing,
+    # it does not cache compiled code.
+    local $self->{cache} = 0;
+    my $protocode = $self->_compiler->compile($str);
+    $self->_initialize($protocode, undef, undef, undef, undef);
+    return $self->render(undef, $vars);
+}
+
 sub find_file {
     my($self, $file, $mtime) = @_;
 

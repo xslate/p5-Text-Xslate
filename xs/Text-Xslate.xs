@@ -1381,6 +1381,9 @@ CODE:
     }
     else if(items == 3) { /* render($file, \%vars) */
         name     = ST(1);
+        if(!SvOK(name)) {
+            name = newSVpvs_flags("<input>", SVs_TEMP);
+        }
         vars_ref = ST(2);
     }
     else {

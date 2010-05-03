@@ -17,55 +17,28 @@ sub mk_indent {
 }
 
 my $tx = Text::Xslate->new(
-    string => <<'TX',
-<:= $value | indent("> ") :>
-TX
     function => {
         indent => \&mk_indent,
     },
 );
 
-is $tx->render({ value => 'Xslate' }), "&gt; Xslate\n";
-is $tx->render({ value => 'Perl' }),   "&gt; Perl\n";
+my @set = (
+    [ q{<: $value | indent("> ") :>}, { value => 'Xslate' }
+        => '&gt; Xslate' ],
 
-$tx = Text::Xslate->new(
-    string => <<'TX',
-:= $value | indent("| ")
-TX
-    function => {
-        indent => \&mk_indent,
-    },
+    [ q{<: $value | indent("> ") :>}, { value => "Xslate\nPerl\n" }
+        => "&gt; Xslate\n&gt; Perl\n" ],
+
+    [ q{: $value | indent("| ") }, { value => "Xslate\nPerl\n" }
+        => "| Xslate\n| Perl\n" ],
+
+    [ q{: indent("* ")($value) }, { value => "Xslate\nPerl\n" }
+        => "* Xslate\n* Perl\n" ],
 );
 
-is $tx->render({ value => "foo\nbar\n" }),  <<'T', 'dynamic filters using |';
-| foo
-| bar
-T
-
-is $tx->render({ value => "foo\nbar\nbaz\n" }),  <<'T';
-| foo
-| bar
-| baz
-T
-
-$tx = Text::Xslate->new(
-    string => <<'TX',
-:= indent("+ ")($value)
-TX
-    function => {
-        indent => \&mk_indent,
-    },
-);
-
-is $tx->render({ value => "foo\nbar\n" }),  <<'T', 'dynamic filters using ()';
-+ foo
-+ bar
-T
-
-is $tx->render({ value => "foo\nbar\nbaz\n" }),  <<'T';
-+ foo
-+ bar
-+ baz
-T
+foreach my $d(@set) {
+    my($in, $vars, $out, $msg) = @$d;
+    is $tx->render_string($in, $vars), $out, $msg || $in;
+}
 
 done_testing;
