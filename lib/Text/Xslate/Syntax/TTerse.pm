@@ -68,7 +68,7 @@ sub _std_if {
 
     while($t->id eq "ELSIF") {
         $parser->reserve($t);
-        $parser->advance("ELSIF");
+        $parser->advance(); # "ELSIF"
 
         my $elsif = $t->clone(arity => "if");
         $elsif->first(  $parser->expression(0) );
@@ -83,9 +83,9 @@ sub _std_if {
 
     if($t->id eq "ELSE") {
         $parser->reserve($t);
-        $parser->advance("ELSE");
+        $t = $parser->advance(); # "ELSE"
 
-        $if->third( $parser->token->id eq "IF"
+        $if->third( $t->id eq "IF"
             ? $parser->statement()
             : $parser->statements());
     }

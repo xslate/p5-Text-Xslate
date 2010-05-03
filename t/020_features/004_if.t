@@ -82,7 +82,7 @@ b
 !'
         => "b\n!"],
 
-    [<<'T', <<'X', "if-elsif-end (1)"],
+    [<<'T', <<'X', "if-else-if-end (1)"],
 : if $lang == "Xslate" {
     foo
 : }
@@ -96,7 +96,7 @@ T
     foo
 X
 
-    [<<'T', <<'X', "if-elsif-end (2)"],
+    [<<'T', <<'X', "if-else-if-end (2)"],
 : if $lang != "Xslate" {
     foo
 : }
@@ -110,11 +110,53 @@ T
     bar
 X
 
-    [<<'T', <<'X', "if-elsif-end (3)"],
+    [<<'T', <<'X', "if-else-if-end (3)"],
 : if $lang != "Xslate" {
     foo
 : }
 : else if $value != 10 {
+    bar
+: }
+: else {
+    baz
+: }
+T
+    baz
+X
+
+    [<<'T', <<'X', "if-elsif-end (1)"],
+: if $lang == "Xslate" {
+    foo
+: }
+: elsif $value == 10 {
+    bar
+: }
+: else {
+    baz
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X', "if-elsif-end (2)"],
+: if $lang != "Xslate" {
+    foo
+: }
+: elsif $value == 10 {
+    bar
+: }
+: else {
+    baz
+: }
+T
+    bar
+X
+
+    [<<'T', <<'X', "if-elsif-end (3)"],
+: if $lang != "Xslate" {
+    foo
+: }
+: elsif $value != 10 {
     bar
 : }
 : else {

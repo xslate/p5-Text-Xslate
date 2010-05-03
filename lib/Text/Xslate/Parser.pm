@@ -731,14 +731,14 @@ sub find { # find a name from all the scopes
 sub reserve { # reserve a name to the scope
     my($parser, $symbol) = @_;
     if($symbol->arity ne 'name' or $symbol->reserved) {
-        return;
+        return $symbol;
     }
 
     my $top = $parser->scope->[-1];
     my $t = $top->{$symbol->id};
     if($t) {
         if($t->reserved) {
-            return;
+            return $symbol;
         }
         if($t->arity eq "name") {
            confess("Already defined: $symbol");
@@ -746,7 +746,7 @@ sub reserve { # reserve a name to the scope
     }
     $top->{$symbol->id} = $symbol;
     $symbol->reserved(1);
-    return;
+    return $symbol;
 }
 
 sub define { # define a name to the scope
@@ -773,8 +773,7 @@ sub define { # define a name to the scope
 sub _nud_function{
     my($p, $s) = @_;
     my $f = $s->clone(arity => 'function');
-    $p->reserve($f);
-    return $f;
+    return $p->reserve($f);
 }
 
 sub define_function {
@@ -791,8 +790,7 @@ sub define_function {
 sub _nud_macro{
     my($p, $s) = @_;
     my $f = $s->clone(arity => 'macro');
-    $p->reserve($f);
-    return $f;
+    return $p->reserve($f);
 }
 
 sub define_macro {
@@ -823,8 +821,8 @@ sub statement { # process one or more statements
     }
 
     if($t->has_std) { # is $t a statement?
-        $parser->advance();
         $parser->reserve($t);
+        $parser->advance();
         return $t->std($parser);
     }
 
@@ -933,13 +931,17 @@ sub _pointy {
 
         $parser->advance("(") if $paren;
 
-        while((my $t = $parser->token)->arity eq "variable") {
+        my $t = $parser->token;
+        while($t->arity eq "variable") {
             push @vars, $t;
             $parser->define($t);
-            $parser->advance();
+            $t = $parser->advance();
 
-            if($parser->token->id eq ",") {
-                $parser->advance(); # ","
+            if($t->id eq ",") {
+                $t = $parser->advance(); # ","
+            }
+            else {
+                last;
             }
         }
 
@@ -997,14 +999,30 @@ sub _std_if {
     $if->first( $parser->expression(0) );
     $if->second( $parser->block() );
 
-    if($parser->token->id eq "else") {
-        $parser->advance(); # "else"
-        $parser->reserve($parser->token);
-        $if->third( $parser->token->id eq "if"
-            ? $parser->statement()
-            : $parser->block ());
+    my $top_if = $if;
+
+    my $t = $parser->token;
+    while($t->id eq "elsif") {
+        $parser->reserve($t);
+        $parser->advance(); # "elsif"
+
+        my $elsif = $t->clone(arity => "if");
+        $elsif->first(  $parser->expression(0) );
+        $elsif->second( $parser->block() );
+        $if->third([$elsif]);
+        $if = $elsif;
+        $t  = $parser->token;
     }
-    return $if;
+
+    if($t->id eq "else") {
+        $parser->reserve($t);
+        $t = $parser->advance(); # "else"
+
+        $if->third( $t->id eq "if"
+            ? $parser->statement()
+            : $parser->block());
+    }
+    return $top_if;
 }
 
 sub _std_command {
