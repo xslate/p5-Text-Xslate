@@ -237,7 +237,11 @@ Output:
         My template tody!
         After body!
 
-If you omit the base template, it works as inside-out.
+You can also overlay templates just like Moose's roles:
+
+    : cascade myapp::base with myapp::role1, myapp::role2
+
+If you omit the base template, it works inside-out.
 
 Given a file F<myapp/hello.tx>:
 
@@ -260,8 +264,6 @@ Output:
         --------------
         Hello, world!
         --------------
-
-
 
 =head2 Macro blocks
 
