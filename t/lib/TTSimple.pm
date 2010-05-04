@@ -1,7 +1,7 @@
 package t::lib::TTSimple;
 
 use strict;
-use constant USE_TT => $ENV{USE_TT};
+use constant USE_TT => scalar(grep { $_ eq '--tt' } @ARGV) || $ENV{USE_TT};
 use Carp;
 
 use parent qw(Exporter);
