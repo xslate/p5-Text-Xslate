@@ -80,8 +80,8 @@ sub _load_input { # for <input>
     my $protocode;
 
     if($self->{string}) {
-        require Carp;
-        Carp::carp('"string" option has been deprecated. Use render_string() instead');
+        #require Carp;
+        #Carp::carp('"string" option has been deprecated. Use render_string() instead');
         $source++;
         $protocode = $self->_compiler->compile($self->{string});
     }
@@ -105,8 +105,6 @@ sub _load_input { # for <input>
 sub render_string {
     my($self, $str, $vars) = @_;
 
-    # because render_string() is provided for testing,
-    # it does not cache compiled code.
     local $self->{cache} = 0;
     my $protocode = $self->_compiler->compile($str);
     $self->_initialize($protocode, undef, undef, undef, undef);
