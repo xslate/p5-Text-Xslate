@@ -688,7 +688,7 @@ TXC_goto(goto) {
     TX_st->pc = SvUVX(TX_op_arg);
 }
 
-TXC_w_sv(depend); /* indicate files for templates to depend on */
+TXC_w_sv(depend); /* tell the vm to dependent template files */
 
 TXC(end) {
     TX_st->pc = TX_st->code_len;

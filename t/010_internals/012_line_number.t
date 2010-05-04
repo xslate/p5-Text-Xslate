@@ -133,6 +133,16 @@ T
 like $@, qr/^Xslate::Compiler\Q(<input>:3/;
 like $@, qr/Redefinition/, 'block redefinition';
 
+eval {
+    $tx->render_string(<<'T', {});
+    : cascade myapp::bad_redefine
+T
+};
+
+like $@, qr{^Xslate::Compiler\Q(myapp/bad_redefine.tx:3};
+like $@, qr{\Qmyapp/base.tx};
+like $@, qr/Redefinition/, 'block redefinition';
+
 is $warn, '', "no warns";
 
 done_testing;

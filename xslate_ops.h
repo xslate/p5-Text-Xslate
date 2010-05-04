@@ -50,7 +50,7 @@ TXC_w_key(function);
 TXC(funcall);
 TXC_w_key(methodcall_s);
 TXC_goto(goto);
-TXC_w_sv(depend); /* indicate files for templates to depend on */
+TXC_w_sv(depend); /* tell the vm to dependent template files */
 TXC(end);
 
 enum tx_opcode_t {

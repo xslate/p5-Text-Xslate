@@ -118,6 +118,10 @@ has parser => (
     required => 0,
 );
 
+has cascade => (
+    is  => 'rw',
+    isa => 'Object',
+);
 
 sub compile_str {
     my($self, $str) = @_;
@@ -138,19 +142,59 @@ sub compile {
 
     my %mtable;
     local $self->{macro_table} = \%mtable;
+    local $self->{cascade};
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
 
-    my $ast = $parser->parse($str, %args);
+    my @code; # main protocode
+    {
+        my $ast = $parser->parse($str, %args);
 
-    # main
-    my @code = $self->_compile_ast($ast);
+        @code = $self->_compile_ast($ast);
+    }
 
-    my $main = delete $mtable{'@main'}; # cascade
+    my $base = $self->cascade;
+    if(defined $base) {
+        my $engine = $self->engine
+            // $self->_error($base, "Cannot cascade templates without Xslate engine");
 
-    if(defined $main) {
-        my @new_code = $self->_compile_cascade($main);
+        my $base_file   = $self->_bare_to_file($base->first);
+        my @components = map{ $self->_bare_to_file($_) } @{$base->second};
+
+        my $base_code = $engine->load_file($base_file);
+        unshift @{$base_code},
+            [ depend => $engine->find_file($base_file)->{fullpath} ];
+
+        # overlay:
+        foreach my $cfile(@components) {
+            my $body;
+            my $code     = $engine->load_file($cfile);
+            my $fullpath = $engine->find_file($cfile)->{fullpath};
+
+            foreach my $c(@{$code}) {
+                if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
+                    if($c->[0] eq 'macro_begin') {
+                        $body = [];
+                        push @{ $mtable{$c->[1]} //= [] }, {
+                            name  => $c->[1],
+                            line  => $c->[2],
+                            body  => $body,
+                        };
+                    }
+                    elsif($c->[0] ne 'macro_end') {
+                        push @{$body}, $c;
+                    }
+                }
+            }
+
+            unshift @{$base_code},
+                [ depend => $fullpath ];
+            @{$base_code} = $self->_process_cascade($cfile, $base_code);
+        }
+
+        # cascade:
+        my @new_code = $self->_process_cascade($base_file, $base_code);
 
         # all the main code will be discarded
         foreach my $c(@code) {
@@ -207,12 +251,11 @@ sub _compile_ast {
     return @code;
 }
 
-sub _compile_cascade {
-    my($self, $main) = @_;
+sub _process_cascade {
+    my($self, $base_file, $base_code) = @_;
     my $mtable = $self->macro_table;
 
-    my $main_file =   $main->[0];
-    my @code      = @{$main->[1]};
+    my @code = @{$base_code};
     for(my $i = 0; $i < @code; $i++) {
         my $c = $code[$i];
         if($c->[0] ne 'macro_begin') {
@@ -225,7 +268,7 @@ sub _compile_cascade {
 
         if(exists $mtable->{$name}) {
             $self->_error($mtable->{$name}{line},
-                "Redefinition of macro/block $name in " . $main_file
+                "Redefinition of macro/block $name in " . $base_file
                 . " (you must use before/around/after to override macros/blocks)",
             );
         }
@@ -298,30 +341,26 @@ sub _generate_command {
     }
     return @code;
 }
-sub _generate_cascade {
-    my($self, $node) = @_;
 
-    my @code;
-
-    my $engine = $self->engine
-        // $self->_error($node, "Cannot cascade without an Xslate engine");
-    my $file   = $node->first;
-    #my $components_ref = $node->second;
-
+sub _bare_to_file {
+    my($self, $file) = @_;
     if(ref($file) eq 'ARRAY') { # myapp::foo
         $file  = join '/', @{$file};
-        $file .= $engine->{suffix};
+        $file .= $self->engine->{suffix};
     }
     else { # "myapp/foo.tx"
         $file = literal_to_value($file);
     }
+    return $file;
+}
 
-    my $c = $engine->load_file($file);
-    unshift @{$c}, [depend => $engine->find_file($file)->{fullpath}];
-
-    $self->macro_table->{'@main'} = [ $file, $c ];
-
-    return @code;
+sub _generate_cascade {
+    my($self, $node) = @_;
+    if(defined $self->cascade) {
+        $self->_error($node, "Cannot cascade twice in a template");
+    }
+    $self->cascade( $node );
+    return ();
 }
 
 sub _generate_for {

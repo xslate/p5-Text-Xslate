@@ -143,20 +143,19 @@ sub find_file {
         }
     }
 
-    if(defined $orig_mtime) {
-        return {
-            fullpath    => $fullpath,
-            cachepath   => $cachepath,
-
-            orig_mtime  => $orig_mtime,
-            cache_mtime => $cache_mtime,
-
-            is_compiled => $is_compiled,
-        };
+    if(not defined $orig_mtime) {
+        $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
-    else {
-        return undef;
-    }
+
+    return {
+        fullpath    => $fullpath,
+        cachepath   => $cachepath,
+
+        orig_mtime  => $orig_mtime,
+        cache_mtime => $cache_mtime,
+
+        is_compiled => $is_compiled,
+    };
 }
 
 
@@ -171,10 +170,6 @@ sub load_file {
     }
 
     my $f = $self->find_file($file, $mtime);
-
-    if(not defined $f) {
-        $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
-    }
 
     my $fullpath    = $f->{fullpath};
     my $cachepath   = $f->{cachepath};
