@@ -1,9 +1,19 @@
 Revision history for Perl extension Text::Xslate
 
+0.1009
+    [NEW FEATURE]
+    - Extend cascade statement:
+        cascade myapp::base with component1, component2
+        cascade with component1, component2
+    - Function import mechanism, which needs no plugin modules:
+        Text::Xslate->new(import => [qw(Data::Dumper)])
+    - Support "elsif" in Kolon for compatibility
+    - Support "UNLESS" in TTerse for compatibility
+
 0.1008 Mon May  3 18:36:52 2010
     [CHANGES]
-    - Deprecate "string" option for new() and render(\%vars). Use render_string()
-      instead.
+    - Deprecate "string" option for new() and render(\%vars).
+      Use render_string() instead.
 
     [NEW FEATURE]
     - render_string($str, \%vars), which is provided mainly for testing
