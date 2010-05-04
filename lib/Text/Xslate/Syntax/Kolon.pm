@@ -84,6 +84,8 @@ if-then-else statement:
 
     : $var.value == nil ? "nil" : $var.value
 
+Note that C<elsif> for C<else if> is also okey.
+
 switch statement (B<not yet implemented>):
 
     : given $var -> $it {
