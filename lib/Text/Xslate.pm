@@ -399,8 +399,9 @@ engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc).
 
 =head3 Template cascading
 
-Xslate supports template cascading, which allows one to extend
-templates with block modifiers.
+Xslate supports template cascading, which allows you to extend
+templates with block modifiers. It is like traditional template inclusion,
+but is more powerful.
 
 This mechanism is also called as template inheritance.
 
