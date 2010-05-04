@@ -40,19 +40,17 @@ sub new {
     $args{compiler}     //= 'Text::Xslate::Compiler';
     $args{syntax}       //= 'Kolon'; # passed directly to the compiler
 
-    if(defined $args{function}) {
-        $args{function} = { %{$args{function}} };
-    }
-    else {
-        $args{function} = {};
-    }
-
+    my %funcs;
     if(defined $args{import}) {
-        my %funcs = import_from(@{$args{import}});
-        while(my($name, $body) = each %funcs) {
-            $args{function}{$name} = $body;
+        %funcs = import_from(@{$args{import}});
+    }
+    # function => { ... } overrides imported functions
+    if(my $funcs_ref = $args{function}) {
+        while(my($name, $body) = each %{$funcs_ref}) {
+            $funcs{$name} = $body;
         }
     }
+    $args{function} = \%funcs;
 
     if(defined $args{file}) {
         require Carp;
