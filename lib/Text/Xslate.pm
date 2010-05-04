@@ -494,8 +494,8 @@ This method may be used for pre-compiling template files.
 
 =head3 C<< escaped_string($str :Str) -> EscapedString >>
 
-Marks I<$str> as escaped. Escaped strings will not be escaped by the engine,
-so you have to escape these strings.
+Marks I<$str> as escaped. Escaped strings will not be escaped by the template 
+engine, so you have to escape these strings by yourself.
 
 For example:
 
@@ -506,6 +506,10 @@ For example:
     );
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
+
+=head3 C<< html_escape($str :Str) -> EscapedString >>
+
+Escapes html special characters in I<$str>, and returns a escaped string (see above).
 
 =head1 TEMPLATE SYNTAX
 
