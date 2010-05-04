@@ -17,11 +17,11 @@ Text::Xslate::Syntax::Kolon - The default template syntax
 
     use Text::Xslate;
     my $tx = Text::Xslate->new(
-        syntax => 'Kolon',
+        syntax => 'Kolon', # optional
     );
 
     print $tx->render_string(
-        'Hello, [% dialect %] world!',
+        'Hello, <: $dialect :> world!',
         { dialect => 'Kolon' }
     );
 
