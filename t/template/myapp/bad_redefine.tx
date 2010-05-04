@@ -1,0 +1,5 @@
+: cascade myapp::base
+
+: block hello -> {
+    BAD REDEFINE
+: }

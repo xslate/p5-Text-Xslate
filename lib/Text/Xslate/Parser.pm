@@ -308,11 +308,11 @@ sub lex {
 sub parse {
     my($parser, $input, %args) = @_;
 
-    $parser->input( $parser->preprocess($input) );
-
     $parser->file( $args{file} // '<input>' );
     $parser->line( $args{line} // 0 );
     $parser->near_token('(start)');
+
+    $parser->input( $parser->preprocess($input) );
 
     my $ast = $parser->statements();
     if($parser->input ne '') {
@@ -441,7 +441,7 @@ sub define_symbols {
 
     # template inheritance
 
-    $parser->symbol('cascade')  ->set_std(\&std_bare_command);
+    $parser->symbol('cascade')  ->set_std(\&std_cascade);
     $parser->symbol('macro')    ->set_std(\&std_proc);
     $parser->symbol('block')    ->set_std(\&std_proc);
     $parser->symbol('around')   ->set_std(\&std_proc);
@@ -1074,7 +1074,7 @@ sub _get_bare_name {
     return \@parts;
 }
 
-sub std_bare_command {
+sub std_cascade {
     my($parser, $symbol) = @_;
 
     my $name = $parser->_get_bare_name();
@@ -1094,7 +1094,7 @@ sub std_bare_command {
     return $symbol->clone(
         first  => $name,
         second => \@components,
-        arity  => 'bare_command');
+        arity  => 'cascade');
 }
 
 # markers for the compiler

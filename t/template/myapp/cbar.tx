@@ -1,0 +1,5 @@
+: # This is a cascading component
+
+: after hello -> {
+    BAR
+: }

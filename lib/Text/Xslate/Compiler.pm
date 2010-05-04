@@ -118,12 +118,6 @@ has parser => (
     required => 0,
 );
 
-has cascading => (
-    is  => 'rw',
-    isa => 'Maybe[Str]',
-
-    required => 0,
-);
 
 sub compile_str {
     my($self, $str) = @_;
@@ -142,17 +136,18 @@ sub compile_str {
 sub compile {
     my($self, $str, %args) = @_;
 
-    local $self->{macro_table} = {};
-    my $mtable = $self->macro_table;
+    my %mtable;
+    local $self->{macro_table} = \%mtable;
 
-    my $parser = $self->parser;
+    my $parser   = $self->parser;
+    my $old_file = $parser->file;
 
     my $ast = $parser->parse($str, %args);
 
     # main
     my @code = $self->_compile_ast($ast);
 
-    my $main = delete $mtable->{'@main'}; # cascade
+    my $main = delete $mtable{'@main'}; # cascade
 
     if(defined $main) {
         my @new_code = $self->_compile_cascade($main);
@@ -175,7 +170,7 @@ sub compile {
     }
 
     # macros
-    foreach my $macros(values %{ $mtable }) {
+    foreach my $macros(values %mtable) {
         foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
             push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
             push @code, @{ $macro->{body} };
@@ -189,7 +184,7 @@ sub compile {
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
             if _DUMP_ASM;
 
-    $self->file("<input>"); # reset
+    $parser->file($old_file // '<input>'); # reset
 
     return \@code;
 }
@@ -216,7 +211,8 @@ sub _compile_cascade {
     my($self, $main) = @_;
     my $mtable = $self->macro_table;
 
-    my @code = @{$main};
+    my $main_file =   $main->[0];
+    my @code      = @{$main->[1]};
     for(my $i = 0; $i < @code; $i++) {
         my $c = $code[$i];
         if($c->[0] ne 'macro_begin') {
@@ -229,7 +225,7 @@ sub _compile_cascade {
 
         if(exists $mtable->{$name}) {
             $self->_error($mtable->{$name}{line},
-                "Redefinition of macro/block $name in " . $self->cascading
+                "Redefinition of macro/block $name in " . $main_file
                 . " (you must use before/around/after to override macros/blocks)",
             );
         }
@@ -273,7 +269,6 @@ sub _compile_cascade {
             }
         }
     }
-    $self->cascading(undef);
     return @code;
 }
 
@@ -303,33 +298,29 @@ sub _generate_command {
     }
     return @code;
 }
-sub _generate_bare_command {
+sub _generate_cascade {
     my($self, $node) = @_;
 
     my @code;
 
-    if($node->id eq 'cascade') {
-        my $engine = $self->engine
-            // $self->_error($node, "Cannot cascade without an Xslate engine");
-        my $file   = $node->first;
-        #my $components_ref = $node->second;
+    my $engine = $self->engine
+        // $self->_error($node, "Cannot cascade without an Xslate engine");
+    my $file   = $node->first;
+    #my $components_ref = $node->second;
 
-        if(ref($file) eq 'ARRAY') {
-            $file  = join '/', @{$file};
-            $file .= $engine->{suffix};
-        }
-        else {
-            $file = literal_to_value($file);
-        }
-
-        my $c = $self->macro_table->{'@main'} = $engine->load_file($file);
-        $self->cascading($file);
-
-        unshift @{$c}, [depend => $engine->find_file($file)->{fullpath}];
+    if(ref($file) eq 'ARRAY') { # myapp::foo
+        $file  = join '/', @{$file};
+        $file .= $engine->{suffix};
     }
-    else {
-        $self->_error($node, "Unknown command $node");
+    else { # "myapp/foo.tx"
+        $file = literal_to_value($file);
     }
+
+    my $c = $engine->load_file($file);
+    unshift @{$c}, [depend => $engine->find_file($file)->{fullpath}];
+
+    $self->macro_table->{'@main'} = [ $file, $c ];
+
     return @code;
 }
 
@@ -427,6 +418,7 @@ sub _generate_proc { # block, before, around, after
         nargs  => $arg_ix,
         body   => [ $self->_compile_ast($block) ],
         line   => $node->line,
+        file   => $self->file,
     );
 
     if($type ~~ [qw(macro block)]) {
