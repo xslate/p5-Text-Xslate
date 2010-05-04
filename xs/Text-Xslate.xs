@@ -1178,7 +1178,7 @@ CODE:
                     if(tx_oparg[opnum] & TXARGf_GOTO) {
                         /* calculate relational addresses to absolute addresses */
                         UV const abs_addr = (UV)(i + SvIVX(st.code[i].arg));
-                        if(abs_addr > (UV)len) {
+                        if(abs_addr >= (UV)len) {
                             croak("Oops: goto address %"IVdf" is out of range (must be 0 <= addr <= %"IVdf")",
                                 SvIVX(st.code[i].arg), (IV)len);
                         }
