@@ -149,7 +149,7 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
 TTerse is a subset of the Template-Toolkit 2 syntax,
 using C<< [% ... %] >> tags.
 
-=head1 EXAMPLES
+=head1 SYNTAX
 
 =head2 Variable access
 

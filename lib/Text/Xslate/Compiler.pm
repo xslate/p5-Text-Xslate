@@ -152,19 +152,36 @@ sub compile {
         my $ast = $parser->parse($str, %args);
 
         @code = $self->_compile_ast($ast);
+        push @code, ['end'];
     }
 
-    my $base = $self->cascade;
-    if(defined $base) {
+    my $cascade = $self->cascade;
+    if(defined $cascade) {
         my $engine = $self->engine
-            // $self->_error($base, "Cannot cascade templates without Xslate engine");
+            // $self->_error($cascade, "Cannot cascade templates without Xslate engine");
 
-        my $base_file   = $self->_bare_to_file($base->first);
-        my @components = map{ $self->_bare_to_file($_) } @{$base->second};
+        my @components = map{ $self->_bare_to_file($_) } @{$cascade->second};
 
-        my $base_code = $engine->load_file($base_file);
-        unshift @{$base_code},
-            [ depend => $engine->find_file($base_file)->{fullpath} ];
+        my($base_file, $base_code);
+        my $base = $cascade->first;
+
+        if(defined $base) {
+            $base_file = $self->_bare_to_file($base);
+            $base_code = $base_code = $engine->load_file($base_file);
+            unshift @{$base_code},
+                [ depend => $engine->find_file($base_file)->{fullpath} ];
+        }
+        else { # only "with"
+            $base_file = $args{file} // '<input>'; # only for error messages
+            $base_code = \@code;
+
+            if(defined $args{fullpath}) {
+                unshift @{$base_code},
+                    [ depend => $args{fullpath} ];
+            }
+
+            push @code, $self->_flush_macro_table(\%mtable);
+        }
 
         # overlay:
         foreach my $cfile(@components) {
@@ -191,36 +208,30 @@ sub compile {
             unshift @{$base_code},
                 [ depend => $fullpath ];
             @{$base_code} = $self->_process_cascade($cfile, $base_code);
+            ### after: $base_code
         }
 
         # cascade:
-        my @new_code = $self->_process_cascade($base_file, $base_code);
+        @{$base_code} = $self->_process_cascade($base_file, $base_code)
+            if defined $base;
 
         # all the main code will be discarded
-        foreach my $c(@code) {
-            if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
-                if($c->[0] eq 'print_raw_s') {
-                    Carp::carp("Xslate: Uselses use of text '$c->[1]'");
-                }
-                else {
-                    Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
+        if($base_code != \@code) {
+            foreach my $c(@code) {
+                if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
+                    if($c->[0] eq 'print_raw_s') {
+                        Carp::carp("Xslate: Uselses use of text '$c->[1]'");
+                    }
+                    else {
+                        #Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
+                    }
                 }
             }
+            @code = @{$base_code};
         }
-        @code = @new_code;
-    }
-    else {
-        push @code, ['end'];
     }
 
-    # macros
-    foreach my $macros(values %mtable) {
-        foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
-            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
-            push @code, @{ $macro->{body} };
-            push @code, [ 'macro_end' ];
-        }
-    }
+    push @code, $self->_flush_macro_table(\%mtable) if %mtable;
 
     $self->_optimize(\@code) for 1 .. _OPTIMIZE // 2;
 
@@ -231,6 +242,20 @@ sub compile {
     $parser->file($old_file // '<input>'); # reset
 
     return \@code;
+}
+
+sub _flush_macro_table {
+    my($self, $mtable) = @_;
+    my @code;
+    foreach my $macros(values %{$mtable}) {
+        foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
+            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
+            push @code, @{ $macro->{body} };
+            push @code, [ 'macro_end' ];
+        }
+    }
+    %{$mtable} = ();
+    return @code;
 }
 
 sub _compile_ast {

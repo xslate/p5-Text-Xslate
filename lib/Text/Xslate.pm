@@ -202,7 +202,10 @@ sub load_file {
         $protocode = $self->_load_assembly($string);
     }
     else {
-        $protocode = $self->_compiler->compile($string, file => $file);
+        $protocode = $self->_compiler->compile($string,
+            file     => $file,
+            fullpath => $fullpath,
+        );
 
         if($self->{cache}) {
             require File::Basename;

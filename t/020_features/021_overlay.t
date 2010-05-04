@@ -37,6 +37,21 @@ HEAD
 FOOT
 X
 
+    [<<'T', { lang => 'Xslate' }, <<'X', 'overlay'],
+: cascade with myapp::cfoo, myapp::cbar
+----
+: block hello -> {
+    This is template cascading!
+: }
+----
+T
+----
+    FOO
+    This is template cascading!
+    BAR
+----
+X
+
 );
 
 foreach my $d(@set) {

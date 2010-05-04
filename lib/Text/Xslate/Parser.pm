@@ -1077,7 +1077,10 @@ sub _get_bare_name {
 sub std_cascade {
     my($parser, $symbol) = @_;
 
-    my $name = $parser->_get_bare_name();
+    my $base;
+    if($parser->token->id ne "with") {
+        $base = $parser->_get_bare_name();
+    }
     my @components;
 
     if($parser->token->id eq "with") {
@@ -1092,7 +1095,7 @@ sub std_cascade {
     }
     $parser->advance(";");
     return $symbol->clone(
-        first  => $name,
+        first  => $base,
         second => \@components,
         arity  => 'cascade');
 }
