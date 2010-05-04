@@ -338,7 +338,7 @@ This document describes Text::Xslate version 0.1008.
     my $tx = Text::Xslate->new(
         # the fillowing options are optional.
         path       => ['.'],
-        cache_path => File::Spec->tmpdir,
+        cache_dir  => File::Spec->tmpdir,
         cache      => 1,
     );
 
