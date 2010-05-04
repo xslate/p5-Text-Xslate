@@ -12,14 +12,16 @@ use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
     say $mod, '/', $mod->VERSION;
 }
+my $path = "$Bin/template";
 
 my $mt = Text::MicroTemplate::File->new(
-    include_path => ["$Bin/template"],
+    include_path => [$path],
     cache        => 2,
 );
 my $tx = Text::Xslate->new(
-    path  => ["$Bin/template"],
-    cache => 2,
+    path      => [$path],
+    cache_dir => $path,
+    cache     => 2,
 );
 
 my %vars = (

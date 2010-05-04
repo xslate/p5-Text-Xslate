@@ -1,14 +1,6 @@
 List:
 : for $data ->($item) {
     * <:= $item.title :>
-: }
-
-List:
-: for $data ->($item) {
     * <:= $item.title :>
-: }
-
-List:
-: for $data ->($item) {
     * <:= $item.title :>
 : }

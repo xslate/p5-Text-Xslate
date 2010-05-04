@@ -16,7 +16,7 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate Text::MicroTemplate::Extende
 
 my %args = @ARGV;
 
-my $cache = $args{'--cache'} // 1;
+my $cache = $args{'--cache'} // 2;
 
 {
     package BlogEntry;
@@ -48,14 +48,17 @@ my @blog_entries = map{ BlogEntry->new($_) } (
     },
 );
 
+my $path = "$Bin/template";
+
 my $tx = Text::Xslate->new(
-    path  => ["$Bin/template"],
-    cache => $cache,
+    path      => [$path],
+    cache_dir =>  $path,
+    cache     =>  $cache,
 );
 my $mt = Text::MicroTemplate::Extended->new(
-    include_path  => ["$Bin/template"],
+    include_path  => [$path],
     template_args => { blog_entries => \@blog_entries },
-    cache         => $cache,
+    cache        => $cache,
 );
 
 {
