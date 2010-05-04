@@ -8,7 +8,7 @@ __END__
 
 Text::Xslate::EscapedString - The escaped string representation
 
-=jead1 DESCRIPTION
+=head1 DESCRIPTION
 
 EscapedString is strings marked as escaped so that Xslate does not escape them.
 
