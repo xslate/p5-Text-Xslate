@@ -452,7 +452,6 @@ sub _generate_proc { # block, before, around, after
     $self->_lvar_use($arg_ix);
 
     my %macro = (
-        type   => $type,
         name   => $name,
         nargs  => $arg_ix,
         body   => [ $self->_compile_ast($block) ],
