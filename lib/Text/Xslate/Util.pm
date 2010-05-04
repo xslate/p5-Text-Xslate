@@ -7,7 +7,7 @@ use Scalar::Util ();
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
-    literal_to_value import_from html_escape
+    literal_to_value import_from
     $STRING $NUMBER $DEBUG
 );
 
