@@ -54,6 +54,27 @@ T
 };
 like $@, qr/Parser/;
 
+eval {
+    Text::Xslate::Compiler->new->compile_str(<<'T');
+: macro foo -> ($var { ; }
+T
+};
+like $@, qr/Parser/;
+
+eval {
+    Text::Xslate::Compiler->new->compile_str(<<'T');
+: macro foo -> $var) { ; }
+T
+};
+like $@, qr/Parser/;
+
+eval {
+    Text::Xslate::Compiler->new->compile_str(<<'T');
+: macro foo -> ($x $y) { ; }
+T
+};
+like $@, qr/Parser/;
+
 foreach my $assign(qw(= += -= *= /= %= ~= &&= ||= //=)) {
     eval {
         Text::Xslate::Compiler->new->compile_str(<<"T");
