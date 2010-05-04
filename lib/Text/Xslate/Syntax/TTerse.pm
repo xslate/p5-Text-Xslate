@@ -18,13 +18,13 @@ sub define_symbols {
 
     $parser->symbol('IN');
 
-    $parser->symbol('IF')      ->set_std(\&_std_if);
-    $parser->symbol('FOREACH') ->set_std(\&_std_foreach);
+    $parser->symbol('IF')      ->set_std(\&std_if);
+    $parser->symbol('FOREACH') ->set_std(\&std_foreach);
 
-    $parser->symbol('INCLUDE') ->set_std(\&_std_command);
+    $parser->symbol('INCLUDE') ->set_std(\&std_command);
 
     # operators
-    $parser->infix('.', 100, \&_led_dot);
+    $parser->infix('.', 100, \&led_dot);
     $parser->define_basic_operators();
 
 }
@@ -35,7 +35,7 @@ sub undefined_name {
     return $parser->symbol_table->{'(variable)'};
 }
 
-sub _led_dot {
+sub led_dot {
     my($parser, $symbol, $left) = @_;
 
     my $t = $parser->token;
@@ -55,7 +55,7 @@ sub _led_dot {
     return $dot;
 }
 
-sub _std_if {
+sub std_if {
     my($parser, $symbol) = @_;
     my $if = $symbol->clone(arity => "if");
 
@@ -94,7 +94,7 @@ sub _std_if {
     return $top_if;
 }
 
-sub _std_foreach {
+sub std_foreach {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => "for");
@@ -116,9 +116,9 @@ sub _std_foreach {
     return $proc;
 }
 
-sub _std_command {
+sub std_command {
     my($parser, $symbol) = @_;
-    my $command = $parser->SUPER::_std_command($symbol);
+    my $command = $parser->SUPER::std_command($symbol);
     $command->id( lc( $command->id ) );
     return $command;
 }

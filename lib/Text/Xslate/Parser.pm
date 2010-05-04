@@ -340,15 +340,15 @@ sub _define_basic_symbols {
     $parser->symbol('(name)');
     my $s = $parser->symbol('(variable)');
     $s->arity('variable');
-    $s->set_nud(\&_nud_literal);
+    $s->set_nud(\&nud_literal);
 
-    $parser->symbol('(literal)')->set_nud(\&_nud_literal);
+    $parser->symbol('(literal)')->set_nud(\&nud_literal);
 
     $parser->symbol(';');
 
     # basic commands
-    $parser->symbol('print')    ->set_std(\&_std_command);
-    $parser->symbol('print_raw')->set_std(\&_std_command);
+    $parser->symbol('print')    ->set_std(\&std_command);
+    $parser->symbol('print_raw')->set_std(\&std_command);
 
     return;
 }
@@ -386,7 +386,7 @@ sub define_basic_operators {
     $parser->infix('max', 120);
 
     $parser->symbol(':');
-    $parser->infix('?', 110, \&_led_ternary);
+    $parser->infix('?', 110, \&led_ternary);
 
     $parser->assignment('=',   100);
     $parser->assignment('+=',  100);
@@ -422,32 +422,32 @@ sub define_symbols {
     # operators
     $parser->define_basic_operators();
 
-    $parser->infix('.', 256, \&_led_dot);
-    $parser->infix('[', 256, \&_led_fetch);
-    $parser->infix('(', 256, \&_led_call);
+    $parser->infix('.', 256, \&led_dot);
+    $parser->infix('[', 256, \&led_fetch);
+    $parser->infix('(', 256, \&led_call);
 
-    $parser->prefix('(', 200, \&_nud_paren);
+    $parser->prefix('(', 200, \&nud_paren);
 
     # constants
     $parser->define_constant('nil', undef);
 
     # statements
-    $parser->symbol('{')        ->set_std(\&_std_block);
-    $parser->symbol('if')       ->set_std(\&_std_if);
-    $parser->symbol('for')      ->set_std(\&_std_for);
-    $parser->symbol('while' )   ->set_std(\&_std_while);
+    $parser->symbol('{')        ->set_std(\&std_block);
+    $parser->symbol('if')       ->set_std(\&std_if);
+    $parser->symbol('for')      ->set_std(\&std_for);
+    $parser->symbol('while' )   ->set_std(\&std_while);
 
-    $parser->symbol('include')  ->set_std(\&_std_command);
+    $parser->symbol('include')  ->set_std(\&std_command);
 
     # template inheritance
 
-    $parser->symbol('cascade')  ->set_std(\&_std_bare_command);
-    $parser->symbol('macro')    ->set_std(\&_std_proc);
-    $parser->symbol('block')    ->set_std(\&_std_proc);
-    $parser->symbol('around')   ->set_std(\&_std_proc);
-    $parser->symbol('before')   ->set_std(\&_std_proc);
-    $parser->symbol('after')    ->set_std(\&_std_proc);
-    $parser->symbol('super')    ->set_std(\&_std_marker);
+    $parser->symbol('cascade')  ->set_std(\&std_bare_command);
+    $parser->symbol('macro')    ->set_std(\&std_proc);
+    $parser->symbol('block')    ->set_std(\&std_proc);
+    $parser->symbol('around')   ->set_std(\&std_proc);
+    $parser->symbol('before')   ->set_std(\&std_proc);
+    $parser->symbol('after')    ->set_std(\&std_proc);
+    $parser->symbol('super')    ->set_std(\&std_marker);
 
     return;
 }
@@ -557,7 +557,7 @@ sub expression_list {
     return \@args;
 }
 
-sub _led_infix {
+sub led_infix {
     my($parser, $symbol, $left) = @_;
     my $bin = $symbol->clone(arity => 'binary');
 
@@ -569,11 +569,11 @@ sub _led_infix {
 sub infix {
     my($parser, $id, $bp, $led) = @_;
 
-    $parser->symbol($id, $bp)->set_led($led || \&_led_infix);
+    $parser->symbol($id, $bp)->set_led($led || \&led_infix);
     return;
 }
 
-sub _led_infixr {
+sub led_infixr {
     my($parser, $symbol, $left) = @_;
     my $bin = $symbol->clone(arity => 'binary');
     $bin->first($left);
@@ -584,11 +584,11 @@ sub _led_infixr {
 sub infixr {
     my($parser, $id, $bp, $led) = @_;
 
-    $parser->symbol($id, $bp)->set_led($led || \&_led_infixr);
+    $parser->symbol($id, $bp)->set_led($led || \&led_infixr);
     return;
 }
 
-sub _led_assignment {
+sub led_assignment {
     my($parser, $symbol, $left) = @_;
 
     $parser->near_token($left);
@@ -598,11 +598,11 @@ sub _led_assignment {
 sub assignment {
     my($parser, $id, $bp) = @_;
 
-    $parser->symbol($id, $bp)->set_led(\&_led_assignment);
+    $parser->symbol($id, $bp)->set_led(\&led_assignment);
     return;
 }
 
-sub _led_ternary {
+sub led_ternary {
     my($parser, $symbol, $left) = @_;
 
     my $cond = $symbol->clone(arity => 'ternary');
@@ -614,7 +614,7 @@ sub _led_ternary {
     return $cond;
 }
 
-sub _led_dot {
+sub led_dot {
     my($parser, $symbol, $left) = @_;
 
     my $t = $parser->token;
@@ -642,7 +642,7 @@ sub _led_dot {
     return $dot;
 }
 
-sub _led_fetch {
+sub led_fetch {
     my($parser, $symbol, $left) = @_;
 
     my $fetch = $symbol->clone(arity => 'binary');
@@ -654,7 +654,7 @@ sub _led_fetch {
     return $fetch;
 }
 
-sub _led_call {
+sub led_call {
     my($parser, $symbol, $left) = @_;
 
     my $call = $symbol->clone(arity => 'call');
@@ -666,7 +666,7 @@ sub _led_call {
     return $call;
 }
 
-sub _nud_prefix {
+sub nud_prefix {
     my($parser, $symbol) = @_;
     my $un = $symbol->clone(arity => 'unary');
     $parser->reserve($un);
@@ -679,11 +679,11 @@ sub prefix {
 
     my $symbol = $parser->symbol($id);
     $symbol->ubp($bp);
-    $symbol->set_nud($nud || \&_nud_prefix);
+    $symbol->set_nud($nud || \&nud_prefix);
     return;
 }
 
-sub _nud_constant {
+sub nud_constant {
     my($parser, $symbol) = @_;
 
     my $c = $symbol->clone(arity => 'literal');
@@ -696,7 +696,7 @@ sub define_constant {
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
-    $symbol->set_nud(\&_nud_constant);
+    $symbol->set_nud(\&nud_constant);
     $symbol->value($value);
     return;
 }
@@ -761,7 +761,7 @@ sub define { # define a name to the scope
     $top->{$symbol->id} = $symbol;
 
     $symbol->reserved(0);
-    $symbol->set_nud(\&_nud_literal);
+    $symbol->set_nud(\&nud_literal);
     $symbol->remove_led();
     $symbol->remove_std();
     $symbol->lbp(0);
@@ -770,7 +770,7 @@ sub define { # define a name to the scope
 }
 
 
-sub _nud_function{
+sub nud_function{
     my($p, $s) = @_;
     my $f = $s->clone(arity => 'function');
     return $p->reserve($f);
@@ -781,13 +781,13 @@ sub define_function {
 
     foreach my $name(@names) {
         my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&_nud_function);
+        $symbol->set_nud(\&nud_function);
         $symbol->value($name);
     }
     return;
 }
 
-sub _nud_macro{
+sub nud_macro{
     my($p, $s) = @_;
     my $f = $s->clone(arity => 'macro');
     return $p->reserve($f);
@@ -798,7 +798,7 @@ sub define_macro {
 
     foreach my $name(@names) {
         my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&_nud_macro);
+        $symbol->set_nud(\&nud_macro);
         $symbol->value($name);
     }
     return;
@@ -866,19 +866,19 @@ sub block {
 }
 
 
-sub _nud_literal {
+sub nud_literal {
     my($parser, $symbol) = @_;
     return $symbol; # as is
 }
 
-sub _nud_paren {
+sub nud_paren {
     my($parser, $symbol) = @_;
     my $expr = $parser->expression(0);
     $parser->advance(')');
     return $expr;
 }
 
-sub _std_block {
+sub std_block {
     my($parser, $symbol) = @_;
     $parser->new_scope();
     my $a = $parser->statements();
@@ -887,7 +887,7 @@ sub _std_block {
     return $a;
 }
 
-#sub _std_var {
+#sub std_var {
 #    my($parser, $symbol) = @_;
 #    my @a;
 #    while(1) {
@@ -919,7 +919,7 @@ sub _std_block {
 
 # -> VARS { STATEMENTS }
 # ->      { STATEMENTS }
-sub _pointy {
+sub pointy {
     my($parser, $node) = @_;
 
     $parser->advance("->");
@@ -957,25 +957,25 @@ sub _pointy {
     return;
 }
 
-sub _std_for {
+sub std_for {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => 'for');
     $proc->first( $parser->expression(0) );
-    $parser->_pointy($proc);
+    $parser->pointy($proc);
     return $proc;
 }
 
-sub _std_while {
+sub std_while {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => 'while');
     $proc->first( $parser->expression(0) );
-    $parser->_pointy($proc);
+    $parser->pointy($proc);
     return $proc;
 }
 
-sub _std_proc {
+sub std_proc {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => "proc");
@@ -987,11 +987,11 @@ sub _std_proc {
     $parser->define_macro($name->id);
     $proc->first( $name->id );
     $parser->advance();
-    $parser->_pointy($proc);
+    $parser->pointy($proc);
     return $proc;
 }
 
-sub _std_if {
+sub std_if {
     my($parser, $symbol) = @_;
 
     my $if = $symbol->clone(arity => "if");
@@ -1025,7 +1025,7 @@ sub _std_if {
     return $top_if;
 }
 
-sub _std_command {
+sub std_command {
     my($parser, $symbol) = @_;
     my $args;
     if($parser->token->id ne ";") {
@@ -1074,7 +1074,7 @@ sub _get_bare_name {
     return \@parts;
 }
 
-sub _std_bare_command {
+sub std_bare_command {
     my($parser, $symbol) = @_;
 
     my $name = $parser->_get_bare_name();
@@ -1098,7 +1098,7 @@ sub _std_bare_command {
 }
 
 # markers for the compiler
-sub _std_marker {
+sub std_marker {
     my($parser, $symbol) = @_;
     $parser->advance(';');
     return $symbol->clone(arity => 'marker');
