@@ -76,6 +76,21 @@ T
     baz
 X
 
+    [<<'T', <<'X', "unless-end (true)"],
+[% UNLESS lang == "Xslate" -%]
+    ok
+[% END -%]
+T
+X
+
+    [<<'T', <<'X', "unless-end (false)"],
+[% UNLESS lang != "Xslate" -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
 );
 
 foreach my $d(@data) {

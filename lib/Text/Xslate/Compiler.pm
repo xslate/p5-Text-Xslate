@@ -522,7 +522,7 @@ sub _generate_if {
 
     return(
         @expr,
-        [ and  => scalar(@then) + 2, undef, 'if' ],
+        [ and  => scalar(@then) + 2, undef, $node->id ],
         @then,
         [ goto => scalar(@else) + 1 ],
         @else,

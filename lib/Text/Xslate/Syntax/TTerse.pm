@@ -19,6 +19,7 @@ sub define_symbols {
     $parser->symbol('IN');
 
     $parser->symbol('IF')      ->set_std(\&std_if);
+    $parser->symbol('UNLESS')  ->set_std(\&std_if);
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_command);
@@ -60,6 +61,14 @@ sub std_if {
     my $if = $symbol->clone(arity => "if");
 
     $if->first(  $parser->expression(0) );
+    if($symbol->id eq 'UNLESS') {
+        my $not_expr = $parser->symbol_class->new(
+            arity  => 'unary',
+            id     => 'not',
+            first  => $if->first,
+        );
+        $if->first($not_expr);;
+    }
     $if->second( $parser->statements() );
 
     my $t = $parser->token;
