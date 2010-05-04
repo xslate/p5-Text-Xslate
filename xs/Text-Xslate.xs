@@ -211,6 +211,7 @@ TXC(pop) {
     TX_st->pc++;
 }
 
+/* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
     ENTER;
@@ -415,7 +416,7 @@ TXC_goto(for_iter) {
 }
 
 
-/* For arithmatic operators, SvIV_please() can make stringification faster,
+/* sv_2iv(the guts of SvIV_please()) can make stringification faster,
    although I don't know why it is :)
 */
 TXC(add) {
