@@ -7,7 +7,7 @@ use warnings;
 our $VERSION = '0.1008';
 
 use parent qw(Exporter);
-our @EXPORT_OK = qw(escaped_string);
+our @EXPORT_OK = qw(escaped_string html_escape);
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
@@ -15,6 +15,7 @@ XSLoader::load(__PACKAGE__, $VERSION);
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
+    import_from
 );
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
@@ -29,6 +30,8 @@ sub new {
     my $class = shift;
     my %args  = (@_ == 1 ? %{$_[0]} : @_);
 
+    # options
+
     $args{suffix}       //= '.tx';
     $args{path}         //= [ '.' ];
     $args{cache_dir}    //= File::Spec->tmpdir;
@@ -36,11 +39,22 @@ sub new {
     $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
     $args{syntax}       //= 'Kolon'; # passed directly to the compiler
-   #$args{function}     //= {};      # see _compiler()
 
-    $args{template}       = {};
+    if(defined $args{function}) {
+        $args{function} = { %{$args{function}} };
+    }
+    else {
+        $args{function} = {};
+    }
 
-    if(exists $args{file}) {
+    if(defined $args{import}) {
+        my %funcs = import_from(@{$args{import}});
+        while(my($name, $body) = each %funcs) {
+            $args{function}{$name} = $body;
+        }
+    }
+
+    if(defined $args{file}) {
         require Carp;
         Carp::carp('"file" option makes no sense. Use render($file, \%vars) directly');
     }
@@ -48,6 +62,9 @@ sub new {
     if(!ref $args{path}) {
         $args{path} = [$args{path}];
     }
+
+    # internal data
+    $args{template}       = {};
 
     my $self = bless \%args, $class;
     $self->_load_input();
@@ -292,6 +309,20 @@ sub dump :method {
     $dd->Sortkeys(1);
     $dd->Useqq(1);
     return $dd->Dump();
+}
+
+# utility functions
+sub escaped_string;
+
+# TODO: make it into XS
+sub html_escape {
+    my($s) = @_;
+    $s =~ s/&/&amp;/g;
+    $s =~ s/</&lt;/g;
+    $s =~ s/>/&gt;/g;
+    $s =~ s/"/&quot;/g;
+    $s =~ s/'/&#39;/g;
+    return escaped_string($s);
 }
 
 1;

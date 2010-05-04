@@ -1107,7 +1107,7 @@ sub _std_marker {
 sub _error {
     my($self, $message) = @_;
 
-    Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s',
+    Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
         $self->file, $self->line+1, $message,
         $self->near_token ne ';' ? ", near '" . $self->near_token . "'" : '');
 }
