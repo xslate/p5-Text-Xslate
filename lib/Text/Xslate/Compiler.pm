@@ -93,7 +93,7 @@ has engine => (
 
 has syntax => (
     is  => 'rw',
-    isa => 'Str',
+    isa => 'Str|Object',
 
     default  => 'Kolon',
     required => 0,
@@ -108,11 +108,17 @@ has parser => (
     lazy    => 1,
     default => sub {
         my($self) = @_;
-        my $parser_class = Mouse::Util::load_first_existing_class(
-            "Text::Xslate::Syntax::" . $self->syntax,
-            $self->syntax,
-        );
-        return $parser_class->new();
+        my $syntax = $self->syntax;
+        if(ref $syntax) {
+            return $syntax;
+        }
+        else {
+            my $parser_class = Mouse::Util::load_first_existing_class(
+                "Text::Xslate::Syntax::" . $syntax,
+                $syntax,
+            );
+            return $parser_class->new();
+        }
     },
 
     required => 0,
