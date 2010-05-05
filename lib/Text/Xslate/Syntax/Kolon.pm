@@ -237,11 +237,11 @@ Output:
         My template tody!
         After body!
 
-You can also overlay templates just like Moose's roles:
+You can also cascade templates just like Moose's roles:
 
     : cascade myapp::base with myapp::role1, myapp::role2
 
-If you omit the base template, it works inside-out.
+You can omit the base template.
 
 Given a file F<myapp/hello.tx>:
 
