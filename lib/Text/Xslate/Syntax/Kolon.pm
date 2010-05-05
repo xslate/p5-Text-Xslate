@@ -277,6 +277,10 @@ Output:
     : }
     : signeture()
 
+    : macro factorial -> $x {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+
 Note that return values of macros are values that their routines renders.
 That is, macros themselves output nothing.
 
