@@ -63,9 +63,10 @@ static AV*
 tx_push_frame(pTHX_ tx_state_t* const st) {
     AV* newframe;
 
-    if(++st->current_frame > 100) {
+    if(st->current_frame > 100) {
         croak("Macro call is too deep (> 100)");
     }
+    st->current_frame++;
 
     newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
 
@@ -644,11 +645,10 @@ TXC(macro_end) {
 TXC_w_key(macro) {
     SV* const name = TX_op_arg;
     HE* he;
-    if(TX_st->macro && (he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
+    if((he = hv_fetch_ent(TX_st->macro, name, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->macro, he);
     }
-
-    if(!SvOK(TX_st_sa)) {
+    else {
         croak("Macro %s is not defined", tx_neat(aTHX_ name));
     }
 
@@ -659,7 +659,7 @@ TXC_w_key(function) {
     SV* const name = TX_op_arg;
     HE* he;
 
-    if(TX_st->function && (he = hv_fetch_ent(TX_st->function, name, FALSE, 0U))) {
+    if((he = hv_fetch_ent(TX_st->function, name, FALSE, 0U))) {
         TX_st_sa = hv_iterval(TX_st->function, he);
     }
     else {
@@ -760,9 +760,10 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
         CvXSUBANY((CV*)SvRV(eh)).any_ptr = &st;
     }
 
-    if(++MY_CXT.depth > 100) {
+    if(MY_CXT.depth > 100) {
         croak("Execution is too deep (> 100)");
     }
+    MY_CXT.depth++;
 
     while(st.pc < code_len) {
 #ifdef DEBUGGING
@@ -1097,9 +1098,9 @@ CODE:
             st.function = (HV*)SvRV(*svp);
             SvREFCNT_inc_simple_void_NN(st.function);
         }
-        else {
-            croak("Function table must be a HASH reference");
-        }
+    }
+    if(!st.function) {
+        croak("Function table must be a HASH reference");
     }
 
     tmpl = newAV();
@@ -1127,6 +1128,8 @@ CODE:
     sv_rvweaken(st.self);
 
     st.hint_size = 64;
+
+    st.macro    = newHV();
 
     st.sa       = &PL_sv_undef;
     st.sb       = &PL_sv_undef;
@@ -1209,10 +1212,6 @@ CODE:
 
             /* special cases */
             if(opnum == TXOP_macro_begin) {
-                if(!st.macro) {
-                    st.macro = newHV();
-                    ((tx_state_t*)mg->mg_ptr)->macro = st.macro;
-                }
                 (void)hv_store_ent(st.macro, st.code[i].arg, newSViv(i), 0U);
             }
             else if(opnum == TXOP_depend) {
@@ -1240,7 +1239,8 @@ CODE:
     }
 
     if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
-        croak("Xslate: Template variables must be a HASH reference");
+        croak("Xslate: Template variables must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
     }
     st = tx_load_template(aTHX_ self, name);
 
@@ -1271,10 +1271,10 @@ new(SV* klass, SV* str)
 CODE:
 {
     if(SvROK(klass)) {
-        croak("Cannot call %s->new as an instance method", TX_ESC_CLASS);
+        croak("You cannot call %s->new() as an instance method", TX_ESC_CLASS);
     }
     if(strNE(SvPV_nolen_const(klass), TX_ESC_CLASS)) {
-        croak("You cannot use a subclass from %s as a escaped string", TX_ESC_CLASS);
+        croak("You cannot extend %s", TX_ESC_CLASS);
     }
     ST(0) = tx_escaped_string(aTHX_ str);
     XSRETURN(1);
@@ -1286,7 +1286,7 @@ OVERLOAD: \"\"
 CODE:
 {
     if(!( SvROK(self) && SvOK(SvRV(self))) ) {
-        croak("Cannot call %s->as_string as a class method", TX_ESC_CLASS);
+        croak("You cannot call %s->as_string() as a class method", TX_ESC_CLASS);
     }
     ST(0) = SvRV(self);
     XSRETURN(1);

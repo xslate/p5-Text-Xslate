@@ -52,7 +52,7 @@ my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
-has symbol_table => (
+has symbol_table => ( # the global symbol table
     is  => 'ro',
     isa => 'HashRef',
 
@@ -65,6 +65,9 @@ has scope => (
     is  => 'rw',
     isa => 'ArrayRef[HashRef]',
 
+    clearer => 'init_scope',
+
+    lazy    => 1,
     default => sub{ [ {} ] },
 
     init_arg => undef,
@@ -312,6 +315,9 @@ sub parse {
     $parser->file( $args{file} // '<input>' );
     $parser->line( $args{line} // 0 );
     $parser->near_token('(start)');
+    $parser->init_scope();
+
+    local $parser->{symbol_table} = { %{ $parser->symbol_table } };
 
     $parser->input( $parser->preprocess($input) );
 
@@ -321,6 +327,7 @@ sub parse {
         $parser->_error("Syntax error");
     }
     $parser->near_token(undef);
+
     return $ast;
 }
 

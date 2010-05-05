@@ -84,11 +84,51 @@ T
 [FOO][BAR]
 X
 
+    [ <<'T', { }, <<'X', "nexted multi call" ],
+: macro foo ->($x) {
+:   "[" ~ $x  ~ "]"
+: }
+<: foo(foo("FOO") ~ foo("BAR")) :>
+T
+[[FOO][BAR]]
+X
+
+    [ <<'T', { }, <<'X', "recursion" ],
+    : macro factorial ->($x) {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+    <: factorial(0) :>
+    <: factorial(1) :>
+    <: factorial(2) :>
+    <: factorial(3) :>
+T
+    1
+    1
+    2
+    6
+X
+
 );
 
 foreach my $d(@set) {
     my($in, $vars, $out, $msg) = @$d;
     is $tx->render_string($in, $vars), $out, $msg or diag $in;
 }
+
+eval {
+    $tx->render_string('<: foo("x") :>', {});
+};
+like $@, qr/\b foo \b/xms, "don't affect the parser";
+
+eval {
+    $tx->render_string(<<'T', {});
+    : macro factorial ->($x) {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+    : factorial(1_000_000)
+T
+};
+like $@, qr/too deep/, 'deep recursion';
+like $@, qr/\b factorial \b/xms;
 
 done_testing;
