@@ -624,7 +624,6 @@ sub _generate_binary {
                 [ $bin{$_}   => undef ];
 
             if($_ ~~ [qw(min max)]) {
-                # swap operands before comparison
                 splice @code, -1, 0,
                     [save_to_lvar => $self->lvar_id ]; # save lhs
                 push @code,
