@@ -47,6 +47,28 @@ T
         BAZ
 X
 
+    [<<'T', { value => undef }, <<'X'],
+: given $value {
+:    when 0 {
+        ZERO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        BAZ
+X
+
+    [<<'T', { value => undef }, <<'X', 'default only'],
+: given $value {
+:    default {
+        BAZ
+:    }
+: }
+T
+        BAZ
+X
 );
 
 foreach my $d(@set) {

@@ -1112,7 +1112,12 @@ sub std_given {
         }
     }
     if(defined $else) {
-        $elsif->third([$else]);
+        if(defined $elsif) {
+            $elsif->third([$else]);
+        }
+        else {
+            $if = $else; # only default
+        }
     }
     $proc->third([$if]);
     return $proc;
