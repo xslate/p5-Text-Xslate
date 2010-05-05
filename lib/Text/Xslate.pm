@@ -424,7 +424,7 @@ alternative.
 
 Creates a new xslate template engine.
 
-Possible options ares:
+Possible options are:
 
 =over
 
@@ -470,7 +470,7 @@ For example:
     # => $VAR = [42]
 
 You can use function based modules with the C<import> option and invoke
-object methods in templates. Thus, Xslate has no namespaces for plugins.
+object methods in templates. Thus, Xslate doesn't require namespaces for plugins.
 
 =item C<< input_layer => $perliolayers // ":utf8" >>
 
@@ -478,7 +478,7 @@ Specifies PerlIO layers for reading templates.
 
 =item C<< syntax => $moniker >>
 
-Specifies the template syntax.
+Specifies the template syntax you use.
 
 If I<$moniker> is undefined, the default parser will be used.
 
@@ -582,7 +582,7 @@ Perl 5.10.0 or later, and a C compiler.
 
 All complex software has bugs lurking in it, and this module is no
 exception. If you find a bug please either email me, or add the bug
-to cpan-RT.  Patches are welcome :)
+to cpan-RT. Patches are welcome :)
 
 =head1 SEE ALSO
 
@@ -607,6 +607,8 @@ L<Template-Toolkit>
 L<HTML::Template>
 
 L<HTML::Template::Pro>
+
+L<Template::Alloy>
 
 Benchmarks:
 

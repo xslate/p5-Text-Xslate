@@ -410,7 +410,7 @@ TXC_goto(for_iter) {
     /* the loop finished */
     sv_setsv(item,  &PL_sv_undef);
     sv_setsv(avref, &PL_sv_undef);
-    /* don't need to clear the iterator, it's only an integer */
+    /* no need to clear the iterator, it's only an integer */
 
     TX_st->pc = SvUVX(TX_op_arg); /* goto */
 }
