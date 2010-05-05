@@ -329,8 +329,7 @@ sub parse {
     my $ast = $parser->statements();
 
     if($parser->input ne '') {
-        $parser->near_token($parser->token);
-        $parser->_error("Syntax error");
+        $parser->_error("Syntax error", $parser->token);
     }
     $parser->near_token(undef);
 
@@ -610,8 +609,7 @@ sub infixr {
 sub led_assignment {
     my($parser, $symbol, $left) = @_;
 
-    $parser->near_token($left);
-    $parser->_error("Assignment ($symbol) is forbidden");
+    $parser->_error("Assignment ($symbol) is forbidden", $left);
 }
 
 sub assignment {
@@ -1178,11 +1176,12 @@ sub std_marker {
 }
 
 sub _error {
-    my($self, $message) = @_;
+    my($self, $message, $near) = @_;
 
+    $near //= $self->near_token;
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
         $self->file, $self->line+1, $message,
-        $self->near_token ne ';' ? ", near '" . $self->near_token . "'" : '');
+        $near ne ';' ? ", near '$near'" : '');
 }
 
 no Mouse;

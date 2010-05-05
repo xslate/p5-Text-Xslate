@@ -150,7 +150,7 @@ sub compile {
     my $cascade = $self->cascade;
     if(defined $cascade) {
         my $engine = $self->engine
-            // $self->_error($cascade, "Cannot cascade templates without Xslate engine");
+            // $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 
         my @components = map{ $self->_bare_to_file($_) } @{$cascade->second};
 
@@ -284,9 +284,10 @@ sub _process_cascade {
         #warn "macro ", $name, "\n";
 
         if(exists $mtable->{$name}) {
-            $self->_error($mtable->{$name}{line},
+            $self->_error(
                 "Redefinition of macro/block $name in " . $base_file
                 . " (you must use before/around/after to override macros/blocks)",
+                $mtable->{$name}{line}
             );
         }
 
@@ -354,7 +355,7 @@ sub _generate_command {
         }
     }
     if(!@code) {
-        $self->_error($node, "$node requires at least one argument");
+        $self->_error("$node requires at least one argument", $node);
     }
     return @code;
 }
@@ -374,7 +375,7 @@ sub _bare_to_file {
 sub _generate_cascade {
     my($self, $node) = @_;
     if(defined $self->cascade) {
-        $self->_error($node, "Cannot cascade twice in a template");
+        $self->_error("Cannot cascade twice in a template", $node);
     }
     $self->cascade( $node );
     return ();
@@ -387,7 +388,7 @@ sub _generate_for {
     my $block = $node->third;
 
     if(@{$vars} != 1) {
-        $self->_error($node, "A for-loop requires single variable for each items");
+        $self->_error("A for-loop requires single variable for each items", $node);
     }
     my @code = $self->_generate_expr($expr);
 
@@ -420,7 +421,7 @@ sub _generate_while {
     my $block = $node->third;
 
     if(@{$vars} > 1) {
-        $self->_error($node, "A while-loop requires one or zero variable for each items");
+        $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
     my @code = $self->_generate_expr($expr);
 
@@ -478,7 +479,7 @@ sub _generate_proc { # block, before, around, after
 
     if($type ~~ [qw(macro block)]) {
         if(exists $self->macro_table->{$name}) {
-            $self->_error($node, "Redefinition of $type $name is found");
+            $self->_error("Redefinition of $type $name is found", $node);
         }
         $self->macro_table->{$name} = \%macro;
         if($type eq 'block') {
@@ -570,7 +571,7 @@ sub _generate_unary {
                 [ $unary{$_} => () ];
         }
         default {
-            $self->_error($node, "Unary operator $_ is not implemented");
+            $self->_error("Unary operator $_ is not implemented", $node);
         }
     }
 }
@@ -616,7 +617,7 @@ sub _generate_binary {
                 @right;
         }
         default {
-            $self->_error($node, "Binary operator $_ is not yet implemented");
+            $self->_error("Binary operator $_ is not implemented", $node);
         }
     }
     return;
@@ -843,7 +844,7 @@ sub as_assembly {
 }
 
 sub _error {
-    my($self, $node, $message) = @_;
+    my($self, $message, $node) = @_;
 
     my $line = ref($node) ? $node->line : $node;
     Carp::croak(sprintf 'Xslate::Compiler(%s:%d): %s', $self->file, $line, $message);
