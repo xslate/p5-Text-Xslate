@@ -8,6 +8,15 @@ use Text::Xslate;
 my $tx = Text::Xslate->new();
 
 my @set = (
+    [<<'T', {lang => 'Xslate'}, <<'X', 'empty block'],
+    A
+    : block foo -> { }
+    B
+T
+    A
+    B
+X
+
     [<<'T', {lang => 'Xslate'}, <<'X', 'template with a block'],
     A
     : block foo -> {

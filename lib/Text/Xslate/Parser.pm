@@ -52,6 +52,8 @@ my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
+our $in_given;
+
 has symbol_table => ( # the global symbol table
     is  => 'ro',
     isa => 'HashRef',
@@ -75,7 +77,7 @@ has scope => (
 
 has token => (
     is  => 'rw',
-    isa => 'Object',
+    isa => 'Maybe[Object]',
 
     init_arg => undef,
 );
@@ -315,13 +317,17 @@ sub parse {
     $parser->file( $args{file} // '<input>' );
     $parser->line( $args{line} // 0 );
     $parser->near_token('(start)');
+    $parser->token(undef);
     $parser->init_scope();
+
+    local $in_given = 0;
 
     local $parser->{symbol_table} = { %{ $parser->symbol_table } };
 
     $parser->input( $parser->preprocess($input) );
 
     my $ast = $parser->statements();
+
     if($parser->input ne '') {
         $parser->near_token($parser->token);
         $parser->_error("Syntax error");
@@ -446,6 +452,9 @@ sub define_symbols {
     $parser->symbol('if')       ->set_std(\&std_if);
     $parser->symbol('for')      ->set_std(\&std_for);
     $parser->symbol('while' )   ->set_std(\&std_while);
+    $parser->symbol('given')    ->set_std(\&std_given);
+    $parser->symbol('when')     ->set_std(\&std_when);
+    $parser->symbol('default')  ->set_std(\&std_when);
 
     $parser->symbol('include')  ->set_std(\&std_command);
 
@@ -864,18 +873,18 @@ sub statements { # process statements
     my($parser) = @_;
     my @a;
 
-    $parser->advance();
-    while(1) {
-        my $t = $parser->token;
-        if($t->is_end) {
-            last;
-        }
+    my $t = $parser->token;
+    if(defined $t && $t->is_end) {
+        return \@a;
+    }
 
+    $t = $parser->advance();
+    while(!$t->is_end) {
         push @a, $parser->statement();
+        $t = $parser->token;
     }
 
     return \@a;
-    #return @a == 1 ? $a[0] : \@a;
 }
 
 sub block {
@@ -884,7 +893,6 @@ sub block {
     $parser->advance("{");
     return $t->std($parser);
 }
-
 
 sub nud_literal {
     my($parser, $symbol) = @_;
@@ -939,33 +947,36 @@ sub std_block {
 
 # -> VARS { STATEMENTS }
 # ->      { STATEMENTS }
+#         { STATEMENTS }
 sub pointy {
     my($parser, $node) = @_;
 
-    $parser->advance("->");
+    my @vars;
 
     $parser->new_scope();
-    my @vars;
-    if($parser->token->id ne "{") {
-        my $paren = ($parser->token->id eq "(");
+    if($parser->token->id eq "->") {
+        $parser->advance("->");
+        if($parser->token->id ne "{") {
+            my $paren = ($parser->token->id eq "(");
 
-        $parser->advance("(") if $paren;
+            $parser->advance("(") if $paren;
 
-        my $t = $parser->token;
-        while($t->arity eq "variable") {
-            push @vars, $t;
-            $parser->define($t);
-            $t = $parser->advance();
+            my $t = $parser->token;
+            while($t->arity eq "variable") {
+                push @vars, $t;
+                $parser->define($t);
+                $t = $parser->advance();
 
-            if($t->id eq ",") {
-                $t = $parser->advance(); # ","
+                if($t->id eq ",") {
+                    $t = $parser->advance(); # ","
+                }
+                else {
+                    last;
+                }
             }
-            else {
-                last;
-            }
+
+            $parser->advance(")") if $paren;
         }
-
-        $parser->advance(")") if $paren;
     }
     $node->second( \@vars );
 
@@ -992,6 +1003,45 @@ sub std_while {
     my $proc = $symbol->clone(arity => 'while');
     $proc->first( $parser->expression(0) );
     $parser->pointy($proc);
+    return $proc;
+}
+
+sub std_given {
+    my($parser, $symbol) = @_;
+
+    my $proc = $symbol->clone(arity => 'given');
+    $proc->first( $parser->expression(0) );
+
+    local $in_given = 1;
+    $parser->pointy($proc);
+
+    foreach my $stmt(@{$parser->third}) {
+        print $stmt, "\n";
+    }
+    return $proc;
+}
+
+# when/default
+sub std_when {
+    my($parser, $symbol) = @_;
+
+    if(!$in_given) {
+        $parser->_error("You cannot use $symbol blocks outside given blocks");
+    }
+
+    my $proc = $symbol->clone(arity => 'when');
+    if($proc->id eq "when") {
+        $proc->first( $parser->expression(0) );
+
+    }
+    else {
+        my $true = $parser->symbol_class->new(
+            arity => 'literal',
+            value => 1,
+        );
+        $proc->first($true);
+    }
+    $proc->second( $parser->block() );
     return $proc;
 }
 
