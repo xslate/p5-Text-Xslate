@@ -346,6 +346,7 @@ sub _define_basic_symbols {
     $parser->symbol('(end)')->is_end(1); # EOF
 
     $parser->symbol('(name)');
+
     my $s = $parser->symbol('(variable)');
     $s->arity('variable');
     $s->set_nud(\&nud_literal);
@@ -353,16 +354,28 @@ sub _define_basic_symbols {
     $parser->symbol('(literal)')->set_nud(\&nud_literal);
 
     $parser->symbol(';');
+    $parser->symbol('(');
+    $parser->symbol(')');
+    $parser->symbol(',');
 
-    # basic commands
+    # common commands
     $parser->symbol('print')    ->set_std(\&std_command);
     $parser->symbol('print_raw')->set_std(\&std_command);
+
+    # common constants
+    $parser->define_constant('nil', undef);
 
     return;
 }
 
 sub define_basic_operators {
     my($parser) = @_;
+
+    $parser->infix('(', 256, \&led_call);
+    $parser->infix('.', 256, \&led_dot);
+    $parser->infix('[', 256, \&led_fetch);
+
+    $parser->prefix('(', 200, \&nud_paren);
 
     $parser->prefix('!', 200);
     $parser->prefix('+', 200);
@@ -417,9 +430,7 @@ sub define_basic_operators {
 sub define_symbols {
     my($parser) = @_;
 
-    # separators
-    $parser->symbol(',');
-    $parser->symbol(')');
+    # syntax specific separators
     $parser->symbol(']');
     $parser->symbol('}')->is_end(1); # block end
     $parser->symbol('->');
@@ -429,15 +440,6 @@ sub define_symbols {
 
     # operators
     $parser->define_basic_operators();
-
-    $parser->infix('.', 256, \&led_dot);
-    $parser->infix('[', 256, \&led_fetch);
-    $parser->infix('(', 256, \&led_call);
-
-    $parser->prefix('(', 200, \&nud_paren);
-
-    # constants
-    $parser->define_constant('nil', undef);
 
     # statements
     $parser->symbol('{')        ->set_std(\&std_block);
@@ -622,15 +624,25 @@ sub led_ternary {
     return $cond;
 }
 
+sub is_valid_field {
+    my($parser, $token) = @_;
+    given($token->arity) {
+        when("name") {
+            return 1;
+        }
+        when("literal") {
+            return Mouse::Util::TypeConstraints::Int($token->id);
+        }
+    }
+    return 0;
+}
+
 sub led_dot {
     my($parser, $symbol, $left) = @_;
 
     my $t = $parser->token;
-    if($t->arity ne "name") {
-        if(!($t->arity eq "literal"
-                && Mouse::Util::TypeConstraints::Int($t->id))) {
-            $parser->_error("Expected a field name but $t");
-        }
+    if(!$parser->is_valid_field($t)) {
+        $parser->_error("Expected a field name but $_ ($t)");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -638,9 +650,9 @@ sub led_dot {
     $dot->first($left);
     $dot->second($t->clone(arity => 'literal'));
 
-    $parser->advance();
+    $t = $parser->advance();
 
-    if($parser->token->id eq "(") {
+    if($t->id eq "(") {
         $parser->advance(); # "("
         $dot->third( $parser->expression_list() );
         $parser->advance(")");

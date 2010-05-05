@@ -33,7 +33,12 @@ Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line c
 
 =head2 Variable access
 
+Variable access:
+
     <: $var :>
+
+Field access:
+
     <: $var.0 :>
     <: $var.field :>
     <: $var.accessor :>
@@ -47,8 +52,8 @@ C<< $obj["accessor"] >> syntax may be call object methods.
 
 If I<$var> is an object instance, you can call its methods.
 
-    <: $var.foo() :>
-    <: $var.foo(1, 2, 3) :>
+    <: $var.method() :>
+    <: $var.method(1, 2, 3) :>
 
 =head2 Loops
 
