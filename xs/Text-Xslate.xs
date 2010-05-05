@@ -776,7 +776,7 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
 #endif
     }
 
-    /* clear temporary storages */
+    /* clear temporary buffers */
     sv_setsv(st.targ, &PL_sv_undef);
 
     base->hint_size = SvCUR(st.output);
