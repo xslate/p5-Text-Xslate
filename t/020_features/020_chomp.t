@@ -2,9 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     [<<'T', "A[foo]\nB\n", "prechomp(1)"],
@@ -48,12 +48,8 @@ T
 
 foreach my $pair(@data) {
     my($in, $out, $msg) = @$pair;
-
-    my $x = $tx->compile_str($in);
-
     my %vars = (lang => 'Xslate', foo => "<bar>");
-
-    is $x->render(\%vars), $out, $msg;
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

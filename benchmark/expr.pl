@@ -15,9 +15,8 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 100;
 
-my $x = Text::Xslate->new(
-    string => "Hello, <:=  \$value + 1 :> world!\n" x $n,
-);
+my $tx = Text::Xslate->new();
+$tx->load_string("Hello, <:=  \$value + 1 :> world!\n" x $n);
 
 my $mt = build_mt(qq{Hello, <?= \$_[0]->{value} + 1 ?> world!\n} x $n);
 
@@ -29,17 +28,17 @@ my $vars = {
 
 {
     plan tests => 2;
-    is $mt->($vars), $x->render(undef, $vars), 'MT';
+    is $mt->($vars), $tx->render(undef, $vars), 'MT';
 
     my $body = [$subst_tmpl];
     $body->[0] =~ s/%(\w+)%/ $vars->{$1} + 1 /eg;
-    is $body->[0], $x->render(undef, $vars), 's///g';
+    is $body->[0], $tx->render(undef, $vars), 's///g';
 }
 # suppose PSGI response body
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render(undef, $vars)];
+        my $body = [$tx->render(undef, $vars)];
         return;
     },
     mt => sub {

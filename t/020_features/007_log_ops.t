@@ -2,11 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-#use Data::Dumper; $Data::Dumper::Indent = 1;
-
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     ['<:= $value10 == 10 ? 3 : 5 :>', 3],
@@ -68,14 +66,12 @@ my @data = (
 
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         value0  =>  0,
         value10 => 10,
         value20 => 20,
     );
-    is $x->render(\%vars), $out, $in;
+    is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
 done_testing;

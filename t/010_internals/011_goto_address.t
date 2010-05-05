@@ -4,11 +4,11 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
 #use Data::Dumper; $Data::Dumper::Indent = 1;
 
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     [<<'T', "    [foo]\n" . "    [foo]\n"],
@@ -75,16 +75,14 @@ T
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         value => 'foo',
     );
     #use Data::Dumper; $Data::Dumper::Useqq = 1;
     #is Dumper($x->render(\%vars)), Dumper($out);
-    is $x->render(\%vars), $out or do {
+    is $tx->render_string($in, \%vars), $out or do {
         require Data::Dumper;
-        diag( Data::Dumper->new([$x->render(\%vars)])->Useqq(1)->Dump );
+        diag( Data::Dumper->new([$tx->render(\%vars)])->Useqq(1)->Dump );
     };
 }
 

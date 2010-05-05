@@ -2,9 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     ['<:= $var[ $foo && "bar" ] :>', 'BAR'],
@@ -31,8 +31,6 @@ my @data = (
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         var => { foo => 'FOO', bar => 'BAR', baz => "BAZ" },
 
@@ -41,8 +39,7 @@ foreach my $pair(@data) {
         foo => 'foo',
     );
 
-    is $x->render(\%vars), $out, 'first:' . $in;
-    is $x->render(\%vars), $out, 'second';
+    is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
 done_testing;

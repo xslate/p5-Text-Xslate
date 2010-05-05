@@ -1,123 +1,115 @@
 #!perl -w
 
 use strict;
-use if $] == 5.010_000, 'Test::More', 'skip_all' => '5.10.0 has a bug about weak refs';
-use if $] != 5.010_001, 'Test::More', 'skip_all' => '(something is wrong; todo)';
+
+#use if $] == 5.010_000, 'Test::More', 'skip_all' => '5.10.0 has a bug about weak refs';
+#use if $] != 5.010_001, 'Test::More', 'skip_all' => '(something is wrong; todo)';
 
 use Test::Requires qw(Test::LeakTrace);
 use Test::More;
 use Text::Xslate;
-use Text::Xslate::Compiler;
+use t::lib::Util;
 
-my $txc = Text::Xslate::Compiler->new();
+my %vars = (
+    lang  => 'Perl',
+    my    => { lang => 'Xslate' },
+    data  => [ { title => 'foo' }, { title => 'bar' } ],
+    value => 32,
+);
 
-$txc->define_constant(uc => sub{ uc $_[0] });
+if(0) { # TODO
+    no_leaks_ok {
+        my $tx  = Text::Xslate->new(path => [path], cache => 0);
+        my $out = $tx->render('hello.tx', \%vars);
+        $out eq "Hello, Perl world!\n" or die "Error: [$out]";
+    } "new() and render()" or die;
+}
 
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
+my @set = (
+    [<<'T', <<'X', 'interpolate'],
         Hello, <:= $my.lang :> world!
-TX
-} "new";
-
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
-        Hello, <:= $my.lang :> world!
-TX
-
-    my $text = $x->render({ my => { lang => 'Xslate' } });
-    $text eq <<'TEXT' or die "render() failed: $text";
+T
         Hello, Xslate world!
-TEXT
-} "render (interpolate)";
+X
 
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
+    [<<'T', <<'X', 'for'],
         : for $data -> ($item) {
             [<:= $item.title :>]
         : }
-TX
-
-    my $text = $x->render({ data => [ { title => 'foo' }, { title => 'bar' } ] });
-    $text eq <<'TEXT' or die "render() failed: $text";
+T
             [foo]
             [bar]
-TEXT
-} "render (for)";
+X
 
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
+    [<<'T', <<'X', 'expr'],
         <:= ($value + 10) * 2 :>
-TX
-    my $text = $x->render({ value => 11 });
-    $text eq <<'TEXT' or die "render() failed: $text";
-        42
-TEXT
+T
+        84
+X
 
-    $x = $txc->compile_str(<<'TX');
+    [<<'T', <<'X', 'expr'],
         <:= ($value - 10) / 2 :>
-TX
-    $text = $x->render({ value => 32 });
-    $text eq <<'TEXT' or die "render() failed: $text";
+T
         11
-TEXT
+X
 
-    $x = $txc->compile_str(<<'TX');
+    [<<'T', <<'X', 'expr'],
         <:= $value % 2 :>
-TX
-    $text = $x->render({ value => 32 });
-    $text eq <<'TEXT' or die "render() failed: $text";
+T
         0
-TEXT
+X
 
-} "render (expr)";
-
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
-        <:= "|" ~ $value ~ "|" :>
-TX
-
-    my $text = $x->render({ value => 'Xslate' });
-    $text eq <<'TEXT' or die "render() failed: $text";
+    [<<'T', <<'X', 'expr'],
+        <:= "|" ~ $my.lang ~ "|" :>
+T
         |Xslate|
-TEXT
-} "render (concat)";
+X
 
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
-        <:= $value > 10 ? "> 10" : "<= 10" :>
-TX
+    [<<'T', <<'X', 'expr'],
+        <:= $value > 10 ? "larger than 10" : "equal or smaller than 10" :>
+T
+        larger than 10
+X
 
-    my $text = $x->render({ value => 10 });
-    $text eq <<'TEXT' or die "render() failed: $text";
-        &lt;= 10
-TEXT
-
-    $text = $x->render({ value => 11 });
-    $text eq <<'TEXT' or die "render() failed: $text";
-        &gt; 10
-TEXT
-} "render (ternary)";
-
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
-        <:= $value | uc :>
-TX
-
-    my $text = $x->render({ value => 'Xslate' });
-    $text eq <<'TEXT' or die "render() failed: $text";
+    [<<'T', <<'X', 'filter'],
+        <:= $my.lang | uc :>
+T
         XSLATE
-TEXT
-} "render (filter)";
+X
 
-no_leaks_ok {
-    my $x = $txc->compile_str(<<'TX');
-        <:= uc($value) :>
-TX
-
-    my $text = $x->render({ value => 'Xslate' });
-    $text eq <<'TEXT' or die "render() failed: $text";
+    [<<'T', <<'X', 'funcall'],
+        <:= uc($my.lang) :>
+T
         XSLATE
-TEXT
-} "render (call)";
+X
+
+    [<<'T', <<'X', 'block'],
+    : block hello -> {
+        Hello, <: $my.lang :> world!
+    : }
+T
+        Hello, Xslate world!
+X
+
+);
+
+my $tx = Text::Xslate->new(
+    path     => [path],
+    cache    => 0,
+    function => {
+        uc => sub { uc $_[0] },
+    },
+);
+foreach my $d(@set) {
+    my($in, $out, $msg) = @$d;
+
+    $tx->load_string($in);
+
+    no_leaks_ok {
+        my $o = $tx->render(undef, \%vars);
+
+        $o eq $out or die "Error:\n[$o]\n[$out]";
+    } $msg;
+}
 
 done_testing;

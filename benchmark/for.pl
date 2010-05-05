@@ -15,7 +15,8 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro)){
 
 my $n = shift(@ARGV) || 10;
 
-my $x = Text::Xslate->new(string => <<'TX_END');
+my $tx = Text::Xslate->new();
+$tx->load_string(<<'TX_END');
 <ul>
 : for $books ->($item) {
     <li><:= $item.title :></li>
@@ -61,14 +62,14 @@ my %vars = (
      ) x $n],
 );
 
-$x->render(undef, \%vars) eq $mt->(\%vars) or die $x->render(\%vars);
+$tx->render(undef, \%vars) eq $mt->(\%vars) or die $tx->render(\%vars);
 
 #$ht->param(\%vars);die $ht->output();
 
 # suppose PSGI response body
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render(undef, \%vars)];
+        my $body = [$tx->render(undef, \%vars)];
         return;
     },
     mt => sub {

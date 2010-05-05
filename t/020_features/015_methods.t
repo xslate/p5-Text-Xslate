@@ -2,11 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-#use Data::Dumper; $Data::Dumper::Indent = 1;
-
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 {
     package Obj;
@@ -50,12 +48,10 @@ X
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         obj => Obj->new,
     );
-    is $x->render(\%vars), $out, $msg;
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

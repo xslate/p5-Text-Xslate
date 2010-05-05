@@ -2,10 +2,10 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 use Data::Dumper;
 
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     ['Hello, world!' => 'Hello, world!'],
@@ -37,13 +37,10 @@ my @data = (
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (lang => 'Xslate', foo => "<bar>");
 
     my $vars_str = Dumper(\%vars);
-    is $x->render(\%vars), $out, 'first';
-    is $x->render(\%vars), $out, 'second';
+    is $tx->render_string($in, \%vars), $out or diag $in;
 
     is Dumper(\%vars), $vars_str, 'vars are not changed';
 }

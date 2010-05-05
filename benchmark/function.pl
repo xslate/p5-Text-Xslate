@@ -14,10 +14,10 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 100;
 
-my $x = Text::Xslate->new(
-    string => "Hello, <:= \$lang | uc :> world!\n" x $n,
+my $tx = Text::Xslate->new(
     function => { uc => sub{ uc($_[0]) } },
 );
+$tx->load_string("Hello, <:= \$lang | uc :> world!\n" x $n);
 
 my $mt = build_mt("Hello, <?= uc(\$_[0]->{lang}) ?> world!\n" x $n);
 
@@ -27,13 +27,13 @@ my $vars = {
     lang => 'Template',
 };
 
-$x->render(undef, $vars) eq $mt->($vars) or die $x->render($vars);
+$tx->render(undef, $vars) eq $mt->($vars) or die $tx->render($vars);
 
 # suppose PSGI response body
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render(undef, $vars)];
+        my $body = [$tx->render(undef, $vars)];
         return;
     },
     mt => sub {

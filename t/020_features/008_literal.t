@@ -2,11 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-#use Data::Dumper; $Data::Dumper::Indent = 1;
-
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 my @data = (
     [ '<: "foo" :>',    "foo"],
@@ -32,9 +30,8 @@ my @data = (
 
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
-
-    my $x = $tx->compile_str($in);
-    is $x->render({}), $out, $in;
+    my %vars;
+    is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
 done_testing;

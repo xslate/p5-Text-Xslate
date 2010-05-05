@@ -3,18 +3,18 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
+use Text::Xslate::Parser;
 
-
-my $c = Text::Xslate::Compiler->new(
-    parser => Text::Xslate::Parser->new(
-        line_start => undef,
-        tag_start  => qr/\Q[%/xms,
-        tag_end    => qr/\Q%]/xms,
-    ),
+my $myparser = Text::Xslate::Parser->new(
+    line_start => undef,
+    tag_start  => qr/\Q[%/xms,
+    tag_end    => qr/\Q%]/xms,
 );
 
-isa_ok $c, 'Text::Xslate::Compiler';
+my $tx = Text::Xslate->new(
+    syntax => $myparser,
+);
 
 my @data = (
     ['Hello, [%= $lang %] world!' => 'Hello, Xslate world!'],
@@ -33,12 +33,9 @@ my @data = (
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my $x = $c->compile_str($in);
-
     my %vars = (lang => 'Xslate', foo => "<bar>");
 
-    $in =~ s/\n/\\n/g;
-    is $x->render(\%vars), $out, $in;
+    is $tx->render_string($in, \%vars), $out, $in;
 }
 
 done_testing;

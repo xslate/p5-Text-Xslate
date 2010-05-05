@@ -2,11 +2,9 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Compiler;
+use Text::Xslate;
 
-#use Data::Dumper; $Data::Dumper::Indent = 1;
-
-my $tx = Text::Xslate::Compiler->new();
+my $tx = Text::Xslate->new();
 
 {
     package ResultSet;
@@ -97,8 +95,6 @@ X
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
 
-    my $x = $tx->compile_str($in);
-
     my %vars = (
         empty => ResultSet->new(data => []),
         foo => ResultSet->new(data => [1 .. 5]),
@@ -109,7 +105,7 @@ foreach my $d(@data) {
         ]),
         x => 42
     );
-    is $x->render(\%vars), $out, $msg;
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

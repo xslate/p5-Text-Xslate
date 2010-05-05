@@ -63,7 +63,7 @@ my @set = (
 
 foreach my $d(@set) {
     my($in, $vars, $out) = @$d;
-    is $tx->render_string($in, $vars), $out, $in or die;
+    is $tx->render_string($in, $vars), $out or diag $in;
 }
 
 done_testing;

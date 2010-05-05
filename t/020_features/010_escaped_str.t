@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 
-use Text::Xslate qw(escaped_string);
+use Text::Xslate qw(escaped_string html_escape);
 
 my $tx = Text::Xslate->new();
 
@@ -34,10 +34,13 @@ X
 
 foreach my $d(@set) {
     my($in, $vars, $out, $msg) = @$d;
-    is $tx->render_string($in, $vars), $out, $msg || $in;
+    is $tx->render_string($in, $vars), $out, $msg or diag $in;
 }
 
-is escaped_string('&lt;Xslate&gt;'), '&lt;Xslate&gt;', "escaped strings can be stringified";
+is     escaped_string('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "escaped strings can be stringified";
 cmp_ok escaped_string('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "escaped strings are comparable";
+
+is html_escape('<Xslate>'), '&lt;Xslate&gt;', 'html_escape()';
+is html_escape(html_escape('<Xslate>')), '&lt;Xslate&gt;', 'nesting html_escape()';
 
 done_testing;
