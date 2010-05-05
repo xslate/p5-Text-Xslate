@@ -1070,12 +1070,15 @@ sub std_given {
         ]);
     }
 
-    my $top_if;
-    my $current_if;
+    # make if-elsif-else from given-when
+    my $if;
+    my $elsif;
+    my $else;
     foreach my $when(@{$proc->third}) {
         if($when->arity ne "when") {
             $parser->_error("Expected when blocks", $when);
         }
+        $when->arity("if");
 
         if(defined $when->first) {
             if($when->first->arity ne "literal") {
@@ -1089,25 +1092,29 @@ sub std_given {
             );
             $when->first($eq);
         }
-        else {
+        else { # default
             my $true = $c->new(
                 id    => 1,
                 arity => 'literal',
             );
             $when->first($true);
+            $else = $when;
+            next;
         }
-        $when->arity("if");
 
-        if(!defined $top_if) {
-            $top_if     = $when;
-            $current_if = $when;
+        if(!defined $if) {
+            $if    = $when;
+            $elsif = $when;
         }
         else {
-            $current_if->third([$when]);
-            $current_if = $when;
+            $elsif->third([$when]);
+            $elsif = $when;
         }
     }
-    $proc->third([$top_if]);
+    if(defined $else) {
+        $elsif->third([$else]);
+    }
+    $proc->third([$if]);
     return $proc;
 }
 

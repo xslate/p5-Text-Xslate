@@ -28,9 +28,25 @@ X
     [$tmpl, { value => "bar" }, <<'X', 'given-when (2)'],
         BAR
 X
-    [$tmpl, { value => undef }, <<'X', 'given-when (3)'],
+    [$tmpl, { value => undef }, <<'X', 'given-when (default)'],
         BAZ
 X
+    [<<'T', { value => undef }, <<'X', 'default can be the first'],
+: given $value {
+:    default {
+        BAZ
+:    }
+:    when "foo" {
+        FOO
+:    }
+:    when "bar" {
+        BAR
+:    }
+: }
+T
+        BAZ
+X
+
 );
 
 foreach my $d(@set) {
