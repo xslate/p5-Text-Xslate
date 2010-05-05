@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1009
+0.1009 Wed May  5 13:59:13 2010
     [NEW FEATURE]
     - Extend cascade statement:
         cascade myapp::base with component1, component2
