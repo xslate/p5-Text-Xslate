@@ -3,8 +3,6 @@ package Text::Xslate::Util;
 use strict;
 use warnings;
 
-use Scalar::Util ();
-
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
     literal_to_value import_from
@@ -22,8 +20,6 @@ $DEBUG = $ENV{XSLATE} // $DEBUG // '';
 sub literal_to_value {
     my($value) = @_;
     return undef if not defined $value;
-
-    return $value if Scalar::Util::looks_like_number($value);
 
     if($value =~ s/"(.*)"/$1/){
         $value =~ s/\\r/\r/g;
