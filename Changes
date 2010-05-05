@@ -7,8 +7,12 @@ Revision history for Perl extension Text::Xslate
         cascade with component1, component2
     - Function import mechanism, which needs no plugin modules:
         Text::Xslate->new(import => [qw(Data::Dumper)])
-    - Support "elsif" in Kolon for compatibility
-    - Support "UNLESS" in TTerse for compatibility
+    - Support "elsif" in Kolon for compatibility with Perl
+    - Support "UNLESS" in TTerse for compatibility with TT
+    - Support function and method call in TTerse
+
+    [CHANGES]
+    - Internal APIs and tests have been refactored
 
 0.1008 Mon May  3 18:36:52 2010
     [CHANGES]
