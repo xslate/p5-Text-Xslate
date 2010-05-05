@@ -27,13 +27,13 @@ my $vars = {
     lang => 'Template',
 };
 
-$x->render($vars) eq $mt->($vars) or die $x->render($vars);
+$x->render(undef, $vars) eq $mt->($vars) or die $x->render($vars);
 
 # suppose PSGI response body
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render($vars)];
+        my $body = [$x->render(undef, $vars)];
         return;
     },
     mt => sub {

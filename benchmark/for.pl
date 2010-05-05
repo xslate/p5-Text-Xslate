@@ -61,14 +61,14 @@ my %vars = (
      ) x $n],
 );
 
-$x->render(\%vars) eq $mt->(\%vars) or die $x->render(\%vars);
+$x->render(undef, \%vars) eq $mt->(\%vars) or die $x->render(\%vars);
 
 #$ht->param(\%vars);die $ht->output();
 
 # suppose PSGI response body
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render(\%vars)];
+        my $body = [$x->render(undef, \%vars)];
         return;
     },
     mt => sub {

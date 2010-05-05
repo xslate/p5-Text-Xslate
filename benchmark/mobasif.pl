@@ -7,6 +7,8 @@ use MobaSiF::Template;
 use FindBin qw($Bin);
 use Benchmark qw(:all);
 
+use Test::More;
+
 use Config; printf "Perl/%vd on %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate MobaSiF::Template)) {
     print $mod, "/", $mod->VERSION, "\n";
@@ -27,8 +29,10 @@ my $tx = Text::Xslate->new(
     cache     => 2,
 );
 
-$tx->render('simple.tx', $vars) eq MobaSiF::Template::insert($mst_bin, $vars)
-    or MobaSiF::Template::insert($mst_bin, $vars);
+{
+    plan tests => 1;
+    is MobaSiF::Template::insert($mst_bin, $vars), $tx->render('simple.tx', $vars), 'MST';
+}
 
 cmpthese -1, {
     'Xslate' => sub {

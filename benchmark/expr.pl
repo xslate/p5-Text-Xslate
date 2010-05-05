@@ -7,6 +7,7 @@ use Text::MicroTemplate qw(build_mt);
 
 use Benchmark qw(:all);
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
+use Test::More;
 
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
     say $mod, '/', $mod->VERSION;
@@ -26,13 +27,19 @@ my $vars = {
     value => '41',
 };
 
-$x->render($vars) eq $mt->($vars) or die $x->render($vars);
+{
+    plan tests => 2;
+    is $mt->($vars), $x->render(undef, $vars), 'MT';
 
+    my $body = [$subst_tmpl];
+    $body->[0] =~ s/%(\w+)%/ $vars->{$1} + 1 /eg;
+    is $body->[0], $x->render(undef, $vars), 's///g';
+}
 # suppose PSGI response body
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$x->render($vars)];
+        my $body = [$x->render(undef, $vars)];
         return;
     },
     mt => sub {
