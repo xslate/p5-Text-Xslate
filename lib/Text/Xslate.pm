@@ -311,11 +311,14 @@ sub escaped_string;
 # TODO: make it into XS
 sub html_escape {
     my($s) = @_;
+    return $s if ref($s) eq 'Text::Xslate::EscapedString';
+
     $s =~ s/&/&amp;/g;
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
     $s =~ s/"/&quot;/g;
     $s =~ s/'/&#39;/g;
+
     return escaped_string($s);
 }
 
