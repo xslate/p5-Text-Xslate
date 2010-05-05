@@ -1225,41 +1225,28 @@ CODE:
 }
 
 SV*
-render(SV* self, ...)
+render(SV* self, SV* name, SV* vars)
 CODE:
 {
-    SV* name;
-    SV* vars_ref;
-    HV* vars;
     tx_state_t* st;
 
-    if(items == 2) { /* render(\%vars) }*/
-        name     = newSVpvs_flags("<input>", SVs_TEMP);
-        vars_ref = ST(1);
-    }
-    else if(items == 3) { /* render($file, \%vars) */
-        name     = ST(1);
-        if(!SvOK(name)) {
-            name = newSVpvs_flags("<input>", SVs_TEMP);
-        }
-        vars_ref = ST(2);
-    }
-    else {
-        croak_xs_usage(cv,  "self, name, vars");
+    SvGETMAGIC(name);
+    if(!SvOK(name)) {
+        dXSTARG;
+        sv_setpvs(TARG, "<input>");
+        name = TARG;
     }
 
-    if(!(SvROK(vars_ref) && SvTYPE(SvRV(vars_ref)) == SVt_PVHV)) {
+    if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
         croak("Xslate: Template variables must be a HASH reference");
     }
-    vars = (HV*)SvRV(vars_ref);
-
     st = tx_load_template(aTHX_ self, name);
 
     RETVAL = sv_newmortal();
     sv_grow(RETVAL, st->hint_size);
     SvPOK_on(RETVAL);
 
-    tx_execute(aTHX_ st, RETVAL, vars);
+    tx_execute(aTHX_ st, RETVAL, (HV*)SvRV(vars));
 
     ST(0) = RETVAL;
     XSRETURN(1);
