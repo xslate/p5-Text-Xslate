@@ -52,11 +52,6 @@ sub new {
     }
     $args{function} = \%funcs;
 
-    if(defined $args{file}) {
-        require Carp;
-        Carp::carp('"file" option makes no sense. Use render($file, \%vars) directly');
-    }
-
     if(!ref $args{path}) {
         $args{path} = [$args{path}];
     }
@@ -65,7 +60,17 @@ sub new {
     $args{template}       = {};
 
     my $self = bless \%args, $class;
-    $self->_load_input();
+
+    if(defined $args{file}) {
+        require Carp;
+        Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
+    }
+    if(defined $args{string}) {
+        require Carp;
+        Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
+        $self->load_string($args{string});
+    }
+
     return $self;
 }
 
@@ -73,41 +78,19 @@ sub render;
 
 sub _initialize;
 
-sub _load_input { # for <input>
-    my($self) = @_;
+sub load_string { # for <input>
+    my($self, $string) = @_;
 
-    my $source = 0;
-    my $protocode;
-
-    if($self->{string}) {
-        #require Carp;
-        #Carp::carp('"string" option has been deprecated. Use render_string() instead');
-        $source++;
-        $protocode = $self->_compiler->compile($self->{string});
-    }
-
-    if($self->{protocode}) {
-        $source++;
-        $protocode = $self->{protocode};
-    }
-
-    if($source > 1) {
-        $self->throw_error("Multiple template sources are specified");
-    }
-
-    if(defined $protocode) {
-        $self->_initialize($protocode, undef, undef, undef, undef);
-    }
-
+    my $protocode = $self->_compiler->compile($string);
+    $self->_initialize($protocode, undef, undef, undef, undef);
     return $protocode;
 }
 
 sub render_string {
-    my($self, $str, $vars) = @_;
+    my($self, $string, $vars) = @_;
 
     local $self->{cache} = 0;
-    my $protocode = $self->_compiler->compile($str);
-    $self->_initialize($protocode, undef, undef, undef, undef);
+    $self->load_string($string);
     return $self->render(undef, $vars);
 }
 

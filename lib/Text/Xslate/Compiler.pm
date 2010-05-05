@@ -129,20 +129,6 @@ has cascade => (
     isa => 'Object',
 );
 
-sub compile_str {
-    my($self, $str) = @_;
-
-    require Text::Xslate;
-
-    return Text::Xslate->new(
-        protocode    => $self->compile($str),
-
-        # "in-place" mode
-        path  => [],
-        cache => 0,
-    );
-}
-
 sub compile {
     my($self, $str, %args) = @_;
 
