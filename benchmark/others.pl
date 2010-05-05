@@ -72,7 +72,7 @@ cmpthese -1 => {
         my $body = [$tx->render("$tmpl.tx", $vars)];
         return;
     },
-    clearsilver => sub{
+    cs => sub{
         my $body = [];
         $tcs->process("$tmpl.cs", $vars, \$body->[0]);
         return;
