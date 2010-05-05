@@ -3,7 +3,7 @@ use 5.010;
 use strict;
 
 use Text::Xslate;
-use Text::ClearSilver;
+use Text::ClearSilver 0.10.5.4;
 use Text::MicroTemplate::File;
 use Template;
 
