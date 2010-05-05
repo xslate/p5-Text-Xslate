@@ -1004,45 +1004,6 @@ sub std_while {
     return $proc;
 }
 
-sub std_given {
-    my($parser, $symbol) = @_;
-
-    my $proc = $symbol->clone(arity => 'given');
-    $proc->first( $parser->expression(0) );
-
-    local $in_given = 1;
-    $parser->pointy($proc);
-
-    foreach my $stmt(@{$parser->third}) {
-        print $stmt, "\n";
-    }
-    return $proc;
-}
-
-# when/default
-sub std_when {
-    my($parser, $symbol) = @_;
-
-    if(!$in_given) {
-        $parser->_error("You cannot use $symbol blocks outside given blocks");
-    }
-
-    my $proc = $symbol->clone(arity => 'when');
-    if($proc->id eq "when") {
-        $proc->first( $parser->expression(0) );
-
-    }
-    else {
-        my $true = $parser->symbol_class->new(
-            arity => 'literal',
-            value => 1,
-        );
-        $proc->first($true);
-    }
-    $proc->second( $parser->block() );
-    return $proc;
-}
-
 sub std_proc {
     my($parser, $symbol) = @_;
 
@@ -1091,6 +1052,78 @@ sub std_if {
             : $parser->block());
     }
     return $top_if;
+}
+sub std_given {
+    my($parser, $symbol) = @_;
+
+    my $proc = $symbol->clone(arity => 'given');
+    $proc->first( $parser->expression(0) );
+
+    local $in_given = 1;
+    $parser->pointy($proc);
+
+    my $c = $parser->symbol_class;
+
+    if(!(defined $proc->second && @{$proc->second})) { # if no vars given
+        $proc->second([
+            $c->new( id => '($_)', arity => 'variable' )
+        ]);
+    }
+
+    my $top_if;
+    my $current_if;
+    foreach my $when(@{$proc->third}) {
+        if($when->arity ne "when") {
+            $parser->_error("Expected when blocks", $when);
+        }
+
+        if(defined $when->first) {
+            if($when->first->arity ne "literal") {
+                $parser->_error("Expected literals for when", $when);
+            }
+            my $eq = $c->new(
+                id     => '==',
+                arity  => 'binary',
+                first  => $c->new( id => '($_)', arity => 'variable' ),
+                second => $when->first,
+            );
+            $when->first($eq);
+        }
+        else {
+            my $true = $c->new(
+                id    => 1,
+                arity => 'literal',
+            );
+            $when->first($true);
+        }
+        $when->arity("if");
+
+        if(!defined $top_if) {
+            $top_if     = $when;
+            $current_if = $when;
+        }
+        else {
+            $current_if->third([$when]);
+            $current_if = $when;
+        }
+    }
+    $proc->third([$top_if]);
+    return $proc;
+}
+
+# when/default
+sub std_when {
+    my($parser, $symbol) = @_;
+
+    if(!$in_given) {
+        $parser->_error("You cannot use $symbol blocks outside given blocks");
+    }
+    my $proc = $symbol->clone(arity => 'when');
+    if($symbol->id eq "when") {
+        $proc->first( $parser->expression(0) );
+    }
+    $proc->second( $parser->block() );
+    return $proc;
 }
 
 sub std_command {

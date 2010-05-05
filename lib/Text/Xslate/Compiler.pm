@@ -522,6 +522,32 @@ sub _generate_if {
     );
 }
 
+sub _generate_given {
+    my($self, $node) = @_;
+    my $expr  = $node->first;
+    my $vars  = $node->second;
+    my $block = $node->third;
+
+    if(@{$vars} > 1) {
+        $self->_error("A given block requires one or zero variables", $node);
+    }
+    my @code = $self->_generate_expr($expr);
+
+    my($lvar) = @{$vars};
+    my $lvar_id   = $self->lvar_id;
+    my $lvar_name = $lvar->id;
+
+    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
+
+    # a for statement uses three local variables (container, iterator, and item)
+    $self->_lvar_use(1);
+    my @block_code = $self->_compile_ast($block);
+    $self->_lvar_release(1);
+
+    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ], @block_code;
+    return @code;
+}
+
 sub _generate_expr {
     my($self, $node) = @_;
     my @ast = ($node);
