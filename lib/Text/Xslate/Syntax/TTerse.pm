@@ -155,7 +155,7 @@ Scalar access:
     [%  var %]
     [% $var %]
 
-Field acces:
+Field access:
 
     [% var.0 %]
     [% var.field %]

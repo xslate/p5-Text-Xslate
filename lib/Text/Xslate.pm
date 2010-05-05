@@ -432,7 +432,7 @@ I<$level> == 0 creates no caches. It's provided for testing.
 
 =item C<< cache_dir => $dir // File::Spec->tmpdir >>
 
-Specifies the directry used for caches.
+Specifies the directory used for caches.
 
 =item C<< function => \%functions >>
 
@@ -600,11 +600,15 @@ Benchmarks:
 
 L<Template::Benchmark>
 
-=head1 ACKNOWLEDGEMENTS
+=head1 ACKNOWLEDGEMENT
 
 Thanks to lestrrat for the suggestion to the interface of C<render()>.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug-finding.
+
+Thanks to gardejo for the proposal to the name "template cascading".
+
+Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
 
 =head1 AUTHOR
 
