@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1010
+0.1010 Thu May  6 13:25:47 2010
     [BUG FIXES]
     - There ware various parsing issues
 
