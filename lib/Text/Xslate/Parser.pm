@@ -850,6 +850,8 @@ sub statement { # process one or more statements
     if($t->has_std) { # is $t a statement?
         $parser->reserve($t);
         $parser->advance();
+
+        # std() returns a list of nodes
         return $t->std($parser);
     }
 
@@ -881,7 +883,8 @@ sub block {
     my($parser) = @_;
     my $t = $parser->token;
     $parser->advance("{");
-    return $t->std($parser);
+    # std() returns a list of nodes
+    return [$t->std($parser)];
 }
 
 sub nud_literal {
@@ -902,7 +905,7 @@ sub std_block {
     my $a = $parser->statements();
     $parser->advance('}');
     $parser->pop_scope();
-    return $a;
+    return @{$a};
 }
 
 #sub std_var {

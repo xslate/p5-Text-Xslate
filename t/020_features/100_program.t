@@ -42,6 +42,18 @@ T
 [42]
 X
 
+    [<<'T', { data => [42] }, <<'X', 'block'],
+<:
+    {
+        for $data -> $it {
+            if(1) { print "[" ~ $it ~ "]"; }
+        }
+        print "\n";
+    }
+-:>
+T
+[42]
+X
 );
 
 foreach my $d(@set) {

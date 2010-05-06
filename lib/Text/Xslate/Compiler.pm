@@ -258,9 +258,12 @@ sub _compile_ast {
 
     confess("Not an ARRAY reference: $ast") if ref($ast) ne 'ARRAY';
     foreach my $node(@{$ast}) {
-        blessed($node) or Carp::confess("Not a node object: $node");
+        blessed($node) or do {
+            require 'Data/Dumper.pm';
+            Carp::croak("Oops: Not a node object: ", Data::Dumper->new([$node])->Indent(1)->Dump);
+        };
         my $generator = $self->can('_generate_' . $node->arity)
-            || Carp::croak("Cannot generate codes for " . $node->arity . ": " . $node->dump);
+            || Carp::croak("Oops: Cannot generate codes for " . $node->arity . ": " . $node->dump);
 
         push @code, $self->$generator($node);
     }
