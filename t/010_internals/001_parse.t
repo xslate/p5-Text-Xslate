@@ -4,12 +4,9 @@ use strict;
 use Test::More;
 
 use Text::Xslate::Parser;
-
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
+use Text::Xslate::Util qw(p);
 
 my $parser = Text::Xslate::Parser->new();
-
 isa_ok $parser, 'Text::Xslate::Parser';
 
 my @data = (
@@ -26,7 +23,7 @@ my @data = (
 foreach my $d(@data) {
     my($str, @patterns) = @{$d};
 
-    my $code = Dumper($parser->parse($str));
+    my $code = p($parser->parse($str));
     note($code);
 
     foreach my $pat(@patterns) {

@@ -5,8 +5,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-
-#use Data::Dumper; $Data::Dumper::Indent = 1;
+use Text::Xslate::Util qw(p);
 
 my $tx = Text::Xslate->new();
 
@@ -78,12 +77,8 @@ foreach my $pair(@data) {
     my %vars = (
         value => 'foo',
     );
-    #use Data::Dumper; $Data::Dumper::Useqq = 1;
-    #is Dumper($x->render(\%vars)), Dumper($out);
-    is $tx->render_string($in, \%vars), $out or do {
-        require Data::Dumper;
-        diag( Data::Dumper->new([$tx->render(\%vars)])->Useqq(1)->Dump );
-    };
+    is $tx->render_string($in, \%vars), $out
+        or diag( p($tx->render(\%vars)) );
 }
 
 done_testing;

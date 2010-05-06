@@ -4,9 +4,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate::Compiler;
-
-use Data::Dumper;
-$Data::Dumper::Indent = 0;
+use Text::Xslate::Util qw(p);
 
 my $c = Text::Xslate::Compiler->new();
 
@@ -23,7 +21,7 @@ my @data = (
 foreach my $d(@data) {
     my($str, @patterns) = @{$d};
 
-    my $code = Dumper($c->compile($str));
+    my $code = p($c->compile($str));
     #note($code);
 
     foreach my $pat(@patterns) {

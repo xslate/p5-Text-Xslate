@@ -5,6 +5,7 @@ use Mouse;
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
+    p
 );
 
 use constant _DUMP_PROTO => scalar($DEBUG =~ /\b dump=proto \b/xmsi);

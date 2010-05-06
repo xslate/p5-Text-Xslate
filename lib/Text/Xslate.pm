@@ -278,16 +278,6 @@ sub throw_error {
     goto &Carp::croak;
 }
 
-sub dump :method {
-    my($self) = @_;
-    require 'Data/Dumper.pm'; # we don't want to create its namespace
-    my $dd = Data::Dumper->new([$self], ['xslate']);
-    $dd->Indent(1);
-    $dd->Sortkeys(1);
-    $dd->Useqq(1);
-    return $dd->Dump();
-}
-
 # utility functions
 sub escaped_string;
 
@@ -303,6 +293,10 @@ sub html_escape {
     $s =~ s/'/&#39;/g;
 
     return escaped_string($s);
+}
+
+sub dump :method {
+    goto &Text::Xslate::Util::p;
 }
 
 1;

@@ -6,6 +6,7 @@ use warnings;
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
     literal_to_value import_from
+    p
     $STRING $NUMBER $DEBUG
 );
 
@@ -60,6 +61,16 @@ sub import_from {
             $_ ne 'meta' && $c ? ($_ => $c): ();
         } keys %{$meta->namespace};
 }
+
+sub p { # for debugging
+    my($self) = @_;
+    require 'Data/Dumper.pm'; # we don't want to create its namespace
+    my $dd = Data::Dumper->new([$self]);
+    $dd->Indent(1);
+    return $dd->Dump() if defined wantarray;
+    print $dd->Dump();
+}
+
 
 1;
 __END__

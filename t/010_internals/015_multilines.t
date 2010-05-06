@@ -4,8 +4,6 @@ use Test::More;
 
 use Text::Xslate;
 
-#use Data::Dumper; $Data::Dumper::Indent = 1;
-
 my $tx = Text::Xslate->new();
 
 

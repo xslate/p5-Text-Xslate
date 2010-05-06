@@ -6,6 +6,7 @@ use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
     literal_to_value
+    p
 );
 
 use Scalar::Util ();
@@ -261,19 +262,16 @@ sub _compile_ast {
     my($self, $ast) = @_;
     return unless defined $ast;
 
-    Carp::croak("Oops: Not an ARRAY reference: $ast") if ref($ast) ne 'ARRAY';
+    Carp::croak("Oops: Not an ARRAY reference: " . p($ast)) if ref($ast) ne 'ARRAY';
 
     # TODO
     # $self->_optimize_ast($ast) if $self->optimize;
 
     my @code;
     foreach my $node(@{$ast}) {
-        blessed($node) or do {
-            require 'Data/Dumper.pm';
-            Carp::croak("Oops: Not a node object: ", Data::Dumper->new([$node])->Indent(1)->Dump);
-        };
+        blessed($node) or Carp::croak("Oops: Not a node object: " . p($node));
         my $generator = $self->can('_generate_' . $node->arity)
-            || Carp::croak("Oops: Cannot generate codes for " . $node->arity . ": " . $node->dump);
+            || Carp::croak("Oops: Unexpected node:  " . p($node));
 
         push @code, $self->$generator($node);
     }
