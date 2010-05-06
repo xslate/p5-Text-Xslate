@@ -899,7 +899,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
 
     call_method("load_file", G_EVAL | G_VOID);
     if(sv_true(ERRSV)){
-        croak("%"SVf, ERRSV);
+        croak("%"SVf" ...", ERRSV);
     }
 
     FREETMPS;
