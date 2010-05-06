@@ -1,7 +1,15 @@
 Revision history for Perl extension Text::Xslate
 
+0.1010
+    [BUG FIXES]
+    - There ware various parsing issues
+
+    [NEW FEATURES]
+    - Switch statement like Perl6
+    - Arrows in pointy blocks can be omitted if not necessary
+
 0.1009 Wed May  5 13:59:13 2010
-    [NEW FEATURE]
+    [NEW FEATURES]
     - Extend cascade statement:
         cascade myapp::base with component1, component2
         cascade with component1, component2
@@ -19,7 +27,7 @@ Revision history for Perl extension Text::Xslate
     - Deprecate "string" option for new() and render(\%vars).
       Use render_string() instead.
 
-    [NEW FEATURE]
+    [NEW FEATURES]
     - render_string($str, \%vars), which is provided mainly for testing
 
 0.1007 Sun May  2 22:26:09 2010
@@ -28,7 +36,7 @@ Revision history for Perl extension Text::Xslate
     - Blessed references ware not printable.
     - The "file" option to new() was confusing. Now it has been removed.
 
-    [NEW FEATURE]
+    [NEW FEATURES]
     - New operators: "and", "or", "not", "min", "max"
     - New method call syntax:
         $obj.method(...)

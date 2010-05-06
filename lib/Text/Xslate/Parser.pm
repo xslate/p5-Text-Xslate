@@ -383,7 +383,7 @@ sub define_basic_operators {
 
     $parser->prefix('(', 200, \&nud_paren);
 
-    $parser->prefix('!', 200);
+    $parser->prefix('!', 200)->is_logical(1);
     $parser->prefix('+', 200);
     $parser->prefix('-', 200);
 
@@ -395,20 +395,20 @@ sub define_basic_operators {
     $parser->infix('-', 170);
     $parser->infix('~', 170); # connect
 
-    $parser->infix('<',  160);
-    $parser->infix('<=', 160);
-    $parser->infix('>',  160);
-    $parser->infix('>=', 160);
+    $parser->infix('<',  160)->is_logical(1);
+    $parser->infix('<=', 160)->is_logical(1);
+    $parser->infix('>',  160)->is_logical(1);
+    $parser->infix('>=', 160)->is_logical(1);
 
-    $parser->infix('==', 150);
-    $parser->infix('!=', 150);
+    $parser->infix('==', 150)->is_logical(1);
+    $parser->infix('!=', 150)->is_logical(1);
 
     $parser->infix('|',  140); # filter
 
-    $parser->infixr('&&', 130);
+    $parser->infixr('&&', 130)->is_logical(1);
 
-    $parser->infixr('||', 120);
-    $parser->infixr('//', 120);
+    $parser->infixr('||', 120)->is_logical(1);
+    $parser->infixr('//', 120)->is_logical(1);
     $parser->infix('min', 120);
     $parser->infix('max', 120);
 
@@ -426,7 +426,7 @@ sub define_basic_operators {
     $parser->assignment('||=', 100);
     $parser->assignment('//=', 100);
 
-    $parser->prefix('not', 70);
+    $parser->prefix('not', 70)->is_logical(1);
     $parser->infix('and',  60);
     $parser->infix('or',   50);
 
@@ -443,6 +443,7 @@ sub define_symbols {
     $parser->symbol('else');
     $parser->symbol('with');
     $parser->symbol('::');
+    $parser->symbol('($_)'); # default topic variable
 
     # operators
     $parser->define_basic_operators();
@@ -588,8 +589,9 @@ sub led_infix {
 sub infix {
     my($parser, $id, $bp, $led) = @_;
 
-    $parser->symbol($id, $bp)->set_led($led || \&led_infix);
-    return;
+    my $symbol = $parser->symbol($id, $bp);
+    $symbol->set_led($led || \&led_infix);
+    return $symbol;
 }
 
 sub led_infixr {
@@ -603,8 +605,9 @@ sub led_infixr {
 sub infixr {
     my($parser, $id, $bp, $led) = @_;
 
-    $parser->symbol($id, $bp)->set_led($led || \&led_infixr);
-    return;
+    my $symbol = $parser->symbol($id, $bp);
+    $symbol->set_led($led || \&led_infixr);
+    return $symbol;
 }
 
 sub led_assignment {
@@ -708,7 +711,7 @@ sub prefix {
     my $symbol = $parser->symbol($id);
     $symbol->ubp($bp);
     $symbol->set_nud($nud || \&nud_prefix);
-    return;
+    return $symbol;
 }
 
 sub nud_constant {
@@ -857,9 +860,8 @@ sub statement { # process one or more statements
 
     my $expr = $parser->expression(0);
     $parser->advance(";");
-    return $parser->symbol_class->new(
+    return $parser->symbol('print')->clone(
         arity  => 'command',
-        id     => 'print',
         first  => [$expr],
         line   => $expr->line,
     );
@@ -1048,6 +1050,7 @@ sub std_if {
     }
     return $top_if;
 }
+
 sub std_given {
     my($parser, $symbol) = @_;
 
@@ -1057,13 +1060,12 @@ sub std_given {
     local $in_given = 1;
     $parser->pointy($proc);
 
-    my $c = $parser->symbol_class;
-
     if(!(defined $proc->second && @{$proc->second})) { # if no vars given
         $proc->second([
-            $c->new( id => '($_)', arity => 'variable' )
+            $parser->symbol('($_)')->clone(arity => 'variable' )
         ]);
     }
+    my($topic) = @{$proc->second};
 
     # make if-elsif-else from given-when
     my $if;
@@ -1075,22 +1077,21 @@ sub std_given {
         }
         $when->arity("if");
 
-        if(defined $when->first) {
-            if($when->first->arity ne "literal") {
-                $parser->_error("Expected literals for when", $when);
+        if(defined $when->first) { # given
+            if(!$when->first->is_logical) {
+                my $eq = $parser->symbol('==')->clone(
+                    arity  => 'binary',
+                    first  => $topic,
+                    second => $when->first,
+                );
+                $when->first($eq);
             }
-            my $eq = $c->new(
-                id     => '==',
-                arity  => 'binary',
-                first  => $c->new( id => '($_)', arity => 'variable' ),
-                second => $when->first,
-            );
-            $when->first($eq);
         }
         else { # default
-            my $true = $c->new(
-                id    => 1,
-                arity => 'literal',
+            my $true = $parser->symbol('(literal)')->clone(
+                id         => 1,
+                arity      => 'literal',
+                is_logical => 1,
             );
             $when->first($true);
             $else = $when;

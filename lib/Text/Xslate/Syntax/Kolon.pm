@@ -71,7 +71,7 @@ There are C<for> and C<while> loops.
 
 =head2 Conditional statements
 
-if-then-else statement:
+You can use the if-then-else statement:
 
     : if $var == nil {
         $var is nil.
@@ -91,7 +91,21 @@ if-then-else statement:
 
 Note that C<elsif> for C<else if> is also okey.
 
-switch statement (B<not yet implemented>):
+You can also use the switch statement:
+
+    : given $var {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when $it == "bar" {
+            it is bar.
+    :   }
+    :   default {
+            it is not foo nor bar.
+        }
+    : }
+
+For given statements, you can use the topic variable.
 
     : given $var -> $it {
     :   when "foo" {
@@ -100,10 +114,7 @@ switch statement (B<not yet implemented>):
     :   when $it == "bar" or $it == "baz" {
             it is bar or baz.
     :   }
-    :   default {
-            it is not foo nor bar.
-        }
-    :
+    : }
 
 =head2 Expressions
 

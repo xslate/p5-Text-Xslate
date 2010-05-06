@@ -69,6 +69,33 @@ X
 T
         BAZ
 X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr'],
+: given $value -> $it {
+:    when $it >= 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'complex logical expr'],
+: given $value -> $it {
+:    when $it >= 0 && $it <= 10   {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
 );
 
 foreach my $d(@set) {
