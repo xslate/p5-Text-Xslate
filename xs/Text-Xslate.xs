@@ -34,7 +34,7 @@ tx_line(pTHX_ const tx_state_t* const st) {
 static const char*
 tx_neat(pTHX_ SV* const sv) {
     if(SvOK(sv)) {
-        if(SvROK(sv) || looks_like_number(sv)) {
+        if(SvROK(sv) || looks_like_number(sv) || isGV(sv)) {
             return form("%"SVf, sv);
         }
         else {
