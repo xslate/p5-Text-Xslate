@@ -768,7 +768,7 @@ sub reserve { # reserve a name to the scope
             return $symbol;
         }
         if($t->arity eq "name") {
-           $self->_error("Already defined: $symbol");
+           $parser->_error("Already defined: $symbol");
         }
     }
     $top->{$symbol->id} = $symbol;
@@ -782,7 +782,7 @@ sub define { # define a name to the scope
 
     my $t = $top->{$symbol->id};
     if(defined $t) {
-        $self->_error($t->reserved ? "Already reserved: $t" : "Already defined: $t");
+        $parser->_error($t->reserved ? "Already reserved: $t" : "Already defined: $t");
     }
 
     $top->{$symbol->id} = $symbol;
@@ -1230,5 +1230,13 @@ __END__
 =head1 NAME
 
 Text::Xslate::Parser - The base class of template parsers
+
+=head1 DESCRIPTION
+
+This is a parser to make the abstract syntax tree from templates.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
 
 =cut

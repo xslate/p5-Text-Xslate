@@ -53,6 +53,13 @@ my %unary = (
     '-'   => 'minus',
 );
 
+has optimize => (
+    is  => 'rw',
+    isa => 'Int',
+
+    default => _OPTIMIZE // 2,
+);
+
 has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
@@ -225,7 +232,7 @@ sub compile {
 
     push @code, $self->_flush_macro_table(\%mtable) if %mtable;
 
-    $self->_optimize(\@code) for 1 .. _OPTIMIZE // 2;
+    $self->_optimize_vmcode(\@code) for 1 .. $self->optimize;
 
     print "// ", $self->file, "\n",
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
@@ -252,11 +259,14 @@ sub _flush_macro_table {
 
 sub _compile_ast {
     my($self, $ast) = @_;
-    my @code;
-
     return unless defined $ast;
 
-    confess("Not an ARRAY reference: $ast") if ref($ast) ne 'ARRAY';
+    Carp::croak("Oops: Not an ARRAY reference: $ast") if ref($ast) ne 'ARRAY';
+
+    # TODO
+    # $self->_optimize_ast($ast) if $self->optimize;
+
+    my @code;
     foreach my $node(@{$ast}) {
         blessed($node) or do {
             require 'Data/Dumper.pm';
@@ -733,7 +743,7 @@ sub _noop {
     return;
 }
 
-sub _optimize {
+sub _optimize_vmcode {
     my($self, $c) = @_;
 
     # calculate goto addresses
@@ -769,7 +779,7 @@ sub _optimize {
     for(my $i = 0; $i < @{$c}; $i++) {
         given($c->[$i][0]) {
             when('print_raw_s') {
-                # merge a set of print_raw_s into single command
+                # merge a chain of print_raw_s into single command
                 my $j = $i + 1; # from the next op
                 while($j < @{$c}
                         && $c->[$j][0] eq 'print_raw_s'
@@ -843,8 +853,9 @@ sub as_assembly {
     my $as = "";
     foreach my $ix(0 .. (@{$code_ref}-1)) {
         my($opname, $arg, $line, $comment) = @{$code_ref->[$ix]};
-        $as .= "$ix:" if $addix;
+        $as .= "$ix:" if $addix; # for debugging
 
+        # "$opname $arg #$line // $comment"
         $as .= $opname;
         if(defined $arg) {
             $as .= " ";
@@ -880,9 +891,18 @@ sub _error {
 
 no Mouse;
 __PACKAGE__->meta->make_immutable;
+__END__
 
 =head1 NAME
 
-Text::Xslate::Compiler - An Xslate compiler
+Text::Xslate::Compiler - The Xslate compiler
+
+=head1 DESCRIPTION
+
+This is the Xslate compiler to generate the virtual machine code from the abstract syntax tree.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
 
 =cut
