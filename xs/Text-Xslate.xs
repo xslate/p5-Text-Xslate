@@ -898,6 +898,9 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
     PUTBACK;
 
     call_method("load_file", G_EVAL | G_VOID);
+    if(sv_true(ERRSV)){
+        croak("%"SVf, ERRSV);
+    }
 
     FREETMPS;
     LEAVE;
@@ -985,11 +988,6 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
         tx_invoke_load_file(aTHX_ self, name, NULL);
-        if(sv_true(ERRSV)){
-            why = SvPVx_nolen_const(ERRSV);
-            goto err;
-        }
-
         retried++;
         goto retry;
     }

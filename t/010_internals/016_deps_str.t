@@ -26,7 +26,8 @@ my $tx = Text::Xslate->new(path => [path], cache_dir => path);
 
 #use Data::Dumper; print Dumper $tx;
 
-is $tx->render_string(":cascade myapp::base", {lang => 'Xslate'}), <<'T';
+$tx->load_string(":cascade myapp::base");
+is $tx->render(undef, {lang => 'Xslate'}), <<'T';
 HEAD
     Hello, Xslate world!
 FOOT
@@ -37,7 +38,8 @@ copy "$base.mod" => $base;
 
 utime $^T+60, $^T+60, $base;
 
-is $tx->render_string(":cascade myapp::base", {lang => 'Foo'}), <<'T';
+$tx->load_string(":cascade myapp::base");
+is $tx->render(undef, {lang => 'Foo'}), <<'T';
 HEAD
     Modified version of base.tx
 FOOT
@@ -46,7 +48,8 @@ T
 move "$base.save" => $base;
 utime $^T+120, $^T+120, $base;
 
-is $tx->render_string(":cascade myapp::base", {lang => 'Perl'}), <<'T';
+$tx->load_string(":cascade myapp::base");
+is $tx->render(undef, {lang => 'Perl'}), <<'T';
 HEAD
     Hello, Perl world!
 FOOT

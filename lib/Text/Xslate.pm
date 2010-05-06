@@ -80,7 +80,10 @@ sub _initialize;
 
 sub load_string { # for <input>
     my($self, $string) = @_;
-
+    if(not defined $string) {
+        $self->throw_error("LoadError: Template string is not given");
+    }
+    $self->{string} = $string;
     my $protocode = $self->_compiler->compile($string);
     $self->_initialize($protocode, undef, undef, undef, undef);
     return $protocode;
@@ -90,6 +93,7 @@ sub render_string {
     my($self, $string, $vars) = @_;
 
     local $self->{cache} = 0;
+    local $self->{string};
     $self->load_string($string);
     return $self->render(undef, $vars);
 }
@@ -146,8 +150,7 @@ sub load_file {
     print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
 
     if($file eq '<input>') { # simply reload it
-        return $self->_load_input()
-            // $self->throw_error("LoadError: Template source <input> does not exist");
+        return $self->load_string($self->{string});
     }
 
     my $f = $self->find_file($file, $mtime);
