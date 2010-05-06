@@ -97,7 +97,7 @@ You can also use the switch statement:
     :   when "foo" {
             it is foo.
     :   }
-    :   when $it == "bar" {
+    :   when "bar" {
             it is bar.
     :   }
     :   default {
