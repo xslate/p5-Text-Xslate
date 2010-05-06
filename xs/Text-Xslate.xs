@@ -624,7 +624,7 @@ TXC_w_key(macro_begin) {
 TXC(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame];
-    SV* const retaddr = AvARRAY(oldframe)[TXframe_RETADDR];
+    SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
     SV* tmp;
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
