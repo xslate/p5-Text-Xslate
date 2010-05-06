@@ -841,7 +841,6 @@ sub pop_scope {
 sub statement { # process one or more statements
     my($parser) = @_;
     my $t = $parser->token;
-
     if($t->id eq ";"){
         $parser->advance(); # ";"
         return;
@@ -854,9 +853,6 @@ sub statement { # process one or more statements
     }
 
     my $expr = $parser->expression(0);
-#    if($expr->assignment && $expr->id ne "(") {
-#        confess("Bad expression statement");
-#    }
     $parser->advance(";");
     return $parser->symbol_class->new(
         arity  => 'command',
