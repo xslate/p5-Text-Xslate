@@ -326,6 +326,7 @@ sub parse {
 
     $parser->input( $parser->preprocess($input) );
 
+    $parser->advance();
     my $ast = $parser->statements();
 
     if($parser->input ne '') {
@@ -868,11 +869,6 @@ sub statements { # process statements
     my @a;
 
     my $t = $parser->token;
-    if(defined $t && $t->is_end) {
-        return \@a;
-    }
-
-    $t = $parser->advance();
     while(!$t->is_end) {
         push @a, $parser->statement();
         $t = $parser->token;

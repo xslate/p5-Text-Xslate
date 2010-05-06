@@ -17,7 +17,7 @@ my @data = (
     ['Hello, <:= $lang :> world!', qr/\b lang \b/xms, qr/Hello, /, qr/ world!/],
     ['aaa <:= $bbb :> ccc <:= $ddd :>', qr/aaa/, qr/\b bbb \b/xms, qr/ccc/, qr/\b ddd \b/xms],
 
-    ['<: for $data ->($item) { echo $item; } :>', qr/\b for /xms, qr/\b data \b/xms, qr/\b item \b/xms ],
+    ['<: for $data ->($item) { print $item; } :>', qr/\b for /xms, qr/\b data \b/xms, qr/\b item \b/xms ],
 );
 
 foreach my $d(@data) {

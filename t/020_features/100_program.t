@@ -13,7 +13,8 @@ my @set = (
     if($value == 10) {
         print "Hello, world!";
     }
-:>
+    print "\n";
+-:>
 T
 Hello, world!
 X
@@ -23,9 +24,22 @@ X
     for $data -> $item {
         print "[" ~ $item ~ "]";
     }
-:>
+    print "\n";
+-:>
 T
 [1][2][3]
+X
+
+
+    [<<'T', { data => 42 }, <<'X'],
+<:
+    given $data -> $it {
+        default { print "[" ~ $it ~ "]"; }
+    }
+    print "\n";
+-:>
+T
+[42]
 X
 
 );

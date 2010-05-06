@@ -17,7 +17,7 @@ my @data = (
     ['Hello, <:= $lang :> world!', qr/ \$lang \b/xms, qr/"Hello, "/, qr/" world!"/],
     ['aaa <:= $bbb :> ccc <:= $ddd :>', qr/aaa/, qr/\$bbb/, qr/ccc/, qr/\$ddd/],
 
-    ['<: for $data ->($item) { echo $item; } :>', qr/\b for \b/xms, qr/\$data\b/, qr/\$item/ ],
+    ['<: for $data ->($item) { print $item; } :>', qr/\b for \b/xms, qr/\$data\b/, qr/\$item/ ],
 
     ["<p>:</p>",   qr{<p>:</p>}],
     ["<p> : </p>", qr{<p> : </p>}],
