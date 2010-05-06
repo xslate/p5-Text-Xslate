@@ -1237,7 +1237,11 @@ Text::Xslate::Parser - The base class of template parsers
 
 This is a parser to make the abstract syntax tree from templates.
 
+The basis of the parser is Top Down Operator Precedence.
+
 =head1 SEE ALSO
+
+L<http://javascript.crockford.com/tdop/tdop.html> - Top Down Operator Precedence (Douglas Crockford)
 
 L<Text::Xslate>
 
