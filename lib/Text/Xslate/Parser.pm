@@ -253,7 +253,6 @@ sub preprocess {
                 $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
                     if $shortcut;
 
-                #if($s =~ /[\{\}\[\]]\n?\z/xms){ # ???
                 if($s =~ /[\}]\n?\z/xms){
                     $code .= $s;
                 }
@@ -271,7 +270,7 @@ sub preprocess {
                 # noop, just a marker
             }
             default {
-                $self->_error("Unknown token: $_");
+                $self->_error("Oops: Unknown token: $_");
             }
         }
     }
@@ -304,7 +303,7 @@ sub lex {
         return [ string => $1 ];
     }
     elsif(s/\A (\S+)//xms) {
-        $self->_error("Unexpected lex symbol '$1'");
+        $self->_error("Oops: Unexpected lex symbol '$1'");
     }
     else { # empty
         return undef;
@@ -769,7 +768,7 @@ sub reserve { # reserve a name to the scope
             return $symbol;
         }
         if($t->arity eq "name") {
-           confess("Already defined: $symbol");
+           $self->_error("Already defined: $symbol");
         }
     }
     $top->{$symbol->id} = $symbol;
@@ -783,7 +782,7 @@ sub define { # define a name to the scope
 
     my $t = $top->{$symbol->id};
     if(defined $t) {
-        confess($t->reserved ? "Already reserved: $t" : "Already defined: $t");
+        $self->_error($t->reserved ? "Already reserved: $t" : "Already defined: $t");
     }
 
     $top->{$symbol->id} = $symbol;
