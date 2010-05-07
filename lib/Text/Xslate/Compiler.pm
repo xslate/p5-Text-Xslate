@@ -16,7 +16,7 @@ use constant _OPTIMIZE => scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
-my %bin = (
+my %binary = (
     '==' => 'eq',
     '!=' => 'ne',
     '<'  => 'lt',
@@ -39,7 +39,7 @@ my %bin = (
 
     '['  => 'fetch_field',
 );
-my %logical_bin = (
+my %logical_binary = (
     '&&'  => 'and',
     'and' => 'and',
     '||'  => 'or',
@@ -633,7 +633,7 @@ sub _generate_binary {
                 $self->_generate_expr($node->first),
                 [ fetch_field_s => $node->second->id ];
         }
-        when(%bin) {
+        when(%binary) {
             my @code = $self->_generate_expr($node->first);
             push @code, [ save_to_lvar => $self->lvar_id ];
             $self->_lvar_use(1);
@@ -643,7 +643,7 @@ sub _generate_binary {
 
             push @code,
                 [ load_lvar_to_sb => $self->lvar_id ],
-                [ $bin{$_}   => undef ];
+                [ $binary{$_}   => undef ];
 
             if($_ ~~ [qw(min max)]) {
                 splice @code, -1, 0,
@@ -656,11 +656,11 @@ sub _generate_binary {
             }
             return @code;
         }
-        when(%logical_bin) {
+        when(%logical_binary) {
             my @right = $self->_generate_expr($node->second);
             return
                 $self->_generate_expr($node->first),
-                [ $logical_bin{$_} => scalar(@right) + 1 ],
+                [ $logical_binary{$_} => scalar(@right) + 1 ],
                 @right;
         }
         default {
