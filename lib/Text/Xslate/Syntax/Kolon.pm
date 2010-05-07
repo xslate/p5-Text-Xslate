@@ -69,9 +69,16 @@ There are C<for> and C<while> loops.
         [<: $item.field :>]
     : }
 
+C<while> statements are not the same as Perl's. In fact, the above Xslate
+code is the same as the following Perl code:
+
+    while(defined(my $item = $obj->fetch)) {
+        ...
+    }
+
 =head2 Conditional statements
 
-You can use the if-then-else statement:
+There are C<if-else> and C<given-when> conditional statements.
 
     : if $var == nil {
         $var is nil.
@@ -90,8 +97,6 @@ You can use the if-then-else statement:
     : $var.value == nil ? "nil" : $var.value
 
 Note that C<elsif> for C<else if> is also okey.
-
-You can also use the switch statement:
 
     : given $var {
     :   when "foo" {

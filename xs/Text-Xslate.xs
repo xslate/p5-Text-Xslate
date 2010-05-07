@@ -486,6 +486,17 @@ TXC_goto(and) {
     }
 }
 
+TXC_goto(dand) {
+    SV* const sv = TX_st_sa;
+    SvGETMAGIC(sv);
+    if(SvOK(sv)) {
+        TX_st->pc++;
+    }
+    else {
+        TX_st->pc = SvUVX(TX_op_arg);
+    }
+}
+
 TXC_goto(or) {
     if(!sv_true(TX_st_sa)) {
         TX_st->pc++;

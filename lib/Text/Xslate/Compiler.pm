@@ -467,7 +467,7 @@ sub _generate_while {
         if @{$vars};
 
     push @code,
-        [ and  => scalar(@block_code) + 2, undef, "while" ],
+        [ dand  => scalar(@block_code) + 2, undef, "while" ],
         @block_code,
         [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
 
