@@ -379,8 +379,10 @@ This document describes Text::Xslate version 0.1010.
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. That is, templates are
-compiled into xslate opcodes, and then executed by the xslate virtual machine
-just like as Perl does.
+compiled into xslate opcodes, and then executed by the xslate virtual machine.
+
+The philosophy for Xslate is B<sandboxing> that the template logic should
+not have no access outside the template beyond your permission.
 
 B<This software is under development>.
 Version 0.1xxx is a developing stage, which may include radical changes.
@@ -390,13 +392,13 @@ Version 0.2xxx and more will be somewhat stable.
 
 =head3 High performance
 
-Xslate has an virtual machine written in XS, which is highly optimized.
-According to benchmarks, Xslate is B<2-10> times faster than other template
-engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc).
+Xslate has a virtual machine written in XS, which is highly optimized.
+According to benchmarks, Xslate is B<2-10 times faster> than other template
+engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
 
 =head3 Template cascading
 
-Xslate supports template cascading, which allows you to extend
+Xslate supports B<template cascading>, which allows you to extend
 templates with block modifiers. It is like traditional template inclusion,
 but is more powerful.
 
@@ -407,8 +409,8 @@ This mechanism is also called as template inheritance.
 The Xslate engine and parser/compiler are completely separated so that
 one can use alternative parsers.
 
-Currently, C<TTerse>, a Template-Toolkit-like parser, is supported as an
-alternative.
+For example, C<TTerse>, a Template-Toolkit-like parser, is supported as a
+completely different syntax.
 
 =head1 INTERFACE
 
@@ -470,13 +472,13 @@ object methods in templates. Thus, Xslate doesn't require namespaces for plugins
 
 Specifies PerlIO layers for reading templates.
 
-=item C<< syntax => $moniker >>
+=item C<< syntax => $name // "Kolon" >>
 
 Specifies the template syntax you use.
 
-If I<$moniker> is undefined, the default parser will be used.
+I<$name> may be a short name (moniker), or a fully qualified name.
 
-=item C<< escape => $mode // 'html' >>
+=item C<< escape => $mode // "html" >>
 
 Specifies the escape mode.
 
@@ -498,10 +500,10 @@ Note that I<$string> is never cached so that this method is suitable for testing
 
 =head3 B<< $tx->load_file($file) :Void >>
 
-Loads I<$file> for following C<render($file, \%vars)>. Compiles and caches it
-if needed.
+Loads I<$file> for following C<render($file, \%vars)>. Compiles and saves it
+as caches if needed.
 
-This method may be used for pre-compiling template files.
+This method can be used for pre-compiling template files.
 
 =head3 Exportable functions
 
@@ -526,7 +528,7 @@ Escapes html special characters in I<$str>, and returns a escaped string (see ab
 
 =head1 TEMPLATE SYNTAX
 
-There are syntaxes you can use:
+There are several syntaxes you can use:
 
 =over
 
@@ -609,6 +611,8 @@ L<HTML::Template>
 L<HTML::Template::Pro>
 
 L<Template::Alloy>
+
+L<Template::Sandbox>
 
 Benchmarks:
 
