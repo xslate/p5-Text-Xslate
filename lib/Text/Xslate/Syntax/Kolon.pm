@@ -55,73 +55,11 @@ If I<$var> is an object instance, you can call its methods.
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
 
-=head2 Loops
+=head2 Expressions
 
-There are C<for> and C<while> loops.
-
-    : # $data must be an ARRAY reference
-    : for $data -> $item {
-        [<: $item.field :>]
-    : }
-
-    : # $obj must be an iteratable object
-    : while $obj.fetch -> $item {
-        [<: $item.field :>]
-    : }
-
-C<while> statements are not the same as Perl's. In fact, the above Xslate
-code is the same as the following Perl code:
-
-    while(defined(my $item = $obj->fetch)) {
-        ...
-    }
-
-=head2 Conditional statements
-
-There are C<if-else> and C<given-when> conditional statements.
-
-    : if $var == nil {
-        $var is nil.
-    : }
-    : else if $var != "foo" {
-        $var is not nil nor "foo".
-    : }
-    : else {
-        $var is "foo".
-    : }
-
-    : if( $var >= 1 && $var <= 10 ) {
-        $var is 1 .. 10
-    : }
+Conditional operator (C<< ?: >>):
 
     : $var.value == nil ? "nil" : $var.value
-
-Note that C<elsif> for C<else if> is also okey.
-
-    : given $var {
-    :   when "foo" {
-            it is foo.
-    :   }
-    :   when "bar" {
-            it is bar.
-    :   }
-    :   default {
-            it is not foo nor bar.
-        }
-    : }
-
-For given statements, you can use the topic variable.
-
-    : given $var -> $it {
-    :   when "foo" {
-            it is foo.
-    :   }
-    :   when $it == "bar" or $it == "baz" {
-            it is bar or baz.
-    :   }
-    : }
-
-=head2 Expressions
 
 Relational operators (C<< == != < <= > >= >>):
 
@@ -162,6 +100,68 @@ Operator precedence is the same as Perl's:
     not
     and
     or
+
+=head2 Loops
+
+There are C<for> and C<while> loops.
+
+    : # $data must be an ARRAY reference
+    : for $data -> $item {
+        [<: $item.field :>]
+    : }
+
+    : # $obj must be an iteratable object
+    : while $obj.fetch -> $item {
+        [<: $item.field :>]
+    : }
+
+C<while> statements are not the same as Perl's. In fact, the above Xslate
+while code is the same as the following Perl while code:
+
+    while(defined(my $item = $obj->fetch)) {
+        ...
+    }
+
+=head2 Conditional statements
+
+There are C<if-else> and C<given-when> conditional statements.
+
+    : if $var == nil {
+        $var is nil.
+    : }
+    : else if $var != "foo" { # elsif ... is okey
+        $var is not nil nor "foo".
+    : }
+    : else {
+        $var is "foo".
+    : }
+
+    : if( $var >= 1 && $var <= 10 ) {
+        $var is 1 .. 10
+    : }
+
+    : given $var {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when "bar" {
+            it is bar.
+    :   }
+    :   default {
+            it is not foo nor bar.
+        }
+    : }
+
+For given statements, you can use the topic variable.
+
+    : given $var -> $it {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when $it == "bar" or $it == "baz" {
+            it is bar or baz.
+    :   }
+    : }
 
 =head2 Functions and filters
 

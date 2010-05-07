@@ -167,6 +167,10 @@ If I<$var> is an object instance, you can call its methods.
     [% $var.method() %]
     [% $var.method(1, 2, 3) %]
 
+=head2 Expressions
+
+Almost the same as L<Text::Xslate::Syntax::Kolon>.
+
 =head2 Loops
 
     [% FOREACH item IN arrayref %]
@@ -188,10 +192,6 @@ If I<$var> is an object instance, you can call its methods.
     [% ELSE %]
         Case 3
     [% END %]
-
-=head2 Expressions
-
-Almost the same as L<Text::Xslate::Syntax::Kolon>.
 
 =head2 Functions and filters
 
