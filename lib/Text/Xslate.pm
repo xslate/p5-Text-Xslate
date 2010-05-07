@@ -424,7 +424,7 @@ Possible options are:
 
 =over
 
-=item C<< path => \@path // ["."] >>
+=item C<< path => \@path // ['.'] >>
 
 Specifies the include paths.
 
@@ -468,17 +468,17 @@ For example:
 You can use function based modules with the C<import> option and invoke
 object methods in templates. Thus, Xslate doesn't require namespaces for plugins.
 
-=item C<< input_layer => $perliolayers // ":utf8" >>
+=item C<< input_layer => $perliolayers // ':utf8' >>
 
 Specifies PerlIO layers for reading templates.
 
-=item C<< syntax => $name // "Kolon" >>
+=item C<< syntax => $name // 'Kolon' >>
 
 Specifies the template syntax you use.
 
 I<$name> may be a short name (moniker), or a fully qualified name.
 
-=item C<< escape => $mode // "html" >>
+=item C<< escape => $mode // 'html' >>
 
 Specifies the escape mode.
 
@@ -517,7 +517,7 @@ For example:
     my $tx   = Text::Xslate->new();
     my $tmpl = 'Mailaddress: <: $email :>';
     my %vars = (
-        email => "Foo &lt;foo@example.com&gt;",
+        email => 'Foo &lt;foo@example.com&gt;',
     );
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
@@ -557,7 +557,7 @@ There are common notes in the Xslate virtual machine.
 
 You cannot use C<undef> as a valid value.
 The use of C<undef> will cause fatal errors as if
-C<use warnings FALTAL => "all"> was specified.
+C<use warnings FALTAL => 'all'> was specified.
 However, unlike Perl, you can use equal operators to check whether
 the value is defined or not:
 
@@ -571,10 +571,10 @@ the value is defined or not:
 Or, you can also use defined-or operator (//):
 
     : # on Kolon syntax
-    Hello, <: $value // "Xslate" :> world!
+    Hello, <: $value // 'Xslate' :> world!
 
     [% # on TTerse syntax %]
-    Hello, [% $value // "Xslate" %] world!
+    Hello, [% $value // 'Xslate' %] world!
 
 =head1 DEPENDENCIES
 
@@ -624,7 +624,7 @@ Thanks to lestrrat for the suggestion to the interface of C<render()>.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug-finding.
 
-Thanks to gardejo for the proposal to the name "template cascading".
+Thanks to gardejo for the proposal to the name B<template cascading>.
 
 Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
 
