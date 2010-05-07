@@ -107,6 +107,13 @@ has syntax => (
     required => 0,
 );
 
+has escape_mode => (
+    is  => 'rw',
+    isa => Mouse::Util::TypeConstraints::enum([qw(html none)]),
+
+    default => 'html',
+);
+
 has parser => (
     is  => 'rw',
     isa => 'Object', # Text::Xslate::Parser
@@ -355,6 +362,10 @@ sub _generate_command {
     my @code;
 
     my $proc = $node->id;
+    if($proc eq 'print' and $self->escape_mode ne 'html') {
+        $proc = 'print_raw';
+    }
+
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
             push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];

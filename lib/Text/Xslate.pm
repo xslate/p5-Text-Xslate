@@ -24,7 +24,7 @@ use File::Spec;
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-my $XSLATE_MAGIC = ".xslate $VERSION\n";
+my $XSLATE_MAGIC = qq{.xslate "%s-%s-%s"\n}; # version-syntax-escape
 
 sub new {
     my $class = shift;
@@ -34,11 +34,12 @@ sub new {
 
     $args{suffix}       //= '.tx';
     $args{path}         //= [ '.' ];
-    $args{cache_dir}    //= File::Spec->tmpdir;
     $args{input_layer}  //= ':utf8';
-    $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
     $args{syntax}       //= 'Kolon'; # passed directly to the compiler
+    $args{escape}       //= 'html';
+    $args{cache}        //= 1;
+    $args{cache_dir}    //= File::Spec->tmpdir;
 
     my %funcs;
     if(defined $args{import}) {
@@ -171,7 +172,7 @@ sub load_file {
         open my($in), '<' . $self->{input_layer}, $to_read
             or $self->throw_error("LoadError: Cannot open $to_read for reading: $!");
 
-        if($is_compiled && scalar(<$in>) ne $XSLATE_MAGIC) {
+        if($is_compiled && scalar(<$in>) ne $self->_magic) {
             # magic token is not matched
             close $in;
             unlink $cachepath
@@ -204,7 +205,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->throw_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $XSLATE_MAGIC;
+            print $out $self->_magic;
             print $out $self->_compiler->as_assembly($protocode);
 
             if(!close $out) {
@@ -231,6 +232,15 @@ sub load_file {
     return $protocode;
 }
 
+sub _magic {
+    my($self) = @_;
+    return sprintf $XSLATE_MAGIC,
+        $VERSION,
+        $self->{syntax},
+        $self->{escape},
+    ;
+}
+
 sub _compiler {
     my($self) = @_;
     my $compiler = $self->{compiler};
@@ -238,8 +248,9 @@ sub _compiler {
     if(!ref $compiler){
         require Mouse::Util;
         $compiler = Mouse::Util::load_class($compiler)->new(
-            engine => $self,
-            syntax => $self->{syntax},
+            engine       => $self,
+            syntax      => $self->{syntax},
+            escape_mode => $self->{escape},
         );
 
         if(my $funcs = $self->{function}) {
@@ -464,6 +475,12 @@ Specifies PerlIO layers for reading templates.
 Specifies the template syntax you use.
 
 If I<$moniker> is undefined, the default parser will be used.
+
+=item C<< escape => $mode // 'html' >>
+
+Specifies the escape mode.
+
+Possible escape modes are B<html> and B<none>.
 
 =back
 
