@@ -67,8 +67,8 @@ has lvar_id => ( # local varialbe id
 
     traits  => [qw(Counter)],
     handles => {
-        _lvar_use     => 'inc',
-        _lvar_release => 'dec',
+        lvar_use     => 'inc',
+        lvar_release => 'dec',
     },
 
     default  => 0,
@@ -423,9 +423,9 @@ sub _generate_for {
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->_lvar_use(3);
+    $self->lvar_use(3);
     my @block_code = $self->_compile_ast($block);
-    $self->_lvar_release(3);
+    $self->lvar_release(3);
 
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
@@ -459,9 +459,9 @@ sub _generate_while {
         if @{$vars};
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->_lvar_use(scalar @{$vars});
+    $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_ast($block);
-    $self->_lvar_release(scalar @{$vars});
+    $self->lvar_release(scalar @{$vars});
 
     push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ]
         if @{$vars};
@@ -489,7 +489,7 @@ sub _generate_proc { # block, before, around, after
         $self->lvar->{$arg} = [ fetch_lvar => $arg_ix++, $node->line, $arg ];
     }
 
-    $self->_lvar_use($arg_ix);
+    $self->lvar_use($arg_ix);
 
     my %macro = (
         name   => $name,
@@ -519,7 +519,7 @@ sub _generate_proc { # block, before, around, after
         push @{ $self->macro_table->{ $fq_name } //= [] }, \%macro;
     }
 
-    $self->_lvar_release($arg_ix);
+    $self->lvar_release($arg_ix);
 
     return; # no code, only definition
 }
@@ -562,9 +562,9 @@ sub _generate_given {
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->_lvar_use(1);
+    $self->lvar_use(1);
     my @block_code = $self->_compile_ast($block);
-    $self->_lvar_release(1);
+    $self->lvar_release(1);
 
     push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ], @block_code;
     return @code;
@@ -636,10 +636,10 @@ sub _generate_binary {
         when(%binary) {
             my @code = $self->_generate_expr($node->first);
             push @code, [ save_to_lvar => $self->lvar_id ];
-            $self->_lvar_use(1);
 
+            $self->lvar_use(1);
             push @code, $self->_generate_expr($node->second);
-            $self->_lvar_release(1);
+            $self->lvar_release(1);
 
             push @code,
                 [ load_lvar_to_sb => $self->lvar_id ],
