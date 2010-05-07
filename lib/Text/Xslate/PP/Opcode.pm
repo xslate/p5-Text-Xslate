@@ -484,11 +484,11 @@ sub tx_access_lvar {
 sub tx_push_frame {
     my ( $st ) = @_;
 
-    $st->current_frame( $st->current_frame + 1 );
-
     if ( $st->current_frame > 100 ) {
         Carp::croak("Macro call is too deep (> 100)");
     }
+
+    $st->current_frame( $st->current_frame + 1 );
 
     $st->frame->[ $st->current_frame ] = [];
 

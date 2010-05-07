@@ -413,7 +413,27 @@ sub _initialize {
     }
     else {
         $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = sub {
-            Carp::croak( @_ );
+            my ( $str ) = @_;
+            my $st = $Text::Xslate::PP::Opcode::current_st;
+
+            Carp::croak( $str ) unless $st;
+
+            my $cframe = $st->frame->[ $st->current_frame ];
+            my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
+
+            $st->self->_reset_depth;
+
+            local $SIG{__DIE__};
+
+            #    /* unroll the stack frame */
+            #    /* to fix TXframe_OUTPUT */
+
+            local $Carp::CarpLevel = 2;
+            local $Carp::Internal{ 'Text::Xslate::PP::Opcode' } = 1;
+            local $Carp::Internal{ 'Text::Xslate::PP' } = 1;
+
+            my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
+            Carp::croak( sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, 0, $name, $st->{ pc }, $str ) );
         };
     }
 
@@ -580,6 +600,9 @@ sub tx_execute { no warnings 'recursion';
     $st->{ pc }   = 0;
     $st->vars( $vars );
 
+    local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
+    $Text::Xslate::PP::Opcode::current_st = $st;
+
     if ( $Depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
@@ -592,6 +615,8 @@ sub tx_execute { no warnings 'recursion';
     $Depth--;
 }
 
+
+sub _reset_depth { $Depth = 0; }
 
 
 package Text::Xslate::PP::EscapedString;
