@@ -418,7 +418,7 @@ sub _initialize {
     }
 
     # defaultにできるものは後で直しておく
-    $st->template( $tmpl );
+    $st->tmpl( $tmpl );
     $st->self( $self ); # weaken!
 
     $st->macro( {} );

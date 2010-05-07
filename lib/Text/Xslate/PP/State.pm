@@ -3,7 +3,9 @@ package Text::Xslate::PP::State;
 use Mouse; # we don't need Mouse for this module?
 use Carp ();
 
-has template => ( is => 'rw' );
+our $VERSION = '0.001';
+
+has tmpl => ( is => 'rw' );
 
 has self => ( is => 'rw' );
 
