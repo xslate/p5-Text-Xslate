@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use inc::Module::Install;
+use Module::Install::XSUtil 0.21;
 
 all_from 'lib/Text/Xslate.pm';
 
