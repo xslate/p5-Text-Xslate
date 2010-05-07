@@ -402,7 +402,7 @@ sub op_macro_end { # 42
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
     my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
 
-    $_[0]->targ( $_[0]->{ output } );
+    $_[0]->targ( Text::Xslate::PP::escaped_string( $_[0]->{ output } ) );
 
     $_[0]->sa( $_[0]->targ );
 

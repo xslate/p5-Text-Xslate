@@ -630,7 +630,7 @@ package Text::Xslate::EscapedString;
 
 use overload (
     '""' => sub { ${ $_[0] }; },
-    'eq' => sub { ${ $_[0] } eq $_[1]; },
+    fallback => 1,
 );
 
 
