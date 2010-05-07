@@ -82,7 +82,7 @@ sub _initialize;
 sub load_string { # for <input>
     my($self, $string) = @_;
     if(not defined $string) {
-        $self->throw_error("LoadError: Template string is not given");
+        $self->_error("LoadError: Template string is not given");
     }
     $self->{string} = $string;
     my $protocode = $self->_compiler->compile($string);
@@ -130,7 +130,7 @@ sub find_file {
     }
 
     if(not defined $orig_mtime) {
-        $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
+        $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
     return {
@@ -170,13 +170,13 @@ sub load_file {
     {
         my $to_read = $is_compiled ? $cachepath : $fullpath;
         open my($in), '<' . $self->{input_layer}, $to_read
-            or $self->throw_error("LoadError: Cannot open $to_read for reading: $!");
+            or $self->_error("LoadError: Cannot open $to_read for reading: $!");
 
         if($is_compiled && scalar(<$in>) ne $self->_magic) {
             # magic token is not matched
             close $in;
             unlink $cachepath
-                or $self->throw_error("LoadError: Cannot unlink $cachepath: $!");
+                or $self->_error("LoadError: Cannot unlink $cachepath: $!");
             goto &load_file; # retry
         }
 
@@ -203,7 +203,7 @@ sub load_file {
                 File::Path::mkpath($cachedir);
             }
             open my($out), '>:raw:utf8', $cachepath
-                or $self->throw_error("LoadError: Cannot open $cachepath for writing: $!");
+                or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
             print $out $self->_magic;
             print $out $self->_compiler->as_assembly($protocode);
@@ -285,7 +285,7 @@ sub _load_assembly {
     return \@protocode;
 }
 
-sub throw_error {
+sub _error {
     shift;
     unshift @_, 'Xslate: ';
     require Carp;
