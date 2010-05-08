@@ -164,6 +164,14 @@ T
     baz
 X
 
+    [<<'T', <<'X', "if does not require parens"],
+: if ($value + 10) == 20 {
+    foo
+: }
+T
+    foo
+X
+
 );
 
 foreach my $d(@data) {
