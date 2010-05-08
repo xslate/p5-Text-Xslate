@@ -9,9 +9,6 @@ our $VERSION = '0.1011';
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
 
-use XSLoader;
-XSLoader::load(__PACKAGE__, $VERSION);
-
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
@@ -19,6 +16,17 @@ use Text::Xslate::Util qw(
 );
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
+
+if($DEBUG !~ /\b pp \b/xms) {
+    eval {
+        require XSLoader;
+        XSLoader::load(__PACKAGE__, $VERSION);
+    };
+}
+if(!defined &_initialize) {
+    require 'Text/Xslate/PP.pm';
+    Text::Xslate::PP->import();
+}
 
 use File::Spec;
 
