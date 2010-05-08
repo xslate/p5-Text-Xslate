@@ -373,6 +373,8 @@ sub render {
 
     my $st = tx_load_template( $self, $name );
 
+    $st->{ output } = '';
+
     tx_execute( $st, undef, $vars );
 
     $st->{ output };
