@@ -3,7 +3,42 @@ package Text::Xslate::PP;
 use 5.008; # finally even other modules will run in Perl 5.008?
 use strict;
 
-our $VERSION = '0.0001';
+use parent qw(Exporter);
+our @EXPORT_OK;
+our @EXPORT;
+
+my $loaded;
+
+unless ( $loaded++ ) {
+    my $called_by = caller;
+
+    if ( $called_by->isa('Text::Xslate') ) {
+        @EXPORT = qw( _initialize render _reset_depth ); # for Text::Xslate
+        *Text::Xslate::escaped_string = *Text::Xslate::PP::escaped_string;
+    }
+    else { # directly PP called
+        @EXPORT_OK = qw( escaped_string html_escape );
+    }
+
+    unless ( exists &Text::Xslate::EscapedString::new ) {
+        eval q{
+            package Text::Xslate::EscapedString;
+
+            sub new {
+                my ( $class, $str ) = @_;
+                bless \$str, 'Text::Xslate::EscapedString';
+            }
+
+            use overload (
+                '""' => sub { ${ $_[0] }; },
+                fallback => 1,
+            );
+        };
+        die $@ if $@;
+    }
+
+}
+
 
 use Carp ();
 use Data::Dumper;
@@ -17,14 +52,13 @@ our $XS_COMAPT_VERSION = '0.1010';
 
 my $Depth = 0;
 
+our $VERSION = '0.0001';
+
 #
 #
 #
 
-# <<< Most codes are copied and modified from Text::Xslate
-
-use parent qw(Exporter);
-our @EXPORT_OK = qw(escaped_string html_escape);
+# <<< Most codes are copied and modified from Text::Xslate 0.1010
 
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
@@ -190,7 +224,7 @@ sub load_file {
     my($self, $file, $mtime) = @_;
 
     print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
-#print $file,"\n";
+
     if($file eq '<input>') { # simply reload it
         return $self->load_string($self->{string});
     }
@@ -604,7 +638,7 @@ sub tx_execute { no warnings 'recursion';
     $st->vars( $vars );
 
     local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
-    $Text::Xslate::PP::Opcode::current_st = $st;
+    local $Text::Xslate::PP::Opcode::current_st = $st;
 
     if ( $Depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
@@ -620,21 +654,6 @@ sub tx_execute { no warnings 'recursion';
 
 
 sub _reset_depth { $Depth = 0; }
-
-
-package Text::Xslate::PP::EscapedString;
-
-sub new {
-    my ( $class, $str ) = @_;
-    bless \$str, 'Text::Xslate::EscapedString';
-}
-
-package Text::Xslate::EscapedString;
-
-use overload (
-    '""' => sub { ${ $_[0] }; },
-    fallback => 1,
-);
 
 
 1;
