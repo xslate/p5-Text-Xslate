@@ -509,7 +509,7 @@ sub _initialize {
         my ( $opname, $arg, $line ) = @$pair;
         my $opnum = $TX_OPS->{ $opname };
 
-        unless ( $opnum ) {
+        unless ( defined $opnum ) {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
