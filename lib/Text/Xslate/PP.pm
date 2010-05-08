@@ -84,11 +84,12 @@ sub new {
 
     $args{suffix}       //= '.tx';
     $args{path}         //= [ '.' ];
-    $args{cache_dir}    //= File::Spec->tmpdir;
     $args{input_layer}  //= ':utf8';
-    $args{cache}        //= 1;
     $args{compiler}     //= 'Text::Xslate::Compiler';
     $args{syntax}       //= 'Kolon'; # passed directly to the compiler
+    $args{escape}       //= 'html';
+    $args{cache}        //= 1;
+    $args{cache_dir}    //= File::Spec->tmpdir;
 
     my %funcs;
     if(defined $args{import}) {
@@ -112,9 +113,11 @@ sub new {
     my $self = bless \%args, $class;
 
     if(defined $args{file}) {
+        require Carp;
         Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
     }
     if(defined $args{string}) {
+        require Carp;
         Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
         $self->load_string($args{string});
     }
@@ -156,7 +159,7 @@ sub _load_input { # for <input>
 sub load_string { # for <input>
     my($self, $string) = @_;
     if(not defined $string) {
-        $self->throw_error("LoadError: Template string is not given");
+        $self->_error("LoadError: Template string is not given");
     }
     $self->{string} = $string;
     my $protocode = $self->_compiler->compile($string);
@@ -164,15 +167,14 @@ sub load_string { # for <input>
     return $protocode;
 }
 
-
 sub render_string {
     my($self, $string, $vars) = @_;
 
     local $self->{cache} = 0;
+    local $self->{string};
     $self->load_string($string);
     return $self->render(undef, $vars);
 }
-
 
 sub find_file {
     my($self, $file, $mtime) = @_;
@@ -205,7 +207,7 @@ sub find_file {
     }
 
     if(not defined $orig_mtime) {
-        $self->throw_error("LoadError: Cannot find $file (path: @{$self->{path}})");
+        $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
     return {
@@ -245,13 +247,13 @@ sub load_file {
     {
         my $to_read = $is_compiled ? $cachepath : $fullpath;
         open my($in), '<' . $self->{input_layer}, $to_read
-            or $self->throw_error("LoadError: Cannot open $to_read for reading: $!");
+            or $self->_error("LoadError: Cannot open $to_read for reading: $!");
 
-        if($is_compiled && scalar(<$in>) ne $XSLATE_MAGIC) {
+        if($is_compiled && scalar(<$in>) ne $self->_magic) {
             # magic token is not matched
             close $in;
             unlink $cachepath
-                or $self->throw_error("LoadError: Cannot unlink $cachepath: $!");
+                or $self->_error("LoadError: Cannot unlink $cachepath: $!");
             goto &load_file; # retry
         }
 
@@ -260,7 +262,6 @@ sub load_file {
     }
 
     my $protocode;
-
     if($is_compiled) {
         $protocode = $self->_load_assembly($string);
     }
@@ -279,9 +280,9 @@ sub load_file {
                 File::Path::mkpath($cachedir);
             }
             open my($out), '>:raw:utf8', $cachepath
-                or $self->throw_error("LoadError: Cannot open $cachepath for writing: $!");
+                or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $XSLATE_MAGIC;
+            print $out $self->_magic;
             print $out $self->_compiler->as_assembly($protocode);
 
             if(!close $out) {
@@ -308,8 +309,14 @@ sub load_file {
     return $protocode;
 }
 
-
-
+sub _magic {
+    my($self) = @_;
+    return sprintf $XSLATE_MAGIC,
+        $VERSION,
+        $self->{syntax},
+        $self->{escape},
+    ;
+}
 
 sub _compiler {
     my($self) = @_;
@@ -318,8 +325,9 @@ sub _compiler {
     if(!ref $compiler){
         require Mouse::Util;
         $compiler = Mouse::Util::load_class($compiler)->new(
-            engine => $self,
-            syntax => $self->{syntax},
+            engine       => $self,
+            syntax      => $self->{syntax},
+            escape_mode => $self->{escape},
         );
 
         if(my $funcs = $self->{function}) {
@@ -354,7 +362,7 @@ sub _load_assembly {
     return \@protocode;
 }
 
-sub throw_error {
+sub _error {
     shift;
     unshift @_, 'Xslate: ';
     require Carp;
