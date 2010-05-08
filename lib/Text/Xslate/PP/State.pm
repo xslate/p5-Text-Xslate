@@ -7,7 +7,7 @@ our $VERSION = '0.001';
 
 has tmpl => ( is => 'rw' );
 
-has self => ( is => 'rw' );
+has self => ( is => 'rw', weak_ref => 1 );
 
 has sa => ( is => 'rw' );
 
