@@ -423,8 +423,6 @@ sub _initialize {
 
             $st->self->_reset_depth;
 
-            local $SIG{__DIE__};
-
             #    /* unroll the stack frame */
             #    /* to fix TXframe_OUTPUT */
 
@@ -433,7 +431,8 @@ sub _initialize {
             local $Carp::Internal{ 'Text::Xslate::PP' } = 1;
 
             my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
-            Carp::croak( sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, 0, $name, $st->{ pc }, $str ) );
+            my $line = $st->lines->[ $st->{ pc } ];
+            Carp::croak( sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str ) );
         };
     }
 
@@ -456,6 +455,7 @@ sub _initialize {
     $mainframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ]    = 'main';
     $mainframe->[ Text::Xslate::PP::Opcode::TXframe_RETADDR ] = $len;
 
+    $st->lines( [] );
     $st->{ output } = '';
 
     $st->code( [] );
@@ -521,6 +521,7 @@ sub _initialize {
         }
 
         # set up line number
+        $st->lines->[ $i ] = $line;
 
         # special cases
         if( $opnum == $TX_OPS->{ macro_begin } ) {

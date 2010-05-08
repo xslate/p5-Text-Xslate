@@ -118,7 +118,11 @@ sub op_fetch_field_s { # 14
 sub op_print { # 15
     my $sv = $_[0]->sa;
 
-    $sv = '' unless defined $sv;
+#    $sv = '' unless defined $sv;
+
+    unless ( defined $sv ) {
+        Carp::croak( 'Use of uninitialized value in subroutine entry' );
+    }
 
     if ( blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
         $_[0]->{ output } .= $sv;
@@ -502,7 +506,8 @@ sub tx_fetch {
     my ( $st, $var, $key ) = @_;
 
     if ( blessed $var ) {
-        return $var->$key();
+        my $ret = eval q{ $var->$key() };
+        return $ret;
     }
     elsif ( ref $var eq 'HASH' ) {
         return $var->{ $key };
