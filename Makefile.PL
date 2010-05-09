@@ -29,8 +29,7 @@ xslate_ops.h :: xs/Text-Xslate.xs tool/opcode.pl
 M
 
 clean_files qw(
-    Text-Xslate-* *.stackdump
-    xs/*.gcda xs/*.gcno xs/*.gcov
+    Text-Xslate-*
     nytprof *.out
     cover_db
 );
