@@ -11,74 +11,74 @@ our $VERSION = '0.0001';
 #
 #
 
-sub op_noop { # 0
+sub op_noop {
     $_[0]->{ pc }++;
 }
 
 
-sub op_move_to_sb { # 1
+sub op_move_to_sb {
     $_[0]->sb( $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
 
-sub op_move_from_sb { # 2
+sub op_move_from_sb {
     $_[0]->sa( $_[0]->sb );
     $_[0]->{ pc }++;
 }
 
 
-sub op_save_to_lvar { # 3
+sub op_save_to_lvar {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
     tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
 
-sub op_load_lvar_to_sb { # 4
+sub op_load_lvar_to_sb {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
     $_[0]->sb( tx_access_lvar( $_[0], $_[0]->pc_arg ) );
     $_[0]->{ pc }++;
 }
 
 
-sub op_push { # 5
+sub op_push {
     push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->sa;
     $_[0]->{ pc }++;
 }
 
 
-sub op_pop { # 6
+sub op_pop {
     #
     $_[0]->{ pc }++;
 }
 
 
-sub op_pushmark { # 7
+sub op_pushmark {
     push @{ $_[0]->{ SP } }, [];
     $_[0]->{ pc }++;
 }
 
 
-sub op_nil { # 8
+sub op_nil {
     $_[0]->sa( undef );
     $_[0]->{ pc }++;
 }
 
 
-sub op_literal { # 9
+sub op_literal {
     $_[0]->sa( $_[0]->pc_arg );
     $_[0]->{ pc }++;
 }
 
 
-sub op_literal_i { # 10 = 9
+sub op_literal_i {
     $_[0]->sa( $_[0]->pc_arg );
     $_[0]->{ pc }++;
 }
 
 
-sub op_fetch_s { # 11
+sub op_fetch_s {
     my $vars = $_[0]->vars;
     my $val  = $vars->{ $_[0]->pc_arg };
     $_[0]->sa( $val );
@@ -86,7 +86,7 @@ sub op_fetch_s { # 11
 }
 
 
-sub op_fetch_lvar { # 12
+sub op_fetch_lvar {
     my $id     = $_[0]->pc_arg;
     my $cframe = $_[0]->frame->[ $_[0]->current_frame ];
 
@@ -99,7 +99,7 @@ sub op_fetch_lvar { # 12
 }
 
 
-sub op_fetch_field { # 13
+sub op_fetch_field {
     my $var = $_[0]->sb;
     my $key = $_[0]->sa;
     $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
@@ -107,7 +107,7 @@ sub op_fetch_field { # 13
 }
 
 
-sub op_fetch_field_s { # 14
+sub op_fetch_field_s {
     my $var = $_[0]->sa;
     my $key = $_[0]->pc_arg;
     $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
@@ -115,7 +115,7 @@ sub op_fetch_field_s { # 14
 }
 
 
-sub op_print { # 15
+sub op_print {
     my $sv = $_[0]->sa;
 
 #    $sv = '' unless defined $sv;
@@ -142,19 +142,19 @@ sub op_print { # 15
 }
 
 
-sub op_print_raw { # 16
+sub op_print_raw {
     $_[0]->{ output } .= $_[0]->sa;
     $_[0]->{ pc }++;
 }
 
 
-sub op_print_raw_s { # 17
+sub op_print_raw_s {
     $_[0]->{ output } .= $_[0]->pc_arg;
     $_[0]->{ pc }++;
 }
 
 
-sub op_include { # 18
+sub op_include {
     no warnings 'recursion';
 
     my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->sa );
@@ -167,7 +167,7 @@ sub op_include { # 18
 }
 
 
-sub op_for_start { # 19
+sub op_for_start {
     my $ar = $_[0]->sa;
     my $id = $_[0]->pc_arg;
 
@@ -186,7 +186,7 @@ sub op_for_start { # 19
 }
 
 
-sub op_for_iter { # 20
+sub op_for_iter {
     my $id = $_[0]->sa;
     my $av = tx_access_lvar( $_[0], $id + 1 );
     my $i  = tx_access_lvar( $_[0], $id + 2 );
@@ -204,42 +204,42 @@ sub op_for_iter { # 20
 }
 
 
-sub op_add { # 21
+sub op_add {
     $_[0]->targ( $_[0]->sb + $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_sub { # 22
+sub op_sub {
     $_[0]->targ( $_[0]->sb - $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_mul { # 23
+sub op_mul {
     $_[0]->targ( $_[0]->sb * $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_div { # 24
+sub op_div {
     $_[0]->targ( $_[0]->sb / $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_mod { # 25
+sub op_mod {
     $_[0]->targ( $_[0]->sb % $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_concat { # 26
+sub op_concat {
     my $sv = $_[0]->pc_arg;
     $sv .= $_[0]->sb . $_[0]->sa;
     $_[0]->sa( $sv );
@@ -247,7 +247,7 @@ sub op_concat { # 26
 }
 
 
-sub op_filt { # 27
+sub op_filt {
     my $arg    = $_[0]->sb;
     my $filter = $_[0]->sa;
 
@@ -265,7 +265,7 @@ sub op_filt { # 27
 }
 
 
-sub op_and { # 28
+sub op_and {
     if ( $_[0]->sa ) {
         $_[0]->{ pc }++;
     }
@@ -275,7 +275,7 @@ sub op_and { # 28
 }
 
 
-sub op_dand { #
+sub op_dand {
     if ( defined $_[0]->sa ) {
         $_[0]->{ pc }++;
     }
@@ -285,7 +285,7 @@ sub op_dand { #
 }
 
 
-sub op_or { # 29
+sub op_or {
     if ( ! $_[0]->sa ) {
         $_[0]->{ pc }++;
     }
@@ -295,7 +295,7 @@ sub op_or { # 29
 }
 
 
-sub op_dor { # 30
+sub op_dor {
     my $sv = $_[0]->sa;
     if ( defined $sv ) {
         $_[0]->{ pc } = $_[0]->pc_arg;
@@ -307,27 +307,27 @@ sub op_dor { # 30
 }
 
 
-sub op_not { # 31
+sub op_not {
     $_[0]->sa( ! $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
 
-sub op_plus { # 32
+sub op_plus {
     $_[0]->targ( + $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_minus { # 33
+sub op_minus {
     $_[0]->targ( - $_[0]->sa );
     $_[0]->sa( $_[0]->targ );
     $_[0]->{ pc }++;
 }
 
 
-sub op_eq { # 34
+sub op_eq {
     my $aval = $_[0]->sa;
     my $bval = $_[0]->sb;
 
@@ -347,34 +347,34 @@ sub op_eq { # 34
 }
 
 
-sub op_ne { # 35
+sub op_ne {
     op_eq( $_[0] ); # 後で直す
     $_[0]->sa( ! $_[0]->sa );
 }
 
 
-sub op_lt { # 36
+sub op_lt {
     $_[0]->sa( $_[0]->sb < $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
-sub op_le { # 37
+sub op_le {
     $_[0]->sa( $_[0]->sb <= $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
-sub op_gt { # 38
+sub op_gt {
     $_[0]->sa( $_[0]->sb > $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
-sub op_ge { # 39
+sub op_ge {
     $_[0]->sa( $_[0]->sb >= $_[0]->sa );
     $_[0]->{ pc }++;
 }
 
 
-sub op_macrocall { # 40
+sub op_macrocall {
     my $addr   = $_[0]->sa; # macro rentry point
     my $cframe = tx_push_frame( $_[0] );
 
@@ -396,13 +396,13 @@ sub op_macrocall { # 40
 }
 
 
-sub op_macro_begin { # 41
+sub op_macro_begin {
     $_[0]->frame->[ $_[0]->current_frame ]->[ TXframe_NAME ] = $_[0]->pc_arg;
     $_[0]->{ pc }++;
 }
 
 
-sub op_macro_end { # 42
+sub op_macro_end {
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
     my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
 
@@ -416,7 +416,7 @@ sub op_macro_end { # 42
 }
 
 
-sub op_macro { # 43
+sub op_macro {
     my $name = $_[0]->pc_arg;
 
     $_[0]->sa( $_[0]->macro->{ $name } );
@@ -425,7 +425,7 @@ sub op_macro { # 43
 }
 
 
-sub op_function { # 44
+sub op_function {
     my $name = $_[0]->pc_arg;
 
     if ( my $func = $_[0]->function->{ $name } ) {
@@ -439,7 +439,7 @@ sub op_function { # 44
 }
 
 
-sub op_funcall { # 45
+sub op_funcall {
     my $func = $_[0]->sa;
     my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
     my $ret = eval { $func->( @args ) };
@@ -449,7 +449,7 @@ sub op_funcall { # 45
 }
 
 
-sub op_methodcall_s { # 46
+sub op_methodcall_s {
     my ( $obj, @args ) = @{ pop @{ $_[0]->{ SP } } };
     my $method = $_[0]->pc_arg;
     my $ret = eval { $obj->$method( @args ) };
@@ -459,18 +459,18 @@ sub op_methodcall_s { # 46
 }
 
 
-sub op_goto { # 47
+sub op_goto {
     $_[0]->{ pc } = $_[0]->pc_arg;
 }
 
 
-sub op_depend { # 48
+sub op_depend {
     # = noop
     $_[0]->{ pc }++;
 }
 
 
-sub op_end { # 49
+sub op_end {
     $_[0]->{ pc } = $_[0]->code_len;
 }
 

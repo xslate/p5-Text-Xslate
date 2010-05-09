@@ -416,8 +416,8 @@ sub _initialize {
 
     # この処理全体的に別のところに移動させたい
 
-    unless ( $self->{ template } ) {
-    }
+    #unless ( $self->{ template } ) {
+    #}
 
     unless ( defined $name ) { # $name ... filename
         $name = '<input>';
@@ -429,7 +429,7 @@ sub _initialize {
         $st->function( $self->{ function } );
     }
 
-    my $tmpl = []; # [ name, error_handler, mtime of the file, cachepath ,fullpath ]
+    my $tmpl = [];
 
     $self->{ template }->{ $name } = $tmpl;
     $self->{ tmpl_st }->{ $name }  = $st;
@@ -442,7 +442,7 @@ sub _initialize {
     if ( $self->{ error_handler } ) {
         $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = $self->{ error_handler };
     }
-    else {
+    else { # シグナルハンドラは使わない方向で
         $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = sub {
             my ( $str ) = @_;
             my $st = $Text::Xslate::PP::Opcode::current_st;
