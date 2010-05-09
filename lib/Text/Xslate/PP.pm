@@ -26,11 +26,27 @@ unless ( $loaded++ ) {
 
             sub new {
                 my ( $class, $str ) = @_;
+
+                Carp::croak("Usage: Text::Xslate::EscapedString::new(klass, str)") if ( @_ != 2 );
+
+                if ( ref $class ) {
+                    Carp::croak( sprintf( "You cannot call %s->new() as an instance method", __PACKAGE__ ) );
+                }
+                elsif ( $class ne __PACKAGE__ ) {
+                    Carp::croak( sprintf( "You cannot extend %s", __PACKAGE__ ) );
+                }
                 bless \$str, 'Text::Xslate::EscapedString';
             }
 
+            sub as_string {
+                unless ( $_[0] and ref $_[0] ) {
+                    Carp::croak( sprintf( "You cannot call %s->as_string() a class method", __PACKAGE__ ) );
+                }
+                return ${ $_[0] };
+            }
+
             use overload (
-                '""' => sub { ${ $_[0] }; },
+                '""' => sub { ${ $_[0] } }, # don't use 'as_string' or deep recursion.
                 fallback => 1,
             );
         };
@@ -375,6 +391,8 @@ sub html_escape {
 sub render {
     my ( $self, $name, $vars ) = @_;
 
+    Carp::croak("Usage: Text::Xslate::render(self, name, vars)") if ( @_ != 3 );
+
     if ( !defined $name ) {
         $name = '<input>';
     }
@@ -560,6 +578,11 @@ sub escaped_string {
 
 sub tx_load_template {
     my ( $self, $name ) = @_;
+
+    unless ( $self && ref $self ) {
+        Carp::croak( "Invalid xslate object" );
+    }
+
     my $ttobj = $self->{ template };
     my $retried = 0;
 
