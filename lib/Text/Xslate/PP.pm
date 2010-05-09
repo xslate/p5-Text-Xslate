@@ -595,15 +595,17 @@ sub tx_load_template {
     my $ttobj = $self->{ template };
     my $retried = 0;
 
-#        Carp::croak(
-#            sprintf( "Xslate: Cannot load template %s: %s", $name, "template entry is invalid" )
-#        );
+    unless ( $ttobj and  ref $ttobj eq 'HASHREF' ) {
+        Carp::croak(
+            sprintf( "Xslate: Cannot load template '%s': %s", $name, "template table is not a HASH reference" )
+        );
+    }
 
     RETRY:
 
     if( $retried > 1 ) {
         Carp::croak(
-            sprintf( "Xslate: Cannot load template %s: %s", $name, "retried reloading, but failed" )
+            sprintf( "Xslate: Cannot load template '%s': %s", $name, "retried reloading, but failed" )
         );
     }
 
