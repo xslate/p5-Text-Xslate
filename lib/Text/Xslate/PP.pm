@@ -589,7 +589,7 @@ sub tx_load_template {
 
     return $self->{ tmpl_st }->{ $name } unless $cache_mtime;
 
-    if( $retried > 0 ) {
+    if( $retried > 0 or tx_all_deps_are_fresh( $tmpl, $cache_mtime ) ) {
         return $self->{ tmpl_st }->{ $name };
     }
     else{
@@ -599,6 +599,29 @@ sub tx_load_template {
     }
 
     Carp::croak("Xslate: Cannot load template");
+}
+
+
+sub tx_all_deps_are_fresh {
+    my ( $tmpl, $cache_mtime ) = @_;
+    my $len = scalar @{$tmpl};
+
+    for ( my $i = Text::Xslate::PP::Opcode::TXo_FULLPATH; $i < $len; $i++ ) {
+        my $deppath = $tmpl->[ $i ];
+
+        next unless defined $deppath;
+
+        if ( ( stat( $deppath ) )[9] > $cache_mtime ) {
+            my $main_cache = $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ];
+            if ( $i != Text::Xslate::PP::Opcode::TXo_FULLPATH and $main_cache ) {
+                unlink $main_cache or warn $!;
+            }
+            return;
+        }
+
+    }
+
+    return 1;
 }
 
 
