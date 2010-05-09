@@ -415,8 +415,6 @@ sub render {
 
     my $st = tx_load_template( $self, $name );
 
-    $st->{ output } = '';
-
     tx_execute( $st, undef, $vars );
 
     $st->{ output };
@@ -446,6 +444,7 @@ sub _initialize {
     my $tmpl = []; # [ name, error_handler, mtime of the file, cachepath ,fullpath ]
 
     $self->{ template }->{ $name } = $tmpl;
+    $self->{ tmpl_st }->{ $name }  = $st;
 
     $tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ]      = $name;
     $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ]     = $mtime;
@@ -618,10 +617,10 @@ sub tx_load_template {
 
     my $cache_mtime = $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ];
 
-    return $self->{ st } unless $cache_mtime;
+    return $self->{ tmpl_st }->{ $name } unless $cache_mtime;
 
     if( $retried > 0 ) {
-        return $self->{ st };
+        return $self->{ tmpl_st }->{ $name };
     }
     else{
         tx_invoke_load_file( $self, $name, $cache_mtime );
@@ -638,11 +637,13 @@ sub tx_invoke_load_file {
     $self->load_file( $name, $mtime );
 }
 
+
 sub tx_execute { no warnings 'recursion';
     my ( $st, $output, $vars ) = @_;
     my $len = $st->code_len;
 
-    $st->{ pc }   = 0;
+    $st->{ output } = '';
+    $st->{ pc }     = 0;
     $st->vars( $vars );
 
     local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
@@ -656,6 +657,8 @@ sub tx_execute { no warnings 'recursion';
     while( $st->{ pc } < $len ) {
         $st->code->[ $st->{ pc } ]->{ exec_code }->( $st );
     }
+
+    $st->targ( undef );
 
     $Depth--;
 }
