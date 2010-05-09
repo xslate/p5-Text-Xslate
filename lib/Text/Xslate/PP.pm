@@ -481,7 +481,7 @@ sub _initialize {
 
     # defaultにできるものは後で直しておく
     $st->tmpl( $tmpl );
-    $st->self( $self ); # weaken!
+    $st->self( $self ); # weak_ref!
 
     $st->macro( {} );
 
@@ -503,8 +503,6 @@ sub _initialize {
 
     $st->code( [] );
     $st->code_len( $len );
-
-    $self->{ st } = $st;
 
     for ( my $i = 0; $i < $len; $i++ ) {
         my $pair = $proto->[ $i ];
@@ -595,7 +593,7 @@ sub tx_load_template {
     my $ttobj = $self->{ template };
     my $retried = 0;
 
-    unless ( $ttobj and  ref $ttobj eq 'HASHREF' ) {
+    unless ( $ttobj and  ref $ttobj eq 'HASH' ) {
         Carp::croak(
             sprintf( "Xslate: Cannot load template '%s': %s", $name, "template table is not a HASH reference" )
         );
