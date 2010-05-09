@@ -126,36 +126,6 @@ sub new {
 }
 
 
-sub _load_input { # for <input>
-    my($self) = @_;
-
-    my $source = 0;
-    my $protocode;
-
-    if($self->{string}) {
-        require Carp;
-        Carp::carp('"string" option has been deprecated. Use render_string() instead');
-        $source++;
-        $protocode = $self->_compiler->compile($self->{string});
-    }
-
-    if($self->{protocode}) {
-        $source++;
-        $protocode = $self->{protocode};
-    }
-
-    if($source > 1) {
-        $self->throw_error("Multiple template sources are specified");
-    }
-
-    if(defined $protocode) {
-        $self->_initialize($protocode, undef, undef, undef, undef);
-    }
-
-    return $protocode;
-}
-
-
 sub load_string { # for <input>
     my($self, $string) = @_;
     if(not defined $string) {
