@@ -32,8 +32,7 @@ lib/Text/Xslate/PP/Const.pm :: xs/Text-Xslate.xs tool/opcode_for_pp.pl
 M
 
 clean_files qw(
-    Text-Xslate-* *.stackdump
-    xs/*.gcda xs/*.gcno xs/*.gcov
+    Text-Xslate-*
     nytprof *.out
     cover_db
 );

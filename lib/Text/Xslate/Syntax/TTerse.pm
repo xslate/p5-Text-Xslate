@@ -119,6 +119,26 @@ sub std_command {
     return $command;
 }
 
+sub statement {
+    my($parser) = @_;
+    my @s = $parser->SUPER::statement();
+
+    # TT can print nil as an empty string
+    # so need to convert {print expr} to {print (expr) // ""}
+    foreach my $s(grep { $_->arity eq "command" } @s) {
+        foreach my $arg(@{ $s->first }) {
+            $arg = $parser->symbol("//")->clone(
+                arity  => "binary",
+                first  => $arg,
+                second => $parser->symbol("(literal)")->clone(
+                    arity => "literal",
+                    id    => "",
+                ),
+            );
+        }
+    }
+    return @s;
+}
 
 no Mouse;
 __PACKAGE__->meta->make_immutable();

@@ -572,17 +572,11 @@ the value is defined or not:
     : if $value == nil { ; }
     : if $value != nil { ; }
 
-    [% # on TTerse syntax -%]
-    [% IF $value == nil %] [% END %]
-    [% IF $value != nil %] [% END %]
-
 Or, you can also use defined-or operator (//):
 
-    : # on Kolon syntax
     Hello, <: $value // 'Xslate' :> world!
 
-    [% # on TTerse syntax %]
-    Hello, [% $value // 'Xslate' %] world!
+In TTerse, however, you can print nil as an empty string.
 
 =head1 DEPENDENCIES
 

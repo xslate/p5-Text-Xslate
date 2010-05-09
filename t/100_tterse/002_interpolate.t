@@ -13,14 +13,17 @@ my @data = (
 
     ['Hello, [% $lang %] world!' => 'Hello, Xslate world!'],
 
+    ['Hello, [% $no_such_field %] world!' => 'Hello,  world!', 'nil as empty'],
+    ['Hello, [% $no_such_field or "Default" %] world!' => 'Hello, Default world!', 'empty or default'],
 );
 
 foreach my $pair(@data) {
-    my($in, $out) = @$pair;
+    my($in, $out, $msg) = @$pair;
 
-    my %vars = (lang => 'Xslate', foo => "<bar>");
+    my %vars = (lang => 'Xslate', foo => "<bar>", '$lang' => 'XXX');
 
-    is render_str($in, \%vars), $out, $in for 1 .. 2;
+    is render_str($in, \%vars), $out, $msg
+        or diag $in;
 }
 
 done_testing;
