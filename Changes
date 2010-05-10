@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1012 Mon May 10 13:56:28 2010
+    [BUG FIXES]
+    - Cascaded templates ware not reloaded correctly (thanks to tokuhirom)
+
 0.1011 Fri May  7 12:29:45 2010
     [NEW FEATURES]
     - New escape => 'none' mode for non-HTML templates
