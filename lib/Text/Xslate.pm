@@ -22,6 +22,7 @@ if($DEBUG !~ /\b pp \b/xms) {
         require XSLoader;
         XSLoader::load(__PACKAGE__, $VERSION);
     };
+    die $@ if $@ && $DEBUG =~ /\b xs \b/xms;
 }
 if(!defined &_initialize) {
     require 'Text/Xslate/PP.pm';
