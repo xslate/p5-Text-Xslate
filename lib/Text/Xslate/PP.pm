@@ -36,36 +36,7 @@ unless ( $loaded++ ) {
     }
 
     unless ( exists &Text::Xslate::EscapedString::new ) {
-        eval q{
-            package Text::Xslate::EscapedString;
-
-            sub new {
-                my ( $class, $str ) = @_;
-
-                Carp::croak("Usage: Text::Xslate::EscapedString::new(klass, str)") if ( @_ != 2 );
-
-                if ( ref $class ) {
-                    Carp::croak( sprintf( "You cannot call %s->new() as an instance method", __PACKAGE__ ) );
-                }
-                elsif ( $class ne __PACKAGE__ ) {
-                    Carp::croak( sprintf( "You cannot extend %s", __PACKAGE__ ) );
-                }
-                bless \$str, 'Text::Xslate::EscapedString';
-            }
-
-            sub as_string {
-                unless ( $_[0] and ref $_[0] ) {
-                    Carp::croak( sprintf( "You cannot call %s->as_string() a class method", __PACKAGE__ ) );
-                }
-                return ${ $_[0] };
-            }
-
-            use overload (
-                '""' => sub { ${ $_[0] } }, # don't use 'as_string' or deep recursion.
-                fallback => 1,
-            );
-        };
-        die $@ if $@;
+        _make_xslate_escapedstring_class();
     }
 
 }
@@ -202,8 +173,9 @@ sub _initialize {
         # 後でまとめる
         if ( $tx_oparg & TXARGf_SV ) {
 
-#            Carp::croak( sprintf( "Oops: Opcode %s must have an argument on [%d]", $opname, $i ) )
-#                unless ( defined $arg );
+            # This line croak at 'concat'!
+            # Carp::croak( sprintf( "Oops: Opcode %s must have an argument on [%d]", $opname, $i ) )
+            #     unless ( defined $arg );
 
             if( $tx_oparg & TXARGf_KEY ) {
                 $st->code->[ $i ]->{ arg } = $arg;
@@ -368,6 +340,40 @@ sub tx_execute { no warnings 'recursion';
 
 
 sub _reset_depth { $Depth = 0; }
+
+
+sub _make_xslate_escapedstring_class {
+    eval q{
+        package Text::Xslate::EscapedString;
+
+        sub new {
+            my ( $class, $str ) = @_;
+
+            Carp::croak("Usage: Text::Xslate::EscapedString::new(klass, str)") if ( @_ != 2 );
+
+            if ( ref $class ) {
+                Carp::croak( sprintf( "You cannot call %s->new() as an instance method", __PACKAGE__ ) );
+            }
+            elsif ( $class ne __PACKAGE__ ) {
+                Carp::croak( sprintf( "You cannot extend %s", __PACKAGE__ ) );
+            }
+            bless \$str, 'Text::Xslate::EscapedString';
+        }
+
+        sub as_string {
+            unless ( $_[0] and ref $_[0] ) {
+                Carp::croak( sprintf( "You cannot call %s->as_string() a class method", __PACKAGE__ ) );
+            }
+            return ${ $_[0] };
+        }
+
+        use overload (
+            '""' => sub { ${ $_[0] } }, # don't use 'as_string' or deep recursion.
+            fallback => 1,
+        );
+    };
+    die $@ if $@;
+}
 
 
 1;

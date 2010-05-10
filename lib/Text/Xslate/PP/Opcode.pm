@@ -506,6 +506,7 @@ sub tx_fetch {
     my ( $st, $var, $key ) = @_;
 
     if ( blessed $var ) {
+        local $SIG{__DIE__}; # oops
         my $ret = eval q{ $var->$key() };
         return $ret;
     }
