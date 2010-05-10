@@ -10,7 +10,7 @@ package Text::Xslate::PP;
 use strict;
 use warnings;
 
-our $XS_COMAPT_VERSION = '0.1011';
+our $COPIED_XS_VERSION = '0.1011';
 
 # The below lines are copied from Text::Xslate 0.1011 by tool/copy_code_for_pp.pl.
 

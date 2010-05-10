@@ -36,7 +36,7 @@ while(<>) {
     next if /^#/;
 
     if ( /\$VERSION\s*=\s*['"]([.0-9]+)['"]/ ) {
-        print "our \$XS_COMAPT_VERSION = '$1';\n\n";
+        print "our \$COPIED_XS_VERSION = '$1';\n\n";
         print "# The below lines are copied from Text::Xslate $1 by $0.\n\n";
         next;
     }

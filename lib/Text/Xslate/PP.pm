@@ -7,6 +7,18 @@ use parent qw(Exporter);
 our @EXPORT_OK;
 our @EXPORT;
 
+use Carp ();
+use Data::Dumper;
+
+use Text::Xslate::PP::Const;
+use Text::Xslate::PP::State;
+
+my $TX_OPS = \%Text::Xslate::OPS;
+
+my $Depth = 0;
+
+our $VERSION = '0.0001';
+
 our $XS_COMAPT_VERSION = '0.1011';
 
 my $loaded;
@@ -58,18 +70,6 @@ unless ( $loaded++ ) {
 
 }
 
-
-use Carp ();
-use Data::Dumper;
-
-use Text::Xslate::PP::Const;
-use Text::Xslate::PP::State;
-
-my $TX_OPS = \%Text::Xslate::OPS;
-
-my $Depth = 0;
-
-our $VERSION = '0.0001';
 
 #
 # real PP code
