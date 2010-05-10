@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1011';
+our $VERSION = '0.1012';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -121,8 +121,6 @@ sub find_file {
         $orig_mtime = (stat($fullpath))[9] // next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
-        # find the cache
-        # TODO
 
         if(-f $cachepath) {
             $cache_mtime = (stat(_))[9]; # compiled
@@ -195,6 +193,18 @@ sub load_file {
     my $protocode;
     if($is_compiled) {
         $protocode = $self->_load_assembly($string);
+
+        # checks the mtime of dependencies
+        foreach my $code(@{$protocode}) {
+            if($code->[0] eq 'depend') {
+                my $dep_mtime = (stat $code->[1])[9];
+                if($dep_mtime > ($mtime // $f->{orig_mtime})){
+                    unlink $cachepath
+                        or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+                    goto &load_file; # retry
+                }
+            }
+        }
     }
     else {
         $protocode = $self->_compiler->compile($string,
@@ -330,7 +340,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1011.
+This document describes Text::Xslate version 0.1012.
 
 =head1 SYNOPSIS
 

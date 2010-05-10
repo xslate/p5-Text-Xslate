@@ -945,7 +945,7 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
             return FALSE;
         }
         else {
-            //PerlIO_stdoutf("%"SVf": fresh enough\n", deppath); // */
+            //PerlIO_stdoutf("%"SVf": fresh enough (%d <= %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
         }
     }
     return TRUE;
@@ -1025,7 +1025,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
         return (tx_state_t*)mg->mg_ptr;
     }
 
-    //PerlIO_stdoutf("###%d %d >= %d\n", (int)retried, (int)SvIVX(cache_mtime), (int)f.st_mtime);
+    //PerlIO_stdoutf("###%d %d\n", (int)retried, (int)SvIVX(cache_mtime));
 
     if(retried > 0 /* if already retried, it should be valid */
             || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
