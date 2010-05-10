@@ -29,6 +29,9 @@ xslate_ops.h :: xs/Text-Xslate.xs tool/opcode.pl
 
 lib/Text/Xslate/PP/Const.pm :: xs/Text-Xslate.xs tool/opcode_for_pp.pl
 	$(PERLRUNINST) tool/opcode_for_pp.pl xs/Text-Xslate.xs > lib/Text/Xslate/PP/Const.pm
+
+lib/Text/Xslate/PP/Methods.pm :: xs/Text-Xslate.xs tool/copy_code_for_pp.pl
+	$(PERLRUNINST) tool/copy_code_for_pp.pl lib/Text/Xslate.pm > lib/Text/Xslate/PP/Methods.pm
 M
 
 clean_files qw(
