@@ -323,6 +323,7 @@ sub tx_execute { no warnings 'recursion';
 
     local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
     local $Text::Xslate::PP::Opcode::current_st = $st;
+    local $SIG{__WARN__} = $SIG{__DIE__};
 
     if ( $Depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");

@@ -118,12 +118,6 @@ sub op_fetch_field_s {
 sub op_print {
     my $sv = $_[0]->sa;
 
-#    $sv = '' unless defined $sv;
-
-    unless ( defined $sv ) {
-        Carp::croak( 'Use of uninitialized value in subroutine entry' );
-    }
-
     if ( blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
         $_[0]->{ output } .= $sv;
     }
