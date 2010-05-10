@@ -334,6 +334,8 @@ sub tx_execute { no warnings 'recursion';
     }
 
     $st->targ( undef );
+    $st->sa( undef );
+    $st->sb( undef );
 
     $Depth--;
 }

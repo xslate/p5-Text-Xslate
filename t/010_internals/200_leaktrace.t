@@ -10,7 +10,6 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
-if ( $INC{'Text/Xslate/PP.pm'} ) { plan skip_all => 'Xslate::PP is used.'; }
 
 my %vars = (
     lang  => 'Perl',

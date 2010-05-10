@@ -375,7 +375,7 @@ sub op_ge {
 
 
 sub op_macrocall {
-    my $addr   = $_[0]->sa; # macro rentry point
+    my $addr   = $_[0]->sa; # macro entry point
     my $cframe = tx_push_frame( $_[0] );
 
     $cframe->[ TXframe_RETADDR ] = $_[0]->{ pc } + 1;
@@ -494,7 +494,7 @@ sub tx_push_frame {
 
     $st->current_frame( $st->current_frame + 1 );
 
-    $st->frame->[ $st->current_frame ] = [];
+    $st->frame->[ $st->current_frame ] ||= [];
 
     $st->pad( $st->frame->[ $st->current_frame ] );
 
