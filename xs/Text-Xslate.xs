@@ -346,7 +346,7 @@ TXC(print) {
     }
     else {
         HV* const self = (HV*)SvRV(TX_st->self);
-        SV** const svp = hv_fetchs(self, "warnings", FALSE);
+        SV** const svp = hv_fetchs(self, "verbose", FALSE);
         if(svp && sv_true(*svp)) {
             warn("Try to print nil value");
         }
