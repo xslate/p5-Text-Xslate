@@ -17,20 +17,20 @@ sub op_noop {
 
 
 sub op_move_to_sb {
-    $_[0]->sb( $_[0]->sa );
+    $_[0]->{sb} = $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
 
 sub op_move_from_sb {
-    $_[0]->sa( $_[0]->sb );
+    $_[0]->{sa} = $_[0]->{sb};
     $_[0]->{ pc }++;
 }
 
 
 sub op_save_to_lvar {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-    tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->sa );
+    tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->{sa} );
     $_[0]->{ pc }++;
 }
 
@@ -43,7 +43,7 @@ sub op_load_lvar_to_sb {
 
 
 sub op_push {
-    push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->sa;
+    push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
@@ -61,27 +61,27 @@ sub op_pushmark {
 
 
 sub op_nil {
-    $_[0]->sa( undef );
+    $_[0]->{sa} = undef;
     $_[0]->{ pc }++;
 }
 
 
 sub op_literal {
-    $_[0]->sa( $_[0]->pc_arg );
+    $_[0]->{sa} = $_[0]->pc_arg;
     $_[0]->{ pc }++;
 }
 
 
 sub op_literal_i {
-    $_[0]->sa( $_[0]->pc_arg );
+    $_[0]->{sa} = $_[0]->pc_arg;
     $_[0]->{ pc }++;
 }
 
 
 sub op_fetch_s {
-    my $vars = $_[0]->vars;
+    my $vars = $_[0]->{vars};
     my $val  = $vars->{ $_[0]->pc_arg };
-    $_[0]->sa( $val );
+    $_[0]->{sa} = $val;
     $_[0]->{ pc }++;
 }
 
@@ -94,29 +94,29 @@ sub op_fetch_lvar {
         Carp::croak("Too few arguments for %s", $cframe->[ TXframe_NAME ] );
     }
 
-    $_[0]->sa( tx_access_lvar( $_[0], $id ) );
+    $_[0]->{sa} = tx_access_lvar( $_[0], $id );
     $_[0]->{ pc }++;
 }
 
 
 sub op_fetch_field {
-    my $var = $_[0]->sb;
-    my $key = $_[0]->sa;
-    $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
+    my $var = $_[0]->{sb};
+    my $key = $_[0]->{sa};
+    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
     $_[0]->{ pc }++;
 }
 
 
 sub op_fetch_field_s {
-    my $var = $_[0]->sa;
+    my $var = $_[0]->{sa};
     my $key = $_[0]->pc_arg;
-    $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
+    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
     $_[0]->{ pc }++;
 }
 
 
 sub op_print {
-    my $sv = $_[0]->sa;
+    my $sv = $_[0]->{sa};
 
     if ( blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
         $_[0]->{ output } .= $sv;
@@ -137,7 +137,7 @@ sub op_print {
 
 
 sub op_print_raw {
-    $_[0]->{ output } .= $_[0]->sa;
+    $_[0]->{ output } .= $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
@@ -151,9 +151,9 @@ sub op_print_raw_s {
 sub op_include {
     no warnings 'recursion';
 
-    my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->sa );
+    my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
 
-    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->vars );
+    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
 
     $_[0]->{ output } .= $st->{ output };
 
@@ -162,7 +162,7 @@ sub op_include {
 
 
 sub op_for_start {
-    my $ar = $_[0]->sa;
+    my $ar = $_[0]->{sa};
     my $id = $_[0]->pc_arg;
 
     unless ( $ar and ref $ar eq 'ARRAY' ) { # magicについては後で
@@ -181,7 +181,7 @@ sub op_for_start {
 
 
 sub op_for_iter {
-    my $id = $_[0]->sa;
+    my $id = $_[0]->{sa};
     my $av = tx_access_lvar( $_[0], $id + 1 );
     my $i  = tx_access_lvar( $_[0], $id + 2 );
 
@@ -199,51 +199,51 @@ sub op_for_iter {
 
 
 sub op_add {
-    $_[0]->targ( $_[0]->sb + $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = $_[0]->{sb} + $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_sub {
-    $_[0]->targ( $_[0]->sb - $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = $_[0]->{sb} - $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_mul {
-    $_[0]->targ( $_[0]->sb * $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = $_[0]->{sb} * $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_div {
-    $_[0]->targ( $_[0]->sb / $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = $_[0]->{sb} / $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_mod {
-    $_[0]->targ( $_[0]->sb % $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = $_[0]->{sb} % $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_concat {
     my $sv = $_[0]->pc_arg;
-    $sv .= $_[0]->sb . $_[0]->sa;
-    $_[0]->sa( $sv );
+    $sv .= $_[0]->{sb} . $_[0]->{sa};
+    $_[0]->{sa} = $sv;
     $_[0]->{ pc }++;
 }
 
 
 sub op_filt {
-    my $arg    = $_[0]->sb;
-    my $filter = $_[0]->sa;
+    my $arg    = $_[0]->{sb};
+    my $filter = $_[0]->{sa};
 
     local $@;
 
@@ -253,14 +253,14 @@ sub op_filt {
         Carp::croak( sprintf("%s\n\t... exception cought on %s", $@, 'filtering') );
     }
 
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
+#    $_[0]->{targ} = $ret;
+    $_[0]->{sa} = $ret;
     $_[0]->{ pc }++;
 }
 
 
 sub op_and {
-    if ( $_[0]->sa ) {
+    if ( $_[0]->{sa} ) {
         $_[0]->{ pc }++;
     }
     else {
@@ -270,7 +270,7 @@ sub op_and {
 
 
 sub op_dand {
-    if ( defined $_[0]->sa ) {
+    if ( defined $_[0]->{sa} ) {
         $_[0]->{ pc }++;
     }
     else {
@@ -280,7 +280,7 @@ sub op_dand {
 
 
 sub op_or {
-    if ( ! $_[0]->sa ) {
+    if ( ! $_[0]->{sa} ) {
         $_[0]->{ pc }++;
     }
     else {
@@ -290,7 +290,7 @@ sub op_or {
 
 
 sub op_dor {
-    my $sv = $_[0]->sa;
+    my $sv = $_[0]->{sa};
     if ( defined $sv ) {
         $_[0]->{ pc } = $_[0]->pc_arg;
     }
@@ -302,39 +302,39 @@ sub op_dor {
 
 
 sub op_not {
-    $_[0]->sa( ! $_[0]->sa );
+    $_[0]->{sa} = ! $_[0]->sa;
     $_[0]->{ pc }++;
 }
 
 
 sub op_plus {
-    $_[0]->targ( + $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = + $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_minus {
-    $_[0]->targ( - $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{targ} = - $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
     $_[0]->{ pc }++;
 }
 
 
 sub op_eq {
-    my $aval = $_[0]->sa;
-    my $bval = $_[0]->sb;
+    my $aval = $_[0]->{sa};
+    my $bval = $_[0]->{sb};
 
     if ( defined $aval and defined $bval ) {
         # SVf_IOKかどうかのチェック
-        $_[0]->sa( $aval eq $bval );
+        $_[0]->{sa} = $aval eq $bval;
     }
 
     if ( defined $aval ) {
-        $_[0]->sa( defined $bval && $aval eq $bval  );
+        $_[0]->{sa} = defined $bval && $aval eq $bval;
     }
     else {
-        $_[0]->sa( !defined $bval );
+        $_[0]->{sa} = !defined $bval;
     }
 
     $_[0]->{ pc }++;
@@ -343,33 +343,33 @@ sub op_eq {
 
 sub op_ne {
     op_eq( $_[0] ); # 後で直す
-    $_[0]->sa( ! $_[0]->sa );
+    $_[0]->{sa} = ! $_[0]->{sa};
 }
 
 
 sub op_lt {
-    $_[0]->sa( $_[0]->sb < $_[0]->sa );
+    $_[0]->{sa} = $_[0]->{sb} < $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
 sub op_le {
-    $_[0]->sa( $_[0]->sb <= $_[0]->sa );
+    $_[0]->{sa} = $_[0]->{sb} <= $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
 sub op_gt {
-    $_[0]->sa( $_[0]->sb > $_[0]->sa );
+    $_[0]->{sa} = $_[0]->{sb} > $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
 sub op_ge {
-    $_[0]->sa( $_[0]->sb >= $_[0]->sa );
+    $_[0]->{sa} = $_[0]->{sb} >= $_[0]->{sa};
     $_[0]->{ pc }++;
 }
 
 
 sub op_macrocall {
-    my $addr   = $_[0]->sa; # macro entry point
+    my $addr   = $_[0]->{sa}; # macro entry point
     my $cframe = tx_push_frame( $_[0] );
 
     $cframe->[ TXframe_RETADDR ] = $_[0]->{ pc } + 1;
@@ -400,9 +400,9 @@ sub op_macro_end {
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
     my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
 
-    $_[0]->targ( Text::Xslate::PP::escaped_string( $_[0]->{ output } ) );
+    $_[0]->{targ} = Text::Xslate::PP::escaped_string( $_[0]->{ output } );
 
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{sa} = $_[0]->targ;
 
     $_[0]->{ output } = $oldframe->[ TXframe_OUTPUT ];
 
@@ -413,7 +413,7 @@ sub op_macro_end {
 sub op_macro {
     my $name = $_[0]->pc_arg;
 
-    $_[0]->sa( $_[0]->macro->{ $name } );
+    $_[0]->{sa} = $_[0]->macro->{ $name };
 
     $_[0]->{ pc }++;
 }
@@ -423,7 +423,7 @@ sub op_function {
     my $name = $_[0]->pc_arg;
 
     if ( my $func = $_[0]->function->{ $name } ) {
-        $_[0]->sa( $func );
+        $_[0]->{sa} = $func;
     }
     else {
         Carp::croak( sprintf( "Function %s is not registered", $name ) );
@@ -434,11 +434,11 @@ sub op_function {
 
 
 sub op_funcall {
-    my $func = $_[0]->sa;
+    my $func = $_[0]->{sa};
     my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
     my $ret = eval { $func->( @args ) };
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
+    $_[0]->{targ} = $ret;
+    $_[0]->{sa} = $ret;
     $_[0]->{ pc }++;
 }
 
@@ -447,8 +447,8 @@ sub op_methodcall_s {
     my ( $obj, @args ) = @{ pop @{ $_[0]->{ SP } } };
     my $method = $_[0]->pc_arg;
     my $ret = eval { $obj->$method( @args ) };
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
+    $_[0]->{targ} = $ret;
+    $_[0]->{sa} = $ret;
     $_[0]->{ pc }++;
 }
 

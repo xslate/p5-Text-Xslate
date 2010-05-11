@@ -150,6 +150,8 @@ sub _initialize {
     $st->code( [] );
     $st->code_len( $len );
 
+    my $code = [];
+
     for ( my $i = 0; $i < $len; $i++ ) {
         my $pair = $proto->[ $i ];
 
@@ -164,9 +166,10 @@ sub _initialize {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
-        $st->code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
-#        $st->code->[ $i ]->{ exec_code } = $Opcodelist->[ $opnum ];
-        $st->code->[ $i ]->{ opname } = $opname; # for test
+        $code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
+        $code->[ $i ]->{ opname }    = $opname; # for test
+#        $st->code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
+#        $st->code->[ $i ]->{ opname } = $opname; # for test
 
         my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
 
@@ -178,10 +181,12 @@ sub _initialize {
             #     unless ( defined $arg );
 
             if( $tx_oparg & TXARGf_KEY ) {
-                $st->code->[ $i ]->{ arg } = $arg;
+#                $st->code->[ $i ]->{ arg } = $arg;
+                $code->[ $i ]->{ arg } = $arg;
             }
             elsif ( $tx_oparg & TXARGf_INT ) {
-                $st->code->[ $i ]->{ arg } = $arg;
+#                $st->code->[ $i ]->{ arg } = $arg;
+                $code->[ $i ]->{ arg } = $arg;
 
                 if( $tx_oparg & TXARGf_GOTO ) {
                     my $abs_addr = $i + $arg;
@@ -192,12 +197,14 @@ sub _initialize {
                         );  #これおかしくない？
                     }
 
-                    $st->code->[ $i ]->{ arg } = $abs_addr;
+#                    $st->code->[ $i ]->{ arg } = $abs_addr;
+                    $code->[ $i ]->{ arg } = $abs_addr;
                 }
 
             }
             else {
-                $st->code->[ $i ]->{ arg } = $arg;
+#                $st->code->[ $i ]->{ arg } = $arg;
+                $code->[ $i ]->{ arg } = $arg;
             }
 
         }
@@ -205,7 +212,8 @@ sub _initialize {
             if( defined $arg ) {
                 Carp::croak( sprintf( "Oops: Opcode %s has an extra argument on [%d]", $opname, $i ) );
             }
-            $st->code->[ $i ]->{ arg } = undef;
+#            $st->code->[ $i ]->{ arg } = undef;
+            $code->[ $i ]->{ arg } = undef;
         }
 
         # set up line number
@@ -213,14 +221,16 @@ sub _initialize {
 
         # special cases
         if( $opnum == $TX_OPS->{ macro_begin } ) {
-            $st->macro->{ $st->code->[ $i ]->{ arg } } = $i;
+#            $st->macro->{ $st->code->[ $i ]->{ arg } } = $i;
+            $st->macro->{ $code->[ $i ]->{ arg } } = $i;
         }
         elsif( $opnum == $TX_OPS->{ depend } ) {
-            push @{ $tmpl }, $st->code->[ $i ]->{ arg };
+#            push @{ $tmpl }, $st->code->[ $i ]->{ arg };
+            push @{ $tmpl }, $code->[ $i ]->{ arg };
         }
 
     }
-
+    $st->{code} = $code;
 }
 
 
@@ -319,7 +329,8 @@ sub tx_execute { no warnings 'recursion';
 
     $st->{ output } = '';
     $st->{ pc }     = 0;
-    $st->vars( $vars );
+
+    $st->{vars} = $vars;
 
     local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
     local $Text::Xslate::PP::Opcode::current_st = $st;
@@ -330,13 +341,16 @@ sub tx_execute { no warnings 'recursion';
     }
     $Depth++;
 
+    my $code = $st->{code};
+
     while( $st->{ pc } < $len ) {
-        $st->code->[ $st->{ pc } ]->{ exec_code }->( $st );
+        $code->[ $st->{ pc } ]->{ exec_code }->( $st );
     }
 
-    $st->targ( undef );
-    $st->sa( undef );
-    $st->sb( undef );
+    $st->{targ} = undef;
+    $st->{sa} = undef;
+    $st->{sb} = undef;
+
 
     $Depth--;
 }
