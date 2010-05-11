@@ -12,6 +12,13 @@
 typedef struct {
     U32 depth;
     HV* escaped_string_stash;
+
+    tx_state_t* current_st; /* set while tx_execute(), othewise NULL */
+
+    /* those handlers are just \&_warn and \&_die,
+       but stored here for performance */
+    SV* warn_handler;
+    SV* die_handler;
 } my_cxt_t;
 START_MY_CXT
 
@@ -284,7 +291,7 @@ TXC(print) {
     if(tx_str_is_escaped(aTHX_ sv)) {
         sv_catsv_nomg(output, SvRV(sv));
     }
-    else {
+    else if(SvOK(sv)) {
         STRLEN len;
         const char*       cur = SvPV_const(sv, len);
         const char* const end = cur + len;
@@ -337,6 +344,13 @@ TXC(print) {
         }
         *SvEND(output) = '\0';
     }
+    else {
+        HV* const self = (HV*)SvRV(TX_st->self);
+        SV** const svp = hv_fetchs(self, "warnings", FALSE);
+        if(svp && sv_true(*svp)) {
+            warn("Try to print nil value");
+        }
+    }
 
     TX_st->pc++;
 }
@@ -356,7 +370,7 @@ TXC_w_sv(print_raw_s) {
 TXC(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
-    ENTER; /* for error handlers */
+    ENTER;
     tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
@@ -705,52 +719,16 @@ TXC(end) {
     TX_st->pc = TX_st->code_len;
 }
 
-XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
-XS(XS_Text__Xslate__error) {
-    dVAR; dXSARGS;
-    dMY_CXT;
-    tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
-    AV* const cframe     = TX_current_framex(st);
-    SV* const name       = AvARRAY(cframe)[TXframe_NAME];
-
-    PERL_UNUSED_ARG(items);
-
-    /* avoid recursion; they are retrieved at the end of the scope, anyway */
-    PL_diehook  = NULL;
-    PL_warnhook = NULL;
-
-    MY_CXT.depth = 0;
-
-    assert(st);
-
-    /* unroll the stack frame */
-    /* to fix TXframe_OUTPUT */
-    while(st->current_frame > 0) {
-        AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
-        SV* tmp;
-        st->current_frame--;
-
-        /* swap st->output and TXframe_OUTPUT */
-        tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
-        AvARRAY(frame)[TXframe_OUTPUT] = st->output;
-        st->output                     = tmp;
-    }
-
-    croak("Xslate(%s:%d &%"SVf"[%d]): %"SVf,
-        tx_file(aTHX_ st), tx_line(aTHX_ st),
-        name, (int)st->pc, ST(0));
-    XSRETURN_EMPTY; /* not reached */
-}
 
 /* End of opcodes */
 
 /* The virtual machine code interpreter */
+/* NOTE: tx_execute() must be surrounded in ENTER and LEAVE */
 static void
 tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
-    SV* eh;
 
     StructCopy(base, &st, tx_state_t);
 
@@ -759,21 +737,16 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
 
     assert(st.tmpl != NULL);
 
-    /* local $SIG{__WARN__} = \&error_handler */
-    /* local $SIG{__DIE__} = \&error_handler */
-
-    SAVESPTR(PL_warnhook);
-    SAVESPTR(PL_diehook);
-    eh = PL_warnhook = PL_diehook = AvARRAY(st.tmpl)[TXo_ERROR_HANDLER];
-
-    if(SvROK(eh) && SvTYPE(SvRV(eh)) == SVt_PVCV
-        && CvXSUB((CV*)SvRV(eh)) == XS_Text__Xslate__error) {
-        CvXSUBANY((CV*)SvRV(eh)).any_ptr = &st;
-    }
+    /* local $current_st */
+    SAVEVPTR(MY_CXT.current_st);
+    MY_CXT.current_st = &st;
 
     if(MY_CXT.depth > 100) {
         croak("Execution is too deep (> 100)");
     }
+
+    /* local $depth = $depth + 1 */
+    SAVEI32(MY_CXT.depth);
     MY_CXT.depth++;
 
     while(st.pc < code_len) {
@@ -792,8 +765,6 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     sv_setsv(st.targ, &PL_sv_undef);
 
     base->hint_size = SvCUR(st.output);
-
-    MY_CXT.depth--;
 }
 
 
@@ -1052,6 +1023,8 @@ BOOT:
     MY_CXT_INIT;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
     tx_init_ops(aTHX_ ops);
 }
 
@@ -1064,6 +1037,8 @@ CODE:
     MY_CXT_CLONE;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
     PERL_UNUSED_VAR(items);
 }
 
@@ -1116,21 +1091,10 @@ CODE:
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
     av_extend(tmpl, TXo_least_size - 1);
 
-    /* tmpl = [name, fullpath, mtime of the file, error_handler] */
-
-    svp = hv_fetchs(self, "error_handler", FALSE);
-    if(svp && SvOK(*svp)) {
-        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), *svp);
-    }
-    else {
-        CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
-        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
-    }
-
-    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE),  name);
-    sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE),  mtime );
-    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE), cachepath);
-    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE),  fullpath);
+    sv_setsv(*av_fetch(tmpl, TXo_NAME,      TRUE),  name);
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
+    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
+    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
 
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);
@@ -1238,6 +1202,7 @@ SV*
 render(SV* self, SV* name, SV* vars)
 CODE:
 {
+    dMY_CXT;
     tx_state_t* st;
 
     SvGETMAGIC(name);
@@ -1251,6 +1216,15 @@ CODE:
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
     }
+
+    /* local $SIG{__WARN__} = \&warn_handler */
+    SAVESPTR(PL_warnhook);
+    PL_warnhook = MY_CXT.warn_handler;
+
+    /* local $SIG{__DIE__}  = \&die_handler */
+    SAVESPTR(PL_diehook);
+    PL_diehook = MY_CXT.die_handler;
+
     st = tx_load_template(aTHX_ self, name);
 
     RETVAL = sv_newmortal();
@@ -1269,6 +1243,99 @@ CODE:
 {
     ST(0) = tx_escaped_string(aTHX_ str);
     XSRETURN(1);
+}
+
+void
+_warn(SV* msg)
+ALIAS:
+    _warn = 0
+    _die  = 1
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* const st = MY_CXT.current_st;
+    SV* self;
+    AV* cframe;
+    SV* name;
+    SV* full_message;
+    SV** svp;
+    CV*  handler;
+
+    if(!st) {
+        croak("Not in $xslate->render()");
+    }
+    self   = st->self;
+
+    cframe = TX_current_framex(st);
+    name   = AvARRAY(cframe)[TXframe_NAME];
+
+    svp = (ix == 0)
+        ? hv_fetchs((HV*)SvRV(self), "warn_handler", FALSE)
+        : hv_fetchs((HV*)SvRV(self), "die_handler",  FALSE);
+
+    if(svp && SvOK(*svp)) {
+        HV* stash;
+        GV* gv;
+        handler = sv_2cv(*svp, &stash, &gv, 0);
+        if(!handler) {
+            croak("Not a subroutine reference for %s handler",
+                ix == 0 ? "warn" : "die");
+        }
+    }
+    else {
+        handler = NULL;
+    }
+
+    full_message = newSVpvf("Xslate(%s:%d &%"SVf"[%d]): %"SVf,
+            tx_file(aTHX_ st), tx_line(aTHX_ st),
+            name, (int)st->pc, msg);
+    sv_2mortal(full_message);
+
+    /* warnhook/diehook = NULL is to avoid recursion */
+    ENTER;
+    if(ix == 0) { /* warn */
+        SAVESPTR(PL_warnhook);
+        PL_warnhook = NULL;
+
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+        }
+        else {
+            warn("%"SVf, full_message);
+        }
+    }
+    else {
+        SAVESPTR(PL_diehook);
+        PL_diehook = NULL;
+
+        /* unroll the stack frame */
+        /* to fix TXframe_OUTPUT */
+        /* TODO: append the stack info to msg */
+        while(st->current_frame > 0) {
+            AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
+            SV* tmp;
+            st->current_frame--;
+
+            /* swap st->output and TXframe_OUTPUT */
+            tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
+            AvARRAY(frame)[TXframe_OUTPUT] = st->output;
+            st->output                     = tmp;
+        }
+
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+        }
+        croak("%"SVf, full_message);
+        /* not reached */
+    }
+    LEAVE;
+    XSRETURN_EMPTY;
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString

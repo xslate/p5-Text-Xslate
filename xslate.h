@@ -34,7 +34,6 @@
 /* template representation, stored in $self->{template}{$file} */
 enum txtmplo_ix {
     TXo_NAME,
-    TXo_ERROR_HANDLER,
     TXo_MTIME,
 
     TXo_CACHEPATH,
