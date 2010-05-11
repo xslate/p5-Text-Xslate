@@ -51,6 +51,13 @@ tx_neat(pTHX_ SV* const sv) {
     return "undef";
 }
 
+static bool
+tx_verbose(pTHX_ tx_state_t* const st) {
+    HV* const self = (HV*)SvRV(st->self);
+    SV** const svp = hv_fetchs(self, "verbose", FALSE);
+    return svp && sv_true(*svp);
+}
+
 static SV*
 tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX_lvar() */
     AV* const cframe  = TX_current_framex(st);
@@ -103,8 +110,8 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
-    if(UNLIKELY(sv_true(ERRSV))){
-        croak("%"SVf "\n"
+    if(UNLIKELY(sv_true(ERRSV)) && tx_verbose(aTHX_ st)){
+        warn("%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
 
@@ -118,7 +125,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
 
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
-    SV* sv = NULL;
+    SV* sv;
     PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
         dSP;
@@ -149,8 +156,11 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     }
     else {
         invalid_container:
-        croak("Cannot access '%"SVf"' (%s is not a container)",
-            key, tx_neat(aTHX_ var));
+        if(tx_verbose(aTHX_ st)) {
+            warn("Cannot access '%"SVf"' (%s is not a container)",
+                key, tx_neat(aTHX_ var));
+        }
+        sv = &PL_sv_undef;
     }
     return sv;
 }
@@ -345,9 +355,7 @@ TXC(print) {
         *SvEND(output) = '\0';
     }
     else {
-        HV* const self = (HV*)SvRV(TX_st->self);
-        SV** const svp = hv_fetchs(self, "verbose", FALSE);
-        if(svp && sv_true(*svp)) {
+        if(tx_verbose(aTHX_ TX_st)) {
             warn("Try to print nil value");
         }
     }
@@ -378,13 +386,16 @@ TXC(include) {
 }
 
 TXC_w_var(for_start) {
-    SV* const avref = TX_st_sa;
-    IV  const id    = SvIVX(TX_op_arg);
+    SV* avref    = TX_st_sa;
+    IV  const id = SvIVX(TX_op_arg);
 
     SvGETMAGIC(avref);
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Iterator variables must be an ARRAY reference, not %s",
-            tx_neat(aTHX_ avref));
+        if(tx_verbose(aTHX_ TX_st)) {
+            warn("Iterator variables must be an ARRAY reference, not %s",
+                tx_neat(aTHX_ avref));
+        }
+        avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
 
     (void)   TX_lvar(id+0); /* for each item, ensure to allocate a sv */
