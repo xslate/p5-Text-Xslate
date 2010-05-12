@@ -51,11 +51,47 @@ tx_neat(pTHX_ SV* const sv) {
     return "undef";
 }
 
-static bool
+static IV
 tx_verbose(pTHX_ tx_state_t* const st) {
-    HV* const self = (HV*)SvRV(st->self);
-    SV** const svp = hv_fetchs(self, "verbose", FALSE);
-    return svp && sv_true(*svp);
+    HV* const hv   = (HV*)SvRV(st->self);
+    SV** const svp = hv_fetchs(hv, "verbose", FALSE);
+    return svp && SvOK(*svp) ? SvIV(*svp) : TX_VERBOSE_DEFAULT;
+}
+
+#ifdef __attribute__format__
+static void
+tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+
+static void
+tx_error(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+#endif
+
+/* for trivial errors, ignored by default */
+static void
+tx_warn(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
+    assert(st);
+    assert(fmt);
+    if(tx_verbose(aTHX_ st) > TX_VERBOSE_DEFAULT) { /* stronger than the default */
+        va_list args;
+        va_start(args, fmt);
+        vwarn(fmt, &args);
+        va_end(args);
+    }
+}
+
+/* for possible errors, warned by default */
+static void
+tx_error(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
+    assert(st);
+    assert(fmt);
+    if(tx_verbose(aTHX_ st) >= TX_VERBOSE_DEFAULT) { /* equal or stronger than the default */
+        va_list args;
+        va_start(args, fmt);
+        vwarn(fmt, &args);
+        va_end(args);
+    }
 }
 
 static SV*
@@ -97,26 +133,44 @@ static SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
     /* ENTER & SAVETMPS must be done */
 
-    if(!(flags & G_METHOD)) {
+    if(!(flags & G_METHOD)) { /* functions */
         HV* dummy_stash;
         GV* dummy_gv;
         CV* const cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
         if(!cv) {
-            croak("Functions must be a CODE reference, not %s",
+            tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
                 tx_neat(aTHX_ proc));
+
+            (void)POPMARK;
+            sv_setsv_nomg(st->targ, &PL_sv_undef);
+            goto finish;
         }
         proc = (SV*)cv;
+    }
+    else { /* methods */
+        if(!SvROK(proc)) { /* proc does not seem a CODE reference */
+            SV* const invocant = PL_stack_base[TOPMARK+1];
+            if(!SvOK(invocant)) {
+                tx_warn(aTHX_ st, "Use of nil to invoke method %s",
+                    tx_neat(aTHX_ proc));
+
+                (void)POPMARK;
+                sv_setsv_nomg(st->targ, &PL_sv_undef);
+                goto finish;
+            }
+        }
     }
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
-    if(UNLIKELY(sv_true(ERRSV)) && tx_verbose(aTHX_ st)){
-        warn("%"SVf "\n"
+    if(UNLIKELY(sv_true(ERRSV))) {
+        tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
 
     sv_setsv_nomg(st->targ, TX_pop());
 
+    finish:
     FREETMPS;
     LEAVE;
 
@@ -154,12 +208,14 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
             goto invalid_container;
         }
     }
-    else {
+    else if(SvOK(var)){ /* string, number, etc. */
         invalid_container:
-        if(tx_verbose(aTHX_ st)) {
-            warn("Cannot access '%"SVf"' (%s is not a container)",
-                key, tx_neat(aTHX_ var));
-        }
+        tx_error(aTHX_ st, "Cannot access %s (%s is not a container)",
+            tx_neat(aTHX_ key), tx_neat(aTHX_ var));
+        sv = &PL_sv_undef;
+    }
+    else { /* undef */
+        tx_warn(aTHX_ st, "Use of nil to access %s", tx_neat(aTHX_ key));
         sv = &PL_sv_undef;
     }
     return sv;
@@ -270,10 +326,12 @@ TXC_w_var(fetch_lvar) {
 
     /* XXX: is there a better way? */
     if(AvFILLp(cframe) < (id + TXframe_START_LVAR)) {
-        croak("Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
+        tx_error(aTHX_ TX_st, "Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
+        TX_st_sa = &PL_sv_undef;
     }
-
-    TX_st_sa = TX_lvar_get(id);
+    else {
+        TX_st_sa = TX_lvar_get(id);
+    }
 
     TX_st->pc++;
 }
@@ -355,9 +413,8 @@ TXC(print) {
         *SvEND(output) = '\0';
     }
     else {
-        if(tx_verbose(aTHX_ TX_st)) {
-            warn("Try to print nil value");
-        }
+        tx_warn(aTHX_ TX_st, "Use of nil to be printed");
+        /* does nothing */
     }
 
     TX_st->pc++;
@@ -391,9 +448,12 @@ TXC_w_var(for_start) {
 
     SvGETMAGIC(avref);
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        if(tx_verbose(aTHX_ TX_st)) {
-            warn("Iterator variables must be an ARRAY reference, not %s",
+        if(SvOK(avref)) {
+            tx_error(aTHX_ TX_st, "Iterating data must be an ARRAY reference, not %s",
                 tx_neat(aTHX_ avref));
+        }
+        else {
+            tx_warn(aTHX_ TX_st, "Use of nil to be iterated");
         }
         avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
@@ -565,7 +625,7 @@ tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
     U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
 
-    if(af && bf) {
+    if(af && bf) { /* shortcut for performance */
         if(af == SVf_IOK && bf == SVf_IOK) {
             return SvIVX(a) == SvIVX(b);
         }
@@ -1228,6 +1288,8 @@ CODE:
             tx_neat(aTHX_ vars));
     }
 
+    st = tx_load_template(aTHX_ self, name);
+
     /* local $SIG{__WARN__} = \&warn_handler */
     SAVESPTR(PL_warnhook);
     PL_warnhook = MY_CXT.warn_handler;
@@ -1235,8 +1297,6 @@ CODE:
     /* local $SIG{__DIE__}  = \&die_handler */
     SAVESPTR(PL_diehook);
     PL_diehook = MY_CXT.die_handler;
-
-    st = tx_load_template(aTHX_ self, name);
 
     RETVAL = sv_newmortal();
     sv_grow(RETVAL, st->hint_size);
@@ -1273,6 +1333,10 @@ CODE:
     CV*  handler;
 
     if(!st) {
+        SAVESPTR(PL_warnhook);
+        SAVESPTR(PL_diehook);
+        PL_warnhook = NULL;
+        PL_diehook  = NULL;
         croak("Not in $xslate->render()");
     }
     self   = st->self;
