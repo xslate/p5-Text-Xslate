@@ -12,6 +12,13 @@
 typedef struct {
     U32 depth;
     HV* escaped_string_stash;
+
+    tx_state_t* current_st; /* set while tx_execute(), othewise NULL */
+
+    /* those handlers are just \&_warn and \&_die,
+       but stored here for performance */
+    SV* warn_handler;
+    SV* die_handler;
 } my_cxt_t;
 START_MY_CXT
 
@@ -41,7 +48,50 @@ tx_neat(pTHX_ SV* const sv) {
             return form("'%"SVf"'", sv);
         }
     }
-    return "undef";
+    return "nil";
+}
+
+static IV
+tx_verbose(pTHX_ tx_state_t* const st) {
+    HV* const hv   = (HV*)SvRV(st->self);
+    SV** const svp = hv_fetchs(hv, "verbose", FALSE);
+    return svp && SvOK(*svp) ? SvIV(*svp) : TX_VERBOSE_DEFAULT;
+}
+
+#ifdef __attribute__format__
+static void
+tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+
+static void
+tx_error(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+#endif
+
+/* for trivial errors, ignored by default */
+static void
+tx_warn(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
+    assert(st);
+    assert(fmt);
+    if(tx_verbose(aTHX_ st) > TX_VERBOSE_DEFAULT) { /* stronger than the default */
+        va_list args;
+        va_start(args, fmt);
+        vwarn(fmt, &args);
+        va_end(args);
+    }
+}
+
+/* for possible errors, warned by default */
+static void
+tx_error(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
+    assert(st);
+    assert(fmt);
+    if(tx_verbose(aTHX_ st) >= TX_VERBOSE_DEFAULT) { /* equal or stronger than the default */
+        va_list args;
+        va_start(args, fmt);
+        vwarn(fmt, &args);
+        va_end(args);
+    }
 }
 
 static SV*
@@ -83,26 +133,44 @@ static SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
     /* ENTER & SAVETMPS must be done */
 
-    if(!(flags & G_METHOD)) {
+    if(!(flags & G_METHOD)) { /* functions */
         HV* dummy_stash;
         GV* dummy_gv;
         CV* const cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
         if(!cv) {
-            croak("Functions must be a CODE reference, not %s",
+            tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
                 tx_neat(aTHX_ proc));
+
+            (void)POPMARK;
+            sv_setsv_nomg(st->targ, &PL_sv_undef);
+            goto finish;
         }
         proc = (SV*)cv;
+    }
+    else { /* methods */
+        if(!SvROK(proc)) { /* proc does not seem a CODE reference */
+            SV* const invocant = PL_stack_base[TOPMARK+1];
+            if(!SvOK(invocant)) {
+                tx_warn(aTHX_ st, "Use of nil to invoke method %s",
+                    tx_neat(aTHX_ proc));
+
+                (void)POPMARK;
+                sv_setsv_nomg(st->targ, &PL_sv_undef);
+                goto finish;
+            }
+        }
     }
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
-    if(UNLIKELY(sv_true(ERRSV))){
-        croak("%"SVf "\n"
+    if(UNLIKELY(sv_true(ERRSV))) {
+        tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
 
     sv_setsv_nomg(st->targ, TX_pop());
 
+    finish:
     FREETMPS;
     LEAVE;
 
@@ -126,26 +194,44 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
+        SvGETMAGIC(key);
         if(SvTYPE(rv) == SVt_PVHV) {
-            HE* const he = hv_fetch_ent((HV*)rv, key, FALSE, 0U);
-
-            sv = he ? hv_iterval((HV*)rv, he) : &PL_sv_undef;
+            if(SvOK(key)) {
+                HE* const he = hv_fetch_ent((HV*)rv, key, FALSE, 0U);
+                if(he) {
+                    sv = hv_iterval((HV*)rv, he);
+                }
+            }
+            else {
+                tx_warn(aTHX_ st, "Use of nil as a field key");
+            }
         }
         else if(SvTYPE(rv) == SVt_PVAV) {
-            SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
-
-            sv = svp ? *svp : &PL_sv_undef;
+            if(looks_like_number(key)) {
+                SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
+                if(svp) {
+                    sv = *svp;
+                }
+            }
+            else {
+                tx_warn(aTHX_ st, "Use of %s as an array index",
+                    tx_neat(aTHX_ key));
+            }
         }
         else {
             goto invalid_container;
         }
     }
-    else {
+    else if(SvOK(var)){ /* string, number, etc. */
         invalid_container:
-        croak("Cannot access '%"SVf"' (%s is not a container)",
-            key, tx_neat(aTHX_ var));
+        tx_error(aTHX_ st, "Cannot access %s (%s is not a container)",
+            tx_neat(aTHX_ key), tx_neat(aTHX_ var));
     }
-    return sv;
+    else { /* undef */
+        tx_warn(aTHX_ st, "Use of nil to access %s", tx_neat(aTHX_ key));
+    }
+
+    return sv ? sv : &PL_sv_undef;
 }
 
 static SV*
@@ -253,10 +339,12 @@ TXC_w_var(fetch_lvar) {
 
     /* XXX: is there a better way? */
     if(AvFILLp(cframe) < (id + TXframe_START_LVAR)) {
-        croak("Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
+        tx_error(aTHX_ TX_st, "Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
+        TX_st_sa = &PL_sv_undef;
     }
-
-    TX_st_sa = TX_lvar_get(id);
+    else {
+        TX_st_sa = TX_lvar_get(id);
+    }
 
     TX_st->pc++;
 }
@@ -284,7 +372,7 @@ TXC(print) {
     if(tx_str_is_escaped(aTHX_ sv)) {
         sv_catsv_nomg(output, SvRV(sv));
     }
-    else {
+    else if(SvOK(sv)) {
         STRLEN len;
         const char*       cur = SvPV_const(sv, len);
         const char* const end = cur + len;
@@ -337,6 +425,10 @@ TXC(print) {
         }
         *SvEND(output) = '\0';
     }
+    else {
+        tx_warn(aTHX_ TX_st, "Use of nil to be printed");
+        /* does nothing */
+    }
 
     TX_st->pc++;
 }
@@ -356,7 +448,7 @@ TXC_w_sv(print_raw_s) {
 TXC(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
 
-    ENTER; /* for error handlers */
+    ENTER;
     tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
@@ -364,13 +456,19 @@ TXC(include) {
 }
 
 TXC_w_var(for_start) {
-    SV* const avref = TX_st_sa;
-    IV  const id    = SvIVX(TX_op_arg);
+    SV* avref    = TX_st_sa;
+    IV  const id = SvIVX(TX_op_arg);
 
     SvGETMAGIC(avref);
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Iterator variables must be an ARRAY reference, not %s",
-            tx_neat(aTHX_ avref));
+        if(SvOK(avref)) {
+            tx_error(aTHX_ TX_st, "Iterating data must be an ARRAY reference, not %s",
+                tx_neat(aTHX_ avref));
+        }
+        else {
+            tx_warn(aTHX_ TX_st, "Use of nil to be iterated");
+        }
+        avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
 
     (void)   TX_lvar(id+0); /* for each item, ensure to allocate a sv */
@@ -540,7 +638,7 @@ tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
     U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
 
-    if(af && bf) {
+    if(af && bf) { /* shortcut for performance */
         if(af == SVf_IOK && bf == SVf_IOK) {
             return SvIVX(a) == SvIVX(b);
         }
@@ -705,52 +803,16 @@ TXC(end) {
     TX_st->pc = TX_st->code_len;
 }
 
-XS(XS_Text__Xslate__error); /* -Wmissing-prototypes */
-XS(XS_Text__Xslate__error) {
-    dVAR; dXSARGS;
-    dMY_CXT;
-    tx_state_t* const st = (tx_state_t*)XSANY.any_ptr;
-    AV* const cframe     = TX_current_framex(st);
-    SV* const name       = AvARRAY(cframe)[TXframe_NAME];
-
-    PERL_UNUSED_ARG(items);
-
-    /* avoid recursion; they are retrieved at the end of the scope, anyway */
-    PL_diehook  = NULL;
-    PL_warnhook = NULL;
-
-    MY_CXT.depth = 0;
-
-    assert(st);
-
-    /* unroll the stack frame */
-    /* to fix TXframe_OUTPUT */
-    while(st->current_frame > 0) {
-        AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
-        SV* tmp;
-        st->current_frame--;
-
-        /* swap st->output and TXframe_OUTPUT */
-        tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
-        AvARRAY(frame)[TXframe_OUTPUT] = st->output;
-        st->output                     = tmp;
-    }
-
-    croak("Xslate(%s:%d &%"SVf"[%d]): %"SVf,
-        tx_file(aTHX_ st), tx_line(aTHX_ st),
-        name, (int)st->pc, ST(0));
-    XSRETURN_EMPTY; /* not reached */
-}
 
 /* End of opcodes */
 
 /* The virtual machine code interpreter */
+/* NOTE: tx_execute() must be surrounded in ENTER and LEAVE */
 static void
 tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
     Size_t const code_len = base->code_len;
     tx_state_t st;
-    SV* eh;
 
     StructCopy(base, &st, tx_state_t);
 
@@ -759,21 +821,16 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
 
     assert(st.tmpl != NULL);
 
-    /* local $SIG{__WARN__} = \&error_handler */
-    /* local $SIG{__DIE__} = \&error_handler */
-
-    SAVESPTR(PL_warnhook);
-    SAVESPTR(PL_diehook);
-    eh = PL_warnhook = PL_diehook = AvARRAY(st.tmpl)[TXo_ERROR_HANDLER];
-
-    if(SvROK(eh) && SvTYPE(SvRV(eh)) == SVt_PVCV
-        && CvXSUB((CV*)SvRV(eh)) == XS_Text__Xslate__error) {
-        CvXSUBANY((CV*)SvRV(eh)).any_ptr = &st;
-    }
+    /* local $current_st */
+    SAVEVPTR(MY_CXT.current_st);
+    MY_CXT.current_st = &st;
 
     if(MY_CXT.depth > 100) {
         croak("Execution is too deep (> 100)");
     }
+
+    /* local $depth = $depth + 1 */
+    SAVEI32(MY_CXT.depth);
     MY_CXT.depth++;
 
     while(st.pc < code_len) {
@@ -792,8 +849,6 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     sv_setsv(st.targ, &PL_sv_undef);
 
     base->hint_size = SvCUR(st.output);
-
-    MY_CXT.depth--;
 }
 
 
@@ -1052,6 +1107,8 @@ BOOT:
     MY_CXT_INIT;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
     tx_init_ops(aTHX_ ops);
 }
 
@@ -1064,6 +1121,8 @@ CODE:
     MY_CXT_CLONE;
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
     PERL_UNUSED_VAR(items);
 }
 
@@ -1116,21 +1175,10 @@ CODE:
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
     av_extend(tmpl, TXo_least_size - 1);
 
-    /* tmpl = [name, fullpath, mtime of the file, error_handler] */
-
-    svp = hv_fetchs(self, "error_handler", FALSE);
-    if(svp && SvOK(*svp)) {
-        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), *svp);
-    }
-    else {
-        CV* const eh = newXS(NULL, XS_Text__Xslate__error, __FILE__);
-        sv_setsv(*av_fetch(tmpl, TXo_ERROR_HANDLER, TRUE), sv_2mortal(newRV_noinc((SV*)eh)));
-    }
-
-    sv_setsv(*av_fetch(tmpl, TXo_NAME,     TRUE),  name);
-    sv_setsv(*av_fetch(tmpl, TXo_MTIME,    TRUE),  mtime );
-    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE), cachepath);
-    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH, TRUE),  fullpath);
+    sv_setsv(*av_fetch(tmpl, TXo_NAME,      TRUE),  name);
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
+    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
+    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
 
     st.tmpl = tmpl;
     st.self = newRV_inc((SV*)self);
@@ -1238,6 +1286,7 @@ SV*
 render(SV* self, SV* name, SV* vars)
 CODE:
 {
+    dMY_CXT;
     tx_state_t* st;
 
     SvGETMAGIC(name);
@@ -1251,7 +1300,16 @@ CODE:
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
     }
+
     st = tx_load_template(aTHX_ self, name);
+
+    /* local $SIG{__WARN__} = \&warn_handler */
+    SAVESPTR(PL_warnhook);
+    PL_warnhook = MY_CXT.warn_handler;
+
+    /* local $SIG{__DIE__}  = \&die_handler */
+    SAVESPTR(PL_diehook);
+    PL_diehook = MY_CXT.die_handler;
 
     RETVAL = sv_newmortal();
     sv_grow(RETVAL, st->hint_size);
@@ -1269,6 +1327,103 @@ CODE:
 {
     ST(0) = tx_escaped_string(aTHX_ str);
     XSRETURN(1);
+}
+
+void
+_warn(SV* msg)
+ALIAS:
+    _warn = 0
+    _die  = 1
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* const st = MY_CXT.current_st;
+    SV* self;
+    AV* cframe;
+    SV* name;
+    SV* full_message;
+    SV** svp;
+    CV*  handler;
+
+    if(!st) {
+        SAVESPTR(PL_warnhook);
+        SAVESPTR(PL_diehook);
+        PL_warnhook = NULL;
+        PL_diehook  = NULL;
+        croak("Not in $xslate->render()");
+    }
+    self   = st->self;
+
+    cframe = TX_current_framex(st);
+    name   = AvARRAY(cframe)[TXframe_NAME];
+
+    svp = (ix == 0)
+        ? hv_fetchs((HV*)SvRV(self), "warn_handler", FALSE)
+        : hv_fetchs((HV*)SvRV(self), "die_handler",  FALSE);
+
+    if(svp && SvOK(*svp)) {
+        HV* stash;
+        GV* gv;
+        handler = sv_2cv(*svp, &stash, &gv, 0);
+        if(!handler) {
+            croak("Not a subroutine reference for %s handler",
+                ix == 0 ? "warn" : "die");
+        }
+    }
+    else {
+        handler = NULL;
+    }
+
+    full_message = newSVpvf("Xslate(%s:%d &%"SVf"[%d]): %"SVf,
+            tx_file(aTHX_ st), tx_line(aTHX_ st),
+            name, (int)st->pc, msg);
+    sv_2mortal(full_message);
+
+    /* warnhook/diehook = NULL is to avoid recursion */
+    ENTER;
+    if(ix == 0) { /* warn */
+        SAVESPTR(PL_warnhook);
+        PL_warnhook = NULL;
+
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+        }
+        else {
+            warn("%"SVf, full_message);
+        }
+    }
+    else {
+        SAVESPTR(PL_diehook);
+        PL_diehook = NULL;
+
+        /* unroll the stack frame */
+        /* to fix TXframe_OUTPUT */
+        /* TODO: append the stack info to msg */
+        while(st->current_frame > 0) {
+            AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
+            SV* tmp;
+            st->current_frame--;
+
+            /* swap st->output and TXframe_OUTPUT */
+            tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
+            AvARRAY(frame)[TXframe_OUTPUT] = st->output;
+            st->output                     = tmp;
+        }
+
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+        }
+        croak("%"SVf, full_message);
+        /* not reached */
+    }
+    LEAVE;
+    XSRETURN_EMPTY;
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString
