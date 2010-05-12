@@ -3,7 +3,7 @@ package Text::Xslate::PP::Opcode;
 use strict;
 use Data::Dumper;
 use Carp ();
-use Scalar::Util qw( blessed );
+use Scalar::Util ();
 
 our $VERSION = '0.0001';
 
@@ -81,9 +81,7 @@ sub op_literal_i {
 
 
 sub op_fetch_s {
-    my $vars = $_[0]->{vars};
-    my $val  = $vars->{ $_[0]->pc_arg };
-    $_[0]->{sa} = $val;
+    $_[0]->{sa} = $_[0]->{vars}->{ $_[0]->pc_arg };
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -120,17 +118,17 @@ sub op_fetch_field_s {
 sub op_print {
     my $sv = $_[0]->{sa};
 
-    if ( blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+    if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
         $_[0]->{ output } .= $sv;
     }
     else {
-        # 置換
-        $sv =~ s/&/&amp;/g;
-        $sv =~ s/</&lt;/g;
-        $sv =~ s/>/&gt;/g;
-        $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&#39;/g;
-
+        if ( $sv =~ /[&<>"']/ ) { # 置換
+            $sv =~ s/&/&amp;/g;
+            $sv =~ s/</&lt;/g;
+            $sv =~ s/>/&gt;/g;
+            $sv =~ s/"/&quot;/g;
+            $sv =~ s/'/&#39;/g;
+        }
         $_[0]->{ output } .= $sv;
     }
 
@@ -191,7 +189,6 @@ sub op_for_iter {
         tx_access_lvar( $_[0], $id     => $av->[ $i ] );
         tx_access_lvar( $_[0], $id + 2 => $i );
         goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-#        return;
     }
 
     $_[0]->{ pc } = $_[0]->pc_arg;
@@ -526,7 +523,7 @@ sub tx_push_frame {
 sub tx_fetch {
     my ( $st, $var, $key ) = @_;
 
-    if ( blessed $var ) {
+    if ( Scalar::Util::blessed $var ) {
         local $SIG{__DIE__}; # oops
         my $ret = eval q{ $var->$key() };
         return $ret;
