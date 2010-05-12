@@ -502,6 +502,17 @@ Specifies the escape mode.
 
 Possible escape modes are B<html> and B<none>.
 
+=item C<< verbose => $level // 1 >>
+
+Specifies the verbose level.
+
+If C<< $level == 0 >>, all the possible errors will be ignored.
+
+If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
+but severe errors (e.g. to invoke missing methods) will be warned.
+
+If C<< $level >= 2 >>, all the possible errors will be warned.
+
 =back
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
