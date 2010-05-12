@@ -7,74 +7,76 @@ use Scalar::Util qw( blessed );
 
 our $VERSION = '0.0001';
 
+no warnings 'recursion';
+
 #
 #
 #
 
 sub op_noop {
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_move_to_sb {
     $_[0]->{sb} = $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_move_from_sb {
     $_[0]->{sa} = $_[0]->{sb};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_save_to_lvar {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
     tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->{sa} );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_load_lvar_to_sb {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
     $_[0]->sb( tx_access_lvar( $_[0], $_[0]->pc_arg ) );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_push {
     push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_pop {
     #
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_pushmark {
     push @{ $_[0]->{ SP } }, [];
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_nil {
     $_[0]->{sa} = undef;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_literal {
     $_[0]->{sa} = $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_literal_i {
     $_[0]->{sa} = $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -82,7 +84,7 @@ sub op_fetch_s {
     my $vars = $_[0]->{vars};
     my $val  = $vars->{ $_[0]->pc_arg };
     $_[0]->{sa} = $val;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -95,7 +97,7 @@ sub op_fetch_lvar {
     }
 
     $_[0]->{sa} = tx_access_lvar( $_[0], $id );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -103,7 +105,7 @@ sub op_fetch_field {
     my $var = $_[0]->{sb};
     my $key = $_[0]->{sa};
     $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -111,7 +113,7 @@ sub op_fetch_field_s {
     my $var = $_[0]->{sa};
     my $key = $_[0]->pc_arg;
     $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -132,32 +134,30 @@ sub op_print {
         $_[0]->{ output } .= $sv;
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_print_raw {
     $_[0]->{ output } .= $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_print_raw_s {
     $_[0]->{ output } .= $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_include {
-    no warnings 'recursion';
-
     my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
 
     Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
 
     $_[0]->{ output } .= $st->{ output };
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -176,7 +176,7 @@ sub op_for_start {
     tx_access_lvar( $_[0], $id + 1, $ar );
     tx_access_lvar( $_[0], $id + 2, -1 );
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -190,46 +190,47 @@ sub op_for_iter {
     if ( ++$i <= $#{ $av } ) {
         tx_access_lvar( $_[0], $id     => $av->[ $i ] );
         tx_access_lvar( $_[0], $id + 2 => $i );
-        $_[0]->{ pc }++;
-        return;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+#        return;
     }
 
     $_[0]->{ pc } = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_add {
     $_[0]->{targ} = $_[0]->{sb} + $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_sub {
     $_[0]->{targ} = $_[0]->{sb} - $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_mul {
     $_[0]->{targ} = $_[0]->{sb} * $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_div {
     $_[0]->{targ} = $_[0]->{sb} / $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_mod {
     $_[0]->{targ} = $_[0]->{sb} % $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -237,7 +238,7 @@ sub op_concat {
     my $sv = $_[0]->pc_arg;
     $sv .= $_[0]->{sb} . $_[0]->{sa};
     $_[0]->{sa} = $sv;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -255,36 +256,39 @@ sub op_filt {
 
 #    $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_and {
     if ( $_[0]->{sa} ) {
-        $_[0]->{ pc }++;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
 
 sub op_dand {
     if ( defined $_[0]->{sa} ) {
-        $_[0]->{ pc }++;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
 
 sub op_or {
     if ( ! $_[0]->{sa} ) {
-        $_[0]->{ pc }++;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
@@ -293,9 +297,10 @@ sub op_dor {
     my $sv = $_[0]->{sa};
     if ( defined $sv ) {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
     else {
-        $_[0]->{ pc }++;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
 
 }
@@ -303,21 +308,21 @@ sub op_dor {
 
 sub op_not {
     $_[0]->{sa} = ! $_[0]->sa;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_plus {
     $_[0]->{targ} = + $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_minus {
     $_[0]->{targ} = - $_[0]->{sa};
     $_[0]->{sa} = $_[0]->{targ};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -337,34 +342,51 @@ sub op_eq {
         $_[0]->{sa} = !defined $bval;
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_ne {
-    op_eq( $_[0] ); # 後で直す
+    my $aval = $_[0]->{sa};
+    my $bval = $_[0]->{sb};
+
+    if ( defined $aval and defined $bval ) {
+        # SVf_IOKかどうかのチェック
+        $_[0]->{sa} = $aval eq $bval;
+    }
+
+    if ( defined $aval ) {
+        $_[0]->{sa} = defined $bval && $aval eq $bval;
+    }
+    else {
+        $_[0]->{sa} = !defined $bval;
+    }
+
     $_[0]->{sa} = ! $_[0]->{sa};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_lt {
     $_[0]->{sa} = $_[0]->{sb} < $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_le {
     $_[0]->{sa} = $_[0]->{sb} <= $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_gt {
     $_[0]->{sa} = $_[0]->{sb} > $_[0]->{sa};
-    $_[0]->{ pc }++;
+    # $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_ge {
     $_[0]->{sa} = $_[0]->{sb} >= $_[0]->{sa};
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -387,12 +409,13 @@ sub op_macrocall {
     }
 
     $_[0]->{ pc } = $addr;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_macro_begin {
     $_[0]->frame->[ $_[0]->current_frame ]->[ TXframe_NAME ] = $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -407,6 +430,8 @@ sub op_macro_end {
     $_[0]->{ output } = $oldframe->[ TXframe_OUTPUT ];
 
     $_[0]->{ pc } = $oldframe->[ TXframe_RETADDR ];
+
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -415,7 +440,7 @@ sub op_macro {
 
     $_[0]->{sa} = $_[0]->macro->{ $name };
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -429,7 +454,7 @@ sub op_function {
         Carp::croak( sprintf( "Function %s is not registered", $name ) );
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -439,7 +464,7 @@ sub op_funcall {
     my $ret = eval { $func->( @args ) };
     $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
@@ -449,23 +474,25 @@ sub op_methodcall_s {
     my $ret = eval { $obj->$method( @args ) };
     $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_goto {
     $_[0]->{ pc } = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_depend {
     # = noop
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_end {
     $_[0]->{ pc } = $_[0]->code_len;
+    return;
 }
 
 

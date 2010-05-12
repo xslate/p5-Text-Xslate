@@ -72,11 +72,6 @@ sub _initialize {
     my $len = scalar( @$proto );
     my $st  = Text::Xslate::PP::State->new;
 
-    # この処理全体的に別のところに移動させたい
-
-    #unless ( $self->{ template } ) {
-    #}
-
     unless ( defined $name ) { # $name ... filename
         $name = '<input>';
         $fullpath = $cachepath = undef;
@@ -100,7 +95,7 @@ sub _initialize {
     if ( $self->{ error_handler } ) {
         $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = $self->{ error_handler };
     }
-    else { # シグナルハンドラは使わない方向で
+    else {
         $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = sub {
             my ( $str ) = @_;
             my $st = $Text::Xslate::PP::Opcode::current_st;
@@ -125,7 +120,6 @@ sub _initialize {
         };
     }
 
-    # defaultにできるものは後で直しておく
     $st->tmpl( $tmpl );
     $st->self( $self ); # weak_ref!
 
@@ -139,7 +133,7 @@ sub _initialize {
     $st->frame( [] );
     $st->current_frame( -1 );
 
-    my $mainframe = Text::Xslate::PP::Opcode::tx_push_frame( $st ); # $st->_push_frame();
+    my $mainframe = Text::Xslate::PP::Opcode::tx_push_frame( $st );
 
     $mainframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ]    = 'main';
     $mainframe->[ Text::Xslate::PP::Opcode::TXframe_RETADDR ] = $len;
@@ -168,8 +162,6 @@ sub _initialize {
 
         $code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
         $code->[ $i ]->{ opname }    = $opname; # for test
-#        $st->code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
-#        $st->code->[ $i ]->{ opname } = $opname; # for test
 
         my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
 
@@ -181,11 +173,9 @@ sub _initialize {
             #     unless ( defined $arg );
 
             if( $tx_oparg & TXARGf_KEY ) {
-#                $st->code->[ $i ]->{ arg } = $arg;
                 $code->[ $i ]->{ arg } = $arg;
             }
             elsif ( $tx_oparg & TXARGf_INT ) {
-#                $st->code->[ $i ]->{ arg } = $arg;
                 $code->[ $i ]->{ arg } = $arg;
 
                 if( $tx_oparg & TXARGf_GOTO ) {
@@ -197,13 +187,11 @@ sub _initialize {
                         );  #これおかしくない？
                     }
 
-#                    $st->code->[ $i ]->{ arg } = $abs_addr;
                     $code->[ $i ]->{ arg } = $abs_addr;
                 }
 
             }
             else {
-#                $st->code->[ $i ]->{ arg } = $arg;
                 $code->[ $i ]->{ arg } = $arg;
             }
 
@@ -212,7 +200,6 @@ sub _initialize {
             if( defined $arg ) {
                 Carp::croak( sprintf( "Oops: Opcode %s has an extra argument on [%d]", $opname, $i ) );
             }
-#            $st->code->[ $i ]->{ arg } = undef;
             $code->[ $i ]->{ arg } = undef;
         }
 
@@ -221,11 +208,9 @@ sub _initialize {
 
         # special cases
         if( $opnum == $TX_OPS->{ macro_begin } ) {
-#            $st->macro->{ $st->code->[ $i ]->{ arg } } = $i;
             $st->macro->{ $code->[ $i ]->{ arg } } = $i;
         }
         elsif( $opnum == $TX_OPS->{ depend } ) {
-#            push @{ $tmpl }, $st->code->[ $i ]->{ arg };
             push @{ $tmpl }, $code->[ $i ]->{ arg };
         }
 
@@ -341,16 +326,11 @@ sub tx_execute { no warnings 'recursion';
     }
     $Depth++;
 
-    my $code = $st->{code};
-
-    while( $st->{ pc } < $len ) {
-        $code->[ $st->{ pc } ]->{ exec_code }->( $st );
-    }
+    $st->{code}->[ 0 ]->{ exec_code }->( $st );
 
     $st->{targ} = undef;
     $st->{sa} = undef;
     $st->{sb} = undef;
-
 
     $Depth--;
 }
