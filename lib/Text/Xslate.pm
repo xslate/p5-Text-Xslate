@@ -321,8 +321,8 @@ sub html_escape {
     $s =~ s/&/&amp;/g;
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
-    $s =~ s/"/&quot;/g;
-    $s =~ s/'/&#39;/g;
+    $s =~ s/"/&quot;/g; # " for poor editors
+    $s =~ s/'/&#39;/g;  # ' for poor editors
 
     return escaped_string($s);
 }
