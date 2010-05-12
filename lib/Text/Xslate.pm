@@ -573,20 +573,31 @@ There are common notes in the Xslate virtual machine.
 
 =head2 Nil handling
 
-You cannot use C<undef> as a valid value.
-The use of C<undef> will cause fatal errors as if
-C<use warnings FALTAL => 'all'> was specified.
-However, unlike Perl, you can use equal operators to check whether
-the value is defined or not:
+Note that nil handling is different from Perl's.
 
-    : if $value == nil { ; }
-    : if $value != nil { ; }
+=over
 
-Or, you can also use defined-or operator (//):
+=item to print
 
-    Hello, <: $value // 'Xslate' :> world!
+Prints nothing.
 
-In TTerse, however, you can print nil as an empty string.
+=item to access fields.
+
+Returns nil. That is, C<< nil.foo.bar.baz >> produces nil.
+
+=item to invoke methods
+
+Returns nil. That is, C<< nil.foo().bar().baz() >> produces nil.
+
+=item to iterate
+
+Dealt as an empty array.
+
+=item equality
+
+C<< $var == nil >> returns true if and only if I<$var> is nil.
+
+=back
 
 =head1 DEPENDENCIES
 
