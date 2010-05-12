@@ -5,7 +5,10 @@ use Test::More;
 
 use Text::Xslate;
 
-my $tx = Text::Xslate->new();
+my $warn = '';
+my $tx = Text::Xslate->new(
+    warn_handler => sub { $warn .= "@_" },
+);
 
 my @set = (
     [<<'T', {lang => 'Xslate'}, <<'X', 'empty block'],
@@ -95,14 +98,16 @@ foreach my $d(@set) {
 }
 
 
-eval {
-    diag $tx->render_string(<<'T', {});
+my $out = eval {
+    $tx->render_string(<<'T', {});
     : macro foo -> $arg {
         Hello <:= $arg :>!
     : }
     : foo()
 T
 };
-like $@, qr/Too few arguments/, 'prototype mismatch';
+is $out, "        Hello !\n";
+like $warn, qr/Too few arguments/, 'prototype mismatch';
+is $@, '';
 
 done_testing;

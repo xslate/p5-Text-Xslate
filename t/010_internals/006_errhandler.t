@@ -6,7 +6,10 @@ use Test::More;
 use Text::Xslate;
 
 my $err = '';
-my $tx = Text::Xslate->new( verbose => 1, warn_handler => sub{ $err = "@_" });
+my $tx = Text::Xslate->new(
+    verbose      => 2,
+    warn_handler => sub{ $err = "@_" },
+);
 
 is $tx->render_string(
     'Hello, <:= $lang :> world!',

@@ -8,7 +8,7 @@ use t::lib::Util;
 my $warn;
 
 my $tx = Text::Xslate->new(
-    verbose => 1,
+    verbose => 2,
     warn_handler => sub{ $warn .= join '', @_ },
     cache => 0,
     path => [path]);
