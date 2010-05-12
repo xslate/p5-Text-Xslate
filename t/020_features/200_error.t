@@ -18,11 +18,13 @@ foreach my $code(
     q{ nil.foo },
     q{ nil.foo() },
     q{ for nil -> ($item) { print "foobar"; } },
+    q{ $h[nil] },
+    q{ $a[nil] },
 ) {
     $warn = '';
 
     my $out = eval {
-        $tx->render_string("<: $code :>", {});
+        $tx->render_string("<: $code :>", { h => {'' => 'foo'}, a => [42] });
     };
 
     is $out,  '', $code;
@@ -40,10 +42,12 @@ foreach my $code(
     q{ nil.foo },
     q{ nil.foo() },
     q{ for nil -> ($item) { print "foobar"; } },
+    q{ $h[nil] },
+    q{ $a[nil] },
 ) {
     $warn = '';
     my $out = eval {
-        $tx->render_string("<: $code :>", {});
+        $tx->render_string("<: $code :>", { h => {'' => 'foo'}, a => [42] });
     };
 
     is $out,  '', $code;

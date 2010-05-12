@@ -48,7 +48,7 @@ tx_neat(pTHX_ SV* const sv) {
             return form("'%"SVf"'", sv);
         }
     }
-    return "undef";
+    return "nil";
 }
 
 static IV
@@ -179,7 +179,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
 
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
-    SV* sv;
+    SV* sv = NULL;
     PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
         dSP;
@@ -194,15 +194,29 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
+        SvGETMAGIC(key);
         if(SvTYPE(rv) == SVt_PVHV) {
-            HE* const he = hv_fetch_ent((HV*)rv, key, FALSE, 0U);
-
-            sv = he ? hv_iterval((HV*)rv, he) : &PL_sv_undef;
+            if(SvOK(key)) {
+                HE* const he = hv_fetch_ent((HV*)rv, key, FALSE, 0U);
+                if(he) {
+                    sv = hv_iterval((HV*)rv, he);
+                }
+            }
+            else {
+                tx_warn(aTHX_ st, "Use of nil as a field key");
+            }
         }
         else if(SvTYPE(rv) == SVt_PVAV) {
-            SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
-
-            sv = svp ? *svp : &PL_sv_undef;
+            if(looks_like_number(key)) {
+                SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
+                if(svp) {
+                    sv = *svp;
+                }
+            }
+            else {
+                tx_warn(aTHX_ st, "Use of %s as an array index",
+                    tx_neat(aTHX_ key));
+            }
         }
         else {
             goto invalid_container;
@@ -212,13 +226,12 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
         invalid_container:
         tx_error(aTHX_ st, "Cannot access %s (%s is not a container)",
             tx_neat(aTHX_ key), tx_neat(aTHX_ var));
-        sv = &PL_sv_undef;
     }
     else { /* undef */
         tx_warn(aTHX_ st, "Use of nil to access %s", tx_neat(aTHX_ key));
-        sv = &PL_sv_undef;
     }
-    return sv;
+
+    return sv ? sv : &PL_sv_undef;
 }
 
 static SV*
