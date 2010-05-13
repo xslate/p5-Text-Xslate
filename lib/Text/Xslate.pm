@@ -133,6 +133,10 @@ sub find_file {
         else {
             $is_compiled = 0;
         }
+
+        if (-f $fullpath) {
+            last;
+        }
     }
 
     if(not defined $orig_mtime) {
