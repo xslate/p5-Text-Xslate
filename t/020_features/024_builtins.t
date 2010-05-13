@@ -13,9 +13,10 @@ use Text::Xslate;
         is  => 'ro',
         isa => 'ArrayRef',
 
-        auto_deref => 1,
+        default => sub { [] },
     );
 
+    sub ITEMS{ shift->items() }
 }
 
 my $tx = Text::Xslate->new(
@@ -30,7 +31,7 @@ my @set = (
     ['<: $h.size() :>', { h => {} },        '0', 'for hash'],
     ['<: $h.size() :>', { h => {a => 1, b => 2, c => 3} }, '3'],
 
-    ['<: $o.size() :>', { o => MyArray->new(items => []) },        '0', 'for object'],
+    ['<: $o.size() :>', { o => MyArray->new() },                   '0', 'for object'],
     ['<: $o.size() :>', { o => MyArray->new(items => [0 .. 9]) }, '10'],
 
     ['<: nil.size() :>', { }, '', 'nil.size() returns an empty string'],

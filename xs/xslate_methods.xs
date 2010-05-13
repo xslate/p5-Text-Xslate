@@ -195,7 +195,7 @@ static const size_t tx_num_buildin_method
 
 
 static I32
-tx_as_enumerable(pTHX_ SV** const svp) {
+tx_as_enumerable(pTHX_ tx_state_t* const st, SV** const svp) {
     SV* const sv = *svp;
 
     if(sv_isobject(sv)) {
@@ -205,9 +205,11 @@ tx_as_enumerable(pTHX_ SV** const svp) {
         XPUSHs(sv);
         PUTBACK;
 
-        call_method("items", G_SCALAR | G_EVAL);
+        call_method("ITEMS", G_SCALAR | G_EVAL);
 
         if(sv_true(ERRSV)) {
+            tx_error(aTHX_ st, "Use of %s as enumerable objects",
+                tx_neat(aTHX_ sv));
             return FALSE;
         }
 
@@ -284,7 +286,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             }
 
             if(bm.traits & TX_TRAIT_ENUMERABLE) {
-                if(!tx_as_enumerable(aTHX_ MARK /* invocant ptr */)) {
+                if(!tx_as_enumerable(aTHX_ st, MARK /* invocant ptr */)) {
                     goto finish;
                 }
                 assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVAV);
