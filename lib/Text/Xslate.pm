@@ -134,7 +134,7 @@ sub find_file {
             $is_compiled = 0;
         }
 
-        if (-f $fullpath) {
+        if ($orig_mtime) {
             last;
         }
     }
