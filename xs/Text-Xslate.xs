@@ -7,6 +7,55 @@
 #include "ppport.h"
 
 #include "xslate.h"
+#include "xslate_ops.h"
+
+#ifdef DEBUGGING
+#define TX_st_sa  *tx_sv_safe(aTHX_ &(TX_st->sa),  "TX_st->sa",  __FILE__, __LINE__)
+#define TX_st_sb  *tx_sv_safe(aTHX_ &(TX_st->sb),  "TX_st->sb",  __FILE__, __LINE__)
+#define TX_op_arg *tx_sv_safe(aTHX_ &(TX_op->arg), "TX_st->arg", __FILE__, __LINE__)
+static SV**
+tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
+    if(UNLIKELY(*svp == NULL)) {
+        croak("panic: %s is NULL at %s line %d.\n", name, f, l);
+    }
+    return svp;
+}
+
+#define TX_lvarx_get(st, ix) tx_lvar_get_safe(aTHX_ st, ix)
+
+static SV*
+tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
+    AV* const cframe  = TX_current_framex(st);
+    I32 const real_ix = lvar_ix + TXframe_START_LVAR;
+
+    assert(SvTYPE(cframe) == SVt_PVAV);
+
+    if(AvFILLp(cframe) < real_ix) {
+        croak("panic: local variable storage is too small (%d < %d)",
+            (int)(AvFILLp(cframe) - TXframe_START_LVAR), (int)lvar_ix); 
+    }
+
+    if(!st->pad) {
+        croak("panic: access local variable (%d) before initialization",
+            (int)lvar_ix);
+    }
+    return st->pad[lvar_ix];
+}
+
+
+#else /* DEBUGGING */
+#define TX_st_sa        (TX_st->sa)
+#define TX_st_sb        (TX_st->sb)
+#define TX_op_arg       (TX_op->arg)
+
+#define TX_lvarx_get(st, ix) ((st)->pad[ix])
+#endif /* DEBUGGING */
+
+#define TX_lvarx(st, ix) tx_fetch_lvar(aTHX_ st, ix)
+
+#define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
+#define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
+
 
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
@@ -38,7 +87,7 @@ tx_line(pTHX_ const tx_state_t* const st) {
     return (int)st->lines[ st->pc ];
 }
 
-static const char*
+const char*
 tx_neat(pTHX_ SV* const sv) {
     if(SvOK(sv)) {
         if(SvROK(sv) || looks_like_number(sv) || isGV(sv)) {
@@ -58,18 +107,8 @@ tx_verbose(pTHX_ tx_state_t* const st) {
     return svp && SvOK(*svp) ? SvIV(*svp) : TX_VERBOSE_DEFAULT;
 }
 
-#ifdef __attribute__format__
-static void
-tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)
-    __attribute__format__(__printf__, pTHX_2, pTHX_3);
-
-static void
-tx_error(pTHX_ tx_state_t* const, const char* const fmt, ...)
-    __attribute__format__(__printf__, pTHX_2, pTHX_3);
-#endif
-
 /* for trivial errors, ignored by default */
-static void
+void
 tx_warn(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
     assert(st);
     assert(fmt);
@@ -81,8 +120,8 @@ tx_warn(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
     }
 }
 
-/* for possible errors, warned by default */
-static void
+/* for severe errors, warned by default */
+void
 tx_error(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
     assert(st);
     assert(fmt);
@@ -131,6 +170,7 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 
 static SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
+    SV* retval = NULL;
     /* ENTER & SAVETMPS must be done */
 
     if(!(flags & G_METHOD)) { /* functions */
@@ -142,22 +182,18 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
                 tx_neat(aTHX_ proc));
 
             (void)POPMARK;
-            sv_setsv_nomg(st->targ, &PL_sv_undef);
             goto finish;
         }
         proc = (SV*)cv;
     }
     else { /* methods */
-        if(!SvROK(proc)) { /* proc does not seem a CODE reference */
-            SV* const invocant = PL_stack_base[TOPMARK+1];
-            if(!SvOK(invocant)) {
-                tx_warn(aTHX_ st, "Use of nil to invoke method %s",
-                    tx_neat(aTHX_ proc));
+        SV* const invocant = PL_stack_base[TOPMARK+1];
+        if(!SvOK(invocant)) {
+            tx_warn(aTHX_ st, "Use of nil to invoke method %s",
+                tx_neat(aTHX_ proc));
 
-                (void)POPMARK;
-                sv_setsv_nomg(st->targ, &PL_sv_undef);
-                goto finish;
-            }
+            (void)POPMARK;
+            goto finish;
         }
     }
 
@@ -168,9 +204,11 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
             "\t... exception cought on %s", ERRSV, name);
     }
 
-    sv_setsv_nomg(st->targ, TX_pop());
+    retval = TX_pop();
 
     finish:
+    sv_setsv_nomg(st->targ, retval);
+
     FREETMPS;
     LEAVE;
 
@@ -787,8 +825,7 @@ TXC(funcall) {
 }
 
 TXC_w_key(methodcall_s) {
-    /* PUSHMARK & PUSH must be done */
-    TX_st_sa = tx_call(aTHX_ TX_st, TX_op_arg, G_METHOD, "method call");
+    TX_st_sa = tx_methodcall(aTHX_ TX_st, TX_op_arg);
 
     TX_st->pc++;
 }
@@ -1110,6 +1147,12 @@ BOOT:
     MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
     MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
     tx_init_ops(aTHX_ ops);
+
+    {
+        EXTERN_C XS(boot_Text__Xslate__Methods);
+        PUSHMARK(SP);
+        boot_Text__Xslate__Methods(aTHX_ cv);
+    }
 }
 
 #ifdef USE_ITHREADS

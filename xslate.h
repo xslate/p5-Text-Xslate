@@ -102,57 +102,27 @@ struct tx_code_s {
     SV* arg;
 };
 
-#ifdef DEBUGGING
-#define TX_st_sa  *tx_sv_safe(aTHX_ &(TX_st->sa),  "TX_st->sa",  __FILE__, __LINE__)
-#define TX_st_sb  *tx_sv_safe(aTHX_ &(TX_st->sb),  "TX_st->sb",  __FILE__, __LINE__)
-#define TX_op_arg *tx_sv_safe(aTHX_ &(TX_op->arg), "TX_st->arg", __FILE__, __LINE__)
-static SV**
-tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
-    if(UNLIKELY(*svp == NULL)) {
-        croak("panic: %s is NULL at %s line %d.\n", name, f, l);
-    }
-    return svp;
-}
-
-#define TX_lvarx_get(st, ix) tx_lvar_get_safe(aTHX_ st, ix)
-
-static SV*
-tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
-    AV* const cframe  = TX_current_framex(st);
-    I32 const real_ix = lvar_ix + TXframe_START_LVAR;
-
-    assert(SvTYPE(cframe) == SVt_PVAV);
-
-    if(AvFILLp(cframe) < real_ix) {
-        croak("panic: local variable storage is too small (%d < %d)",
-            (int)(AvFILLp(cframe) - TXframe_START_LVAR), (int)lvar_ix); 
-    }
-
-    if(!st->pad) {
-        croak("panic: access local variable (%d) before initialization",
-            (int)lvar_ix);
-    }
-    return st->pad[lvar_ix];
-}
-
-
-#else /* DEBUGGING */
-#define TX_st_sa        (TX_st->sa)
-#define TX_st_sb        (TX_st->sb)
-#define TX_op_arg       (TX_op->arg)
-
-#define TX_lvarx_get(st, ix) ((st)->pad[ix])
-#endif /* DEBUGGING */
-
-#define TX_lvarx(st, ix) tx_fetch_lvar(aTHX_ st, ix)
-
-#define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
-#define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
-
 #define TX_VERBOSE_DEFAULT 1
 
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal
 #define TXCODE_depend      TXCODE_noop
 
-#include "xslate_ops.h"
+#ifndef __attribute__format__
+#define __attribute__format__(a,b,c) /* nothing */
+#endif
+
+void
+tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+
+void
+tx_error(pTHX_ tx_state_t* const, const char* const fmt, ...)
+    __attribute__format__(__printf__, pTHX_2, pTHX_3);
+
+const char*
+tx_neat(pTHX_ SV* const sv);
+
+SV*
+tx_methodcall(pTHX_ tx_state_t* const st, SV* const method);
+
