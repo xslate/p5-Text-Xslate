@@ -1283,7 +1283,7 @@ CODE:
 }
 
 SV*
-render(SV* self, SV* name, SV* vars)
+render(SV* self, SV* name, SV* vars = &PL_sv_undef)
 CODE:
 {
     dMY_CXT;
@@ -1294,6 +1294,10 @@ CODE:
         dXSTARG;
         sv_setpvs(TARG, "<input>");
         name = TARG;
+    }
+
+    if(!SvOK(vars)) {
+        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
     }
 
     if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
