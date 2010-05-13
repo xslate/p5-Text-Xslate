@@ -2,15 +2,15 @@ package Text::Xslate::PP::Methods;
 
 use strict;
 use warnings;
-our $VERSION = 0.101201000;
+our $VERSION = 0.101301000;
 package Text::Xslate::PP;
 
 use strict;
 use warnings;
 
-our $COPIED_XS_VERSION = '0.1012';
+our $COPIED_XS_VERSION = '0.1013';
 
-# The below lines are copied from Text::Xslate 0.1012 by tool/copy_code_for_pp.pl.
+# The below lines are copied from Text::Xslate 0.1013 by tool/copy_code_for_pp.pl.
 
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG

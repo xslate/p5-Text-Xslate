@@ -55,6 +55,8 @@ sub render {
         $name = '<input>';
     }
 
+    $vars = {} unless defined $vars;
+
     unless ( $vars and ref $vars eq 'HASH' ) {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
