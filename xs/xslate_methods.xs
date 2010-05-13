@@ -20,7 +20,7 @@
 #define TX_TRAIT_ENUMERABLE 0x01
 #define TX_TRAIT_KV         0x02
 
-#define TX_PAIR_CLASS "Text::Xslate::Pair"
+#define TX_PAIR_CLASS "Text::Xslate::Type::Pair"
 
 typedef struct {
     const char* const name;
@@ -40,6 +40,46 @@ tx_make_pair(pTHX_ HV* const stash, SV* const key, SV* const val) {
 
     av = av_make(2, pair);
     return sv_bless( sv_2mortal( newRV_noinc((SV*)av) ), stash );
+}
+
+static I32
+tx_pair_cmp(pTHX_ SV* const a, SV* const b) {
+    assert(SvROK(a));
+    assert(SvTYPE(SvRV(a)) == SVt_PVAV);
+    assert(SvROK(b));
+    assert(SvTYPE(SvRV(b)) == SVt_PVAV);
+
+    return sv_cmp(
+        *av_fetch((AV*)SvRV(a), 0, TRUE),
+        *av_fetch((AV*)SvRV(b), 0, TRUE)
+    );
+}
+
+static SV*
+tx_kv(pTHX_ SV* const hvref) {
+    HV* const stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
+    HV* const hv    = (HV*)SvRV(hvref);
+    AV* const av    = newAV();
+    SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
+    HE* he;
+
+    assert(SvROK(hvref));
+    assert(SvTYPE(hv) == SVt_PVHV);
+
+    av_extend(av, HvKEYS(hv) - 1); /* if possible */
+
+    hv_iterinit(hv);
+    while((he = hv_iternext(hv))) {
+        SV* const pair = tx_make_pair(aTHX_ stash,
+            hv_iterkeysv(he),
+            hv_iterval(hv, he));
+
+        av_push(av, pair);
+        SvREFCNT_inc_simple_void_NN(pair);
+    }
+    sortsv(AvARRAY(av), AvFILLp(av)+1, tx_pair_cmp);
+
+    return avref;
 }
 
 /* Enumerable containers */
@@ -136,25 +176,7 @@ TXBM(values) {
 }
 
 TXBM(kv) {
-    SV* const avref = tx_builtin_method_keys(aTHX_ st, method, MARK);
-    HV* const hv    = (HV*)SvRV(*MARK);
-    AV* const av    = (AV*)SvRV(avref);
-    I32 const len   = AvFILLp(av) + 1;
-    I32 i;
-    HV* const stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
-
-    /* map { make_pair($_ => $hv->{$_}) } @{$keys} */
-    for(i = 0; i < len; i++) {
-        SV* const key  = AvARRAY(av)[i];
-        HE* const he   = hv_fetch_ent(hv, key, TRUE, 0U);
-        SV* const val  = hv_iterval(hv, he);
-        SV* const pair = tx_make_pair(aTHX_ stash, key, val);
-        AvARRAY(av)[i] = pair;
-        SvREFCNT_inc_simple_void_NN(pair);
-        SvREFCNT_dec(key);
-    }
-
-    return avref;
+    return tx_kv(aTHX_ *MARK);
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
@@ -202,24 +224,7 @@ tx_as_enumerable(pTHX_ SV** const svp) {
             return TRUE;
         }
         else if(SvTYPE(SvRV(sv)) == SVt_PVHV) {
-            HV* const stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
-            HV* const hv    = (HV*)SvRV(sv);
-            AV* const av    = newAV();
-            SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
-            HE* he;
-
-            av_extend(av, HvKEYS(hv) - 1); /* if possible */
-
-            hv_iterinit(hv);
-            while((he = hv_iternext(hv))) {
-                SV* const pair = tx_make_pair(aTHX_ stash,
-                    hv_iterkeysv(he),
-                    hv_iterval(hv, he));
-
-                av_push(av, pair);
-                SvREFCNT_inc_simple_void_NN(pair);
-            }
-            *svp = avref;
+            *svp = tx_kv(aTHX_ sv);
             return TRUE;
         }
     }
@@ -230,8 +235,8 @@ tx_as_enumerable(pTHX_ SV** const svp) {
 SV*
 tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     /* ENTER & LEAVE & PUSHMARK & PUSH must be done */
-    SV** MARK = PL_stack_base + TOPMARK;
     dSP;
+    SV** MARK = PL_stack_base + TOPMARK;
     dORIGMARK;
     SV* const invocant = *(++MARK);
     STRLEN methodlen;
@@ -295,7 +300,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     return retval ? retval : &PL_sv_undef;
 }
 
-MODULE = Text::Xslate::Methods    PACKAGE = Text::Xslate::Pair
+MODULE = Text::Xslate::Methods    PACKAGE = Text::Xslate::Type::Pair
 
 void
 key(AV* pair)

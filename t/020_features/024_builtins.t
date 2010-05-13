@@ -61,6 +61,19 @@ a=1
 b=2
 c=3
 X
+
+    [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'reversed kv' ],
+<:
+    for $h.reverse() -> $pair {
+        print $pair.key, "=", $pair.value, "\n";
+    }
+-:>
+T
+c=3
+b=2
+a=1
+X
+
 );
 
 foreach my $d(@set) {
