@@ -1,0 +1,152 @@
+#!/usr/bin/env perl
+package App::Xslate;
+use Mouse;
+use Mouse::Util::TypeConstraints;
+use Cwd ();
+use File::Basename ();
+use File::Path ();
+use Text::Xslate;
+
+with 'MouseX::Getopt';
+
+has cache_dir => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_cache_dir',
+);
+
+has cache => (
+    is => 'ro',
+    isa => 'Bool',
+    predicate => 'has_cache',
+);
+
+has import => (
+    is => 'ro',
+    isa => 'ArrayRef[Str]',
+    predicate => 'has_import',
+);
+
+has input_layer => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_input_layer',
+);
+
+has path => (
+    is => 'ro', 
+    isa => 'ArrayRef[Str]',
+    predicate => 'has_path',
+);
+
+has syntax => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_syntax',
+);
+
+# --ignore=pattern
+MouseX::Getopt::OptionTypeMap->add_option_type_to_map(
+    RegexpRef => '=s'
+);
+coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
+has ignore => (
+    is => 'ro',
+    isa => 'RegexpRef',
+    coerce => 1,
+);
+
+# --suffix old=new
+has suffix => (
+    is => 'ro',
+    isa => 'HashRef',
+);
+
+has dest => (
+    is => 'ro',
+    isa => 'Str',
+    default => Cwd::cwd()
+);
+
+sub run {
+    my $self = shift;
+
+    my $targets = $self->extra_argv;
+
+    my %args;
+    foreach my $field qw(cache_dir cache import input_layer path syntax) {
+        my $method = "has_$field";
+        $args{ $field } = $self->$field if $self->$method;
+    }
+
+    my $xslate = Text::Xslate->new(%args);
+    my $ignore = $self->ignore;
+    my $suffix_map = $self->suffix;
+    my $dest = $self->dest;
+    foreach my $target (@$targets) {
+        if ($ignore) {
+            if ($target =~ /$ignore/) {
+                next;
+            }
+        }
+
+        my $outfile = File::Spec->catfile( $dest, $target );
+        my ($suffix) = ($target =~ /\.([^\.]+)$/);
+        if ($suffix_map && (my $replace = $suffix_map->{ $suffix })) {
+            $outfile =~ s/$suffix$/$replace/;
+        }
+
+        my $dir = File::Basename::dirname( $outfile );
+        if (! -d $dir) {
+            if (! File::Path::mkpath( $dir )) {
+                die "Could not create directory $dir: $!";
+            }
+        }
+
+        my $fh;
+        if (! open( $fh, '>', $outfile ) ) {
+            die "XXX";
+        }
+
+        print $fh $xslate->render( $target );
+        close $fh;
+    }
+}
+
+package main;
+use strict;
+use Getopt::Long;
+
+sub main {
+    my $app = App::Xslate->new_with_options();
+    $app->run();
+}
+
+main() unless caller();
+
+__END__
+
+=head1 NAME
+
+xslate - Process Xslate Templates
+
+=head1 SYNOPSIS
+
+    xslate 
+        # Text::Xslate options
+        [ --cache ]
+        [ --cache_dir=/path/to/dir ]
+        [ --import=Module ... ]
+        [ --input_layer ... ]
+        [ --path=/path/to/templates ... ]
+        [ --syntax=moniker ]
+
+        # Output options
+        [ --dest=/path/to/destination ]
+        [ --ignore=pattern ... ]
+        [ --suffix old=new ... ]
+
+        # Target to process
+        target
+
+=cut
