@@ -464,7 +464,7 @@ TXC(print) {
         *SvEND(output) = '\0';
     }
     else {
-        tx_warn(aTHX_ TX_st, "Use of nil to be printed");
+        tx_warn(aTHX_ TX_st, "Use of nil to print");
         /* does nothing */
     }
 
@@ -504,7 +504,7 @@ TXC_w_var(for_start) {
                 tx_neat(aTHX_ avref));
         }
         else {
-            tx_warn(aTHX_ TX_st, "Use of nil to be iterated");
+            tx_warn(aTHX_ TX_st, "Use of nil to iterate");
         }
         avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
