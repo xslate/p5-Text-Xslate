@@ -5,19 +5,12 @@ use 5.008;
 use strict;
 
 use Carp ();
-use Data::Dumper;
 
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
 
 my $TX_OPS = \%Text::Xslate::OPS;
-
-$Text::Xslate::PP::Depth = 0;
-
-our $VERSION = '0.1000';
-
-our $XS_COMAPT_VERSION = '0.1013';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
@@ -274,6 +267,8 @@ sub tx_invoke_load_file {
     $self->load_file( $name, $mtime );
 }
 
+our $_depth = 0;
+our $_current_st;
 
 sub tx_execute { no warnings 'recursion';
     my ( $st, $output, $vars ) = @_;
@@ -284,13 +279,13 @@ sub tx_execute { no warnings 'recursion';
 
     $st->{vars} = $vars;
 
-    local $Text::Xslate::PP::Opcode::current_st = $st;
+    local $_current_st = $st;
 
-    if ( $Text::Xslate::PP::Depth > 100 ) {
+    if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
 
-    local $Text::Xslate::PP::Depth = $Text::Xslate::PP::Depth + 1;
+    local $_depth = $_depth + 1;
 
     $st->{code}->[ 0 ]->{ exec_code }->( $st );
 
@@ -302,17 +297,16 @@ sub tx_execute { no warnings 'recursion';
 
 sub _error_handler {
     my ( $str, $die_handler ) = @_;
-    my $st = $Text::Xslate::PP::Opcode::current_st;
+    my $st = $_current_st;
 
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
 
     my $cframe = $st->frame->[ $st->current_frame ];
     my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
 
-    $Text::Xslate::PP::Depth = 0;
-
-    #    /* unroll the stack frame */
-    #    /* to fix TXframe_OUTPUT */
+    if($die_handler) {
+        $_depth = 0;
+    }
 
     my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
     my $line = $st->lines->[ $st->{ pc } ] || 0;

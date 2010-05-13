@@ -1,9 +1,6 @@
 package Text::Xslate::PP::State;
 
 use Mouse; # we don't need Mouse for this module?
-use Carp ();
-
-our $VERSION = '0.100';
 
 has tmpl => ( is => 'rw' );
 

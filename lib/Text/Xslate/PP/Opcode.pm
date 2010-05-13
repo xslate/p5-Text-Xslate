@@ -1,13 +1,12 @@
 package Text::Xslate::PP::Opcode;
 
 use strict;
-use Data::Dumper;
+use warnings;
+
 use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-
-our $VERSION = '0.0001';
 
 no warnings 'recursion';
 
