@@ -42,6 +42,6 @@ jjn
 Goro Fuji
 gfx
 Douglas Crockford
-Makamaka Hannyaharamitu
 makamaka
+Hannyaharamitu
 APIs
