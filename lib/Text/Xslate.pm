@@ -17,16 +17,18 @@ use Text::Xslate::Util qw(
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
-if($DEBUG !~ /\b pp \b/xms) {
-    eval {
-        require XSLoader;
-        XSLoader::load(__PACKAGE__, $VERSION);
-    };
-    die $@ if $@ && $DEBUG =~ /\b xs \b/xms;
-}
-if(!defined &_initialize) {
-    require 'Text/Xslate/PP.pm';
-    Text::Xslate::PP->import();
+if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
+    if($DEBUG !~ /\b pp \b/xms) {
+        eval {
+            require XSLoader;
+            XSLoader::load(__PACKAGE__, $VERSION);
+        };
+        die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
+    }
+    if(!__PACKAGE__->can('render')) { # failed to load XS, or force PP
+        require 'Text/Xslate/PP.pm';
+        Text::Xslate::PP->import(':backend');
+    }
 }
 
 use File::Spec;
@@ -83,10 +85,6 @@ sub new {
 
     return $self;
 }
-
-sub render;
-
-sub _initialize;
 
 sub load_string { # for <input>
     my($self, $string) = @_;

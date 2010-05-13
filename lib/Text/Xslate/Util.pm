@@ -16,7 +16,7 @@ our $STRING  = qr/(?: $dquoted | $squoted )/xms;
 our $NUMBER  = qr/(?: [+-]? [0-9][0-9_]* (?: \. [0-9_]+)? )/xms;
 
 our $DEBUG;
-$DEBUG = $ENV{XSLATE} // $DEBUG // '';
+$DEBUG //= $ENV{XSLATE} // '';
 
 sub literal_to_value {
     my($value) = @_;

@@ -1,17 +1,15 @@
 package Text::Xslate::PP;
+# Text::Xslate in pure Perl
 
 use 5.008;
 use strict;
-
-use parent qw(Exporter);
-our @EXPORT_OK;
-our @EXPORT;
 
 use Carp ();
 use Data::Dumper;
 
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
+use Text::Xslate::PP::EscapedString;
 
 my $TX_OPS = \%Text::Xslate::OPS;
 
@@ -21,26 +19,19 @@ our $VERSION = '0.1000';
 
 our $XS_COMAPT_VERSION = '0.1013';
 
-my $loaded;
+use parent qw(Exporter);
+our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
+our %EXPORT_TAGS = (
+    backend => \@EXPORT_OK,
+);
 
-unless ( $loaded++ ) {
-    my $called_by = caller;
-
-    if ( $called_by->isa('Text::Xslate') ) {
-        @EXPORT = qw( _initialize render ); # for Text::Xslate
-        *Text::Xslate::escaped_string = *Text::Xslate::PP::escaped_string;
-    }
-    else { # directly PP called
-        @EXPORT_OK = qw( escaped_string html_escape );
-        require Text::Xslate::PP::Methods; # install Text::Xslate methods
-    }
-
-    unless ( exists &Text::Xslate::EscapedString::new ) {
-        _make_xslate_escapedstring_class();
-    }
-
+{
+    package Text::Xslate;
+    Text::Xslate::PP->import(':backend');
+    our @ISA = qw(Text::Xslate::PP);
 }
 
+require Text::Xslate;
 
 #
 # export API
@@ -351,40 +342,6 @@ sub _die {
 
 sub _warn {
     _error_handler( $_[0], 0 );
-}
-
-
-sub _make_xslate_escapedstring_class {
-    eval q{
-        package Text::Xslate::EscapedString;
-
-        sub new {
-            my ( $class, $str ) = @_;
-
-            Carp::croak("Usage: Text::Xslate::EscapedString::new(klass, str)") if ( @_ != 2 );
-
-            if ( ref $class ) {
-                Carp::croak( sprintf( "You cannot call %s->new() as an instance method", __PACKAGE__ ) );
-            }
-            elsif ( $class ne __PACKAGE__ ) {
-                Carp::croak( sprintf( "You cannot extend %s", __PACKAGE__ ) );
-            }
-            bless \$str, 'Text::Xslate::EscapedString';
-        }
-
-        sub as_string {
-            unless ( $_[0] and ref $_[0] ) {
-                Carp::croak( sprintf( "You cannot call %s->as_string() a class method", __PACKAGE__ ) );
-            }
-            return ${ $_[0] };
-        }
-
-        use overload (
-            '""' => sub { ${ $_[0] } }, # don't use 'as_string' or deep recursion.
-            fallback => 1,
-        );
-    };
-    die $@ if $@;
 }
 
 

@@ -177,7 +177,7 @@ our $tx_oparg = [
 package Text::Xslate::PP::Const;
 use strict;
 
-our $VERSION = '0.100020100513064143';
+our $VERSION = '0.100020100513082253';
 
 
 sub init_opcode_dispatch_table {
