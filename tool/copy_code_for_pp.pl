@@ -2,7 +2,24 @@
 use 5.008;
 use strict;
 
-our $VERSION = '0.001';
+our $VERSION = '0.1000';
+
+my @lines;
+
+my $ThisModVersion;
+my $COPIED_XS_VERSION;
+
+while(<>) {
+
+    if ( /\$VERSION\s*=\s*['"]([.0-9]+)['"]/ ) {
+        $COPIED_XS_VERSION = $1;
+        $ThisModVersion = "$COPIED_XS_VERSION$VERSION";
+        $ThisModVersion =~ s/\.(\d+)$/$1/;
+        next;
+    }
+
+    push @lines, $_;
+}
 
 my $start;
 my $skip;
@@ -15,8 +32,11 @@ package Text::Xslate::PP::Methods;
 
 use strict;
 use warnings;
+HEAD
 
-our \$VERSION = '$VERSION';
+print "our \$VERSION = $ThisModVersion;";
+
+print <<HEAD;
 
 package Text::Xslate::PP;
 
@@ -25,8 +45,11 @@ use warnings;
 
 HEAD
 
+print "our \$COPIED_XS_VERSION = '$COPIED_XS_VERSION';\n\n";
+print "# The below lines are copied from Text::Xslate $COPIED_XS_VERSION by $0.\n\n";
 
-while(<>) {
+
+for (@lines) {
 
     if ( /^__END__/ ) {
         print $_;
@@ -34,12 +57,6 @@ while(<>) {
     }
 
     next if /^#/;
-
-    if ( /\$VERSION\s*=\s*['"]([.0-9]+)['"]/ ) {
-        print "our \$COPIED_XS_VERSION = '$1';\n\n";
-        print "# The below lines are copied from Text::Xslate $1 by $0.\n\n";
-        next;
-    }
 
     if ( /^if\(\$DEBUG\s+!~\s+\/\\b pp/ ) {
         $skip++;
@@ -68,13 +85,25 @@ while(<>) {
     print $line;
 }
 
+
+
+
 print <<POD
 
 =pod
 
 =head1 NAME
 
-Text::Xslate::PP::Methods - installer copying Text::Xslate code into PP
+Text::Xslate::PP::Methods - install to copied Text::Xslate code into PP
+
+=head1 DESCRIPTION
+
+This module is called by Text::Xslate::PP internally.
+
+=head1 SEE ALSO
+
+L<Text::Xslate::PP>,
+L<Text::Xslate>
 
 =head1 LICENSE AND COPYRIGHT
 

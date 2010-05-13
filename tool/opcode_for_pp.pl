@@ -2,6 +2,7 @@
 use 5.008;
 use strict;
 
+our $VERSION = '0.1000';
 
 my @ops;
 my @lines = <DATA>;
@@ -76,6 +77,17 @@ $code .=  <<'CODE';
 # make opcode dispatch table.
 package Text::Xslate::PP::Const;
 use strict;
+
+CODE
+
+my ( $sec, $min, $hour, $day, $mon, $year ) = gmtime();
+my $date = sprintf( "%04d%02d%02d%02d%02d%02d", $year + 1900, $mon + 1, $day, $hour, $min, $sec );
+$code .=  <<"CODE";
+our \$VERSION = '$VERSION$date';
+
+CODE
+
+$code .=  <<'CODE';
 
 sub init_opcode_dispatch_table {
 
@@ -156,8 +168,6 @@ package Text::Xslate::PP::Const;
 
 use strict;
 
-our $VERSION = '0.001';
-
 my $loaded;
 
 unless ( $loaded ) {
@@ -173,4 +183,23 @@ unless ( $loaded ) {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Text::Xslate::PP::Const - Text::Xslate pure-Perl constant values
+
+=head1 DESCRIPTION
+
+This module is called by Text::Xslate::PP internally.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 by Makamaka Hannyaharamitu (makamaka).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
 
