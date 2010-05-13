@@ -42,3 +42,6 @@ jjn
 Goro Fuji
 gfx
 Douglas Crockford
+Makamaka Hannyaharamitu
+makamaka
+APIs
