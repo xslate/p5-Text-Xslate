@@ -5,6 +5,8 @@ use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
 
+use Text::Xslate::PP::Const;
+
 our $VERSION = '0.0001';
 
 no warnings 'recursion';
@@ -91,10 +93,13 @@ sub op_fetch_lvar {
     my $cframe = $_[0]->frame->[ $_[0]->current_frame ];
 
     if ( scalar @{ $cframe } < $id + TXframe_START_LVAR + 1 ) {
-        Carp::croak("Too few arguments for %s", $cframe->[ TXframe_NAME ] );
+        tx_error( $_[0], "Too few arguments for %s", $cframe->[ TXframe_NAME ] );
+        $_[0]->{sa} = undef;
+    }
+    else {
+        $_[0]->{sa} = tx_access_lvar( $_[0], $id );
     }
 
-    $_[0]->{sa} = tx_access_lvar( $_[0], $id );
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -121,7 +126,7 @@ sub op_print {
     if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
         $_[0]->{ output } .= $sv;
     }
-    else {
+    elsif ( defined $sv ) {
         if ( $sv =~ /[&<>"']/ ) { # 置換
             $sv =~ s/&/&amp;/g;
             $sv =~ s/</&lt;/g;
@@ -130,6 +135,9 @@ sub op_print {
             $sv =~ s/'/&#39;/g;
         }
         $_[0]->{ output } .= $sv;
+    }
+    else {
+        tx_warn( $_[0], "Use of nil to be printed" );
     }
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -163,10 +171,14 @@ sub op_for_start {
     my $ar = $_[0]->{sa};
     my $id = $_[0]->pc_arg;
 
-    unless ( $ar and ref $ar eq 'ARRAY' ) { # magicについては後で
-        Carp::croak(
-            sprintf( "Iterator variables must be an ARRAY reference, not %s", $ar )
-        );
+    unless ( $ar and ref $ar eq 'ARRAY' ) {
+        if ( defined $ar ) {
+            tx_error( $_[0], "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
+        }
+        else {
+            tx_warn( $_[0], "Use of nil to be iterated" );
+        }
+        $ar = [];
     }
 
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
@@ -251,7 +263,6 @@ sub op_filt {
         Carp::croak( sprintf("%s\n\t... exception cought on %s", $@, 'filtering') );
     }
 
-#    $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
@@ -377,7 +388,6 @@ sub op_le {
 
 sub op_gt {
     $_[0]->{sa} = $_[0]->{sb} > $_[0]->{sa};
-    # $_[0]->{ pc }++;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -437,6 +447,10 @@ sub op_macro {
 
     $_[0]->{sa} = $_[0]->macro->{ $name };
 
+    unless ( defined $_[0]->{sa} ) {
+        croak("Macro %s is not defined", tx_neat(aTHX_ name));
+    }
+
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -458,7 +472,7 @@ sub op_function {
 sub op_funcall {
     my $func = $_[0]->{sa};
     my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $ret = eval { $func->( @args ) };
+    my $ret = tx_call( $_[0], 0, $func, @args );
     $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -467,8 +481,7 @@ sub op_funcall {
 
 sub op_methodcall_s {
     my ( $obj, @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $method = $_[0]->pc_arg;
-    my $ret = eval { $obj->$method( @args ) };
+    my $ret = tx_call( $_[0], 1, $_[0]->pc_arg, $obj, @args );
     $_[0]->{targ} = $ret;
     $_[0]->{sa} = $ret;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -520,24 +533,102 @@ sub tx_push_frame {
 }
 
 
+sub tx_call {
+    my ( $st, $flag, $proc, @args ) = @_;
+    my $obj = shift @args if ( $flag );
+    my $ret;
+
+    if ( $flag ) { # method call
+        unless ( defined $obj ) {
+            tx_warn( $st, "Use of nil to invoke method %s", $proc );
+        }
+        else {
+            local $SIG{__DIE__}; # oops
+            local $SIG{__WARN__};
+            $ret = eval { $obj->$proc( @args ) };
+        }
+    }
+    else { # function call
+            local $SIG{__DIE__}; # oops
+            local $SIG{__WARN__};
+            $ret = eval { $proc->( @args ) };
+    }
+
+    $ret;
+}
+
+
 sub tx_fetch {
     my ( $st, $var, $key ) = @_;
+    my $ret;
 
     if ( Scalar::Util::blessed $var ) {
-        local $SIG{__DIE__}; # oops
-        my $ret = eval q{ $var->$key() };
-        return $ret;
+        $ret = tx_call( $_[0], 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
-        return $var->{ $key };
+        if ( defined $key ) {
+            $ret = $var->{ $key };
+        }
+        else {
+            tx_warn( $st, "Use of nil as a field key" );
+        }
     }
     elsif ( ref $var eq 'ARRAY' ) {
-        return $var->[ $key ];
+        if ( defined $key and $key =~ /[-.0-9]/ ) {
+            $ret = $var->[ $key ];
+        }
+        else {
+            tx_warn( $st, "Use of %s as an array index", tx_neat( $key ) );
+        }
+    }
+    elsif ( $var ) {
+        tx_error( $st, "Cannot access %s (%s is not a container)", tx_neat($key), tx_neat($var) );
     }
     else {
-        Carp::croak( sprintf( "Cannot access '%s' (%s is not a container)" ), $key, $var );
+        tx_warn( $st, "Use of nil to access %s", tx_neat( $key ) );
     }
 
+    return $ret;
+}
+
+
+use constant TX_VERBOSE_DEFAULT => 1;
+
+
+sub tx_verbose {
+    my $v = $_[0]->self->{ verbose };
+    defined $v ? $v : TX_VERBOSE_DEFAULT;
+}
+
+
+sub tx_error {
+    my ( $st, $fmt, @args ) = @_;
+    if( tx_verbose( $st ) >= TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
+}
+
+
+sub tx_warn {
+    my ( $st, $fmt, @args ) = @_;
+    if( tx_verbose( $st ) > TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
+}
+
+
+sub tx_neat {
+    if ( defined $_[0] ) {
+        if ( $_[0] =~ /^-?[.0-9]+$/ ) {
+            return $_[0];
+        }
+        else {
+            return "'" . $_[0] . "'";
+        }
+    }
+    else {
+        'nil';
+    }
 }
 
 

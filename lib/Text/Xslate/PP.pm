@@ -15,7 +15,7 @@ use Text::Xslate::PP::State;
 
 my $TX_OPS = \%Text::Xslate::OPS;
 
-my $Depth = 0;
+$Text::Xslate::PP::Depth = 0;
 
 our $VERSION = '0.0001';
 
@@ -27,7 +27,7 @@ unless ( $loaded++ ) {
     my $called_by = caller;
 
     if ( $called_by->isa('Text::Xslate') ) {
-        @EXPORT = qw( _initialize render _reset_depth ); # for Text::Xslate
+        @EXPORT = qw( _initialize render ); # for Text::Xslate
         *Text::Xslate::escaped_string = *Text::Xslate::PP::escaped_string;
     }
     else { # directly PP called
@@ -43,7 +43,7 @@ unless ( $loaded++ ) {
 
 
 #
-# real PP code
+# export API
 #
 
 sub render {
@@ -60,6 +60,9 @@ sub render {
     }
 
     my $st = tx_load_template( $self, $name );
+
+    local $SIG{__DIE__}  = \&_die;
+    local $SIG{__WARN__} = \&_warn;
 
     tx_execute( $st, undef, $vars );
 
@@ -91,34 +94,6 @@ sub _initialize {
     $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ]     = $mtime;
     $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ] = $cachepath;
     $tmpl->[ Text::Xslate::PP::Opcode::TXo_FULLPATH ]  = $fullpath;
-
-    if ( $self->{ error_handler } ) {
-        $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = $self->{ error_handler };
-    }
-    else {
-        $tmpl->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ] = sub {
-            my ( $str ) = @_;
-            my $st = $Text::Xslate::PP::Opcode::current_st;
-
-            Carp::croak( $str ) unless $st;
-
-            my $cframe = $st->frame->[ $st->current_frame ];
-            my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
-
-            $st->self->_reset_depth;
-
-            #    /* unroll the stack frame */
-            #    /* to fix TXframe_OUTPUT */
-
-            local $Carp::CarpLevel = 2;
-            local $Carp::Internal{ 'Text::Xslate::PP::Opcode' } = 1;
-            local $Carp::Internal{ 'Text::Xslate::PP' } = 1;
-
-            my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
-            my $line = $st->lines->[ $st->{ pc } ];
-            Carp::croak( sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str ) );
-        };
-    }
 
     $st->tmpl( $tmpl );
     $st->self( $self ); # weak_ref!
@@ -317,26 +292,65 @@ sub tx_execute { no warnings 'recursion';
 
     $st->{vars} = $vars;
 
-    local $SIG{__DIE__} = $st->{tmpl}->[ Text::Xslate::PP::Opcode::TXo_ERROR_HANDLER ];
     local $Text::Xslate::PP::Opcode::current_st = $st;
-    local $SIG{__WARN__} = $SIG{__DIE__};
 
-    if ( $Depth > 100 ) {
+    if ( $Text::Xslate::PP::Depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
-    $Depth++;
+
+    local $Text::Xslate::PP::Depth = $Text::Xslate::PP::Depth + 1;
 
     $st->{code}->[ 0 ]->{ exec_code }->( $st );
 
     $st->{targ} = undef;
-    $st->{sa} = undef;
-    $st->{sb} = undef;
-
-    $Depth--;
+    $st->{sa}   = undef;
+    $st->{sb}   = undef;
 }
 
 
-sub _reset_depth { $Depth = 0; }
+sub _error_handler {
+    my ( $str, $die_handler ) = @_;
+    my $st = $Text::Xslate::PP::Opcode::current_st;
+
+    Carp::croak( 'Not in $xslate->render()' ) unless $st;
+
+    my $cframe = $st->frame->[ $st->current_frame ];
+    my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
+
+    $Text::Xslate::PP::Depth = 0;
+
+    #    /* unroll the stack frame */
+    #    /* to fix TXframe_OUTPUT */
+
+    my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
+    my $line = $st->lines->[ $st->{ pc } ] || 0;
+    my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str );
+
+    if ( $die_handler ) {
+        Carp::croak( $mess );
+    }
+    else {
+
+    if ( my $h = $st->self->{ warn_handler } ) {
+        $h->( $mess );
+    }
+    else {
+        Carp::carp( $mess );
+    }
+
+    }
+
+}
+
+
+sub _die {
+    _error_handler( $_[0], 1 );
+}
+
+
+sub _warn {
+    _error_handler( $_[0], 0 );
+}
 
 
 sub _make_xslate_escapedstring_class {
