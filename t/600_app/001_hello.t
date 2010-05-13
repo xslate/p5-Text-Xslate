@@ -5,10 +5,9 @@ use File::Path ();
 File::Path::rmtree( "t/600_app/out" );
 
 system $^X, (map { "-I$_" } @INC), "bin/xslate",
-    '--path=example',
     '--suffix', 'tx=txt',
     '--dest=t/600_app/out',
-    'hello.tx'
+    't/600_app/simple/hello.tx'
 ;
 
 is $?, 0, "command executed successfully";
