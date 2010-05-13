@@ -66,3 +66,5 @@ ppport\.h$
 \.ttc$
 
 \.stackdump$
+
+t/600_app/out
