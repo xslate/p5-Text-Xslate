@@ -18,7 +18,9 @@ use Text::Xslate;
 
 }
 
-my $tx = Text::Xslate->new();
+my $tx = Text::Xslate->new(
+    #verbose => 2,
+);
 
 my @set = (
     # enumerable
@@ -30,6 +32,8 @@ my @set = (
 
     ['<: $o.size() :>', { o => MyArray->new(items => []) },        '0', 'for object'],
     ['<: $o.size() :>', { o => MyArray->new(items => [0 .. 9]) }, '10'],
+
+    ['<: nil.size() :>', { }, '', 'nil.size() returns an empty string'],
 
     ['<: $a.join(",") :>', { a => [] },        ''  ],
     ['<: $a.join(",") :>', { a => [1, 2, 3] }, '1,2,3'],

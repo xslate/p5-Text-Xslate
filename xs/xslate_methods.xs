@@ -262,6 +262,11 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
     (void)POPMARK;
 
+    if(!SvOK(invocant)) {
+        tx_warn(aTHX_ st, "Use of nil to invoke method %"SVf, method);
+        goto finish;
+    }
+
     /* linear search */
     for(i = 0; i < tx_num_buildin_method; i++) {
         tx_builtin_method_t const bm = tx_builtin_method[i];
