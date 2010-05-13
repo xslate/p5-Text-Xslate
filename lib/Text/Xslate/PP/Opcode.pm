@@ -41,7 +41,7 @@ sub op_save_to_lvar {
 
 sub op_load_lvar_to_sb {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-    $_[0]->sb( tx_access_lvar( $_[0], $_[0]->pc_arg ) );
+    $_[0]->{sb} = tx_access_lvar( $_[0], $_[0]->pc_arg );
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -315,7 +315,7 @@ sub op_dor {
 
 
 sub op_not {
-    $_[0]->{sa} = ! $_[0]->sa;
+    $_[0]->{sa} = ! $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -432,7 +432,7 @@ sub op_macro_end {
 
     $_[0]->{targ} = Text::Xslate::PP::escaped_string( $_[0]->{ output } );
 
-    $_[0]->{sa} = $_[0]->targ;
+    $_[0]->{sa} = $_[0]->{targ};
 
     $_[0]->{ output } = $oldframe->[ TXframe_OUTPUT ];
 
@@ -631,3 +631,31 @@ sub tx_neat {
 
 1;
 __END__
+
+=head1 NAME
+
+Text::Xslate::PP::Opcode - Text::Xslate pure-Perl version opcodes.
+
+=head1 DESCRIPTION
+
+This module is called by Text::Xslate::PP internally.
+
+=head1 SEE ALSO
+
+L<Text::Xslate::PP>,
+L<Text::Xslate>
+
+=head1 AUTHOR
+
+Makamaka Hannyaharamitu E<lt>makamaka at cpan.orgE<gt>
+
+Text::Xslate was written by Fuji, Goro (gfx).
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 by Makamaka Hannyaharamitu (makamaka).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

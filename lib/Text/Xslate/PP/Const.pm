@@ -40,8 +40,6 @@ package Text::Xslate::PP::Const;
 
 use strict;
 
-our $VERSION = '0.001';
-
 my $loaded;
 
 unless ( $loaded ) {
@@ -179,6 +177,9 @@ our $tx_oparg = [
 package Text::Xslate::PP::Const;
 use strict;
 
+our $VERSION = '0.100020100513061309';
+
+
 sub init_opcode_dispatch_table {
 
     package Text::Xslate::PP::Opcode;
@@ -240,4 +241,23 @@ sub init_opcode_dispatch_table {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+Text::Xslate::PP::Const - Text::Xslate pure-Perl constant values
+
+=head1 DESCRIPTION
+
+This module is called by Text::Xslate::PP internally.
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright (c) 2010 by Makamaka Hannyaharamitu (makamaka).
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
 

@@ -2,9 +2,7 @@ package Text::Xslate::PP::Methods;
 
 use strict;
 use warnings;
-
-our $VERSION = '0.001';
-
+our $VERSION = 0.101201000;
 package Text::Xslate::PP;
 
 use strict;
@@ -327,7 +325,16 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Methods - installer copying Text::Xslate code into PP
+Text::Xslate::PP::Methods - install to copied Text::Xslate code into PP
+
+=head1 DESCRIPTION
+
+This module is called by Text::Xslate::PP internally.
+
+=head1 SEE ALSO
+
+L<Text::Xslate::PP>,
+L<Text::Xslate>
 
 =head1 LICENSE AND COPYRIGHT
 

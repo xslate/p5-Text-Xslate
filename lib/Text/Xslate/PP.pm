@@ -1,6 +1,6 @@
 package Text::Xslate::PP;
 
-use 5.008; # finally even other modules will run in Perl 5.008?
+use 5.008;
 use strict;
 
 use parent qw(Exporter);
@@ -17,9 +17,9 @@ my $TX_OPS = \%Text::Xslate::OPS;
 
 $Text::Xslate::PP::Depth = 0;
 
-our $VERSION = '0.0001';
+our $VERSION = '0.1000';
 
-our $XS_COMAPT_VERSION = '0.1011';
+our $XS_COMAPT_VERSION = '0.1013';
 
 my $loaded;
 
@@ -100,9 +100,9 @@ sub _initialize {
 
     $st->macro( {} );
 
-    $st->sa( undef );
-    $st->sb( undef );
-    $st->targ( '' );
+    $st->{sa}   = undef;
+    $st->{sb}   = undef;
+    $st->{targ} = '';
 
     # stack frame
     $st->frame( [] );
@@ -116,7 +116,6 @@ sub _initialize {
     $st->lines( [] );
     $st->{ output } = '';
 
-    $st->code( [] );
     $st->code_len( $len );
 
     my $code = [];
@@ -396,14 +395,21 @@ Text::Xslate::PP - Text::Xslate compatible pure-Perl module.
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.001.
-
-  Text::Xslate version 0.1010 compatible
+This document describes Text::Xslate::PP version 0.1000.
 
 =head1 DESCRIPTION
 
-Text::Xslate compatible pure-Perl module.
-Not yet full compatible...
+This module exports L<Text::Xslate> compatible pure-Perl APIs.
+Normally it is called in Text::Xslate. So you don't need
+to use this module in your application although it can be called directly.
+
+    # Text::Xslate calls PP when it fails to install XS.
+    use Text::Xslate;
+    my $tx = Text::Xslate->new();
+    
+    # direct use...
+    use Text::Xslate::PP;
+    my $tx_pp = Text::Xslate::PP->new();
 
 =head1 SEE ALSO
 
