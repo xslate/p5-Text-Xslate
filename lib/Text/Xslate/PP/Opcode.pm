@@ -592,9 +592,6 @@ sub tx_fetch {
 }
 
 
-use constant TX_VERBOSE_DEFAULT => 1;
-
-
 sub tx_verbose {
     my $v = $_[0]->self->{ verbose };
     defined $v ? $v : TX_VERBOSE_DEFAULT;
