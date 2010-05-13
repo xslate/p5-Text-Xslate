@@ -119,7 +119,6 @@ sub std_command {
     return $command;
 }
 
-
 no Mouse;
 __PACKAGE__->meta->make_immutable();
 __END__

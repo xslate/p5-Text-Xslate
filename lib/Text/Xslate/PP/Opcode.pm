@@ -3,178 +3,182 @@ package Text::Xslate::PP::Opcode;
 use strict;
 use Data::Dumper;
 use Carp ();
-use Scalar::Util qw( blessed );
+use Scalar::Util ();
+
+use Text::Xslate::PP::Const;
 
 our $VERSION = '0.0001';
 
+no warnings 'recursion';
+
 #
 #
 #
 
-sub op_noop { # 0
-    $_[0]->{ pc }++;
+sub op_noop {
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_move_to_sb { # 1
-    $_[0]->sb( $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_move_to_sb {
+    $_[0]->{sb} = $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_move_from_sb { # 2
-    $_[0]->sa( $_[0]->sb );
-    $_[0]->{ pc }++;
+sub op_move_from_sb {
+    $_[0]->{sa} = $_[0]->{sb};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_save_to_lvar { # 3
+sub op_save_to_lvar {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-    tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->sa );
-    $_[0]->{ pc }++;
+    tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->{sa} );
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_load_lvar_to_sb { # 4
+sub op_load_lvar_to_sb {
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
     $_[0]->sb( tx_access_lvar( $_[0], $_[0]->pc_arg ) );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_push { # 5
-    push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->sa;
-    $_[0]->{ pc }++;
+sub op_push {
+    push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_pop { # 6
+sub op_pop {
     #
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_pushmark { # 7
+sub op_pushmark {
     push @{ $_[0]->{ SP } }, [];
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_nil { # 8
-    $_[0]->sa( undef );
-    $_[0]->{ pc }++;
+sub op_nil {
+    $_[0]->{sa} = undef;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_literal { # 9
-    $_[0]->sa( $_[0]->pc_arg );
-    $_[0]->{ pc }++;
+sub op_literal {
+    $_[0]->{sa} = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_literal_i { # 10 = 9
-    $_[0]->sa( $_[0]->pc_arg );
-    $_[0]->{ pc }++;
+sub op_literal_i {
+    $_[0]->{sa} = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_fetch_s { # 11
-    my $vars = $_[0]->vars;
-    my $val  = $vars->{ $_[0]->pc_arg };
-    $_[0]->sa( $val );
-    $_[0]->{ pc }++;
+sub op_fetch_s {
+    $_[0]->{sa} = $_[0]->{vars}->{ $_[0]->pc_arg };
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_fetch_lvar { # 12
+sub op_fetch_lvar {
     my $id     = $_[0]->pc_arg;
     my $cframe = $_[0]->frame->[ $_[0]->current_frame ];
 
     if ( scalar @{ $cframe } < $id + TXframe_START_LVAR + 1 ) {
-        Carp::croak("Too few arguments for %s", $cframe->[ TXframe_NAME ] );
+        tx_error( $_[0], "Too few arguments for %s", $cframe->[ TXframe_NAME ] );
+        $_[0]->{sa} = undef;
+    }
+    else {
+        $_[0]->{sa} = tx_access_lvar( $_[0], $id );
     }
 
-    $_[0]->sa( tx_access_lvar( $_[0], $id ) );
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_fetch_field { # 13
-    my $var = $_[0]->sb;
-    my $key = $_[0]->sa;
-    $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
-    $_[0]->{ pc }++;
+sub op_fetch_field {
+    my $var = $_[0]->{sb};
+    my $key = $_[0]->{sa};
+    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_fetch_field_s { # 14
-    my $var = $_[0]->sa;
+sub op_fetch_field_s {
+    my $var = $_[0]->{sa};
     my $key = $_[0]->pc_arg;
-    $_[0]->sa( tx_fetch( $_[0], $var, $key ) );
-    $_[0]->{ pc }++;
+    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_print { # 15
-    my $sv = $_[0]->sa;
+sub op_print {
+    my $sv = $_[0]->{sa};
 
-#    $sv = '' unless defined $sv;
-
-    unless ( defined $sv ) {
-        Carp::croak( 'Use of uninitialized value in subroutine entry' );
+    if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+        $_[0]->{ output } .= $sv;
     }
-
-    if ( blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+    elsif ( defined $sv ) {
+        if ( $sv =~ /[&<>"']/ ) { # 置換
+            $sv =~ s/&/&amp;/g;
+            $sv =~ s/</&lt;/g;
+            $sv =~ s/>/&gt;/g;
+            $sv =~ s/"/&quot;/g;
+            $sv =~ s/'/&#39;/g;
+        }
         $_[0]->{ output } .= $sv;
     }
     else {
-        # 置換
-        $sv =~ s/&/&amp;/g;
-        $sv =~ s/</&lt;/g;
-        $sv =~ s/>/&gt;/g;
-        $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&#39;/g;
-
-        $_[0]->{ output } .= $sv;
+        tx_warn( $_[0], "Use of nil to be printed" );
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_print_raw { # 16
-    $_[0]->{ output } .= $_[0]->sa;
-    $_[0]->{ pc }++;
+sub op_print_raw {
+    $_[0]->{ output } .= $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_print_raw_s { # 17
+sub op_print_raw_s {
     $_[0]->{ output } .= $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_include { # 18
-    no warnings 'recursion';
+sub op_include {
+    my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
 
-    my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->sa );
-
-    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->vars );
+    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
 
     $_[0]->{ output } .= $st->{ output };
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_for_start { # 19
-    my $ar = $_[0]->sa;
+sub op_for_start {
+    my $ar = $_[0]->{sa};
     my $id = $_[0]->pc_arg;
 
-    unless ( $ar and ref $ar eq 'ARRAY' ) { # magicについては後で
-        Carp::croak(
-            sprintf( "Iterator variables must be an ARRAY reference, not %s", $ar )
-        );
+    unless ( $ar and ref $ar eq 'ARRAY' ) {
+        if ( defined $ar ) {
+            tx_error( $_[0], "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
+        }
+        else {
+            tx_warn( $_[0], "Use of nil to be iterated" );
+        }
+        $ar = [];
     }
 
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
@@ -182,12 +186,12 @@ sub op_for_start { # 19
     tx_access_lvar( $_[0], $id + 1, $ar );
     tx_access_lvar( $_[0], $id + 2, -1 );
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_for_iter { # 20
-    my $id = $_[0]->sa;
+sub op_for_iter {
+    my $id = $_[0]->{sa};
     my $av = tx_access_lvar( $_[0], $id + 1 );
     my $i  = tx_access_lvar( $_[0], $id + 2 );
 
@@ -196,60 +200,60 @@ sub op_for_iter { # 20
     if ( ++$i <= $#{ $av } ) {
         tx_access_lvar( $_[0], $id     => $av->[ $i ] );
         tx_access_lvar( $_[0], $id + 2 => $i );
-        $_[0]->{ pc }++;
-        return;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
 
     $_[0]->{ pc } = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_add { # 21
-    $_[0]->targ( $_[0]->sb + $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_add {
+    $_[0]->{targ} = $_[0]->{sb} + $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_sub { # 22
-    $_[0]->targ( $_[0]->sb - $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_sub {
+    $_[0]->{targ} = $_[0]->{sb} - $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_mul { # 23
-    $_[0]->targ( $_[0]->sb * $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_mul {
+    $_[0]->{targ} = $_[0]->{sb} * $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_div { # 24
-    $_[0]->targ( $_[0]->sb / $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_div {
+    $_[0]->{targ} = $_[0]->{sb} / $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_mod { # 25
-    $_[0]->targ( $_[0]->sb % $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_mod {
+    $_[0]->{targ} = $_[0]->{sb} % $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_concat { # 26
+sub op_concat {
     my $sv = $_[0]->pc_arg;
-    $sv .= $_[0]->sb . $_[0]->sa;
-    $_[0]->sa( $sv );
-    $_[0]->{ pc }++;
+    $sv .= $_[0]->{sb} . $_[0]->{sa};
+    $_[0]->{sa} = $sv;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_filt { # 27
-    my $arg    = $_[0]->sb;
-    my $filter = $_[0]->sa;
+sub op_filt {
+    my $arg    = $_[0]->{sb};
+    my $filter = $_[0]->{sa};
 
     local $@;
 
@@ -259,123 +263,142 @@ sub op_filt { # 27
         Carp::croak( sprintf("%s\n\t... exception cought on %s", $@, 'filtering') );
     }
 
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
-    $_[0]->{ pc }++;
+    $_[0]->{sa} = $ret;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_and { # 28
-    if ( $_[0]->sa ) {
-        $_[0]->{ pc }++;
+sub op_and {
+    if ( $_[0]->{sa} ) {
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
 
-sub op_dand { #
-    if ( defined $_[0]->sa ) {
-        $_[0]->{ pc }++;
+sub op_dand {
+    if ( defined $_[0]->{sa} ) {
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
 
-sub op_or { # 29
-    if ( ! $_[0]->sa ) {
-        $_[0]->{ pc }++;
+sub op_or {
+    if ( ! $_[0]->{sa} ) {
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
 
 
-sub op_dor { # 30
-    my $sv = $_[0]->sa;
+sub op_dor {
+    my $sv = $_[0]->{sa};
     if ( defined $sv ) {
         $_[0]->{ pc } = $_[0]->pc_arg;
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
     else {
-        $_[0]->{ pc }++;
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
 
 }
 
 
-sub op_not { # 31
-    $_[0]->sa( ! $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_not {
+    $_[0]->{sa} = ! $_[0]->sa;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_plus { # 32
-    $_[0]->targ( + $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_plus {
+    $_[0]->{targ} = + $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_minus { # 33
-    $_[0]->targ( - $_[0]->sa );
-    $_[0]->sa( $_[0]->targ );
-    $_[0]->{ pc }++;
+sub op_minus {
+    $_[0]->{targ} = - $_[0]->{sa};
+    $_[0]->{sa} = $_[0]->{targ};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_eq { # 34
-    my $aval = $_[0]->sa;
-    my $bval = $_[0]->sb;
+sub op_eq {
+    my $aval = $_[0]->{sa};
+    my $bval = $_[0]->{sb};
 
     if ( defined $aval and defined $bval ) {
         # SVf_IOKかどうかのチェック
-        $_[0]->sa( $aval eq $bval );
+        $_[0]->{sa} = $aval eq $bval;
     }
 
     if ( defined $aval ) {
-        $_[0]->sa( defined $bval && $aval eq $bval  );
+        $_[0]->{sa} = defined $bval && $aval eq $bval;
     }
     else {
-        $_[0]->sa( !defined $bval );
+        $_[0]->{sa} = !defined $bval;
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_ne { # 35
-    op_eq( $_[0] ); # 後で直す
-    $_[0]->sa( ! $_[0]->sa );
+sub op_ne {
+    my $aval = $_[0]->{sa};
+    my $bval = $_[0]->{sb};
+
+    if ( defined $aval and defined $bval ) {
+        # SVf_IOKかどうかのチェック
+        $_[0]->{sa} = $aval eq $bval;
+    }
+
+    if ( defined $aval ) {
+        $_[0]->{sa} = defined $bval && $aval eq $bval;
+    }
+    else {
+        $_[0]->{sa} = !defined $bval;
+    }
+
+    $_[0]->{sa} = ! $_[0]->{sa};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_lt { # 36
-    $_[0]->sa( $_[0]->sb < $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_lt {
+    $_[0]->{sa} = $_[0]->{sb} < $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_le { # 37
-    $_[0]->sa( $_[0]->sb <= $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_le {
+    $_[0]->{sa} = $_[0]->{sb} <= $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_gt { # 38
-    $_[0]->sa( $_[0]->sb > $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_gt {
+    $_[0]->{sa} = $_[0]->{sb} > $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_ge { # 39
-    $_[0]->sa( $_[0]->sb >= $_[0]->sa );
-    $_[0]->{ pc }++;
+sub op_ge {
+    $_[0]->{sa} = $_[0]->{sb} >= $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_macrocall { # 40
-    my $addr   = $_[0]->sa; # macro rentry point
+sub op_macrocall {
+    my $addr   = $_[0]->{sa}; # macro entry point
     my $cframe = tx_push_frame( $_[0] );
 
     $cframe->[ TXframe_RETADDR ] = $_[0]->{ pc } + 1;
@@ -393,85 +416,93 @@ sub op_macrocall { # 40
     }
 
     $_[0]->{ pc } = $addr;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_macro_begin { # 41
+sub op_macro_begin {
     $_[0]->frame->[ $_[0]->current_frame ]->[ TXframe_NAME ] = $_[0]->pc_arg;
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_macro_end { # 42
+sub op_macro_end {
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
     my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
 
-    $_[0]->targ( Text::Xslate::PP::escaped_string( $_[0]->{ output } ) );
+    $_[0]->{targ} = Text::Xslate::PP::escaped_string( $_[0]->{ output } );
 
-    $_[0]->sa( $_[0]->targ );
+    $_[0]->{sa} = $_[0]->targ;
 
     $_[0]->{ output } = $oldframe->[ TXframe_OUTPUT ];
 
     $_[0]->{ pc } = $oldframe->[ TXframe_RETADDR ];
+
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_macro { # 43
+sub op_macro {
     my $name = $_[0]->pc_arg;
 
-    $_[0]->sa( $_[0]->macro->{ $name } );
+    $_[0]->{sa} = $_[0]->macro->{ $name };
 
-    $_[0]->{ pc }++;
+    unless ( defined $_[0]->{sa} ) {
+        croak("Macro %s is not defined", tx_neat(aTHX_ name));
+    }
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_function { # 44
+sub op_function {
     my $name = $_[0]->pc_arg;
 
     if ( my $func = $_[0]->function->{ $name } ) {
-        $_[0]->sa( $func );
+        $_[0]->{sa} = $func;
     }
     else {
         Carp::croak( sprintf( "Function %s is not registered", $name ) );
     }
 
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_funcall { # 45
-    my $func = $_[0]->sa;
+sub op_funcall {
+    my $func = $_[0]->{sa};
     my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $ret = eval { $func->( @args ) };
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
-    $_[0]->{ pc }++;
+    my $ret = tx_call( $_[0], 0, $func, @args );
+    $_[0]->{targ} = $ret;
+    $_[0]->{sa} = $ret;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_methodcall_s { # 46
+sub op_methodcall_s {
     my ( $obj, @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $method = $_[0]->pc_arg;
-    my $ret = eval { $obj->$method( @args ) };
-    $_[0]->targ( $ret );
-    $_[0]->sa( $ret );
-    $_[0]->{ pc }++;
+    my $ret = tx_call( $_[0], 1, $_[0]->pc_arg, $obj, @args );
+    $_[0]->{targ} = $ret;
+    $_[0]->{sa} = $ret;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_goto { # 47
+sub op_goto {
     $_[0]->{ pc } = $_[0]->pc_arg;
+    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_depend { # 48
+sub op_depend {
     # = noop
-    $_[0]->{ pc }++;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
-sub op_end { # 49
+sub op_end {
     $_[0]->{ pc } = $_[0]->code_len;
+    return;
 }
 
 
@@ -494,7 +525,7 @@ sub tx_push_frame {
 
     $st->current_frame( $st->current_frame + 1 );
 
-    $st->frame->[ $st->current_frame ] = [];
+    $st->frame->[ $st->current_frame ] ||= [];
 
     $st->pad( $st->frame->[ $st->current_frame ] );
 
@@ -502,23 +533,99 @@ sub tx_push_frame {
 }
 
 
+sub tx_call {
+    my ( $st, $flag, $proc, @args ) = @_;
+    my $obj = shift @args if ( $flag );
+    my $ret;
+
+    if ( $flag ) { # method call
+        unless ( defined $obj ) {
+            tx_warn( $st, "Use of nil to invoke method %s", $proc );
+        }
+        else {
+            local $SIG{__DIE__}; # oops
+            local $SIG{__WARN__};
+            $ret = eval { $obj->$proc( @args ) };
+        }
+    }
+    else { # function call
+            local $SIG{__DIE__}; # oops
+            local $SIG{__WARN__};
+            $ret = eval { $proc->( @args ) };
+    }
+
+    $ret;
+}
+
+
 sub tx_fetch {
     my ( $st, $var, $key ) = @_;
+    my $ret;
 
-    if ( blessed $var ) {
-        my $ret = eval q{ $var->$key() };
-        return $ret;
+    if ( Scalar::Util::blessed $var ) {
+        $ret = tx_call( $_[0], 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
-        return $var->{ $key };
+        if ( defined $key ) {
+            $ret = $var->{ $key };
+        }
+        else {
+            tx_warn( $st, "Use of nil as a field key" );
+        }
     }
     elsif ( ref $var eq 'ARRAY' ) {
-        return $var->[ $key ];
+        if ( defined $key and $key =~ /[-.0-9]/ ) {
+            $ret = $var->[ $key ];
+        }
+        else {
+            tx_warn( $st, "Use of %s as an array index", tx_neat( $key ) );
+        }
+    }
+    elsif ( $var ) {
+        tx_error( $st, "Cannot access %s (%s is not a container)", tx_neat($key), tx_neat($var) );
     }
     else {
-        Carp::croak( sprintf( "Cannot access '%s' (%s is not a container)" ), $key, $var );
+        tx_warn( $st, "Use of nil to access %s", tx_neat( $key ) );
     }
 
+    return $ret;
+}
+
+
+sub tx_verbose {
+    my $v = $_[0]->self->{ verbose };
+    defined $v ? $v : TX_VERBOSE_DEFAULT;
+}
+
+
+sub tx_error {
+    my ( $st, $fmt, @args ) = @_;
+    if( tx_verbose( $st ) >= TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
+}
+
+
+sub tx_warn {
+    my ( $st, $fmt, @args ) = @_;
+    if( tx_verbose( $st ) > TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
+}
+
+
+sub tx_neat {
+    if ( defined $_[0] ) {
+        if ( $_[0] =~ /^-?[.0-9]+$/ ) {
+            return $_[0];
+        }
+        else {
+            return "'" . $_[0] . "'";
+        }
+    }
+    else {
+        'nil';
+    }
 }
 
 

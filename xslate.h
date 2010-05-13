@@ -34,7 +34,6 @@
 /* template representation, stored in $self->{template}{$file} */
 enum txtmplo_ix {
     TXo_NAME,
-    TXo_ERROR_HANDLER,
     TXo_MTIME,
 
     TXo_CACHEPATH,
@@ -149,6 +148,8 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 
 #define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
 #define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
+
+#define TX_VERBOSE_DEFAULT 1
 
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal

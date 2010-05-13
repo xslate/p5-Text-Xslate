@@ -24,25 +24,24 @@ note 'for files';
 
 utime $^T - 120, $^T - 120, $base, $derived;
 
+{
+    # compile and cache template files.
+    my $tx = Text::Xslate->new(path => [path], cache_dir => path);
+    $tx->render($_, {lang => 'Perl'}) for 'myapp/derived.tx';
+}
+
+utime $^T - 60, $^T - 60, $base."c", $derived."c";
+note " cache files have been created at 60 seconds ago.";
+
 my $tx = Text::Xslate->new(path => [path], cache_dir => path);
-
-#use Data::Dumper; print Dumper $tx;
-
-is $tx->render('myapp/derived.tx', {lang => 'Xslate'}), <<'T', 'original' for 1 .. 2;
-HEAD
-    D-BEFORE
-    Hello, Xslate world!
-    D-AFTER
-FOOT
-T
 
 move $base => "$base.save";
 copy "$base.mod" => $base;
 
-utime $^T+60, $^T+60, $base;
-note "modify $base";
+utime $^T, $^T, $base;
+note "modify $base just now";
 
-is $tx->render('myapp/derived.tx', {lang => 'Foo'}), <<'T', 'modified' for 1 .. 2;
+is $tx->render('myapp/derived.tx', {lang => 'Foo'}), <<'T', "modified($_)" for 1 .. 2;
 HEAD
     D-BEFORE
     Modified version of base.tx
@@ -51,16 +50,5 @@ FOOT
 T
 
 move "$base.save" => $base;
-utime $^T+120, $^T+120, $base;
-note "modify $base again";
-
-is $tx->render('myapp/derived.tx', {lang => 'Perl'}), <<'T', 'again' for 1 .. 2;
-HEAD
-    D-BEFORE
-    Hello, Perl world!
-    D-AFTER
-FOOT
-T
-
 
 done_testing;

@@ -146,6 +146,8 @@ use constant TXframe_OUTPUT     => 1;
 use constant TXframe_RETADDR    => 2;
 use constant TXframe_START_LVAR => 3;
 
+use constant TX_VERBOSE_DEFAULT => 1;
+
 #
 #
 #
@@ -159,10 +161,6 @@ our $VERSION = '0.001';
 my $loaded;
 
 unless ( $loaded ) {
-    eval join("", <DATA>);
-    close(DATA);
-    die $@ if $@;
-
     require Text::Xslate::PP::Opcode;
 
     init_opcode_dispatch_table();
@@ -171,10 +169,8 @@ unless ( $loaded ) {
 }
 
 
-1;
-__DATA__
-
 <<This lines will be created by tool/opcode_for_pp.pl>>
 
+1;
 __END__
 

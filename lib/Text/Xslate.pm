@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1011';
+our $VERSION = '0.1012';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -22,6 +22,7 @@ if($DEBUG !~ /\b pp \b/xms) {
         require XSLoader;
         XSLoader::load(__PACKAGE__, $VERSION);
     };
+    die $@ if $@ && $DEBUG =~ /\b xs \b/xms;
 }
 if(!defined &_initialize) {
     require 'Text/Xslate/PP.pm';
@@ -121,8 +122,6 @@ sub find_file {
         $orig_mtime = (stat($fullpath))[9] // next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
-        # find the cache
-        # TODO
 
         if(-f $cachepath) {
             $cache_mtime = (stat(_))[9]; # compiled
@@ -195,6 +194,18 @@ sub load_file {
     my $protocode;
     if($is_compiled) {
         $protocode = $self->_load_assembly($string);
+
+        # checks the mtime of dependencies
+        foreach my $code(@{$protocode}) {
+            if($code->[0] eq 'depend') {
+                my $dep_mtime = (stat $code->[1])[9];
+                if($dep_mtime > ($mtime // $f->{orig_mtime})){
+                    unlink $cachepath
+                        or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+                    goto &load_file; # retry
+                }
+            }
+        }
     }
     else {
         $protocode = $self->_compiler->compile($string,
@@ -311,8 +322,8 @@ sub html_escape {
     $s =~ s/&/&amp;/g;
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
-    $s =~ s/"/&quot;/g;
-    $s =~ s/'/&#39;/g;
+    $s =~ s/"/&quot;/g; # " for poor editors
+    $s =~ s/'/&#39;/g;  # ' for poor editors
 
     return escaped_string($s);
 }
@@ -330,7 +341,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1011.
+This document describes Text::Xslate version 0.1012.
 
 =head1 SYNOPSIS
 
@@ -492,6 +503,17 @@ Specifies the escape mode.
 
 Possible escape modes are B<html> and B<none>.
 
+=item C<< verbose => $level // 1 >>
+
+Specifies the verbose level.
+
+If C<< $level == 0 >>, all the possible errors will be ignored.
+
+If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
+but severe errors (e.g. to invoke missing methods) will be warned.
+
+If C<< $level >= 2 >>, all the possible errors will be warned.
+
 =back
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
@@ -563,26 +585,31 @@ There are common notes in the Xslate virtual machine.
 
 =head2 Nil handling
 
-You cannot use C<undef> as a valid value.
-The use of C<undef> will cause fatal errors as if
-C<use warnings FALTAL => 'all'> was specified.
-However, unlike Perl, you can use equal operators to check whether
-the value is defined or not:
+Note that nil handling is different from Perl's.
 
-    : if $value == nil { ; }
-    : if $value != nil { ; }
+=over
 
-    [% # on TTerse syntax -%]
-    [% IF $value == nil %] [% END %]
-    [% IF $value != nil %] [% END %]
+=item to print
 
-Or, you can also use defined-or operator (//):
+Prints nothing.
 
-    : # on Kolon syntax
-    Hello, <: $value // 'Xslate' :> world!
+=item to access fields.
 
-    [% # on TTerse syntax %]
-    Hello, [% $value // 'Xslate' %] world!
+Returns nil. That is, C<< nil.foo.bar.baz >> produces nil.
+
+=item to invoke methods
+
+Returns nil. That is, C<< nil.foo().bar().baz() >> produces nil.
+
+=item to iterate
+
+Dealt as an empty array.
+
+=item equality
+
+C<< $var == nil >> returns true if and only if I<$var> is nil.
+
+=back
 
 =head1 DEPENDENCIES
 

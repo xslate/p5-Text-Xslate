@@ -126,6 +126,8 @@ while code is the same as the following Perl while code:
 
 There are C<if-else> and C<given-when> conditional statements.
 
+C<if-else>:
+
     : if $var == nil {
         $var is nil.
     : }
@@ -140,6 +142,12 @@ There are C<if-else> and C<given-when> conditional statements.
         $var is 1 .. 10
     : }
 
+Note that C<if> doesn't require parens:
+
+    : if ($var + 10) == 20 { } # OK
+
+C<given-when>:
+
     : given $var {
     :   when "foo" {
             it is foo.
@@ -152,7 +160,7 @@ There are C<if-else> and C<given-when> conditional statements.
         }
     : }
 
-For given statements, you can use the topic variable.
+Note that you can use the topic variable.
 
     : given $var -> $it {
     :   when "foo" {
