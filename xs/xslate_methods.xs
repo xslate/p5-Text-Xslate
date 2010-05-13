@@ -14,7 +14,7 @@
 #define TXBM(moniker) static TXBM_DECL(CAT2(tx_builtin_method_, moniker))
 
 #define TXBM_SETUP(name, nargs, traits) \
-    STRINGIFY(name), CAT2(tx_builtin_method_, name), nargs, traits
+    { STRINGIFY(name), CAT2(tx_builtin_method_, name), nargs, traits }
 
 #define TX_TRAIT_ANY        0x00
 #define TX_TRAIT_ENUMERABLE 0x01
@@ -180,13 +180,13 @@ TXBM(kv) {
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
-    { TXBM_SETUP(size,    0, TX_TRAIT_ENUMERABLE) },
-    { TXBM_SETUP(join,    1, TX_TRAIT_ENUMERABLE) },
-    { TXBM_SETUP(reverse, 0, TX_TRAIT_ENUMERABLE) },
+    TXBM_SETUP(size,    0, TX_TRAIT_ENUMERABLE),
+    TXBM_SETUP(join,    1, TX_TRAIT_ENUMERABLE),
+    TXBM_SETUP(reverse, 0, TX_TRAIT_ENUMERABLE),
 
-    { TXBM_SETUP(keys,    0, TX_TRAIT_KV) },
-    { TXBM_SETUP(values,  0, TX_TRAIT_KV) },
-    { TXBM_SETUP(kv,      0, TX_TRAIT_KV) },
+    TXBM_SETUP(keys,    0, TX_TRAIT_KV),
+    TXBM_SETUP(values,  0, TX_TRAIT_KV),
+    TXBM_SETUP(kv,      0, TX_TRAIT_KV),
 
 };
 
