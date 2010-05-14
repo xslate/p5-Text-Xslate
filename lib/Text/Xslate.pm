@@ -199,6 +199,11 @@ sub load_file {
         foreach my $code(@{$protocode}) {
             if($code->[0] eq 'depend') {
                 my $dep_mtime = (stat $code->[1])[9];
+                if(!defined $dep_mtime) {
+                    # XXX: for FAIL reports on Windows
+                    $dep_mtime = 0;
+                    Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
+                }
                 if($dep_mtime > ($mtime // $f->{orig_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
