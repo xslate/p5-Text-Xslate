@@ -633,16 +633,17 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Opcode - Text::Xslate pure-Perl version opcodes.
+Text::Xslate::PP::Opcode - Text::Xslate opcodes in pure Perl
 
 =head1 DESCRIPTION
 
-This module is called by Text::Xslate::PP internally.
+This module is used by Text::Xslate::PP internally.
 
 =head1 SEE ALSO
 
-L<Text::Xslate::PP>,
 L<Text::Xslate>
+
+L<Text::Xslate::PP>
 
 =head1 AUTHOR
 

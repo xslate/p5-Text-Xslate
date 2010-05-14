@@ -34,16 +34,17 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::State - Text::Xslate pure-Perl virtual machine state.
+Text::Xslate::PP::State - Text::Xslate pure-Perl virtual machine state
 
 =head1 DESCRIPTION
 
-This module is called by Text::Xslate::PP internally.
+This module is used by Text::Xslate::PP internally.
 
 =head1 SEE ALSO
 
-L<Text::Xslate::PP>,
 L<Text::Xslate>
+
+L<Text::Xslate::PP>
 
 =head1 AUTHOR
 

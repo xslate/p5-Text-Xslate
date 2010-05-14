@@ -4,6 +4,8 @@ package Text::Xslate::PP;
 use 5.008;
 use strict;
 
+our $VERSION = '0.1013';
+
 use Carp ();
 
 use Text::Xslate::PP::Const;
@@ -27,7 +29,7 @@ our %EXPORT_TAGS = (
 require Text::Xslate;
 
 #
-# export API
+# public APIs
 #
 
 sub render {
@@ -344,25 +346,26 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP - Text::Xslate compatible pure-Perl module.
+Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.1000.
+This document describes Text::Xslate::PP version 0.1013.
 
 =head1 DESCRIPTION
 
-This module exports L<Text::Xslate> compatible pure-Perl APIs.
-Normally it is called in Text::Xslate. So you don't need
-to use this module in your application although it can be called directly.
+This module implements L<Text::Xslate> runtime in pure Perl.
+Normally it will be loaded in Text::Xslate if needed. So you don't need
+to use this module in your applications.
 
-    # Text::Xslate calls PP when it fails to install XS.
+    # Text::Xslate calls PP when it fails to load XS.
     use Text::Xslate;
     my $tx = Text::Xslate->new();
-    
-    # direct use...
+
+If you want to use Text::Xslate::PP, however, you can use it.
+
     use Text::Xslate::PP;
-    my $tx_pp = Text::Xslate::PP->new();
+    my $tx = Text::Xslate->new();
 
 =head1 SEE ALSO
 

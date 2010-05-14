@@ -39,11 +39,11 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::EscapedString - Text::Xslate pure-Perl EscapedString
+Text::Xslate::PP::EscapedString - Text::Xslate EscaedString in pure Perl
 
 =head1 DESCRIPTION
 
-This module is called by Text::Xslate::PP internally.
+This module is used by Text::Xslate::PP internally.
 
 =head1 SEE ALSO
 
