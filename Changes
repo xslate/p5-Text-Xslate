@@ -1,6 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-NOTE: The pure Perl version and builtin methods are comming soon!
+NOTE: The builtin methods are comming soon!
+
+0.1014 Fri May 14 13:05:17 2010
+    [NEW FEATURES]
+    - Now Xslate works without XS (makamaka)
+    - New xlsate(1) utility, which is like ttree(1) (lestrrat)
 
 0.1013 Thu May 13 15:00:41 2010
     [CHANGES]
