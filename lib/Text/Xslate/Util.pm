@@ -18,15 +18,18 @@ our $NUMBER  = qr/(?: [+-]? [0-9][0-9_]* (?: \. [0-9_]+)? )/xms;
 our $DEBUG;
 $DEBUG //= $ENV{XSLATE} // '';
 
+my %esc2char = (
+    't' => "\t",
+    'n' => "\n",
+    'r' => "\r",
+);
+
 sub literal_to_value {
     my($value) = @_;
     return undef if not defined $value;
 
     if($value =~ s/"(.*)"/$1/){
-        $value =~ s/\\r/\r/g;
-        $value =~ s/\\n/\n/g;
-        $value =~ s/\\t/\t/g;
-        $value =~ s/\\(.)/$1/g;
+        $value =~ s/\\(.)/$esc2char{$1} || $1/xmseg;
     }
     elsif($value =~ s/'(.*)'/$1/) {
         $value =~ s/\\(['\\])/$1/g; # ' for poor editors
