@@ -162,7 +162,6 @@ sub process_file {
 
 package main;
 use strict;
-use Getopt::Long;
 
 sub main {
     my $app = App::Xslate->new_with_options();
@@ -196,13 +195,18 @@ xslate - Process Xslate Templates
         # Target to process
         target
 
+=head1 DESCRIPTION
+
+The xslate script is used to process entire directory trees containing
+template files.
+
 =head1 ARGUMENTS
 
 =head2 target
 
 Specifies the target to be processed by Xslate.
 
-If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate
+If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate.
 
 =head1 AUTHOR
 
