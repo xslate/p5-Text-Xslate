@@ -631,6 +631,10 @@ L<Text::Xslate::Syntax::Metakolon>
 
 L<Text::Xslate::Syntax::TTerse>
 
+Xslate command:
+
+L<xlsate>
+
 Other template modules:
 
 L<Text::MicroTemplate>
