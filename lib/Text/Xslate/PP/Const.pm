@@ -243,11 +243,17 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Const - Text::Xslate pure-Perl constant values
+Text::Xslate::PP::Const - Text::Xslate constants in pure Perl
 
 =head1 DESCRIPTION
 
-This module is called by Text::Xslate::PP internally.
+This module is used by Text::Xslate::PP internally.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+L<Text::Xslate::PP>
 
 =head1 LICENSE AND COPYRIGHT
 
