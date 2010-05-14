@@ -130,7 +130,6 @@ sub _initialize {
 
         my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
 
-        # 後でまとめる
         if ( $tx_oparg & TXARGf_SV ) {
 
             # This line croak at 'concat'!
@@ -146,10 +145,10 @@ sub _initialize {
                 if( $tx_oparg & TXARGf_GOTO ) {
                     my $abs_addr = $i + $arg;
 
-                    if( $abs_addr > $len ) {
+                    if( $abs_addr >= $len ) {
                         Carp::croak(
                             sprintf( "Oops: goto address %d is out of range (must be 0 <= addr <= %d)", $arg, $len )
-                        );  #これおかしくない？
+                        );
                     }
 
                     $code->[ $i ]->{ arg } = $abs_addr;
