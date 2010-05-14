@@ -655,7 +655,8 @@ L<Template::Benchmark>
 
 =head1 ACKNOWLEDGEMENT
 
-Thanks to lestrrat for the suggestion to the interface of C<render()>.
+Thanks to lestrrat for the suggestion to the interface of C<render()> and
+the contribution of App::Xslate.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug-finding.
 
@@ -663,9 +664,15 @@ Thanks to gardejo for the proposal to the name B<template cascading>.
 
 Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
 
+Thanks to makamaka for the contribution of Text::Xslate::PP.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
+
+Makamaka Hannyaharamitu
+
+Maki, Daisuke
 
 =head1 LICENSE AND COPYRIGHT
 

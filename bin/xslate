@@ -204,6 +204,10 @@ Specifies the target to be processed by Xslate.
 
 If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate
 
+=head1 AUTHOR
+
+Maki, Daisuke (lestrrat)
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
