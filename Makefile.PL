@@ -16,6 +16,8 @@ test_requires 'Test::More' => 0.88; # done_testing()
 test_requires 'Test::Requires';
 test_requires 'Test::LeakTrace';
 
+install_script 'xslate';
+
 tests_recursive 't';
 
 cc_src_paths qw(xs);

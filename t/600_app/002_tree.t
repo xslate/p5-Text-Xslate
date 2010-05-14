@@ -3,8 +3,9 @@ use Test::More (tests => 7);
 use File::Path ();
 
 File::Path::rmtree( "t/600_app/out" );
+END{ File::Path::rmtree( "t/600_app/out" ); }
 
-system $^X, (map { "-I$_" } @INC), "bin/xslate",
+system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
     '--dest=t/600_app/out',
     't/600_app/simple'
