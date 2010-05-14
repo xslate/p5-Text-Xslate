@@ -126,12 +126,12 @@ sub op_print {
         $_[0]->{ output } .= $sv;
     }
     elsif ( defined $sv ) {
-        if ( $sv =~ /[&<>"']/ ) { # 置換
+        if ( $sv =~ /[&<>"']/ ) {
             $sv =~ s/&/&amp;/g;
             $sv =~ s/</&lt;/g;
             $sv =~ s/>/&gt;/g;
             $sv =~ s/"/&quot;/g;
-            $sv =~ s/'/&#39;/g;
+            $sv =~ s/'/&#39;/g; # ' for poor editors
         }
         $_[0]->{ output } .= $sv;
     }
