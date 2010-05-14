@@ -35,15 +35,18 @@ require Text::Xslate;
 sub render {
     my ( $self, $name, $vars ) = @_;
 
-    Carp::croak("Usage: Text::Xslate::render(self, name, vars)") if ( @_ != 3 );
+    Carp::croak("Usage: Text::Xslate::render(self, name, vars)")
+        if !( @_ == 2 or @_ == 3 );
+
+    if(!defined $vars) {
+        $vars = {};
+    }
 
     if ( !defined $name ) {
         $name = '<input>';
     }
 
-    $vars = {} unless defined $vars;
-
-    unless ( $vars and ref $vars eq 'HASH' ) {
+    unless ( ref $vars eq 'HASH' ) {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
 
