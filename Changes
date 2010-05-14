@@ -2,6 +2,11 @@ Revision history for Perl extension Text::Xslate
 
 NOTE: The builtin methods are comming soon!
 
+0.1015 Fri May 14 14:52:52 2010
+    [BUG FIXES]
+    - Fix literal_to_value(), which could break values (reported by xaicron)
+    - Missing prerequisites: MouseX::Getopt (reported by xaicron)
+
 0.1014 Fri May 14 13:05:17 2010
     [NEW FEATURES]
     - Now Xslate works without XS (makamaka)
