@@ -132,6 +132,8 @@ sub find_file {
         else {
             $is_compiled = 0;
         }
+
+        last;
     }
 
     if(not defined $orig_mtime) {
