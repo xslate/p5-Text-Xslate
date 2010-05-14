@@ -34,7 +34,7 @@ has input_layer => (
 );
 
 has path => (
-    is => 'ro', 
+    is => 'ro',
     isa => 'ArrayRef[Str]',
     predicate => 'has_path',
 );
@@ -179,7 +179,7 @@ xslate - Process Xslate Templates
 
 =head1 SYNOPSIS
 
-    xslate 
+    xslate
         # Text::Xslate options
         [ --cache ]
         [ --cache_dir=/path/to/dir ]
@@ -200,8 +200,12 @@ xslate - Process Xslate Templates
 
 =head2 target
 
-Specifies the target to be processed by xslate. 
+Specifies the target to be processed by Xslate.
 
 If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
 
 =cut
