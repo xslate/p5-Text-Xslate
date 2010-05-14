@@ -10,6 +10,7 @@ cc_warnings;
 
 requires 'Mouse'                => '0.55';
 requires 'MouseX::NativeTraits' => '0.002';
+requires 'MouseX::Getopt'       => '0.2601';
 requires 'parent'               => '0.221';
 
 test_requires 'Test::More' => 0.88; # done_testing()
