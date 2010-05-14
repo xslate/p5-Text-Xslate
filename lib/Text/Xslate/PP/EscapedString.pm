@@ -39,7 +39,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::EscapedString - Text::Xslate EscaedString in pure Perl
+Text::Xslate::PP::EscapedString - Text::Xslate EscapedString in pure Perl
 
 =head1 DESCRIPTION
 
