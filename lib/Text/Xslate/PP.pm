@@ -179,6 +179,12 @@ sub _initialize {
         }
 
     }
+
+    if ( $ENV{ XSLATE_PP_BOOST } ) {
+        require Text::Xslate::PP::Booster;
+        $st->{ boost_code } = Text::Xslate::PP::Booster->opcode2perlcode( $proto );
+    }
+
     $st->{code} = $code;
 }
 
@@ -291,7 +297,13 @@ sub tx_execute { no warnings 'recursion';
 
     local $_depth = $_depth + 1;
 
-    $st->{code}->[ 0 ]->{ exec_code }->( $st );
+    if ( $ENV{ XSLATE_PP_BOOST } ) {
+        $st->{ boost_code } ? $st->{ boost_code }->( $st )
+                            : $st->{code}->[ 0 ]->{ exec_code }->( $st );
+    }
+    else {
+        $st->{code}->[ 0 ]->{ exec_code }->( $st );
+    }
 
     $st->{targ} = undef;
     $st->{sa}   = undef;
