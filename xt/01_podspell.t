@@ -33,6 +33,8 @@ iff
 okey
 EscapedString
 sandboxing
+APIs
+runtime
 
 # name
 lestrrat
@@ -42,3 +44,7 @@ jjn
 Goro Fuji
 gfx
 Douglas Crockford
+makamaka
+Hannyaharamitu
+Maki
+Daisuke

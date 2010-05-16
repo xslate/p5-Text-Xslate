@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1012';
+our $VERSION = '0.1015';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -17,15 +17,18 @@ use Text::Xslate::Util qw(
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
-if($DEBUG !~ /\b pp \b/xms) {
-    eval {
-        require XSLoader;
-        XSLoader::load(__PACKAGE__, $VERSION);
-    };
-}
-if(!defined &_initialize) {
-    require 'Text/Xslate/PP.pm';
-    Text::Xslate::PP->import();
+if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
+    if($DEBUG !~ /\b pp \b/xms) {
+        eval {
+            require XSLoader;
+            XSLoader::load(__PACKAGE__, $VERSION);
+        };
+        die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
+    }
+    if(!__PACKAGE__->can('render')) { # failed to load XS, or force PP
+        require 'Text/Xslate/PP.pm';
+        Text::Xslate::PP->import(':backend');
+    }
 }
 
 use File::Spec;
@@ -83,10 +86,6 @@ sub new {
     return $self;
 }
 
-sub render;
-
-sub _initialize;
-
 sub load_string { # for <input>
     my($self, $string) = @_;
     if(not defined $string) {
@@ -133,6 +132,8 @@ sub find_file {
         else {
             $is_compiled = 0;
         }
+
+        last;
     }
 
     if(not defined $orig_mtime) {
@@ -198,6 +199,11 @@ sub load_file {
         foreach my $code(@{$protocode}) {
             if($code->[0] eq 'depend') {
                 my $dep_mtime = (stat $code->[1])[9];
+                if(!defined $dep_mtime) {
+                    # XXX: for FAIL reports on Windows
+                    $dep_mtime = 0;
+                    Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
+                }
                 if($dep_mtime > ($mtime // $f->{orig_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
@@ -340,7 +346,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1012.
+This document describes Text::Xslate version 0.1015.
 
 =head1 SYNOPSIS
 
@@ -534,7 +540,7 @@ as caches if needed.
 
 This method can be used for pre-compiling template files.
 
-=head3 Exportable functions
+=head2 Exportable functions
 
 =head3 C<< escaped_string($str :Str) -> EscapedString >>
 
@@ -630,6 +636,10 @@ L<Text::Xslate::Syntax::Metakolon>
 
 L<Text::Xslate::Syntax::TTerse>
 
+Xslate command:
+
+L<xlsate>
+
 Other template modules:
 
 L<Text::MicroTemplate>
@@ -654,7 +664,8 @@ L<Template::Benchmark>
 
 =head1 ACKNOWLEDGEMENT
 
-Thanks to lestrrat for the suggestion to the interface of C<render()>.
+Thanks to lestrrat for the suggestion to the interface of C<render()> and
+the contribution of App::Xslate.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug-finding.
 
@@ -662,9 +673,15 @@ Thanks to gardejo for the proposal to the name B<template cascading>.
 
 Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
 
+Thanks to makamaka for the contribution of Text::Xslate::PP.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
+
+Makamaka Hannyaharamitu
+
+Maki, Daisuke
 
 =head1 LICENSE AND COPYRIGHT
 

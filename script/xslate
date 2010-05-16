@@ -1,0 +1,219 @@
+#!/usr/bin/env perl
+package App::Xslate;
+use Mouse;
+use Mouse::Util::TypeConstraints;
+use Cwd ();
+use File::Basename ();
+use File::Path ();
+use Text::Xslate;
+
+with 'MouseX::Getopt';
+
+has cache_dir => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_cache_dir',
+);
+
+has cache => (
+    is => 'ro',
+    isa => 'Bool',
+    predicate => 'has_cache',
+);
+
+has import => (
+    is => 'ro',
+    isa => 'ArrayRef[Str]',
+    predicate => 'has_import',
+);
+
+has input_layer => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_input_layer',
+);
+
+has path => (
+    is => 'ro',
+    isa => 'ArrayRef[Str]',
+    predicate => 'has_path',
+);
+
+has syntax => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_syntax',
+);
+
+# --ignore=pattern
+MouseX::Getopt::OptionTypeMap->add_option_type_to_map(
+    RegexpRef => '=s'
+);
+coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
+has ignore => (
+    is => 'ro',
+    isa => 'RegexpRef',
+    coerce => 1,
+);
+
+# --suffix old=new
+has suffix => (
+    is => 'ro',
+    isa => 'HashRef',
+);
+
+has dest => (
+    is => 'ro',
+    isa => 'Str',
+    default => Cwd::cwd()
+);
+
+sub run {
+    my $self = shift;
+
+    my $targets = $self->extra_argv;
+
+    my %args;
+    foreach my $field qw(cache_dir cache import input_layer path syntax) {
+        my $method = "has_$field";
+        $args{ $field } = $self->$field if $self->$method;
+    }
+
+    my $xslate = Text::Xslate->new(%args);
+
+    foreach my $target (@$targets) {
+        # XXX if you have a directory, just pushed that into the list of
+        # path in the xslate object
+        if ( -d $target ) {
+            local $self->{__process_base} = scalar(File::Spec->splitdir($target));
+            local $xslate->{path} = [ $target, @{ $xslate->{path} || [] } ];
+            $self->process_tree( $xslate, $target );
+        } else {
+            my $dirname = File::Basename::dirname($target);
+            local $self->{__process_base} = scalar(File::Spec->splitdir($dirname));
+            local $xslate->{path} = [ $dirname, @{ $xslate->{path} || [] } ];
+            $self->process_file( $xslate, $target );
+        }
+    }
+}
+
+sub process_tree {
+    my ($self, $xslate, $dir) = @_;
+
+    opendir( my $fh, $dir ) or die "XXX";
+
+    while (my $e = readdir $fh) {
+        next if $e =~ /^\.+$/;
+        my $target = File::Spec->catfile( $dir, $e );
+        if (-d $target) {
+            $self->process_tree( $xslate, $target );
+        } else {
+            $self->process_file( $xslate, $target );
+        }
+    }
+}
+
+sub process_file {
+    my ($self, $xslate, $file) = @_;
+
+    if ( my $ignore = $self->ignore ) {
+        if ($file =~ /$ignore/) {
+            return;
+        }
+    }
+
+    my $suffix_map = $self->suffix;
+    my $dest = $self->dest;
+
+    my ($suffix) = ($file =~ /\.([^\.]+)$/);
+
+    my $filearg = $file;
+    if (my $base = $self->{__process_base}) {
+        my @comps = File::Spec->splitdir( File::Basename::dirname($file) );
+        splice @comps, 0, $base;
+        $filearg = File::Spec->catfile( @comps, File::Basename::basename($file) );
+    }
+    my $outfile = File::Spec->catfile( $dest, $filearg );
+    if ($suffix_map && (my $replace = $suffix_map->{ $suffix })) {
+        $outfile =~ s/$suffix$/$replace/;
+    }
+
+    my $dir = File::Basename::dirname( $outfile );
+    if (! -d $dir) {
+        if (! File::Path::mkpath( $dir )) {
+            die "Could not create directory $dir: $!";
+        }
+    }
+
+    my $fh;
+    if (! open( $fh, '>', $outfile ) ) {
+        die "Could not open file $outfile for writing: $!";
+    }
+
+    eval {
+        my $rendered = $xslate->render( $filearg );
+        print $fh $rendered;
+    };
+    if ($@) {
+        die $@;
+    }
+    close $fh;
+}
+
+package main;
+use strict;
+
+sub main {
+    my $app = App::Xslate->new_with_options();
+    $app->run();
+}
+
+main() unless caller();
+
+__END__
+
+=head1 NAME
+
+xslate - Process Xslate Templates
+
+=head1 SYNOPSIS
+
+    xslate
+        # Text::Xslate options
+        [ --cache ]
+        [ --cache_dir=/path/to/dir ]
+        [ --import=Module ... ]
+        [ --input_layer ... ]
+        [ --path=/path/to/templates ... ]
+        [ --syntax=moniker ]
+
+        # Output options
+        [ --dest=/path/to/destination ]
+        [ --ignore=pattern ... ]
+        [ --suffix old=new ... ]
+
+        # Target to process
+        target
+
+=head1 DESCRIPTION
+
+The xslate script is used to process entire directory trees containing
+template files.
+
+=head1 ARGUMENTS
+
+=head2 target
+
+Specifies the target to be processed by Xslate.
+
+If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate.
+
+=head1 AUTHOR
+
+Maki, Daisuke (lestrrat)
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+=cut
