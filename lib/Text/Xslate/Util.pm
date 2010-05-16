@@ -92,4 +92,8 @@ Text::Xslate::Util - A set of utilities for Xslate
 
 This module provides internal utilities.
 
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
 =cut
