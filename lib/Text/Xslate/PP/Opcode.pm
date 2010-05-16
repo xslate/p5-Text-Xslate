@@ -3,6 +3,9 @@ package Text::Xslate::PP::Opcode;
 use strict;
 use warnings;
 
+use parent qw(Exporter);
+our @EXPORT_OK = qw(tx_error tx_warn);
+
 use Carp ();
 use Scalar::Util ();
 
@@ -479,10 +482,8 @@ sub op_funcall {
 
 
 sub op_methodcall_s {
-    my ( $obj, @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $ret = tx_call( $_[0], 1, $_[0]->pc_arg, $obj, @args );
-    $_[0]->{targ} = $ret;
-    $_[0]->{sa} = $ret;
+    require Text::Xslate::PP::Method;
+    $_[0]->{sa} = Text::Xslate::PP::Method::tx_methodcall($_[0], $_[0]->pc_arg);
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
