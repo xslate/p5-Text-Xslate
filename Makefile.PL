@@ -1,12 +1,9 @@
 use strict;
 use warnings;
 use inc::Module::Install;
-use Module::Install::XSUtil 0.21;
+use Module::Install::XSUtil 0.24;
 
 all_from 'lib/Text/Xslate.pm';
-
-use_ppport 3.19;
-cc_warnings;
 
 requires 'Mouse'                => '0.55';
 requires 'MouseX::NativeTraits' => '0.002';
@@ -21,7 +18,13 @@ install_script 'xslate';
 
 tests_recursive 't';
 
-cc_src_paths qw(xs);
+my $want_xs = want_xs();
+if($want_xs) {
+    use_ppport 3.19;
+    cc_warnings;
+
+    cc_src_paths qw(xs);
+}
 
 auto_set_repository() if -d '.git';
 
@@ -34,16 +37,17 @@ lib/Text/Xslate/PP/Const.pm :: xs/Text-Xslate.xs tool/opcode_for_pp.pl
 	$(PERLRUNINST) tool/opcode_for_pp.pl xs/Text-Xslate.xs > lib/Text/Xslate/PP/Const.pm
 M
 
+if($want_xs) {
+    # repeat testing for pure Perl mode
+    # see also ExtUtils::MM_Any::test_via_harness()
+    my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
+               .q{ "do 'tool/force-pp.pl'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+               .q{ $(TEST_FILES)} . "\n";
 
-# repeat testing for pure Perl mode
-# see also ExtUtils::MM_Any::test_via_harness()
-my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
-           .q{ "do 'tool/force-pp.pl'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
-           .q{ $(TEST_FILES)} . "\n";
-
-postamble qq{test_dynamic :: test_pp\n\n}
-        . qq{test_pp :: pure_all\n}
-        . qq{\t} . $t_pp;
+    postamble qq{test_dynamic :: test_pp\n\n}
+            . qq{test_pp :: pure_all\n}
+            . qq{\t} . $t_pp;
+}
 
 clean_files qw(
     Text-Xslate-*
