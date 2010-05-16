@@ -50,11 +50,6 @@ Variables may be HASH references, ARRAY references, or objects.
 Because C<$var.field> and C<$var["field"]> are the same semantics,
 C<< $obj["accessor"] >> syntax may be call object methods.
 
-If I<$var> is an object instance, you can call its methods.
-
-    <: $var.method() :>
-    <: $var.method(1, 2, 3) :>
-
 =head2 Expressions
 
 Conditional operator (C<< ?: >>):
@@ -199,6 +194,27 @@ Dynamic functions/filters:
     :# template
     : $value | indent("> ")
     : indent("> ")($value)
+
+=head2 Methods
+
+When I<$var> is an object instance, you can call its methods.
+
+    <: $var.method() :>
+    <: $var.method(1, 2, 3) :>
+
+There are the autoboxing mechanism:
+
+    <: $array.size() :>
+    <: $array.join(",") :>
+    <: $array.reverse() :>
+    <: $hash.keys().join(", ") :>
+    <: $hash.values().join(", ") :>
+    <: for $hash.kv() -> $pair { :>
+        <: # $pair is a pair type with key and value fields -:>
+        <: $pair.key :> = <: $pair.value :>
+    <: } :>
+
+Note that you must use C<()> in order to invoke builtin methods.
 
 =head2 Template inclusion
 
