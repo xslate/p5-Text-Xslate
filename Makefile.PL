@@ -34,17 +34,16 @@ lib/Text/Xslate/PP/Const.pm :: xs/Text-Xslate.xs tool/opcode_for_pp.pl
 	$(PERLRUNINST) tool/opcode_for_pp.pl xs/Text-Xslate.xs > lib/Text/Xslate/PP/Const.pm
 M
 
-if(author_context()) {
-        # repeat testing for pure Perl mode
-        # see also ExtUtils::MM_Any::test_via_harness()
-        my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
-                   .q{ "do 'tool/force-pp.pl'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
-                   .q{ $(TEST_FILES)} . "\n";
 
-        postamble qq{test_dynamic :: test_pp\n\n}
-                . qq{test_pp :: pure_all\n}
-                . qq{\t} . $t_pp;
-}
+# repeat testing for pure Perl mode
+# see also ExtUtils::MM_Any::test_via_harness()
+my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
+           .q{ "do 'tool/force-pp.pl'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+           .q{ $(TEST_FILES)} . "\n";
+
+postamble qq{test_dynamic :: test_pp\n\n}
+        . qq{test_pp :: pure_all\n}
+        . qq{\t} . $t_pp;
 
 clean_files qw(
     Text-Xslate-*
