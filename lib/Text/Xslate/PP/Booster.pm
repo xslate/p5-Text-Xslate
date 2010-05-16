@@ -49,7 +49,7 @@ sub opcode2perlcode_str {
         my $opnum = $TX_OPS->{ $opname };
 
         unless ( $CODE_MANIP{ $opname } ) {
-            Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented", $opname ) );
+            Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented on Booster", $opname ) );
         }
 
         my $manip  = $CODE_MANIP{ $opname };
@@ -71,7 +71,7 @@ sub opcode2perlcode_str {
     my $perlcode =<<'CODE';
 sub {
     my ( $st ) = $_[0];
-    my ( $output, $sa, $sb, $sv, $targ, $st2, @stack, @pad );
+    my ( $output, $sa, $sb, $sv, $targ, $st2, @pad );
     my $vars = $st->{ vars };
 
     # process start
@@ -192,6 +192,20 @@ CODE
 };
 
 
+$CODE_MANIP{ 'save_to_lvar' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $comment = sprintf( "%s# save_to_lvar %s\n", indent( $state ), $arg );
+
+    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
+
+    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
+%s$pad[ %s ] = $sa;
+
+CODE
+
+};
+
+
 $CODE_MANIP{ 'nil' } = sub {
     my ( $state, $arg, $line ) = @_;
     $state->{ lines }->[ $_[0]->{ i } ] .= sprintf( <<'CODE', indent( $state ) );
@@ -289,6 +303,19 @@ CODE
 };
 
 
+$CODE_MANIP{ 'include' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $comment = sprintf( "%s# include #%s\n", indent($state), $line );
+    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state) );
+%s$st2 = Text::Xslate::PP::tx_load_template( $st->self, $sa );
+Text::Xslate::PP::tx_execute( $st2, undef, $vars );
+$output .= $st2->{ output };
+
+CODE
+
+};
+
+
 $CODE_MANIP{ 'for_start' } = sub {
     my ( $state, $arg, $line ) = @_;
 
@@ -371,8 +398,41 @@ $CODE_MANIP{ 'and' } = sub { # if-else あるいは && 等
 
 CODE
 
-        $state->{ indent }++; # if内
+        $state->{ indent }++; # ブロック内
         $state->{ if_end }->{ $i + $arg - 1 }++; # block end
+
+    }
+    else { # ternary
+        $state->{ lines }->[ $state->{ i } ] = '';
+        $state->{ cond_prev_expr } .= $expr . ' && '; # 式を保存
+    }
+
+};
+
+
+$CODE_MANIP{ 'dand' } = sub { # if-else あるいは && 等
+    my ( $state, $arg, $line ) = @_;
+
+    my $ops  = $state->{ ops };
+    my $i    = $state->{ i };
+    my $expr = $ops->[ $i - 1 ]->[ 1 ];
+
+    if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # cond
+        my $cond = $ops->[ $i + $arg - 1 ]->[ 1 ] < 0 ? 'while' : 'if';
+        my $prev_expr = delete $state->{ cond_prev_expr } || ''; # 前に式があれば加える
+        $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $cond, $prev_expr, $expr );
+%s%s ( %sdefined %s ) {
+
+CODE
+
+        $state->{ indent }++; # ブロック内
+
+        if ( $cond eq 'if' ) {
+            $state->{ if_end }->{ $i + $arg - 1 }++; # if block end
+        }
+        else {
+            $state->{ while_end }->{ $i + $arg - 1 }++; # while block end
+        }
 
     }
     else { # ternary
@@ -434,6 +494,10 @@ $CODE_MANIP{ 'goto' } = sub {
 
         $state->{ proc }->{ $state->{ i } + $arg }->{ 'else_end' }++;
         $state->{ indent }++; # else内
+    }
+    elsif ( delete $state->{ while_end }->{ $state->{ i } } ) { # whileのブロックを閉じる
+        $state->{ indent }--;
+        $state->{ lines }->[ $state->{ i } ] .= sprintf( "\n%s}\n", indent( $state ) );
     }
     else {
         die "invalid goto op";
@@ -703,6 +767,7 @@ sub _fetch_field_s {
 
     return sprintf( <<'CODE', $indent, $name, escape($arg) );
 %s%s = fetch( $st, $sa, "%s" );
+
 CODE
 
     my $lines = sprintf( <<'CODE', $name, $arg, $name, $arg, $name, $arg );
