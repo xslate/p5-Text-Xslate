@@ -39,11 +39,11 @@ sub literal_to_value {
 }
 
 sub import_from {
-    require 'Mouse.pm';
-    my $meta = Mouse::Meta::Class->create_anon_class();
+    my $code = <<'T';
+package
+    Text::Xslate::Util::_import;
+T
 
-    my $anon = $meta->name;
-    my $code = sprintf "package %s;\n", $anon;
     for(my $i = 0; $i < @_; $i++) {
         $code .= "use $_[$i]";
         if(ref $_[$i+1]){
@@ -59,10 +59,16 @@ sub import_from {
     };
     Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;
 
-    return map {
-            my $c = Mouse::Util::get_code_ref($anon, $_);
-            $_ ne 'meta' && $c ? ($_ => $c): ();
-        } keys %{$meta->namespace};
+    require 'Mouse/Util.pm';
+
+    my @funcs = map {
+            my $c = Mouse::Util::get_code_ref('Text::Xslate::Util::_import', $_);
+            $c ? ($_ => $c) : ();
+        } keys %Text::Xslate::Util::_import::;
+
+    delete $Text::Xslate::Util::{'_import::'};
+
+    return @funcs;
 }
 
 sub p { # for debugging
