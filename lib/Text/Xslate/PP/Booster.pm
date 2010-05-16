@@ -71,14 +71,28 @@ sub opcode2perlcode_str {
     my $perlcode =<<'CODE';
 sub {
     my ( $st ) = $_[0];
-    my ( $output, $sa, $sb, $sv, $targ, $st2, @pad );
-    my $vars = $st->{ vars };
+    my ( $output, $sa, $sb, $sv, $targ, $st2, $pad, @sp );
+    my $vars  = $st->{ vars };
+
+    $pad = [ [ ] ];
+
+CODE
+
+    if ( $state->{ macro_lines } ) {
+        $perlcode .=<<'CODE';
+    # macro
+CODE
+
+        $perlcode .= join ( '', @{ $state->{ macro_lines } } );
+    }
+
+    $perlcode .=<<'CODE';
 
     # process start
 
 CODE
 
-    $perlcode .= join( '', @{ $state->{lines} } );
+    $perlcode .= join( '', grep { defined } @{ $state->{lines} } );
 
 
 $perlcode .=<<'CODE';
@@ -184,6 +198,9 @@ $CODE_MANIP{ 'noop' } = sub {
 $CODE_MANIP{ 'move_to_sb' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $comment = sprintf( "%s# move_to_sb\n", indent( $state ) );
+
+    $state->{ ops }->[ $state->{ i } -1 ]->[ 1 ] = '$sb';
+
     $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
 %s$sb = $sa;
 
@@ -200,6 +217,28 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
 
     $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
 %s$pad[ %s ] = $sa;
+
+CODE
+
+};
+
+
+$CODE_MANIP{ 'push' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $comment = sprintf( "%s# push\n", indent( $state ) );
+    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
+%spush @{ $sp[-1] }, $sa;
+
+CODE
+
+};
+
+
+$CODE_MANIP{ 'pushmark' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $comment = sprintf( "%s# pushmark\n", indent( $state ) );
+    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
+%spush @sp, [];
 
 CODE
 
@@ -255,10 +294,11 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $comment = sprintf( "%s# fetch_lvar %s #%s\n", indent( $state ), $arg, $line );
     $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
-%s$sa = $pad[ %s ];
+%s$sa = $pad->[ -1 ]->[ %s ];
 
 CODE
 
+    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
 };
 
 
@@ -347,7 +387,7 @@ CODE
     $state->{ indent }++;
 
     $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent($state), $stack_id );
-%s$pad[ %s ] = $_;
+%s$pad->[ -1 ]->[ %s ] = $_;
 
 CODE
 
@@ -479,6 +519,75 @@ $CODE_MANIP{ 'ge' } = sub {
 };
 
 
+$CODE_MANIP{ 'macrocall' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $i   = $state->{ i };
+    my $ops = $state->{ ops };
+
+    $state->{ lines }->[ $i ] .= sprintf( "%s# macrocall\n", indent( $state ) );
+
+    if ( $ops->[ $i + 1 ]->[0] eq 'print' ) {
+        $ops->[ $i + 1 ]->[0] = 'print_raw'; # macro output isn't be escaped
+    }
+
+    my $name = $ops->[ $i - 1 ]->[1];
+
+    return $state->{ lines }->[ $i ] .= sprintf( <<'CODE', indent( $state ), indent( $state ), $name );
+%s$pad->[-1] = pop( @sp );
+%s$sa = $tx_pp_boost_macro_%s->();
+
+CODE
+
+};
+
+$CODE_MANIP{ 'macro_begin' } = sub {
+    my ( $state, $arg, $line ) = @_;
+
+    $state->{ macro_begin } = $state->{ i };
+
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg );
+
+%smy $tx_pp_boost_macro_%s = sub {
+CODE
+
+    $state->{ indent }++;
+
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg );
+%smy $output;
+
+CODE
+
+};
+
+
+$CODE_MANIP{ 'macro_end' } = sub {
+    my ( $state, $arg, $line ) = @_;
+
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%spop( \@\$pad );\n", indent( $state ) );
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s\$output;\n", indent( $state ) );
+
+    $state->{ indent }--;
+
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s};\n", indent( $state ) );
+
+    my $macro_start = $state->{ macro_begin };
+    my $macro_end   = $state->{ i };
+
+    push @{ $state->{ macro_lines } }, splice( @{ $state->{ lines } },  $macro_start, $macro_end );
+};
+
+
+$CODE_MANIP{ 'macro' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s# macro %s\n", indent( $state ), $arg );
+    return $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ) );
+%spush @{$pad}, [];
+
+CODE
+
+};
+
+
 $CODE_MANIP{ 'goto' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $i = $state->{ i };
@@ -504,6 +613,11 @@ $CODE_MANIP{ 'goto' } = sub {
         #$state->{ lines }->[ $state->{ i } ] = sprintf( "%s# goto %s\n", indent( $state ), $arg );
     }
 
+};
+
+
+$CODE_MANIP{ 'depend' } = sub {
+    $_[0]->{ lines }->[ $_[0]->{ i } ] .= '';
 };
 
 
