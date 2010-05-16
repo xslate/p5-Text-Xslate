@@ -1,6 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-NOTE: The builtin methods are comming soon!
+0.1016 Sun May 16 13:59:08 2010
+    [NEW FEATURES]
+    - Support --pp (and --xs) option in Makefile.PL
+    - Support autoboxing; currently supported methods are:
+        For array: size(), join(), reverse()
+        For hash:  keys(), values(), kv() (and all the array methods)
 
 0.1015 Fri May 14 14:52:52 2010
     [BUG FIXES]
