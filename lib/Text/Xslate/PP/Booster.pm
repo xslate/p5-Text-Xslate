@@ -158,6 +158,8 @@ sub compactioin { # destructive to $proto
         }
         elsif ( $opname eq 'move_to_sb' ) {
             if ( $prev_opname eq 'fetch_s' ) {
+                my $next_opname = $proto->[ $i + 1 ]->[0];
+                next if $next_opname eq 'fetch_field_s'; # $sb = $sa;だが、実際に使うのが$saのため回避
                 $proto->[ $i ]->[0]     = 'ex_fetch_s_and_move_to_sb';
                 $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
                 $proto->[ $i - 1 ]->[0] = 'noop';
@@ -282,6 +284,9 @@ CODE
 $CODE_MANIP{ 'fetch_s' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $comment = sprintf("%s# fetch_s \"%s\" #%s\n", indent( $state ), escape( $arg ), $line );
+
+    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
+
     $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state), escape( $arg ) );
 %s$sa = $vars->{ '%s' };
 
@@ -293,12 +298,25 @@ CODE
 $CODE_MANIP{ 'fetch_lvar' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $comment = sprintf( "%s# fetch_lvar %s #%s\n", indent( $state ), $arg, $line );
+
+    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
+
     $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
 %s$sa = $pad->[ -1 ]->[ %s ];
 
 CODE
 
-    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
+};
+
+
+$CODE_MANIP{ 'fetch_field' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $comment = sprintf( "%s# fetch_field\n", indent( $state ), $arg, $line );
+    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
+%s$sa = fetch( $st, $sb, $sa );
+
+CODE
+
 };
 
 
@@ -483,6 +501,16 @@ CODE
 };
 
 
+$CODE_MANIP{ 'not' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $i   = $state->{ i };
+
+    $state->{ ops }->[ $i ]->[1] = '( $sa = ! $sa )';
+
+    $state->{ lines }->[ $i ] .= '';
+};
+
+
 $CODE_MANIP{ 'eq' } = sub {
     my ( $state, $arg, $line ) = @_;
     _make_expr( $state, $arg, 'cond_eq( %s, %s )' );
@@ -614,6 +642,31 @@ $CODE_MANIP{ 'goto' } = sub {
     }
 
 };
+
+
+$CODE_MANIP{ 'function' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $i = $state->{ i };
+        $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg, $arg );
+%s$sa = $st->function->{ %s } or Carp::croak( "Function %s is not registered" );
+CODE
+
+};
+
+
+$CODE_MANIP{ 'filt' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $i = $state->{ i };
+    my $ops = $state->{ ops };
+
+    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), indent( $state ) );
+%s$sa = eval { $sa->( $sb ) };
+%sCarp::croak( sprintf("%%s\n\t... exception cought on %%s", $@, 'filtering') ) if ( $@ );
+
+CODE
+
+};
+
 
 
 $CODE_MANIP{ 'depend' } = sub {
@@ -775,10 +828,11 @@ sub fetch {
             warn_in_booster( $st, "Use of %s as an array index", neat( $key ) );
         }
     }
-    elsif ( $var ) {
+    elsif ( defined $var ) {
         error_in_booster( $st, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
+        print Dumper $var;
         warn_in_booster( $st, "Use of nil to access %s", neat( $key ) );
     }
 
@@ -850,7 +904,6 @@ sub _make_expr {
     my ( $sb_ops, $sa_ops ) = @{ $ops }[ $i - 1, $i - 3 ];
     $sa_ops = $ops->[ $i - 2 ] if ( $sa_ops->[0] eq 'noop' ); # compactioned
 
-
     my $left  = _expr( $sa_ops );
     my $right = _expr( $sb_ops );
     my $str   = sprintf( $type, $left, $right );
@@ -859,7 +912,7 @@ sub _make_expr {
 
     my $next_op = $ops->[ $i + 1 ]->[0];
 
-    if ( $next_op =~ /(?:and|not)/ ) { # 条件式
+    if ( $next_op =~ /(?:and|or)/ ) { # 条件式
         $state->{ ops }->[ $i - 1 ]->[0] = 'noop';
         $state->{ ops }->[ $i - 2 ]->[0] = 'noop';
         $state->{ ops }->[ $i - 3 ]->[0] = 'noop';
