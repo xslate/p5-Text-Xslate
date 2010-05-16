@@ -540,7 +540,7 @@ as caches if needed.
 
 This method can be used for pre-compiling template files.
 
-=head3 Exportable functions
+=head2 Exportable functions
 
 =head3 C<< escaped_string($str :Str) -> EscapedString >>
 

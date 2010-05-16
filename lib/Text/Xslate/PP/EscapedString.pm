@@ -1,3 +1,5 @@
+package Text::Xslate::PP::EscapedString;
+
 package
     Text::Xslate::EscapedString;
 
