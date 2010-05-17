@@ -108,19 +108,19 @@ TXBM(join) {
 }
 
 TXBM(reverse) {
-    AV* const av       = (AV*)SvRV(*MARK);
-    I32 const len      = av_len(av) + 1;
-    AV* const reversed = newAV();
-    SV* const avref    = sv_2mortal(newRV_noinc((SV*)reversed));
+    AV* const av        = (AV*)SvRV(*MARK);
+    I32 const len       = av_len(av) + 1;
+    AV* const result    = newAV();
+    SV* const resultref = sv_2mortal(newRV_noinc((SV*)result));
     I32 i;
 
-    av_fill(reversed, len - 1);
+    av_fill(result, len - 1);
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
-        av_store(reversed, -(i+1), newSVsv(svp ? *svp : &PL_sv_undef));
+        av_store(result, -(i+1), newSVsv(svp ? *svp : &PL_sv_undef));
     }
 
-    return avref;
+    return resultref;
 }
 
 /* Key-Value containers */
