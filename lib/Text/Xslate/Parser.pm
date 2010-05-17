@@ -859,10 +859,7 @@ sub statement { # process one or more statements
     }
 
     my $expr = $parser->expression(0);
-
-    if(!$parser->token->is_end) {
-        $parser->advance(";");
-    }
+    $parser->advance(";");
     return $parser->symbol('print')->clone(
         arity  => 'command',
         first  => [$expr],
