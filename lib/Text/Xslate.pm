@@ -54,8 +54,15 @@ sub new {
 
     my %funcs;
     if(defined $args{import}) {
+        Carp::carp("'import' option has been renamed to 'module'"
+            . " because of the confliction with Perl's import() method."
+            . " Use 'module' instead");
         %funcs = import_from(@{$args{import}});
     }
+    if(defined $args{module}) {
+        %funcs = import_from(@{$args{module}});
+    }
+
     # function => { ... } overrides imported functions
     if(my $funcs_ref = $args{function}) {
         while(my($name, $body) = each %{$funcs_ref}) {
@@ -472,14 +479,14 @@ Specifies the directory used for caches.
 
 Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
 
-=item C<< import => [$module => ?\@import_args, ...] >>
+=item C<< module => [$module => ?\@import_args, ...] >>
 
 Imports functions from I<$module>. I<@import_args> is optional.
 
 For example:
 
     my $tx = Text::Xslate->new(
-        import => ['Data::Dumper'], # use Data::Dumper
+        module => ['Data::Dumper'], # use Data::Dumper
     );
     print $tx->render_string(
         '<: Dumper($x) :>',
@@ -487,8 +494,8 @@ For example:
     );
     # => $VAR = [42]
 
-You can use function based modules with the C<import> option and invoke
-object methods in templates. Thus, Xslate doesn't require namespaces for plugins.
+You can use function based modules with the C<module> option, and also can invoke
+object methods in templates. Thus, Xslate doesn't require the namespaces for plugins.
 
 =item C<< input_layer => $perliolayers // ':utf8' >>
 

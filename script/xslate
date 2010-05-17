@@ -21,10 +21,10 @@ has cache => (
     predicate => 'has_cache',
 );
 
-has import => (
+has module => (
     is => 'ro',
     isa => 'ArrayRef[Str]',
-    predicate => 'has_import',
+    predicate => 'has_module',
 );
 
 has input_layer => (
@@ -74,7 +74,7 @@ sub run {
     my $targets = $self->extra_argv;
 
     my %args;
-    foreach my $field qw(cache_dir cache import input_layer path syntax) {
+    foreach my $field qw(cache_dir cache module input_layer path syntax) {
         my $method = "has_$field";
         $args{ $field } = $self->$field if $self->$method;
     }
@@ -182,7 +182,7 @@ xslate - Process Xslate Templates
         # Text::Xslate options
         [ --cache ]
         [ --cache_dir=/path/to/dir ]
-        [ --import=Module ... ]
+        [ --module=Module ... ]
         [ --input_layer ... ]
         [ --path=/path/to/templates ... ]
         [ --syntax=moniker ]
