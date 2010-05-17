@@ -1,6 +1,7 @@
 package Text::Xslate::PP::Booster;
 
-use strict;
+use Mouse;
+#use strict;
 use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
@@ -13,6 +14,28 @@ my %CODE_MANIP = ();
 my $TX_OPS = \%Text::Xslate::OPS;
 
 
+has indent_depth => ( is => 'rw', default => 1 );
+
+has indent_space => ( is => 'rw', default => '    ' );
+
+has lines => ( is => 'rw', default => sub { []; } );
+
+has ops => ( is => 'rw', default => sub { []; } );
+
+has current_line => ( is => 'rw', default => 0 );
+
+has rvalue => ( is => 'rw', default => sub { []; } );
+
+has lvalue => ( is => 'rw', default => sub { []; } );
+
+has exprs => ( is => 'rw' );
+
+has sa => ( is => 'rw' );
+
+has sb => ( is => 'rw' );
+
+has lvar => ( is => 'rw', default => sub { []; } );
+
 #
 # public APIs
 #
@@ -22,24 +45,15 @@ sub opcode2perlcode_str {
     my $len = scalar( @$proto );
     my @lines;
 
-    $class->compactioin( $proto );
-
-    my $state = {
-        indent => 1,
-        ops    => $proto,
-        lines  => \@lines,
-        i      => 0,
-        loop   => {},
-        cond   => {},
-    };
+    my $state = $class->new(
+        ops => $proto,
+    );
 
     # コード生成
-    my $i = $state->{ i };
+    my $i = 0;
 
-    while ( $i < $len ) {
+    while ( $state->current_line < $len ) {
         my $pair = $proto->[ $i ];
-
-        $state->{ i } = $i;
 
         unless ( $pair and ref $pair eq 'ARRAY' ) {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
@@ -54,16 +68,23 @@ sub opcode2perlcode_str {
 
         my $manip  = $CODE_MANIP{ $opname };
 
-        if ( my $proc = $state->{ proc }->{ $i } ) { # elseブロックの閉じ
-            while ( $proc->{ else_end  }-- ) {
-                $state->{ indent }--;
-                $state->{ lines }->[ $i ] .= sprintf( "\n%s}\n", indent( $state ) );
+        if ( my $proc = $state->{ proc }->{ $i } ) {
+
+            if ( $proc->{ skip } ) {
+                $state->current_line( ++$i );
+                next;
+            }
+
+            while ( $proc->{ else_end  }-- ) { # elseブロックの閉じ
+                $state->indent_depth( $state->indent_depth - 1 );
+                $state->write_lines( "}\n" );
+                $state->write_code( "\n" );
             }
         }
 
         $manip->( $state, $arg, defined $line ? $line : '' );
 
-        $i = ++$state->{ i };
+        $state->current_line( ++$i );
     }
 
     # 書き出し
@@ -71,7 +92,8 @@ sub opcode2perlcode_str {
     my $perlcode =<<'CODE';
 sub {
     my ( $st ) = $_[0];
-    my ( $output, $sa, $sb, $sv, $targ, $st2, $pad, @sp );
+    my ( $sa, $sb, $sv, $targ, $st2, $pad, @sp );
+    my $output = '';
     my $vars  = $st->{ vars };
 
     $pad = [ [ ] ];
@@ -83,7 +105,7 @@ CODE
     # macro
 CODE
 
-        $perlcode .= join ( '', @{ $state->{ macro_lines } } );
+        $perlcode .= join ( '', grep { defined } @{ $state->{ macro_lines } } );
     }
 
     $perlcode .=<<'CODE';
@@ -120,252 +142,145 @@ sub opcode2perlcode {
 }
 
 
-sub compactioin { # destructive to $proto
-    my ( $class, $proto ) = @_;
-    my $len = scalar( @$proto );
-
-    # opコードの圧縮、数値出力の最適化
-    for ( my $i = 0; $i < $len; $i++ ) {
-        my $opname      = $proto->[ $i ]->[0];
-        my $prev_opname = $proto->[ $i - 1 ]->[0];
-
-        if ( $opname eq 'print' ) {
-            if ( $prev_opname eq 'fetch_s' ) {
-                $proto->[ $i ]->[0]     = 'ex_fetch_s_and_print';
-                $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
-                $proto->[ $i - 1 ]->[0] = 'noop';
-            }
-            elsif ( $prev_opname eq 'fetch_field_s' ) {
-                $proto->[ $i ]->[0]     = 'ex_fetch_field_s_and_print';
-                $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
-                $proto->[ $i - 1 ]->[0] = 'noop';
-            }
-            elsif ( $prev_opname eq 'literal_i' ) {
-                $proto->[ $i ]->[0]     = 'ex_literal_i_and_print';
-                $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
-                $proto->[ $i - 1 ]->[0] = 'noop';
-            }
-            elsif ( $prev_opname =~ /(?:ex_)?(?:add|mod)/ ) {
-                $proto->[ $i ]->[0]     = 'print_raw';
-            }
-        }
-        elsif ( $opname =~ /^(add|mod)$/ ) {
-            if ( $prev_opname eq 'literal_i' ) {
-                $proto->[ $i ]->[0]     = "ex_$1_literal_i";
-                $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
-                $proto->[ $i - 1 ]->[0] = 'noop';
-            }
-        }
-        elsif ( $opname eq 'move_to_sb' ) {
-            if ( $prev_opname eq 'fetch_s' ) {
-                my $next_opname = $proto->[ $i + 1 ]->[0];
-                next if $next_opname eq 'fetch_field_s'; # $sb = $sa;だが、実際に使うのが$saのため回避
-                $proto->[ $i ]->[0]     = 'ex_fetch_s_and_move_to_sb';
-                $proto->[ $i ]->[1]     = $proto->[ $i - 1 ]->[1];
-                $proto->[ $i - 1 ]->[0] = 'noop';
-            }
-        }
-    }
-
-}
-
-
 #
-# utils
 #
-
-sub indent {
-    '    ' x $_[0]->{ indent };
-}
-
-
-sub escape {
-    my $str = $_[0];
-    $str =~ s{\n}{\\n}g;
-    $str =~ s{"}{\\"}g;
-    return $str;
-}
-
-
 #
-# opcods / コードの生成は後で綺麗にする
-#
-
 
 $CODE_MANIP{ 'noop' } = sub {
-    $_[0]->{ lines }->[ $_[0]->{ i } ] .= '';
 };
 
 
 $CODE_MANIP{ 'move_to_sb' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# move_to_sb\n", indent( $state ) );
+    $state->sb( $state->sa );
+};
 
-    $state->{ ops }->[ $state->{ i } -1 ]->[ 1 ] = '$sb';
 
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
-%s$sb = $sa;
-
-CODE
-
+$CODE_MANIP{ 'move_from_sb' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    $state->sa( $state->sb );
 };
 
 
 $CODE_MANIP{ 'save_to_lvar' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# save_to_lvar %s\n", indent( $state ), $arg );
-
-    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
-
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
-%s$pad[ %s ] = $sa;
-
-CODE
-
+    my $v = sprintf( '( $pad->[ -1 ]->[ %s ] = %s )', $arg, $state->sa );
+    $state->sa( $v );
+    #$state->lvar->[ $arg ] = $state->sa;
+    $state->lvar->[ $arg ] = $v;
 };
 
 
-$CODE_MANIP{ 'push' } = sub {
+$CODE_MANIP{ 'load_lvar_to_sb' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# push\n", indent( $state ) );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
-%spush @{ $sp[-1] }, $sa;
-
-CODE
-
+    $state->sb( $state->lvar->[ $arg ] );
 };
 
 
-$CODE_MANIP{ 'pushmark' } = sub {
+$CODE_MANIP{ 'push' } = sub { # not yet implemeted
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# pushmark\n", indent( $state ) );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
-%spush @sp, [];
+    $state->write_lines( sprintf( 'push @{ $sp[-1] }, %s;', $state->sa() ) );
+};
 
-CODE
 
+$CODE_MANIP{ 'pushmark' } = sub { # not yet implemeted
+    my ( $state, $arg, $line ) = @_;
+    $state->write_lines( 'push @sp, [];' );
 };
 
 
 $CODE_MANIP{ 'nil' } = sub {
     my ( $state, $arg, $line ) = @_;
-    $state->{ lines }->[ $_[0]->{ i } ] .= sprintf( <<'CODE', indent( $state ) );
-%s$sa = undef;
-
-CODE
-
+    $state->sa( 'undef' );
 };
 
 
 $CODE_MANIP{ 'literal' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# literal \"%s\" #%s\n", indent($state), escape( $arg ), $line );
-    $arg =~ s{\\}{\\\\}g;
-    $arg =~ s{"}{\\"}g;
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state), $arg );
-%s$sa = "%s";
-
-CODE
-
+    $state->sa( '"' . escape( $arg ) . '"' );
 };
 
 
 $CODE_MANIP{ 'literal_i' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# literal_i %s #%s\n", indent($state), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state), $arg );
-%s$sa = %s;
-
-CODE
-
+    $state->sa( $arg );
+    $state->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'fetch_s' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf("%s# fetch_s \"%s\" #%s\n", indent( $state ), escape( $arg ), $line );
-
-    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
-
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state), escape( $arg ) );
-%s$sa = $vars->{ '%s' };
-
-CODE
-
+    $state->sa( sprintf( '$vars->{ "%s" }', escape( $arg ) ) );
 };
 
 
 $CODE_MANIP{ 'fetch_lvar' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# fetch_lvar %s #%s\n", indent( $state ), $arg, $line );
-
-    $state->{ ops }->[ $state->{ i } ]->[ 1 ] = '$sa';
-
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
-%s$sa = $pad->[ -1 ]->[ %s ];
-
-CODE
-
+    $state->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
 };
 
 
 $CODE_MANIP{ 'fetch_field' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# fetch_field\n", indent( $state ), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ) );
-%s$sa = fetch( $st, $sb, $sa );
-
-CODE
-
+    $state->sa( sprintf( 'fetch( $st, %s, %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'fetch_field_s' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# fetch_field_s %s #%s\n", indent( $state ), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . _fetch_field_s( $state, '$sa', $arg );
-};
-
-
-$CODE_MANIP{ 'print' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf("%s# print #%s\n", indent( $state ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ) );
-%s$sv = $sa;
-
-CODE
-
-    $state->{ lines }->[ $state->{ i } ] .= $comment . _print( $state );
+    my $sv = $state->sa();
+    $state->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, escape( $arg ) ) );
 };
 
 
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# print_raw #%s\n", indent($state), $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state) );
-%s$output .= $sa;
-
-CODE
-
+    my $sv = $state->sa();
+    $state->write_lines( sprintf('$output .= %s;', $sv) );
+    $state->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'print_raw_s' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# print_raw_s \"%s\" #%s\n", indent($state), escape( $arg ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state), escape( $arg ) );
-%s$output .= "%s";
+    $state->write_lines( sprintf('$output .= "%s";', escape( $arg ) ) );
+    $state->write_code( "\n" );
+};
 
+
+$CODE_MANIP{ 'print' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $sv = $state->sa();
+
+    $state->write_lines( sprintf( <<'CODE', $sv) );
+$sv = %s;
+
+if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+    $output .= $sv;
+}
+elsif ( defined $sv ) {
+    if ( $sv =~ /[&<>"']/ ) {
+        $sv =~ s/&/&amp;/g;
+        $sv =~ s/</&lt;/g;
+        $sv =~ s/>/&gt;/g;
+        $sv =~ s/"/&quot;/g;
+        $sv =~ s/'/&#39;/g;
+    }
+    $output .= $sv;
+}
+else {
+    warn_in_booster( $st, "Use of nil to be printed" );
+}
 CODE
 
+    $state->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'include' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# include #%s\n", indent($state), $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent($state) );
-%s$st2 = Text::Xslate::PP::tx_load_template( $st->self, $sa );
+    $state->write_lines( sprintf( <<'CODE', $state->sa ) );
+$st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
 Text::Xslate::PP::tx_execute( $st2, undef, $vars );
 $output .= $st2->{ output };
 
@@ -379,111 +294,122 @@ $CODE_MANIP{ 'for_start' } = sub {
 
     push @{ $state->{ for_level } }, {
         stack_id => $arg,
+        ar       => $state->sa,
     };
-
-    my $comment = sprintf( "%s# for_start %s #%s\n", indent($state), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] = $comment . sprintf( <<'CODE', indent($state), $arg );
-CODE
-
 };
 
 
 $CODE_MANIP{ 'for_iter' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf( "%s# for_iter\n", indent( $state ) );
 
-    $state->{ lines }->[ $state->{ i } - 1 ] = ''; # delete literal_i op
-    $state->{ loop }->{ $state->{ i } } = 1; # marked
+    $state->{ loop }->{ $state->current_line } = 1; # marked
 
     my $stack_id = $state->{ for_level }->[ -1 ]->{ stack_id };
+    my $ar       = $state->{ for_level }->[ -1 ]->{ ar };
 
-    $state->{ lines }->[ $state->{ i } ] = $comment
-        . sprintf( <<'CODE', indent($state), $stack_id );
-%sfor ( @{ $sa } ) {
-CODE
+    $state->write_lines( sprintf( 'for ( @{ %s } ) {', $ar ) );
+    $state->write_code( "\n" );
 
-    $state->{ indent }++;
+    $state->indent_depth( $state->indent_depth + 1 );
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent($state), $stack_id );
-%s$pad->[ -1 ]->[ %s ] = $_;
-
-CODE
-
+    $state->write_lines( sprintf( '$pad->[ -1 ]->[ %s ] = $_;', $state->sa() ) );
+    $state->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'add' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s + %s )' );
+    $state->sa( sprintf( '( %s + %s )', $state->sb(), $state->sa() ) );
+    $state->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'sub' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s - %s )' );
+    $state->sa( sprintf( '( %s - %s )', $state->sb(), $state->sa() ) );
+    $state->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'mul' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s * %s )' );
+    $state->sa( sprintf( '( %s * %s )', $state->sb(), $state->sa() ) );
+    $state->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'div' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s / %s )' );
+    $state->sa( sprintf( '( %s / %s )', $state->sb(), $state->sa() ) );
+    $state->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'mod' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s %% %s )' );
+    $state->sa( sprintf( '( %s %% %s )', $state->sb(), $state->sa() ) );
+    $state->optimize_to_print( 'num' );
 };
 
 
-$CODE_MANIP{ 'and' } = sub { # if-else あるいは && 等
+$CODE_MANIP{ 'concat' } = sub {
     my ( $state, $arg, $line ) = @_;
+    $state->sa( sprintf( '( %s . %s )', $state->sb(), $state->sa() ) );
+};
 
-    my $ops  = $state->{ ops };
-    my $i    = $state->{ i };
-    my $expr = $ops->[ $i - 1 ]->[ 1 ];
+
+$CODE_MANIP{ 'filt' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $i = $state->{ i };
+    my $ops = $state->{ ops };
+
+    $state->sa( sprintf('eval { $sa->( %s ) };', $state->sb ) );
+};
+
+
+$CODE_MANIP{ 'and' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $ops  = $state->ops;
+    my $i    = $state->current_line;
+    my $expr = $state->sa();
 
     if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # if cond
-        my $prev_expr = delete $state->{ cond_prev_expr } || ''; # 前に式があれば加える
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $prev_expr, $expr );
-%sif ( %s%s ) {
+        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
+        $state->write_lines( sprintf( <<'CODE' , $expr ) );
+if ( %s ) {
 
 CODE
 
-        $state->{ indent }++; # ブロック内
+        $state->exprs( '' );
+        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
         $state->{ if_end }->{ $i + $arg - 1 }++; # block end
-
     }
     else { # ternary
-        $state->{ lines }->[ $state->{ i } ] = '';
-        $state->{ cond_prev_expr } .= $expr . ' && '; # 式を保存
+        my $pre_exprs = $state->exprs || '';
+        $state->exprs( $pre_exprs . $expr . ' && ' ); # 保存
     }
 
 };
 
 
-$CODE_MANIP{ 'dand' } = sub { # if-else あるいは && 等
-    my ( $state, $arg, $line ) = @_;
 
-    my $ops  = $state->{ ops };
-    my $i    = $state->{ i };
-    my $expr = $ops->[ $i - 1 ]->[ 1 ];
+$CODE_MANIP{ 'dand' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $ops  = $state->ops;
+    my $i    = $state->current_line;
+    my $expr = $state->sa();
 
     if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # cond
         my $cond = $ops->[ $i + $arg - 1 ]->[ 1 ] < 0 ? 'while' : 'if';
-        my $prev_expr = delete $state->{ cond_prev_expr } || ''; # 前に式があれば加える
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $cond, $prev_expr, $expr );
-%s%s ( %sdefined %s ) {
+
+        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
+        $state->write_lines( sprintf( <<'CODE' , $cond, $expr ) );
+%s ( defined( %s ) ) {
 
 CODE
 
-        $state->{ indent }++; # ブロック内
+        $state->exprs( '' );
+        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
 
         if ( $cond eq 'if' ) {
             $state->{ if_end }->{ $i + $arg - 1 }++; # if block end
@@ -494,8 +420,57 @@ CODE
 
     }
     else { # ternary
-        $state->{ lines }->[ $state->{ i } ] = '';
-        $state->{ cond_prev_expr } .= $expr . ' && '; # 式を保存
+        my $pre_exprs = $state->exprs || '';
+        $state->exprs( $pre_exprs . $expr . ' && ' ); # 保存
+    }
+
+#    $state->write_lines( "# and" );
+};
+
+
+$CODE_MANIP{ 'or' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    my $ops  = $state->ops;
+    my $i    = $state->current_line;
+    my $expr = $state->sa();
+
+    if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # if cond
+        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
+        $state->write_lines( sprintf( <<'CODE' , $expr ) );
+if ( !( %s ) ) {
+
+CODE
+
+        $state->exprs( '' );
+        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
+        $state->{ if_end }->{ $i + $arg - 1 }++; # block end
+    }
+    elsif ( $ops->[ $i + $arg ]->[ 0 ] =~ /and|or|dand|dor/ ) {
+        my $pre_exprs = $state->exprs || '';
+        $state->exprs( $pre_exprs . $expr . ' || ' ); # 保存
+    }
+    elsif ( $arg == 2 ) { # $x ? $y : $z;
+        my $line = $state->current_line;
+        my @args;
+
+#        print $state->sa,"\n";
+#        print $state->sb,"\n";
+#        print $state->lvar->[0],"\n";
+
+        while ( $arg-- ) {
+            my ( $opname ) = $ops->[ ++$line ]->[0];
+            push @args, (
+                  $opname eq 'load_lvar_to_sb' ? $state->lvar->[0]
+                : $opname eq 'move_from_sb'    ? $state->sb
+                : die
+            );
+            $state->{ proc }->{ $line }->{ skip } = 1;
+        }
+
+        $state->sa( sprintf( '%s ? %s : %s' , $state->sa, reverse @args ) );
+    }
+    else {
+        die;
     }
 
 };
@@ -503,267 +478,230 @@ CODE
 
 $CODE_MANIP{ 'not' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $i   = $state->{ i };
-
-    $state->{ ops }->[ $i ]->[1] = '( $sa = ! $sa )';
-
-    $state->{ lines }->[ $i ] .= '';
+    my $sv = $state->sa();
+    $state->sa( sprintf( '( !%s )', $sv ) );
 };
 
 
 $CODE_MANIP{ 'eq' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, 'cond_eq( %s, %s )' );
+    $state->sa( sprintf( 'cond_eq( %s, %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'ne' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, 'cond_ne( %s, %s )' );
+    $state->sa( sprintf( 'cond_ne( %s, %s )', $state->sb(), $state->sa() ) );
 };
+
 
 
 $CODE_MANIP{ 'lt' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s < %s )' );
+    $state->sa( sprintf( '( %s < %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'le' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s <= %s )' );
+    $state->sa( sprintf( '( %s <= %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'gt' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s > %s )' );
+    $state->sa( sprintf( '( %s > %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'ge' } = sub {
     my ( $state, $arg, $line ) = @_;
-    _make_expr( $state, $arg, '( %s >= %s )' );
+    $state->sa( sprintf( '( %s >= %s )', $state->sb(), $state->sa() ) );
 };
 
 
 $CODE_MANIP{ 'macrocall' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $i   = $state->{ i };
-    my $ops = $state->{ ops };
-
-    $state->{ lines }->[ $i ] .= sprintf( "%s# macrocall\n", indent( $state ) );
-
-    if ( $ops->[ $i + 1 ]->[0] eq 'print' ) {
-        $ops->[ $i + 1 ]->[0] = 'print_raw'; # macro output isn't be escaped
-    }
-
-    my $name = $ops->[ $i - 1 ]->[1];
-
-    return $state->{ lines }->[ $i ] .= sprintf( <<'CODE', indent( $state ), indent( $state ), $name );
-%s$pad->[-1] = pop( @sp );
-%s$sa = $tx_pp_boost_macro_%s->();
-
-CODE
-
+    my $ops  = $state->ops;
+    $state->optimize_to_print( 'num' );
+    $state->write_lines( '$pad->[-1] = pop( @sp );' );
+    $state->sa( sprintf( '$tx_pp_boost_macro_%s->()', $state->sa() ) );
 };
+
 
 $CODE_MANIP{ 'macro_begin' } = sub {
     my ( $state, $arg, $line ) = @_;
 
-    $state->{ macro_begin } = $state->{ i };
+    $state->{ macro_begin } = $state->current_line;
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg );
-
-%smy $tx_pp_boost_macro_%s = sub {
-CODE
-
-    $state->{ indent }++;
-
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg );
-%smy $output;
-
-CODE
-
+    $state->write_lines( sprintf( 'my $tx_pp_boost_macro_%s = sub {', $arg ) );
+    $state->indent_depth( $state->indent_depth + 1 );
+    $state->write_lines( sprintf( 'my $output;' ) );
 };
 
 
 $CODE_MANIP{ 'macro_end' } = sub {
     my ( $state, $arg, $line ) = @_;
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%spop( \@\$pad );\n", indent( $state ) );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s\$output;\n", indent( $state ) );
+    $state->write_lines( sprintf( 'pop( @$pad );' ) );
+    $state->write_code( "\n" );
+    $state->write_lines( sprintf( '$output;' ) );
 
-    $state->{ indent }--;
+    $state->indent_depth( $state->indent_depth - 1 );
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s};\n", indent( $state ) );
+    $state->write_lines( sprintf( "};\n" ) );
 
     my $macro_start = $state->{ macro_begin };
-    my $macro_end   = $state->{ i };
+    my $macro_end   = $state->current_line;
 
     push @{ $state->{ macro_lines } }, splice( @{ $state->{ lines } },  $macro_start, $macro_end );
+
 };
 
 
 $CODE_MANIP{ 'macro' } = sub {
     my ( $state, $arg, $line ) = @_;
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s# macro %s\n", indent( $state ), $arg );
-    return $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ) );
-%spush @{$pad}, [];
 
-CODE
+    $state->sa( $arg );
 
+    $state->write_lines( 'push @{$pad}, [];' );
+    $state->write_code( "\n" );
 };
 
+
+$CODE_MANIP{ 'function' } = sub { # not yet implemebted
+    my ( $state, $arg, $line ) = @_;
+    $state->write_lines(
+        sprintf('$sa = $st->function->{ %s } or Carp::croak( "Function %s is not registered" );', $arg, $arg )
+    );
+};
+
+
+=pod
+
+$CODE_MANIP{ 'funcall' } = sub {
+    my ( $state, $arg, $line ) = @_;
+#    $state->sa(
+#        sprintf('call( $st, 0, $sa, @{ pop @sp } )' )
+#    );
+    $state->write_lines(
+        sprintf('$sa = call( $st, 0, $sa, @{ pop @sp } );' )
+    );
+
+    $state->sa(
+        sprintf( '$sa' )
+    );
+};
+
+=cut
 
 $CODE_MANIP{ 'goto' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $i = $state->{ i };
+    my $i = $state->current_line;
 
-    if ( delete $state->{ loop }->{ $state->{ i } + $arg + 1 } ) { # for loop
-        $state->{ indent }--;
+    if ( delete $state->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
+        $state->indent_depth( $state->indent_depth - 1 );
         pop @{ $state->{ for_level } };
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( "\n%s}\n", indent( $state ) );
+        $state->write_lines( '}' );
     }
-    elsif ( delete $state->{ if_end }->{ $state->{ i } } ) { # ifのブロックを閉じ、elseブロックを開く
-        $state->{ indent }--;
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( "\n%s}\n%selse {\n", indent( $state ), indent( $state ) );
+    elsif ( delete $state->{ if_end }->{ $i } ) { # ifのブロックを閉じ、elseブロックを開く
+        $state->indent_depth( $state->indent_depth - 1 );
 
-        $state->{ proc }->{ $state->{ i } + $arg }->{ 'else_end' }++;
-        $state->{ indent }++; # else内
+        $state->write_lines( "}\nelse {" );
+
+        $state->{ proc }->{ $i + $arg }->{ 'else_end' }++;
+        $state->indent_depth( $state->indent_depth + 1 ); # else内
     }
-    elsif ( delete $state->{ while_end }->{ $state->{ i } } ) { # whileのブロックを閉じる
-        $state->{ indent }--;
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( "\n%s}\n", indent( $state ) );
+    elsif ( delete $state->{ while_end }->{ $i } ) { # whileブロックを閉じる
+        $state->indent_depth( $state->indent_depth - 1 );
+        $state->write_lines( "}" );
     }
     else {
         die "invalid goto op";
-        #$state->{ lines }->[ $state->{ i } ] = sprintf( "%s# goto %s\n", indent( $state ), $arg );
     }
 
+    $state->write_code( "\n" );
 };
-
-
-$CODE_MANIP{ 'function' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $i = $state->{ i };
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg, $arg );
-%s$sa = $st->function->{ %s } or Carp::croak( "Function %s is not registered" );
-CODE
-
-};
-
-
-$CODE_MANIP{ 'filt' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $i = $state->{ i };
-    my $ops = $state->{ ops };
-
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), indent( $state ) );
-%s$sa = eval { $sa->( $sb ) };
-%sCarp::croak( sprintf("%%s\n\t... exception cought on %%s", $@, 'filtering') ) if ( $@ );
-
-CODE
-
-};
-
 
 
 $CODE_MANIP{ 'depend' } = sub {
-    $_[0]->{ lines }->[ $_[0]->{ i } ] .= '';
 };
 
 
 $CODE_MANIP{ 'end' } = sub {
-    $_[0]->{ lines }->[ $_[0]->{ i } ] .= "\n    # process end\n";
+    my ( $state, $arg, $line ) = @_;
+    $state->write_lines( "# process end" );
 };
 
 
 #
-# EXTRA OPCODES
+# methods
 #
 
+sub write_lines {
+    my ( $state, $lines, $idx ) = @_;
+    my $code = '';
 
-$CODE_MANIP{ 'ex_fetch_s_and_print' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->{ lines }->[ $state->{ i } ] .= sprintf("%s# ex_fetch_s_and_print \"%s\" #%s\n", indent($state), escape( $arg ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', $arg );
-    $sv = $vars->{ '%s' };
+    $idx = $state->current_line unless defined $idx;
 
-CODE
-
-    $state->{ lines }->[ $state->{ i } ] .= _print( $state );
-};
-
-
-$CODE_MANIP{ 'ex_fetch_field_s_and_print' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->{ lines }->[ $state->{ i } ] .= sprintf("%s# ex_fetch_field_s_and_print \"%s\" #%s\n", indent( $state ), escape( $arg ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= _fetch_field_s( $state, '$sv', $arg );
-    $state->{ lines }->[ $state->{ i } ] .= _print( $state );
-};
-
-
-$CODE_MANIP{ 'ex_literal_i_and_print' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->{ lines }->[ $state->{ i } ] .= sprintf("%s# ex_literal_i_and_print \"%s\" #%s\n", indent( $state ), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', indent( $state ), $arg );
-%s$output .= %s;
-
-CODE
-
-};
-
-
-$CODE_MANIP{ 'ex_add_literal_i' } = sub {
-    my ( $state, $arg, $line ) = @_;
-
-    if ( $state->{ ops }->[ $state->{ i } + 1 ]-> [ 0 ] =~ /^(?:and|not)$/ ) {
-        my $i = $state->{ i };
-        return _make_expr( $state, $arg, '( %s + %s )' );
+    for my $line ( split/\n/, $lines ) {
+        $code .= $state->indent . $line . "\n";
     }
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf("%s# ex_add_literal_i #%s\n", indent( $state ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', $arg );
-    $targ = $sa = $sb + %s;
-
-CODE
-
-};
+    $state->lines->[ $idx ] .= $code;
+}
 
 
-$CODE_MANIP{ 'ex_mod_literal_i' } = sub {
-    my ( $state, $arg, $line ) = @_;
+sub write_code {
+    my ( $state, $code, $idx ) = @_;
+    $idx = $state->current_line unless defined $idx;
+    $state->lines->[ $idx ] .= $code;
+}
 
-    if ( $state->{ ops }->[ $state->{ i } + 1 ]-> [ 0 ] =~ /^(?:and|not)$/ ) {
-        my $i = $state->{ i };
-        return _make_expr( $state, $arg, '( %s %% %s )' );
+
+sub reset_line {
+    my ( $state, $idx ) = @_;
+    $idx = $state->current_line unless defined $idx;
+    $state->lines->[ $idx ] = '';
+}
+
+
+sub optimize_to_print {
+    my ( $state, $type ) = @_;
+    my $ops = $state->ops->[ $state->current_line + 1 ];
+
+    return unless $ops;
+    return unless ( $ops->[0] eq 'print' );
+
+    if ( $type eq 'num' ) {
+        $ops->[0] = 'print_raw';
     }
 
-    $state->{ lines }->[ $state->{ i } ] .= sprintf("%s# ex_mod_literal_i #%s\n", indent( $state ), $line );
-    $state->{ lines }->[ $state->{ i } ] .= sprintf( <<'CODE', $arg );
-    $targ = $sa = $sb %% %s;
+}
 
-CODE
+#
+# utils
+#
 
-};
+sub indent {
+    $_[0]->indent_space x $_[0]->indent_depth;
+}
 
 
-$CODE_MANIP{ 'ex_fetch_s_and_move_to_sb' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $comment = sprintf("%s# ex_fetch_s_and_move_to_sb %s #%s\n", indent( $state ), $arg, $line );
-    $state->{ lines }->[ $state->{ i } ] .= $comment . sprintf( <<'CODE', indent( $state ), $arg );
-%s$sb = $vars->{ '%s' };
-
-CODE
-
-};
+sub escape {
+    my $str = $_[0];
+    $str =~ s{\\}{\\\\}g;
+    $str =~ s{\n}{\\n}g;
+    $str =~ s{\t}{\\t}g;
+    $str =~ s{"}{\\"}g;
+    $str =~ s{\$}{\\\$}g;
+    return $str;
+}
 
 
 #
-# functions called in boost code
+# called in booster code
 #
-
 
 sub neat {
     if ( defined $_[0] ) {
@@ -872,129 +810,9 @@ sub error_in_booster {
 }
 
 
-#
-# tempalte helpers
-#
-
-
-sub _expr { # ops
-    my $opname = $_[0]->[0];
-    my $val    = defined $_[0]->[1] ? $_[0]->[1] : 'undef';
-
-    if ( $opname =~ /literal_i/ ) {
-        return $val;
-    }
-    elsif ( $opname =~ /literal/ ) {
-        return '"' . escape( $val ) . '"';
-    }
-    elsif ( $opname =~ /fetch_s/ ) {
-        return '$vars->{' . $val . '}';
-    }
-    else {
-        return $val;
-    }
-}
-
-
-sub _make_expr {
-    my ( $state, $arg, $type ) = @_;
-    my $ops = $state->{ ops };
-    my $i   = $state->{ i };
-
-    my ( $sb_ops, $sa_ops ) = @{ $ops }[ $i - 1, $i - 3 ];
-    $sa_ops = $ops->[ $i - 2 ] if ( $sa_ops->[0] eq 'noop' ); # compactioned
-
-    my $left  = _expr( $sa_ops );
-    my $right = _expr( $sb_ops );
-    my $str   = sprintf( $type, $left, $right );
-
-    $state->{ ops }->[ $i ]->[1] = $str;
-
-    my $next_op = $ops->[ $i + 1 ]->[0];
-
-    if ( $next_op =~ /(?:and|or)/ ) { # 条件式
-        $state->{ ops }->[ $i - 1 ]->[0] = 'noop';
-        $state->{ ops }->[ $i - 2 ]->[0] = 'noop';
-        $state->{ ops }->[ $i - 3 ]->[0] = 'noop';
-        $state->{ lines }->[ $i - 1 ] = '';
-        $state->{ lines }->[ $i - 2 ] = '';
-        $state->{ lines }->[ $i - 3 ] = '';
-        $state->{ lines }->[ $state->{ i } ] .= '';
-    }
-    else {
-        $state->{ lines }->[ $state->{ i } ] .= sprintf( "%s\$sa = %s;\n\n", indent( $state ), $str );
-    }
-
-}
-
-
-sub _fetch_field_s {
-    my ( $state, $name, $arg ) = @_;
-    my $indent = indent( $state );
-
-    return sprintf( <<'CODE', $indent, $name, escape($arg) );
-%s%s = fetch( $st, $sa, "%s" );
-
-CODE
-
-    my $lines = sprintf( <<'CODE', $name, $arg, $name, $arg, $name, $arg );
-if ( ref $sa eq 'HASH' ) {
-    %s = $sa->{%s};
-}
-elsif ( ref $sa eq 'ARRAY' ) {
-    %s = $sa->["%s"];
-}
-elsif ( Scalar::Util::blessed($sa) ) {
-    %s = $sa->%s();
-}
-CODE
-
-    my $ret;
-
-    for my $line ( split/\n/, $lines ) {
-        $ret .= $indent . $line . "\n";
-    }
-
-    return $ret;
-}
-
-
-sub _print {
-    my ( $state ) = @_;
-    my $indent = indent( $state );
-
-my $lines =<<'CODE';
-
-if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
-    $output .= $sv;
-}
-elsif ( defined $sv ) {
-    if ( $sv =~ /[&<>"']/ ) {
-        $sv =~ s/&/&amp;/g;
-        $sv =~ s/</&lt;/g;
-        $sv =~ s/>/&gt;/g;
-        $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&#39;/g;
-    }
-    $output .= $sv;
-}
-else {
-    warn_in_booster( $st, "Use of nil to be printed" );
-}
-CODE
-
-    my $ret;
-
-    for my $line ( split/\n/, $lines ) {
-        $ret .= $indent . $line . "\n";
-    }
-
-    return $ret;
-}
-
-
 1;
 __END__
+
 
 =head1 NAME
 
