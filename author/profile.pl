@@ -9,6 +9,8 @@ use Text::Xslate;
     has body  => (is => 'rw');
 }
 
+my $cache = shift(@ARGV) // 0;
+
 my @blog_entries = map{ BlogEntry->new($_) } (
     {
         title => 'Entry one',
@@ -22,7 +24,8 @@ my @blog_entries = map{ BlogEntry->new($_) } (
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
         path  => ["./benchmark/template"],
-        cache => 0,
+        cache_dir => "./benchmark/template",
+        cache => $cache,
     );
 
     $tx->render('child.tx', { blog_entries => \@blog_entries });
