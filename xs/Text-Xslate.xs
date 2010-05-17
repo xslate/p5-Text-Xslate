@@ -3,7 +3,7 @@
 #include <perl.h>
 #include <XSUB.h>
 
-#define NEED_newSVpvn_flags
+#define NEED_newSVpvn_flags_GLOBAL
 #include "ppport.h"
 
 #include "xslate.h"
