@@ -470,9 +470,7 @@ Specifies the directory used for caches.
 
 =item C<< function => \%functions >>
 
-Specifies functions.
-
-Functions may be called as C<f($arg)> or C<$arg | f>.
+Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
 
 =item C<< import => [$module => ?\@import_args, ...] >>
 
@@ -498,7 +496,7 @@ Specifies PerlIO layers for reading templates.
 
 =item C<< syntax => $name // 'Kolon' >>
 
-Specifies the template syntax you use.
+Specifies the template syntax you want to use.
 
 I<$name> may be a short name (moniker), or a fully qualified name.
 
@@ -618,7 +616,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 =head1 DEPENDENCIES
 
-Perl 5.10.0 or later, and a C compiler.
+Perl 5.10.0 or later.
 
 =head1 BUGS
 
