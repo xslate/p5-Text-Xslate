@@ -58,7 +58,7 @@ has optimize => (
     is  => 'rw',
     isa => 'Int',
 
-    default => _OPTIMIZE // 2,
+    default => _OPTIMIZE // 3,
 );
 
 has lvar_id => ( # local varialbe id
