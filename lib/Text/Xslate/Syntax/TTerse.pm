@@ -12,17 +12,27 @@ sub _build_tag_end    { qr/\Q%]/xms }
 sub define_symbols {
     my($parser) = @_;
 
-    $parser->symbol('END') ->is_end(1);
-    $parser->symbol('ELSE')->is_end(1);
+    # both upper cased and lower cased
+
+    $parser->symbol('END')  ->is_end(1);
+    $parser->symbol('end')  ->is_end(1);
+    $parser->symbol('ELSE') ->is_end(1);
+    $parser->symbol('else') ->is_end(1);
     $parser->symbol('ELSIF')->is_end(1);
+    $parser->symbol('elsif')->is_end(1);
 
     $parser->symbol('IN');
+    $parser->symbol('in');
 
     $parser->symbol('IF')      ->set_std(\&std_if);
+    $parser->symbol('if')      ->set_std(\&std_if);
     $parser->symbol('UNLESS')  ->set_std(\&std_if);
+    $parser->symbol('unless')  ->set_std(\&std_if);
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
+    $parser->symbol('foreach') ->set_std(\&std_foreach);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_command);
+    $parser->symbol('include') ->set_std(\&std_command);
 
     $parser->define_basic_operators();
 
@@ -49,12 +59,12 @@ sub std_if {
     my $if = $symbol->clone(arity => "if");
 
     $if->first(  $parser->expression(0) );
-    if($symbol->id eq 'UNLESS') {
+    if(uc($symbol->id) eq 'UNLESS') {
         my $not_expr = $parser->symbol('not')->clone(
             arity  => 'unary',
             first  => $if->first,
         );
-        $if->first($not_expr);;
+        $if->first($not_expr);
     }
     $if->second( $parser->statements() );
 
@@ -62,7 +72,7 @@ sub std_if {
 
     my $top_if = $if;
 
-    while($t->id eq "ELSIF") {
+    while(uc($t->id) eq "ELSIF") {
         $parser->reserve($t);
         $parser->advance(); # "ELSIF"
 
@@ -77,16 +87,18 @@ sub std_if {
         $t = $parser->token;
     }
 
-    if($t->id eq "ELSE") {
+    if(uc($t->id) eq "ELSE") {
         $parser->reserve($t);
         $t = $parser->advance(); # "ELSE"
 
-        $if->third( $t->id eq "IF"
+        $if->third( uc($t->id) eq "IF"
             ? $parser->statement()
             : $parser->statements());
     }
 
-    $parser->advance("END");
+    $parser->token->id eq "end"
+        ? $parser->advance("end")
+        : $parser->advance("END");
     return $top_if;
 }
 
@@ -102,13 +114,18 @@ sub std_foreach {
 
     my $var = $t;
     $parser->advance();
-    $parser->advance("IN");
+    $parser->token->id eq "in"
+        ? $parser->advance("in")
+        : $parser->advance("IN");
 
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
     $proc->third( $parser->statements() );
 
-    $parser->advance("END");
+    $parser->token->id eq "end"
+        ? $parser->advance("end")
+        : $parser->advance("END");
+
     return $proc;
 }
 
@@ -145,6 +162,8 @@ TTerse is a subset of the Template-Toolkit 2 syntax,
 using C<< [% ... %] >> tags.
 
 =head1 SYNTAX
+
+Note that lower-cased keywords are also allowed.
 
 =head2 Variable access
 
