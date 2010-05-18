@@ -214,7 +214,7 @@ There are the autoboxing mechanism:
         <: $pair.key :> = <: $pair.value :>
     <: } :>
 
-Note that you must use C<()> in order to invoke builtin methods.
+Note that you must use C<()> in order to invoke methods.
 
 =head2 Template inclusion
 
@@ -328,6 +328,14 @@ Output:
 
 Note that return values of macros are values that their routines renders.
 That is, macros themselves output nothing.
+
+=head2 Comments
+
+    :# this is a comment
+    <:
+      # this is also a comment
+      $var
+    :>
 
 =head1 SEE ALSO
 
