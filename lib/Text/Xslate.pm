@@ -14,6 +14,7 @@ use Text::Xslate::Util qw(
     literal_to_value
     import_from
 );
+use Carp ();
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
@@ -81,11 +82,9 @@ sub new {
     my $self = bless \%args, $class;
 
     if(defined $args{file}) {
-        require Carp;
         Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
     }
     if(defined $args{string}) {
-        require Carp;
         Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
         $self->load_string($args{string});
     }
@@ -319,7 +318,6 @@ sub _load_assembly {
 sub _error {
     shift;
     unshift @_, 'Xslate: ';
-    require Carp;
     goto &Carp::croak;
 }
 

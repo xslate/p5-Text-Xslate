@@ -10,6 +10,8 @@ our @EXPORT_OK = qw(
     $STRING $NUMBER $DEBUG
 );
 
+use Carp ();
+
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
