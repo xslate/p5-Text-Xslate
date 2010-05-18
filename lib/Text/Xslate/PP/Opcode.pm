@@ -139,7 +139,7 @@ sub op_print {
         $_[0]->{ output } .= $sv;
     }
     else {
-        tx_warn( $_[0], "Use of nil to be printed" );
+        tx_warn( $_[0], "Use of nil to printed" );
     }
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -178,7 +178,7 @@ sub op_for_start {
             tx_error( $_[0], "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
         }
         else {
-            tx_warn( $_[0], "Use of nil to be iterated" );
+            tx_warn( $_[0], "Use of nil to iterate" );
         }
         $ar = [];
     }
