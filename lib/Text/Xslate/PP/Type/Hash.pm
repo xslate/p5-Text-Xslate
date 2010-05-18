@@ -22,6 +22,9 @@ sub BUILDARGS {
     my $self = shift;
     if(@_ == 1) {
         my($arg) = @_;
+        if(ref($arg) ne 'HASH') {
+            $arg = eval { \%{$arg} } || {};
+        }
         return { _kv => $arg };
     }
     else {

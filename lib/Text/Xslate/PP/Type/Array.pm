@@ -34,9 +34,7 @@ sub BUILDARGS {
             ];
         }
         else {
-            $items = eval {
-                $arg->ITEMS();
-            };
+            $items = eval { \@{ $arg } };
             if(!defined $items) {
                 $items = [];
             }

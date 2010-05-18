@@ -12,12 +12,14 @@
 
 #define TXBM(moniker) static TXBM_DECL(CAT2(tx_builtin_method_, moniker))
 
-#define TXBM_SETUP(name, nargs, traits) \
-    { STRINGIFY(name), CAT2(tx_builtin_method_, name), nargs, traits }
+#define TXBM_SETUP(name, nargs, trait) \
+    { STRINGIFY(name), CAT2(tx_builtin_method_, name), nargs, trait }
 
-#define TX_TRAIT_ANY        0x00
-#define TX_TRAIT_ENUMERABLE 0x01
-#define TX_TRAIT_KV         0x02
+enum tx_trait_t {
+    TX_TRAIT_ANY,
+    TX_TRAIT_ENUMERABLE,
+    TX_TRAIT_KV,
+};
 
 #define TX_PAIR_CLASS "Text::Xslate::Type::Pair"
 
@@ -27,7 +29,7 @@ typedef struct {
     TXBM_DECL( (*body) );
 
     I16 nargs;
-    U16 traits;
+    U16 trait;
 } tx_builtin_method_t;
 
 static SV*
@@ -204,11 +206,11 @@ tx_as_enumerable(pTHX_ tx_state_t* const st, SV** const svp) {
         XPUSHs(sv);
         PUTBACK;
 
-        call_method("ITEMS", G_SCALAR | G_EVAL);
+        call_method("(@{}", G_SCALAR | G_EVAL);
 
         if(sv_true(ERRSV)) {
-            tx_error(aTHX_ st, "Use of %s as enumerable objects",
-                tx_neat(aTHX_ sv));
+            tx_error(aTHX_ st, "Use of %s as %s objects",
+                tx_neat(aTHX_ sv), "enumerable");
             return FALSE;
         }
 
@@ -226,6 +228,42 @@ tx_as_enumerable(pTHX_ tx_state_t* const st, SV** const svp) {
         }
         else if(SvTYPE(SvRV(sv)) == SVt_PVHV) {
             *svp = tx_kv(aTHX_ sv);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static I32
+tx_as_kv(pTHX_ tx_state_t* const st, SV** const svp) {
+    SV* const sv = *svp;
+
+    if(sv_isobject(sv)) {
+        dSP;
+        SV* retval;
+        PUSHMARK(SP);
+        XPUSHs(sv);
+        PUTBACK;
+
+        call_method("(%{}", G_SCALAR | G_EVAL);
+
+        if(sv_true(ERRSV)) {
+            tx_error(aTHX_ st, "Use of %s as %s objects",
+                tx_neat(aTHX_ sv), "kv");
+            return FALSE;
+        }
+
+        retval = TX_pop();
+
+        SvGETMAGIC(retval);
+        if(SvROK(retval) && SvTYPE(SvRV(retval)) == SVt_PVHV) {
+            *svp = retval;
+            return TRUE;
+        }
+    }
+    else if(SvROK(sv)){
+        if(SvTYPE(SvRV(sv)) == SVt_PVHV) {
             return TRUE;
         }
     }
@@ -284,11 +322,17 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
                 goto finish;
             }
 
-            if(bm.traits & TX_TRAIT_ENUMERABLE) {
+            if(bm.trait == TX_TRAIT_ENUMERABLE) {
                 if(!tx_as_enumerable(aTHX_ st, MARK /* invocant ptr */)) {
                     goto finish;
                 }
                 assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVAV);
+            }
+            else if(bm.trait == TX_TRAIT_KV) {
+                if(!tx_as_kv(aTHX_ st, MARK /* invocant ptr */)) {
+                    goto finish;
+                }
+                assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVHV);
             }
 
             retval = st->targ;

@@ -9,6 +9,11 @@ use Text::Xslate;
     package MyArray;
     use Mouse;
 
+    use overload
+        '@{}' => sub{ shift->items() },
+        fallback => 1,
+    ;
+
     has items => (
         is  => 'ro',
         isa => 'ArrayRef',
@@ -16,7 +21,20 @@ use Text::Xslate;
         default => sub { [] },
     );
 
-    sub ITEMS{ shift->items() }
+    package MyKV;
+    use Mouse;
+
+    use overload
+        '%{}' => sub{ shift->items() },
+        fallback => 1,
+    ;
+
+    has items => (
+        is  => 'ro',
+        isa => 'HashRef',
+
+        default => sub { {} },
+    );
 }
 
 my $tx = Text::Xslate->new(
@@ -30,9 +48,6 @@ my @set = (
 
     ['<: $h.size() :>', { h => {} },        '0', 'for hash'],
     ['<: $h.size() :>', { h => {a => 1, b => 2, c => 3} }, '3'],
-
-    ['<: $o.size() :>', { o => MyArray->new() },                   '0', 'for object'],
-    ['<: $o.size() :>', { o => MyArray->new(items => [0 .. 9]) }, '10'],
 
     ['<: nil.size() :>', { }, '', 'nil.size() returns an empty string'],
 
@@ -79,6 +94,23 @@ b=2
 a=1
 X
 
+
+    ['<: $o.size() :>', { o => MyArray->new() },                   '0', 'for object'],
+    ['<: $o.size() :>', { o => MyArray->new(items => [0 .. 9]) }, '10'],
+
+    ['<: $o.keys().join(" ")   :>', { o => MyKV->new(items => { foo => 42 }) }, 'foo'],
+    ['<: $o.values().join(" ") :>', { o => MyKV->new(items => { foo => 42 }) }, '42'],
+    [<<'T', { o => MyKV->new(items => {a => 1, b => 2, c => 3}) }, <<'X', 'object as kv' ],
+<:
+    for $o.kv() -> $pair {
+        print $pair.key, "=", $pair.value, "\n";
+    }
+-:>
+T
+a=1
+b=2
+c=3
+X
 );
 
 foreach my $d(@set) {
