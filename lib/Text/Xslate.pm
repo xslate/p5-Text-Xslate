@@ -208,7 +208,7 @@ sub load_file {
             if($code->[0] eq 'depend') {
                 my $dep_mtime = (stat $code->[1])[_ST_MTIME];
                 if(!defined $dep_mtime) {
-                    $dep_mtime = 0;
+                    $dep_mtime = '+inf'; # force reload
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
                 if($dep_mtime > ($mtime // $f->{orig_mtime})){
