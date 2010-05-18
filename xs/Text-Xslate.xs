@@ -1432,6 +1432,7 @@ CODE:
         SAVESPTR(PL_warnhook);
         PL_warnhook = NULL;
 
+        /* handler can ignore warnings */
         if(handler) {
             PUSHMARK(SP);
             XPUSHs(full_message);
@@ -1460,6 +1461,7 @@ CODE:
             st->output                     = tmp;
         }
 
+        /* handler cannot ignore errors */
         if(handler) {
             PUSHMARK(SP);
             XPUSHs(full_message);

@@ -300,7 +300,7 @@ sub tx_execute { no warnings 'recursion';
 
 
 sub _error_handler {
-    my ( $str, $die_handler ) = @_;
+    my ( $str, $die ) = @_;
     my $st = $_current_st;
 
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
@@ -308,7 +308,7 @@ sub _error_handler {
     my $cframe = $st->frame->[ $st->current_frame ];
     my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
 
-    if($die_handler) {
+    if( $die ) {
         $_depth = 0;
     }
 
@@ -316,20 +316,23 @@ sub _error_handler {
     my $line = $st->lines->[ $st->{ pc } ] || 0;
     my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str );
 
-    if ( $die_handler ) {
-        Carp::croak( $mess );
+    if ( !$die ) { # warn
+        # $h can ignore warnings
+        if ( my $h = $st->self->{ warn_handler } ) {
+            $h->( $mess );
+        }
+        else {
+            Carp::carp( $mess );
+        }
     }
-    else {
-
-    if ( my $h = $st->self->{ warn_handler } ) {
-        $h->( $mess );
+    else { # die
+        # $h cannot ignore errors
+        if(my $h = $st->self->{ die_handler } ) {
+            $h->( $mess );
+        }
+        Carp::croak( $mess ); # MUST DIE!
     }
-    else {
-        Carp::carp( $mess );
-    }
-
-    }
-
+    return;
 }
 
 
