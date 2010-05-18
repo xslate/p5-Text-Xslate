@@ -562,8 +562,8 @@ sub tx_fetch {
     my ( $st, $var, $key ) = @_;
     my $ret;
 
-    if ( Scalar::Util::blessed $var ) {
-        $ret = tx_call( $_[0], 1, $key, $var );
+    if ( Scalar::Util::blessed($var) ) {
+        $ret = tx_call( $st, 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {
@@ -574,7 +574,7 @@ sub tx_fetch {
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
-        if ( defined $key and $key =~ /[-.0-9]/ ) {
+        if ( Scalar::Util::looks_like_number($key) ) {
             $ret = $var->[ $key ];
         }
         else {
@@ -615,16 +615,17 @@ sub tx_warn {
 
 
 sub tx_neat {
-    if ( defined $_[0] ) {
-        if ( $_[0] =~ /^-?[.0-9]+$/ ) {
-            return $_[0];
+    my($s) = @_;
+    if ( defined $s ) {
+        if ( ref($s) || Scalar::Util::looks_like_number($s) ) {
+            return $s;
         }
         else {
-            return "'" . $_[0] . "'";
+            return "'$s'";
         }
     }
     else {
-        'nil';
+        return 'nil';
     }
 }
 
