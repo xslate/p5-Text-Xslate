@@ -2,6 +2,8 @@
 use strict;
 use Text::Xslate;
 
+use UNIVERSAL(); # makes NYTProf happy
+
 {
     package BlogEntry;
     use Mouse;
