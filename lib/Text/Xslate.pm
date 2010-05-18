@@ -211,9 +211,13 @@ sub load_file {
                     $dep_mtime = '+inf'; # force reload
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
-                if($dep_mtime > ($mtime // $f->{orig_mtime})){
+                if($dep_mtime > ($mtime // $f->{cache_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+                    printf "---> %s(%s) is newer than %s(%s)\n",
+                        $code->[1], scalar localtime($dep_mtime),
+                        $cachepath, scalar localtime($mtime // $f->{cache_mtime})
+                            if _DUMP_LOAD_FILE;
                     goto &load_file; # retry
                 }
             }
