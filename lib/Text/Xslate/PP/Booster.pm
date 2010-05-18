@@ -8,7 +8,7 @@ use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
 
-our $VERSION = '0.0001';
+our $VERSION = '0.1014';
 
 my %CODE_MANIP = ();
 my $TX_OPS = \%Text::Xslate::OPS;
@@ -24,10 +24,6 @@ has ops => ( is => 'rw', default => sub { []; } );
 
 has current_line => ( is => 'rw', default => 0 );
 
-has rvalue => ( is => 'rw', default => sub { []; } );
-
-has lvalue => ( is => 'rw', default => sub { []; } );
-
 has exprs => ( is => 'rw' );
 
 has sa => ( is => 'rw' );
@@ -40,14 +36,20 @@ has lvar => ( is => 'rw', default => sub { []; } );
 # public APIs
 #
 
-sub opcode2perlcode_str {
-    my ( $class, $proto ) = @_;
+sub convert_opcode {
+    my ( $class, $proto, $parent ) = @_;
     my $len = scalar( @$proto );
-    my @lines;
 
     my $state = $class->new(
         ops => $proto,
     );
+
+    if ( $parent ) { # 引き継ぐ
+        $state->sa( $parent->sa );
+        $state->sb( $parent->sb );
+        $state->lvar( [ @{ $parent->lvar } ] );
+        $state->{ within_cond } = $parent->{ within_cond };
+    }
 
     # コード生成
     my $i = 0;
@@ -75,11 +77,6 @@ sub opcode2perlcode_str {
                 next;
             }
 
-            while ( $proc->{ else_end  }-- ) { # elseブロックの閉じ
-                $state->indent_depth( $state->indent_depth - 1 );
-                $state->write_lines( "}\n" );
-                $state->write_code( "\n" );
-            }
         }
 
         $manip->( $state, $arg, defined $line ? $line : '' );
@@ -87,12 +84,24 @@ sub opcode2perlcode_str {
         $state->current_line( ++$i );
     }
 
+    return $state;
+}
+
+
+sub opcode2perlcode_str {
+    my ( $class, $proto ) = @_;
+
+    #my $tx = Text::Xslate->new;
+    #print $tx->_compiler->as_assembly( $proto );
+
+    my $state = $class->convert_opcode( $proto );
+
     # 書き出し
 
     my $perlcode =<<'CODE';
 sub {
     my ( $st ) = $_[0];
-    my ( $sa, $sb, $sv, $targ, $st2, $pad, @sp );
+    my ( $sa, $sb, $sv, $targ, $st2, $pad, @sp, %macro );
     my $output = '';
     my $vars  = $st->{ vars };
 
@@ -100,7 +109,11 @@ sub {
 
 CODE
 
-    if ( $state->{ macro_lines } ) {
+    if ( $state->{ macro_mem } ) {
+        for ( reverse @{ $state->{ macro_mem } } ) {
+            push @{ $state->{ macro_lines } }, splice( @{ $state->{ lines } },  $_->[0], $_->[1] );
+        }
+
         $perlcode .=<<'CODE';
     # macro
 CODE
@@ -159,15 +172,26 @@ $CODE_MANIP{ 'move_to_sb' } = sub {
 $CODE_MANIP{ 'move_from_sb' } = sub {
     my ( $state, $arg, $line ) = @_;
     $state->sa( $state->sb );
+
+    if ( $state->{ within_cond } ) {
+        $state->write_lines( sprintf( '$sa = %s;', $state->sb ) );
+    }
+
 };
 
 
 $CODE_MANIP{ 'save_to_lvar' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $v = sprintf( '( $pad->[ -1 ]->[ %s ] = %s )', $arg, $state->sa );
+    $state->lvar->[ $arg ] = $state->sa;
     $state->sa( $v );
-    #$state->lvar->[ $arg ] = $state->sa;
-    $state->lvar->[ $arg ] = $v;
+
+    my $op = $state->{ ops }->[ $state->current_line + 1 ];
+
+    unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)/ ) { # ...
+        $state->write_lines( sprintf( '%s;', $v )  );
+    }
+
 };
 
 
@@ -179,13 +203,13 @@ $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
 
 $CODE_MANIP{ 'push' } = sub { # not yet implemeted
     my ( $state, $arg, $line ) = @_;
-    $state->write_lines( sprintf( 'push @{ $sp[-1] }, %s;', $state->sa() ) );
+    push @{ $state->{ SP }->[ -1 ] }, $state->sa;
 };
 
 
 $CODE_MANIP{ 'pushmark' } = sub { # not yet implemeted
     my ( $state, $arg, $line ) = @_;
-    $state->write_lines( 'push @sp, [];' );
+    push @{ $state->{ SP } }, [];
 };
 
 
@@ -205,6 +229,7 @@ $CODE_MANIP{ 'literal_i' } = sub {
     my ( $state, $arg, $line ) = @_;
     $state->sa( $arg );
     $state->optimize_to_print( 'num' );
+    $state->optimize_to_expr();
 };
 
 
@@ -363,116 +388,31 @@ $CODE_MANIP{ 'filt' } = sub {
     my $i = $state->{ i };
     my $ops = $state->{ ops };
 
-    $state->sa( sprintf('eval { $sa->( %s ) };', $state->sb ) );
+    $state->sa( sprintf('( eval { %s->( %s ) } )', $state->sa, $state->sb ) );
 };
 
 
 $CODE_MANIP{ 'and' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $ops  = $state->ops;
-    my $i    = $state->current_line;
-    my $expr = $state->sa();
-
-    if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # if cond
-        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
-        $state->write_lines( sprintf( <<'CODE' , $expr ) );
-if ( %s ) {
-
-CODE
-
-        $state->exprs( '' );
-        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
-        $state->{ if_end }->{ $i + $arg - 1 }++; # block end
-    }
-    else { # ternary
-        my $pre_exprs = $state->exprs || '';
-        $state->exprs( $pre_exprs . $expr . ' && ' ); # 保存
-    }
-
+    return check_logic( $state, $state->current_line, $arg, 'and' );
 };
-
 
 
 $CODE_MANIP{ 'dand' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $ops  = $state->ops;
-    my $i    = $state->current_line;
-    my $expr = $state->sa();
-
-    if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # cond
-        my $cond = $ops->[ $i + $arg - 1 ]->[ 1 ] < 0 ? 'while' : 'if';
-
-        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
-        $state->write_lines( sprintf( <<'CODE' , $cond, $expr ) );
-%s ( defined( %s ) ) {
-
-CODE
-
-        $state->exprs( '' );
-        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
-
-        if ( $cond eq 'if' ) {
-            $state->{ if_end }->{ $i + $arg - 1 }++; # if block end
-        }
-        else {
-            $state->{ while_end }->{ $i + $arg - 1 }++; # while block end
-        }
-
-    }
-    else { # ternary
-        my $pre_exprs = $state->exprs || '';
-        $state->exprs( $pre_exprs . $expr . ' && ' ); # 保存
-    }
-
-#    $state->write_lines( "# and" );
+    return check_logic( $state, $state->current_line, $arg, 'dand' );
 };
 
 
 $CODE_MANIP{ 'or' } = sub {
     my ( $state, $arg, $line ) = @_;
-    my $ops  = $state->ops;
-    my $i    = $state->current_line;
-    my $expr = $state->sa();
+    return check_logic( $state, $state->current_line, $arg, 'or' );
+};
 
-    if ( $ops->[ $i + $arg - 1 ]->[ 0 ] eq 'goto' ) { # if cond
-        $expr = ($state->exprs || '') . $expr; # 前に式があれば加える
-        $state->write_lines( sprintf( <<'CODE' , $expr ) );
-if ( !( %s ) ) {
 
-CODE
-
-        $state->exprs( '' );
-        $state->indent_depth( $state->indent_depth + 1 ); # ブロック内
-        $state->{ if_end }->{ $i + $arg - 1 }++; # block end
-    }
-    elsif ( $ops->[ $i + $arg ]->[ 0 ] =~ /and|or|dand|dor/ ) {
-        my $pre_exprs = $state->exprs || '';
-        $state->exprs( $pre_exprs . $expr . ' || ' ); # 保存
-    }
-    elsif ( $arg == 2 ) { # $x ? $y : $z;
-        my $line = $state->current_line;
-        my @args;
-
-#        print $state->sa,"\n";
-#        print $state->sb,"\n";
-#        print $state->lvar->[0],"\n";
-
-        while ( $arg-- ) {
-            my ( $opname ) = $ops->[ ++$line ]->[0];
-            push @args, (
-                  $opname eq 'load_lvar_to_sb' ? $state->lvar->[0]
-                : $opname eq 'move_from_sb'    ? $state->sb
-                : die
-            );
-            $state->{ proc }->{ $line }->{ skip } = 1;
-        }
-
-        $state->sa( sprintf( '%s ? %s : %s' , $state->sa, reverse @args ) );
-    }
-    else {
-        die;
-    }
-
+$CODE_MANIP{ 'dor' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    return check_logic( $state, $state->current_line, $arg, 'dor' );
 };
 
 
@@ -480,6 +420,18 @@ $CODE_MANIP{ 'not' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $sv = $state->sa();
     $state->sa( sprintf( '( !%s )', $sv ) );
+};
+
+
+$CODE_MANIP{ 'plus' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    $state->sa( sprintf( '+ %s', $state->sa ) );
+};
+
+
+$CODE_MANIP{ 'minus' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    $state->sa( sprintf( '- %s', $state->sa ) );
 };
 
 
@@ -524,8 +476,11 @@ $CODE_MANIP{ 'macrocall' } = sub {
     my ( $state, $arg, $line ) = @_;
     my $ops  = $state->ops;
     $state->optimize_to_print( 'num' );
-    $state->write_lines( '$pad->[-1] = pop( @sp );' );
-    $state->sa( sprintf( '$tx_pp_boost_macro_%s->()', $state->sa() ) );
+
+    $state->sa( sprintf( '$macro{\'%s\'}->(%s)',
+        $state->sa(),
+        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $state->{ SP } } } ) )
+    ) );
 };
 
 
@@ -534,7 +489,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 
     $state->{ macro_begin } = $state->current_line;
 
-    $state->write_lines( sprintf( 'my $tx_pp_boost_macro_%s = sub {', $arg ) );
+    $state->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
     $state->indent_depth( $state->indent_depth + 1 );
     $state->write_lines( sprintf( 'my $output;' ) );
 };
@@ -551,49 +506,39 @@ $CODE_MANIP{ 'macro_end' } = sub {
 
     $state->write_lines( sprintf( "};\n" ) );
 
-    my $macro_start = $state->{ macro_begin };
-    my $macro_end   = $state->current_line;
-
-    push @{ $state->{ macro_lines } }, splice( @{ $state->{ lines } },  $macro_start, $macro_end );
-
+    push @{ $state->{ macro_mem } }, [ $state->{ macro_begin }, $state->current_line ];
 };
 
 
 $CODE_MANIP{ 'macro' } = sub {
     my ( $state, $arg, $line ) = @_;
-
     $state->sa( $arg );
-
-    $state->write_lines( 'push @{$pad}, [];' );
-    $state->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'function' } = sub { # not yet implemebted
     my ( $state, $arg, $line ) = @_;
-    $state->write_lines(
-        sprintf('$sa = $st->function->{ %s } or Carp::croak( "Function %s is not registered" );', $arg, $arg )
+    $state->sa(
+        sprintf('$st->function->{ %s }', $arg )
     );
 };
 
-
-=pod
 
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $state, $arg, $line ) = @_;
-#    $state->sa(
-#        sprintf('call( $st, 0, $sa, @{ pop @sp } )' )
-#    );
-    $state->write_lines(
-        sprintf('$sa = call( $st, 0, $sa, @{ pop @sp } );' )
-    );
-
     $state->sa(
-        sprintf( '$sa' )
+        sprintf('call( $st, 0, %s, %s )', $state->sa, join( ', ', @{ pop @{ $state->{ SP } } } ) )
     );
 };
 
-=cut
+
+$CODE_MANIP{ 'methodcall_s' } = sub {
+    my ( $state, $arg, $line ) = @_;
+    $state->sa(
+        sprintf('call( $st, 1, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
+    );
+};
+
 
 $CODE_MANIP{ 'goto' } = sub {
     my ( $state, $arg, $line ) = @_;
@@ -603,18 +548,6 @@ $CODE_MANIP{ 'goto' } = sub {
         $state->indent_depth( $state->indent_depth - 1 );
         pop @{ $state->{ for_level } };
         $state->write_lines( '}' );
-    }
-    elsif ( delete $state->{ if_end }->{ $i } ) { # ifのブロックを閉じ、elseブロックを開く
-        $state->indent_depth( $state->indent_depth - 1 );
-
-        $state->write_lines( "}\nelse {" );
-
-        $state->{ proc }->{ $i + $arg }->{ 'else_end' }++;
-        $state->indent_depth( $state->indent_depth + 1 ); # else内
-    }
-    elsif ( delete $state->{ while_end }->{ $i } ) { # whileブロックを閉じる
-        $state->indent_depth( $state->indent_depth - 1 );
-        $state->write_lines( "}" );
     }
     else {
         die "invalid goto op";
@@ -633,10 +566,182 @@ $CODE_MANIP{ 'end' } = sub {
     $state->write_lines( "# process end" );
 };
 
+#
+#
+#
+
+
+sub check_logic {
+    my ( $state, $i, $arg, $type ) = @_;
+    my $ops = $state->ops;
+    my $type_store = $type;
+
+    my $next_opname = $ops->[ $i + $arg ]->[ 0 ] || '';
+
+    if ( $next_opname =~ /and|or/ ) { # &&, ||
+        $type = $type eq 'and'  ? ' && '
+              : $type eq 'dand' ? 'defined( %s )'
+              : $type eq 'or'   ? ' || '
+              : $type eq 'dor'  ? '!(defined( %s ))'
+              : die
+              ;
+        my $pre_exprs = $state->exprs || '';
+        $state->exprs( $pre_exprs . $state->sa() . $type ); # 保存
+        return;
+    }
+
+    my $opname = $ops->[ $i + $arg - 1 ]->[ 0 ]; # goto or ?
+    my $oparg  = $ops->[ $i + $arg - 1 ]->[ 1 ];
+
+    $type = $type eq 'and'  ? '%s'
+          : $type eq 'dand' ? 'defined( %s )'
+          : $type eq 'or'   ? '!( %s )'
+          : $type eq 'dor'  ? '!(defined( %s ))'
+          : die
+          ;
+
+    if ( $opname eq 'goto' and $oparg > 0 ) { # if-elseか三項演算子？
+        my $if_block_start   = $i + 1;                  # ifブロック開始行
+        my $if_block_end     = $i + $arg - 2;           # ifブロック終了行 - goto分も引く
+        my $else_block_start = $i + $arg;               # elseブロック開始行
+        my $else_block_end   = $i + $arg + $oparg - 2;  # elseブロック終了行 - goto分を引く
+
+        my ( $sa_1st, $sa_2nd );
+
+        $state->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+
+        for ( $if_block_start .. $if_block_end ) {
+            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+        }
+
+        my $st_1st = ref($state)->convert_opcode( [ @{ $ops }[ $if_block_start .. $if_block_end ] ] );
+
+        my $code = $st_1st->code;
+        if ( $code and $code !~ /^\n+$/ ) {
+            my $expr = $state->sa;
+            $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
+            $state->write_lines( sprintf( 'if ( %s ) {' , sprintf( $type, $expr ) ) );
+            $state->exprs( '' );
+            $state->write_lines( $code );
+            $state->write_lines( sprintf( '}' ) );
+        }
+        else { # 三項演算子として扱う
+            $sa_1st = $st_1st->sa;
+        }
+
+        if ( $else_block_end >= $else_block_start ) {
+
+            for (  $else_block_start .. $else_block_end ) { # 2
+                $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            }
+
+            my $st_2nd = ref($state)->convert_opcode( [ @{ $ops }[ $else_block_start .. $else_block_end ] ] );
+
+            my $code = $st_2nd->code;
+
+            if ( $code and $code !~ /^\n+$/ ) {
+                $state->write_lines( sprintf( 'else {' ) );
+                $state->write_lines( $code );
+                $state->write_lines( sprintf( '}' ) );
+            }
+            else { # 三項演算子として扱う
+                $sa_2nd = $st_2nd->sa;
+            }
+
+        }
+
+        if ( defined $sa_1st and defined $sa_2nd ) {
+            my $expr = $state->sa;
+            $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
+            $state->sa( sprintf( '(%s ? %s : %s)', sprintf( $type, $expr ), $sa_1st, $sa_2nd ) );
+        }
+        else {
+            $state->write_code( "\n" );
+        }
+
+    }
+    elsif ( $opname eq 'goto' and $oparg < 0 ) { # while
+        my $while_block_start   = $i + 1;                  # whileブロック開始行
+        my $while_block_end     = $i + $arg - 2;           # whileブロック終了行 - goto分も引く
+
+        for ( $while_block_start .. $while_block_end ) {
+            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+        }
+
+        $state->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+
+        my $st_wh = ref($state)->convert_opcode( [ @{ $ops }[ $while_block_start .. $while_block_end ] ] );
+
+        my $expr = $state->sa;
+        $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
+        $state->write_lines( sprintf( 'while ( %s ) {' , sprintf( $type, $expr ) ) );
+        $state->exprs( '' );
+        $state->write_lines( $st_wh->code );
+        $state->write_lines( sprintf( '}' ) );
+
+        $state->write_code( "\n" );
+    }
+    elsif ( logic_is_max_main( $ops, $i, $arg ) ) { # min, max
+
+        for ( $i + 1 .. $i + 2 ) {
+            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+        }
+
+        $state->sa( sprintf( '%s ? %s : %s', $state->sa, $state->sb, $state->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
+    }
+    else { # それ以外の処理
+
+        my $true_start = $i + 1;
+        my $true_end   = $i + $arg - 1; # 次の行までで完成のため、1足す
+        my $false_line = $i + $arg;
+
+            $false_line--; # 出力される場合は省略、falseで設定される値もない
+
+        for ( $true_start .. $true_end ) {
+            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+        }
+
+        my $st_true  = ref($state)->convert_opcode( [ @{ $ops }[ $true_start .. $true_end ] ], $state );
+
+        my $expr = $state->sa;
+        $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
+
+            $type = $type_store eq 'and'  ? 'cond'
+                  : $type_store eq 'or'   ? 'cond_or'
+                  : $type_store eq 'dand' ? 'cond_dand'
+                  : $type_store eq 'dor'  ? 'cond_dor'
+                  : die
+                  ;
+
+$state->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
+%s( %s, sub {
+%s
+}, )
+CODE
+
+    }
+
+}
+
+
+sub logic_is_max_main {
+    my ( $ops, $i, $arg ) = @_;
+        $ops->[ $i     ]->[ 0 ] eq 'or'
+    and $ops->[ $i + 1 ]->[ 0 ] eq 'load_lvar_to_sb'
+    and $ops->[ $i + 2 ]->[ 0 ] eq 'move_from_sb'
+    and $arg == 2
+}
+
 
 #
 # methods
 #
+
+
+sub code {
+    join( '', grep { defined $_ } @{ $_[0]->lines } );
+}
+
 
 sub write_lines {
     my ( $state, $lines, $idx ) = @_;
@@ -678,6 +783,20 @@ sub optimize_to_print {
     }
 
 }
+
+
+sub optimize_to_expr {
+    my ( $state ) = @_;
+    my $ops = $state->ops->[ $state->current_line + 1 ];
+
+    return unless $ops;
+    return unless ( $ops->[0] eq 'goto' );
+
+    $state->write_lines( sprintf( '$sa = %s;', $state->sa ) );
+    $state->sa( '$sa' );
+
+}
+
 
 #
 # utils
@@ -775,6 +894,30 @@ sub fetch {
     }
 
     return $ret;
+}
+
+
+sub cond {
+    my ( $value, $subref ) = @_;
+    $value ? $subref->() : $value;
+}
+
+
+sub cond_or {
+    my ( $value, $subref ) = @_;
+    !$value ? $subref->() : $value;
+}
+
+
+sub cond_dand {
+    my ( $value, $subref ) = @_;
+    defined $value ? $subref->() : $value;
+}
+
+
+sub cond_dor {
+    my ( $value, $subref ) = @_;
+    !(defined $value) ? $subref->() : $value;
 }
 
 
