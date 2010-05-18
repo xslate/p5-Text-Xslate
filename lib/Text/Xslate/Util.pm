@@ -25,7 +25,7 @@ our $NUMBER  = qr/ [+-]? (?:
             (?: x [0-9a-fA-F_]+) # hex
             |
             (?: b [01_]+ )       # binary
-        ))
+        )?)
     )/xms;
 
 our $DEBUG;
@@ -48,7 +48,7 @@ sub literal_to_value {
         $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
     }
     else { # number
-        if($value =~ s/\A ([+-]?) (?= 0.)//xms) {
+        if($value =~ s/\A ([+-]?) (?= 0)//xms) {
             $value = ($1 eq '-' ? -1 : +1) * oct($value); # can grok hex and binary
         }
         else {
