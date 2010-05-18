@@ -49,7 +49,8 @@ sub literal_to_value {
     }
     else { # number
         if($value =~ s/\A ([+-]?) (?= 0)//xms) {
-            $value = ($1 eq '-' ? -1 : +1) * oct($value); # can grok hex and binary
+            $value = ($1 eq '-' ? -1 : +1)
+                * oct($value); # also grok hex and binary
         }
         else {
             $value =~ s/_//xmsg;
