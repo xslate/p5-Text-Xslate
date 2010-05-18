@@ -98,9 +98,9 @@ sub opcode2perlcode_str {
     # 書き出し
 
     my $perlcode =<<'CODE';
-sub {
+sub { no warnings 'recursion';
     my ( $st ) = $_[0];
-    my ( $sa, $sb, $sv, $targ, $st2, $pad, @sp, %macro );
+    my ( $sa, $sb, $sv, $st2, $pad, %macro, $depth );
     my $output = '';
     my $vars  = $st->{ vars };
 
@@ -490,6 +490,11 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 
     $state->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
     $state->indent_depth( $state->indent_depth + 1 );
+
+    $state->write_lines(
+        sprintf( q{Carp::croak('Macro call is too deep (> 100) at "%s"') if ++$depth > 100;}, $arg )
+    );
+
     $state->write_lines( sprintf( 'my $output;' ) );
 };
 
@@ -497,6 +502,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 $CODE_MANIP{ 'macro_end' } = sub {
     my ( $state, $arg, $line ) = @_;
 
+    $state->write_lines( sprintf( '$depth--;' ) );
     $state->write_lines( sprintf( 'pop( @$pad );' ) );
     $state->write_code( "\n" );
     $state->write_lines( sprintf( '$output;' ) );
@@ -533,13 +539,9 @@ $CODE_MANIP{ 'funcall' } = sub {
 
 $CODE_MANIP{ 'methodcall_s' } = sub {
     my ( $state, $arg, $line ) = @_;
-
     $state->sa(
         sprintf('methodcall( $st, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
     );
-#    $state->sa(
-#        sprintf('call( $st, 1, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
-#    );
 };
 
 
@@ -845,7 +847,7 @@ sub call {
     my $obj = shift @args if ( $flag );
     my $ret;
 
-    if ( $flag ) { # method call
+    if ( $flag ) { # method call ... fetch() doesn't use methodcall for speed
         unless ( defined $obj ) {
             warn_in_booster( $st, "Use of nil to invoke method %s", $proc );
         }
