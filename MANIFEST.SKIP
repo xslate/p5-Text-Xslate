@@ -65,6 +65,10 @@ ppport\.h$
 \.txc$
 \.ttc$
 
+\.c$
+
 \.stackdump$
 
 t/600_app/out
+
+MYMETA\.yml$

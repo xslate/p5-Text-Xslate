@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1015';
+our $VERSION = '0.1017';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -31,7 +31,10 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
     }
 }
 
+use Carp ();
 use File::Spec;
+
+use constant _ST_MTIME => 9; # see perldoc -f stat
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
@@ -54,8 +57,15 @@ sub new {
 
     my %funcs;
     if(defined $args{import}) {
+        Carp::carp("'import' option has been renamed to 'module'"
+            . " because of the confliction with Perl's import() method."
+            . " Use 'module' instead");
         %funcs = import_from(@{$args{import}});
     }
+    if(defined $args{module}) {
+        %funcs = import_from(@{$args{module}});
+    }
+
     # function => { ... } overrides imported functions
     if(my $funcs_ref = $args{function}) {
         while(my($name, $body) = each %{$funcs_ref}) {
@@ -74,11 +84,9 @@ sub new {
     my $self = bless \%args, $class;
 
     if(defined $args{file}) {
-        require Carp;
         Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
     }
     if(defined $args{string}) {
-        require Carp;
         Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
         $self->load_string($args{string});
     }
@@ -117,12 +125,12 @@ sub find_file {
 
     foreach my $p(@{$self->{path}}) {
         $fullpath = File::Spec->catfile($p, $file);
-        $orig_mtime = (stat($fullpath))[9] // next; # does not exist
+        $orig_mtime = (stat($fullpath))[_ST_MTIME] // next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
 
         if(-f $cachepath) {
-            $cache_mtime = (stat(_))[9]; # compiled
+            $cache_mtime = (stat(_))[_ST_MTIME]; # compiled
 
             # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
@@ -193,20 +201,23 @@ sub load_file {
 
     my $protocode;
     if($is_compiled) {
-        $protocode = $self->_load_assembly($string);
+        $protocode = $self->deserialize($string);
 
         # checks the mtime of dependencies
         foreach my $code(@{$protocode}) {
             if($code->[0] eq 'depend') {
-                my $dep_mtime = (stat $code->[1])[9];
+                my $dep_mtime = (stat $code->[1])[_ST_MTIME];
                 if(!defined $dep_mtime) {
-                    # XXX: for FAIL reports on Windows
-                    $dep_mtime = 0;
+                    $dep_mtime = '+inf'; # force reload
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
-                if($dep_mtime > ($mtime // $f->{orig_mtime})){
+                if($dep_mtime > ($mtime // $f->{cache_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+                    printf "---> %s(%s) is newer than %s(%s)\n",
+                        $code->[1], scalar localtime($dep_mtime),
+                        $cachepath, scalar localtime($mtime // $f->{cache_mtime})
+                            if _DUMP_LOAD_FILE;
                     goto &load_file; # retry
                 }
             }
@@ -219,9 +230,8 @@ sub load_file {
         );
 
         if($self->{cache}) {
-            require File::Basename;
-
-            my $cachedir = File::Basename::dirname($cachepath);
+            my($volume, $dir) = File::Spec->splitpath($cachepath);
+            my $cachedir      = File::Spec->catpath($volume, $dir, '');
             if(not -e $cachedir) {
                 require File::Path;
                 File::Path::mkpath($cachedir);
@@ -229,8 +239,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->_magic;
-            print $out $self->_compiler->as_assembly($protocode);
+            print $out $self->serialize($protocode);
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -245,7 +254,7 @@ sub load_file {
     my $cache_mtime;
     if($self->{cache} < 2) {
         if($is_compiled) {
-            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[9];
+            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[_ST_MTIME];
         }
         else {
             $cache_mtime = 0; # no compiled cache, always need to reload
@@ -287,7 +296,7 @@ sub _compiler {
     return $compiler;
 }
 
-sub _load_assembly {
+sub deserialize {
     my($self, $assembly) = @_;
 
     my @protocode;
@@ -309,10 +318,14 @@ sub _load_assembly {
     return \@protocode;
 }
 
+sub serialize {
+    my($self, $protocode) = @_;
+    return $self->_magic . $self->_compiler->as_assembly($protocode);
+}
+
 sub _error {
     shift;
     unshift @_, 'Xslate: ';
-    require Carp;
     goto &Carp::croak;
 }
 
@@ -346,7 +359,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1015.
+This document describes Text::Xslate version 0.1017.
 
 =head1 SYNOPSIS
 
@@ -403,7 +416,8 @@ This document describes Text::Xslate version 0.1015.
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. That is, templates are
-compiled into xslate opcodes, and then executed by the xslate virtual machine.
+compiled into xslate intermediate code, and then executed by the xslate
+virtual machine.
 
 The philosophy for Xslate is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
@@ -430,8 +444,8 @@ This mechanism is also called as template inheritance.
 
 =head3 Syntax alternation
 
-The Xslate engine and parser/compiler are completely separated so that
-one can use alternative parsers.
+The Xslate virtual machine and the parser/compiler are completely separated
+so that one can use alternative parsers.
 
 For example, C<TTerse>, a Template-Toolkit-like parser, is supported as a
 completely different syntax.
@@ -470,18 +484,16 @@ Specifies the directory used for caches.
 
 =item C<< function => \%functions >>
 
-Specifies functions.
+Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
 
-Functions may be called as C<f($arg)> or C<$arg | f>.
-
-=item C<< import => [$module => ?\@import_args, ...] >>
+=item C<< module => [$module => ?\@import_args, ...] >>
 
 Imports functions from I<$module>. I<@import_args> is optional.
 
 For example:
 
     my $tx = Text::Xslate->new(
-        import => ['Data::Dumper'], # use Data::Dumper
+        module => ['Data::Dumper'], # use Data::Dumper
     );
     print $tx->render_string(
         '<: Dumper($x) :>',
@@ -489,8 +501,8 @@ For example:
     );
     # => $VAR = [42]
 
-You can use function based modules with the C<import> option and invoke
-object methods in templates. Thus, Xslate doesn't require namespaces for plugins.
+You can use function based modules with the C<module> option, and also can invoke
+object methods in templates. Thus, Xslate doesn't require the namespaces for plugins.
 
 =item C<< input_layer => $perliolayers // ':utf8' >>
 
@@ -498,13 +510,13 @@ Specifies PerlIO layers for reading templates.
 
 =item C<< syntax => $name // 'Kolon' >>
 
-Specifies the template syntax you use.
+Specifies the template syntax you want to use.
 
 I<$name> may be a short name (moniker), or a fully qualified name.
 
 =item C<< escape => $mode // 'html' >>
 
-Specifies the escape mode.
+Specifies the escape mode, which is automatically applied to template expressions.
 
 Possible escape modes are B<html> and B<none>.
 
@@ -515,7 +527,7 @@ Specifies the verbose level.
 If C<< $level == 0 >>, all the possible errors will be ignored.
 
 If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
-but severe errors (e.g. to invoke missing methods) will be warned.
+but severe errors (e.g. for a method to throw the error) will be warned.
 
 If C<< $level >= 2 >>, all the possible errors will be warned.
 
@@ -524,12 +536,14 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 =head3 B<< $tx->render($file, \%vars) :Str >>
 
 Renders a template file with variables, and returns the result.
+I<\%vars> can be omitted.
 
 Note that I<$file> may be cached according to the cache level.
 
 =head3 B<< $tx->render_string($string, \%vars) :Str >>
 
 Renders a template string with variables, and returns the result.
+I<\%vars> can be omitted.
 
 Note that I<$string> is never cached so that this method is suitable for testing.
 
@@ -540,7 +554,7 @@ as caches if needed.
 
 This method can be used for pre-compiling template files.
 
-=head3 Exportable functions
+=head2 Exportable functions
 
 =head3 C<< escaped_string($str :Str) -> EscapedString >>
 
@@ -559,7 +573,7 @@ For example:
 
 =head3 C<< html_escape($str :Str) -> EscapedString >>
 
-Escapes html special characters in I<$str>, and returns a escaped string (see above).
+Escapes html special characters in I<$str>, and returns an escaped string (see above).
 
 =head1 TEMPLATE SYNTAX
 
@@ -618,7 +632,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 =head1 DEPENDENCIES
 
-Perl 5.10.0 or later, and a C compiler.
+Perl 5.10.0 or later.
 
 =head1 BUGS
 
@@ -681,7 +695,7 @@ Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
 
 Makamaka Hannyaharamitu
 
-Maki, Daisuke
+Maki, Daisuke (lestrrat)
 
 =head1 LICENSE AND COPYRIGHT
 

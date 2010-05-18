@@ -58,7 +58,7 @@ has optimize => (
     is  => 'rw',
     isa => 'Int',
 
-    default => _OPTIMIZE // 2,
+    default => _OPTIMIZE // 3,
 );
 
 has lvar_id => ( # local varialbe id
@@ -499,13 +499,15 @@ sub _generate_proc { # block, before, around, after
         file   => $self->file,
     );
 
+    my @code;
+
     if($type ~~ [qw(macro block)]) {
         if(exists $self->macro_table->{$name}) {
             $self->_error("Redefinition of $type $name is found", $node);
         }
         $self->macro_table->{$name} = \%macro;
         if($type eq 'block') {
-            return(
+            @code = (
                 [ pushmark  => () ],
                 [ macro     => $name ],
                 [ macrocall => undef ],
@@ -521,7 +523,7 @@ sub _generate_proc { # block, before, around, after
 
     $self->lvar_release($arg_ix);
 
-    return; # no code, only definition
+    return @code;
 }
 
 sub _generate_if {

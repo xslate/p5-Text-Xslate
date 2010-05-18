@@ -10,10 +10,23 @@ our @EXPORT_OK = qw(
     $STRING $NUMBER $DEBUG
 );
 
+use Carp ();
+
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
-our $NUMBER  = qr/(?: [+-]? [0-9][0-9_]* (?: \. [0-9_]+)? )/xms;
+
+our $NUMBER  = qr/ [+-]? (?:
+        (?: [0-9][0-9_]* (?: \. [0-9_]+)? \b) # decimal
+        |
+        (?: 0 (?:
+            (?: [0-7_]+ )        # octal
+            |
+            (?: x [0-9a-fA-F_]+) # hex
+            |
+            (?: b [01_]+ )       # binary
+        )?)
+    )/xms;
 
 our $DEBUG;
 $DEBUG //= $ENV{XSLATE} // '';
@@ -28,22 +41,31 @@ sub literal_to_value {
     my($value) = @_;
     return undef if not defined $value;
 
-    if($value =~ s/"(.*)"/$1/){
+    if($value =~ s/"(.*)"/$1/xms){
         $value =~ s/\\(.)/$esc2char{$1} || $1/xmseg;
     }
-    elsif($value =~ s/'(.*)'/$1/) {
-        $value =~ s/\\(['\\])/$1/g; # ' for poor editors
+    elsif($value =~ s/'(.*)'/$1/xms) {
+        $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
+    }
+    else { # number
+        if($value =~ s/\A ([+-]?) (?= 0[0-7xb])//xms) {
+            $value = ($1 eq '-' ? -1 : +1)
+                * oct($value); # also grok hex and binary
+        }
+        else {
+            $value =~ s/_//xmsg;
+        }
     }
 
     return $value;
 }
 
 sub import_from {
-    require 'Mouse.pm';
-    my $meta = Mouse::Meta::Class->create_anon_class();
+    my $code = <<'T';
+package
+    Text::Xslate::Util::_import;
+T
 
-    my $anon = $meta->name;
-    my $code = sprintf "package %s;\n", $anon;
     for(my $i = 0; $i < @_; $i++) {
         $code .= "use $_[$i]";
         if(ref $_[$i+1]){
@@ -59,10 +81,16 @@ sub import_from {
     };
     Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;
 
-    return map {
-            my $c = Mouse::Util::get_code_ref($anon, $_);
-            $_ ne 'meta' && $c ? ($_ => $c): ();
-        } keys %{$meta->namespace};
+    require 'Mouse/Util.pm';
+
+    my @funcs = map {
+            my $c = Mouse::Util::get_code_ref('Text::Xslate::Util::_import', $_);
+            $c ? ($_ => $c) : ();
+        } keys %Text::Xslate::Util::_import::;
+
+    delete $Text::Xslate::Util::{'_import::'};
+
+    return @funcs;
 }
 
 sub p { # for debugging
@@ -85,5 +113,9 @@ Text::Xslate::Util - A set of utilities for Xslate
 =head1 DESCRIPTION
 
 This module provides internal utilities.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
 
 =cut

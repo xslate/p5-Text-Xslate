@@ -7,7 +7,7 @@ use Data::Dumper;
 use Time::localtime qw(localtime);
 
 my $tx = Text::Xslate->new(
-    import => [
+    module => [
         'Data::Dumper',
         'Time::localtime' => [qw(localtime)],
         'Scalar::Util'    => [qw(blessed)],

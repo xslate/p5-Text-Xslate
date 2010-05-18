@@ -130,6 +130,25 @@ T
 X
 
 
+    [<<'T', <<'X', "lower cased if"],
+[% if lang == "Xslate" -%]
+    foo
+[% elsif value == 10 -%]
+    bar
+[% else -%]
+    baz
+[% end -%]
+T
+    foo
+X
+
+    [<<'T', <<'X', "lower cased unless"],
+[% unless lang != "Xslate" -%]
+    ok
+[% end -%]
+T
+    ok
+X
 
 );
 

@@ -1,6 +1,20 @@
 Revision history for Perl extension Text::Xslate
 
-NOTE: The builtin methods are comming soon!
+0.1017 Tue May 18 14:35:30 2010
+    [NEW FEATURES]
+    - Support hex/oct/binary literals (e.g. 0xCAFE)
+    - Support lower-cased keywords in TTerse
+
+    [CHANGES]
+    - Rename 'import' option to 'module' because of the confliction with
+      Perl's import() method in App::Xslate
+
+0.1016 Sun May 16 13:59:08 2010
+    [NEW FEATURES]
+    - Support --pp (and --xs) option in Makefile.PL
+    - Support autoboxing; currently supported methods are:
+        For array: size(), join(), reverse()
+        For hash:  keys(), values(), kv() (and all the array methods)
 
 0.1015 Fri May 14 14:52:52 2010
     [BUG FIXES]

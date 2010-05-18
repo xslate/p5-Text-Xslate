@@ -61,6 +61,19 @@ BEGIN
 END
 X
 
+    [<<'T', <<'X', 'lower cased'],
+[% lang %]
+[% foreach type in types -%]
+* [% type %]
+[% end -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
 );
 
 foreach my $d(@data) {

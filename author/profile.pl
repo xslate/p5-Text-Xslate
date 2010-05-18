@@ -2,12 +2,16 @@
 use strict;
 use Text::Xslate;
 
+use UNIVERSAL(); # makes NYTProf happy
+
 {
     package BlogEntry;
     use Mouse;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }
+
+my $cache = shift(@ARGV) // 0;
 
 my @blog_entries = map{ BlogEntry->new($_) } (
     {
@@ -22,7 +26,8 @@ my @blog_entries = map{ BlogEntry->new($_) } (
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
         path  => ["./benchmark/template"],
-        cache => 0,
+        cache_dir => "./benchmark/template",
+        cache => $cache,
     );
 
     $tx->render('child.tx', { blog_entries => \@blog_entries });

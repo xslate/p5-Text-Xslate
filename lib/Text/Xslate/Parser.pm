@@ -296,9 +296,7 @@ sub lex {
         goto &lex; # tail call
     }
     elsif(s/\A ($NUMBER)//xmso){
-        my $value = $1;
-        $value =~ s/_//g;
-        return [ number => $value ];
+        return [ number => $1 ];
     }
     elsif(s/\A ($STRING)//xmso){
         return [ string => $1 ];
