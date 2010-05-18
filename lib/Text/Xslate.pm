@@ -686,7 +686,7 @@ Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
 
 Makamaka Hannyaharamitu
 
-Maki, Daisuke
+Maki, Daisuke (lestrrat)
 
 =head1 LICENSE AND COPYRIGHT
 

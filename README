@@ -28,4 +28,9 @@ Text::Xslate documentation is available as in POD. So you can do:
 
 to read the documentation online with your favorite pager.
 
-Goro Fuji (gfx)
+LICENSE AND COPYRIGHT
+
+Copyright (c) 2010, Fuji, Goro (gfx). All rights reserved.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
