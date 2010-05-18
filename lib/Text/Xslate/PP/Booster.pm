@@ -8,7 +8,7 @@ use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
 
-our $VERSION = '0.1014';
+our $VERSION = '0.1017';
 
 my %CODE_MANIP = ();
 my $TX_OPS = \%Text::Xslate::OPS;
@@ -48,7 +48,6 @@ sub convert_opcode {
         $state->sa( $parent->sa );
         $state->sb( $parent->sb );
         $state->lvar( [ @{ $parent->lvar } ] );
-        $state->{ within_cond } = $parent->{ within_cond };
     }
 
     # コード生成
@@ -201,13 +200,13 @@ $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
 };
 
 
-$CODE_MANIP{ 'push' } = sub { # not yet implemeted
+$CODE_MANIP{ 'push' } = sub {
     my ( $state, $arg, $line ) = @_;
     push @{ $state->{ SP }->[ -1 ] }, $state->sa;
 };
 
 
-$CODE_MANIP{ 'pushmark' } = sub { # not yet implemeted
+$CODE_MANIP{ 'pushmark' } = sub {
     my ( $state, $arg, $line ) = @_;
     push @{ $state->{ SP } }, [];
 };
@@ -534,9 +533,13 @@ $CODE_MANIP{ 'funcall' } = sub {
 
 $CODE_MANIP{ 'methodcall_s' } = sub {
     my ( $state, $arg, $line ) = @_;
+
     $state->sa(
-        sprintf('call( $st, 1, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
+        sprintf('methodcall( $st, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
     );
+#    $state->sa(
+#        sprintf('call( $st, 1, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
+#    );
 };
 
 
@@ -706,7 +709,7 @@ sub check_logic {
         my $expr = $state->sa;
         $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
 
-            $type = $type_store eq 'and'  ? 'cond'
+            $type = $type_store eq 'and'  ? 'cond_and'
                   : $type_store eq 'or'   ? 'cond_or'
                   : $type_store eq 'dand' ? 'cond_dand'
                   : $type_store eq 'dor'  ? 'cond_dor'
@@ -862,6 +865,63 @@ sub call {
 }
 
 
+
+use Text::Xslate::PP::Type::Pair;
+use Text::Xslate::PP::Type::Array;
+use Text::Xslate::PP::Type::Hash;
+
+use constant TX_ENUMERABLE => 'Text::Xslate::PP::Type::Array';
+use constant TX_KV         => 'Text::Xslate::PP::Type::Hash';
+
+my %builtin_method = (
+    size    => [0, TX_ENUMERABLE],
+    join    => [1, TX_ENUMERABLE],
+    reverse => [0, TX_ENUMERABLE],
+
+    keys    => [0, TX_KV],
+    values  => [0, TX_KV],
+    kv      => [0, TX_KV],
+);
+
+sub methodcall {
+    my ( $st, $method, $invocant, @args ) = @_;
+
+    my $retval;
+    if(Scalar::Util::blessed($invocant)) {
+        if($invocant->can($method)) {
+            $retval = eval { $invocant->$method(@args) };
+            if($@) {
+                error_in_booster($st, "%s" . "\t...", $@);
+            }
+            return $retval;
+        }
+        # fallback
+    }
+
+    if(!defined $invocant) {
+        warn_in_booster($st, "Use of nil to invoke method %s", $method);
+    }
+    else {
+        my $bm = $builtin_method{$method} || return undef;
+
+        my($nargs, $klass) = @{$bm};
+        if(@args != $nargs) {
+            error_in_booster($st,
+                "Builtin method %s requres exactly %d argument(s), "
+                . "but supplied %d",
+                $method, $nargs, scalar @args);
+            return undef;
+         }
+
+         $retval = eval {
+            $klass->new($invocant)->$method(@args);
+        };
+    }
+
+    return $retval;
+}
+
+
 sub fetch {
     my ( $st, $var, $key ) = @_;
     my $ret;
@@ -897,7 +957,7 @@ sub fetch {
 }
 
 
-sub cond {
+sub cond_and {
     my ( $value, $subref ) = @_;
     $value ? $subref->() : $value;
 }
@@ -941,15 +1001,25 @@ sub cond_ne {
 }
 
 
+sub is_verbose {
+    my $v = $_[0]->self->{ verbose };
+    defined $v ? $v : Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT;
+}
+
+
 sub warn_in_booster {
-    my ( $st, $msg, @args ) = @_;
-    Carp::carp( sprintf( $msg, @args ) );
+    my ( $st, $fmt, @args ) = @_;
+    if( is_verbose( $st ) > Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
 }
 
 
 sub error_in_booster {
-    my ( $st, $msg, @args ) = @_;
-    Carp::croak( sprintf( $msg, @args ) );
+    my ( $st, $fmt, @args ) = @_;
+    if( is_verbose( $st ) >= Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+        Carp::carp( sprintf( $fmt, @args ) );
+    }
 }
 
 
