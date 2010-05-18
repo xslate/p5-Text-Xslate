@@ -18,6 +18,7 @@ is $tx->render_string(
     { lang => undef }), "Hello,  world!", "error handler" for 1 .. 2;
 
 like $warn, qr/\b nil \b/xms, 'warnings are produced';
+like $warn, qr/^Xslate/;
 is $die, '';
 
 $warn = '';
@@ -31,6 +32,8 @@ is $tx->render_string(
 
 is $warn, '';
 like $die, qr{no/such/path}, 'the error handler was called';
+like $die, qr/^Xslate/;
 like $@,   qr{no/such/path}, 'errors are thrown, anyway';
+like $@,   qr/^Xslate/;
 
 done_testing;
