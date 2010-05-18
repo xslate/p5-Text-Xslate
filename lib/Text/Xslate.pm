@@ -14,7 +14,6 @@ use Text::Xslate::Util qw(
     literal_to_value
     import_from
 );
-use Carp ();
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
@@ -32,7 +31,10 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
     }
 }
 
+use Carp ();
 use File::Spec;
+
+use constant _ST_MTIME => 9; # see perldoc -f stat
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
@@ -123,12 +125,12 @@ sub find_file {
 
     foreach my $p(@{$self->{path}}) {
         $fullpath = File::Spec->catfile($p, $file);
-        $orig_mtime = (stat($fullpath))[9] // next; # does not exist
+        $orig_mtime = (stat($fullpath))[_ST_MTIME] // next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
 
         if(-f $cachepath) {
-            $cache_mtime = (stat(_))[9]; # compiled
+            $cache_mtime = (stat(_))[_ST_MTIME]; # compiled
 
             # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
@@ -199,14 +201,13 @@ sub load_file {
 
     my $protocode;
     if($is_compiled) {
-        $protocode = $self->_load_assembly($string);
+        $protocode = $self->deserialize($string);
 
         # checks the mtime of dependencies
         foreach my $code(@{$protocode}) {
             if($code->[0] eq 'depend') {
-                my $dep_mtime = (stat $code->[1])[9];
+                my $dep_mtime = (stat $code->[1])[_ST_MTIME];
                 if(!defined $dep_mtime) {
-                    # XXX: for FAIL reports on Windows
                     $dep_mtime = 0;
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
@@ -234,8 +235,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->_magic;
-            print $out $self->_compiler->as_assembly($protocode);
+            print $out $self->serialize($protocode);
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -250,7 +250,7 @@ sub load_file {
     my $cache_mtime;
     if($self->{cache} < 2) {
         if($is_compiled) {
-            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[9];
+            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[_ST_MTIME];
         }
         else {
             $cache_mtime = 0; # no compiled cache, always need to reload
@@ -292,7 +292,7 @@ sub _compiler {
     return $compiler;
 }
 
-sub _load_assembly {
+sub deserialize {
     my($self, $assembly) = @_;
 
     my @protocode;
@@ -312,6 +312,11 @@ sub _load_assembly {
     }
 
     return \@protocode;
+}
+
+sub serialize {
+    my($self, $protocode) = @_;
+    return $self->_magic . $self->_compiler->as_assembly($protocode);
 }
 
 sub _error {
