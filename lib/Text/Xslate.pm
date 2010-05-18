@@ -225,9 +225,8 @@ sub load_file {
         );
 
         if($self->{cache}) {
-            require File::Basename;
-
-            my $cachedir = File::Basename::dirname($cachepath);
+            my($volume, $dir) = File::Spec->splitpath($cachepath);
+            my $cachedir      = File::Spec->catpath($volume, $dir, '');
             if(not -e $cachedir) {
                 require File::Path;
                 File::Path::mkpath($cachedir);

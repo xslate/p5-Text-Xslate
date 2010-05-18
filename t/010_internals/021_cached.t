@@ -4,6 +4,9 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use File::Path;
+
+rmtree('t/template/cache');
 
 system $^X, (map { "-I$_" } @INC), "-we", <<'EOT';
     use Text::Xslate;
