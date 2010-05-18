@@ -70,3 +70,5 @@ ppport\.h$
 \.stackdump$
 
 t/600_app/out
+
+MYMETA\.yml$
