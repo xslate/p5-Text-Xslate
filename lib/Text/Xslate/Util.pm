@@ -17,7 +17,7 @@ my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
 
 our $NUMBER  = qr/ [+-]? (?:
-        (?: [1-9][0-9_]* (?: \. [0-9_]+)? ) # decimal
+        (?: [0-9][0-9_]* (?: \. [0-9_]+)? \b) # decimal
         |
         (?: 0 (?:
             (?: [0-7_]+ )        # octal
@@ -48,7 +48,7 @@ sub literal_to_value {
         $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
     }
     else { # number
-        if($value =~ s/\A ([+-]?) (?= 0)//xms) {
+        if($value =~ s/\A ([+-]?) (?= 0[0-7xb])//xms) {
             $value = ($1 eq '-' ? -1 : +1)
                 * oct($value); # also grok hex and binary
         }
