@@ -410,7 +410,8 @@ This document describes Text::Xslate version 0.1016.
 
 B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. That is, templates are
-compiled into xslate opcodes, and then executed by the xslate virtual machine.
+compiled into xslate intermediate code, and then executed by the xslate
+virtual machine.
 
 The philosophy for Xslate is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
@@ -437,8 +438,8 @@ This mechanism is also called as template inheritance.
 
 =head3 Syntax alternation
 
-The Xslate engine and parser/compiler are completely separated so that
-one can use alternative parsers.
+The Xslate virtual machine and the parser/compiler are completely separated
+so that one can use alternative parsers.
 
 For example, C<TTerse>, a Template-Toolkit-like parser, is supported as a
 completely different syntax.
@@ -509,7 +510,7 @@ I<$name> may be a short name (moniker), or a fully qualified name.
 
 =item C<< escape => $mode // 'html' >>
 
-Specifies the escape mode.
+Specifies the escape mode, which is automatically applied to template expressions.
 
 Possible escape modes are B<html> and B<none>.
 
@@ -520,7 +521,7 @@ Specifies the verbose level.
 If C<< $level == 0 >>, all the possible errors will be ignored.
 
 If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
-but severe errors (e.g. to invoke missing methods) will be warned.
+but severe errors (e.g. for a method to throw the error) will be warned.
 
 If C<< $level >= 2 >>, all the possible errors will be warned.
 
@@ -529,12 +530,14 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 =head3 B<< $tx->render($file, \%vars) :Str >>
 
 Renders a template file with variables, and returns the result.
+I<\%vars> can be omitted.
 
 Note that I<$file> may be cached according to the cache level.
 
 =head3 B<< $tx->render_string($string, \%vars) :Str >>
 
 Renders a template string with variables, and returns the result.
+I<\%vars> can be omitted.
 
 Note that I<$string> is never cached so that this method is suitable for testing.
 
@@ -564,7 +567,7 @@ For example:
 
 =head3 C<< html_escape($str :Str) -> EscapedString >>
 
-Escapes html special characters in I<$str>, and returns a escaped string (see above).
+Escapes html special characters in I<$str>, and returns an escaped string (see above).
 
 =head1 TEMPLATE SYNTAX
 
