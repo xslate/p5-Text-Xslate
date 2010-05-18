@@ -15,15 +15,16 @@ use Carp ();
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
+
 our $NUMBER  = qr/ [+-]? (?:
-        (?: [1-9][0-9_]* (?: \. [0-9_]+)? ) # int or real
+        (?: [1-9][0-9_]* (?: \. [0-9_]+)? ) # decimal
         |
         (?: 0 (?:
-            (?: [0-7]+ )           # octal
+            (?: [0-7_]+ )        # octal
             |
-            (?: x [0-9a-fA-F]+) # hex
+            (?: x [0-9a-fA-F_]+) # hex
             |
-            (?: b [01]+ )       # binary
+            (?: b [01_]+ )       # binary
         ))
     )/xms;
 
