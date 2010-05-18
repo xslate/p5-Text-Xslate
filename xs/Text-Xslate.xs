@@ -1480,7 +1480,6 @@ CODE:
         /* not reached */
     }
     LEAVE;
-    XSRETURN_EMPTY;
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString
