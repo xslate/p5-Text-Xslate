@@ -1,6 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
 0.1017
+    [NEW FEATURES]
+    - Support hex/oct/binary literals (e.g. 0xCAFE)
+    - Support lower-cased keywords in TTerse
+
     [CHANGES]
     - Rename 'import' option to 'module' because of the confliction with
       Perl's import() method in App::Xslate
