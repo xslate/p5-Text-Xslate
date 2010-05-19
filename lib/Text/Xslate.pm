@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1017';
+our $VERSION = '0.1019';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -279,8 +279,9 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        require Mouse::Util;
-        $compiler = Mouse::Util::load_class($compiler)->new(
+        require Any::Moose;
+        Any::Moose::load_class($compiler);
+        $compiler = $compiler->new(
             engine       => $self,
             syntax      => $self->{syntax},
             escape_mode => $self->{escape},
@@ -359,7 +360,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1017.
+This document describes Text::Xslate version 0.1019.
 
 =head1 SYNOPSIS
 

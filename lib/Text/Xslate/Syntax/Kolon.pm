@@ -1,10 +1,10 @@
 package Text::Xslate::Syntax::Kolon;
 use 5.010;
-use Mouse;
+use Any::Moose;
 
 extends qw(Text::Xslate::Parser);
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 
 __END__

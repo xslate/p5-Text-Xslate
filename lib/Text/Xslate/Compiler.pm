@@ -1,6 +1,7 @@
 package Text::Xslate::Compiler;
 use 5.010;
-use Mouse;
+use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
@@ -109,7 +110,7 @@ has syntax => (
 
 has escape_mode => (
     is  => 'rw',
-    isa => Mouse::Util::TypeConstraints::enum([qw(html none)]),
+    isa => enum([qw(html none)]),
 
     default => 'html',
 );
@@ -128,7 +129,7 @@ has parser => (
             return $syntax;
         }
         else {
-            my $parser_class = Mouse::Util::load_first_existing_class(
+            my $parser_class = Any::Moose::load_first_existing_class(
                 "Text::Xslate::Syntax::" . $syntax,
                 $syntax,
             );
@@ -823,7 +824,8 @@ sub _optimize_vmcode {
                 }
             }
             when('literal') {
-                if(Mouse::Util::TypeConstraints::Int($c->[$i][1])) {
+                my $constraint = find_type_constraint('Int');
+                if($constraint->check($c->[$i][1])) {
                     $c->[$i][0] = 'literal_i';
                 }
             }
@@ -900,7 +902,9 @@ sub _error {
     Carp::croak(sprintf 'Xslate::Compiler(%s:%d): %s', $self->file, $line, $message);
 }
 
-no Mouse;
+no Any::Moose;
+no Any::Moose '::Util::TypeConstraints';
+
 __PACKAGE__->meta->make_immutable;
 __END__
 

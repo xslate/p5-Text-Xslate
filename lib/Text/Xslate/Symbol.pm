@@ -1,6 +1,6 @@
 package Text::Xslate::Symbol;
 use 5.010;
-use Mouse;
+use Any::Moose;
 
 use overload
     '""' => sub{ $_[0]->id },
@@ -36,7 +36,7 @@ has value => (
     lazy    => 1,
     builder => 'id',
 #    default => sub{
-#        if(!defined $_[0]) { #XXX: Mouse::XS's bug
+#        if(!defined $_[0]) { #XXX: Any::Moose::XS's bug
 #            my(undef, $file, $line) = caller;
 #            warn "[bug] no invocant at $file line $line.\n";
 #            return '(null)';
@@ -215,7 +215,7 @@ sub clone {
     return $self->meta->clone_object($self, @_);
 }
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 
 __END__

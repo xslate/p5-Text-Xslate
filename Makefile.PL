@@ -5,6 +5,9 @@ use Module::Install::XSUtil 0.24;
 
 all_from 'lib/Text/Xslate.pm';
 
+requires 'Any::Moose' => '0.13';
+
+# XXX we don't handle Moose stuff here
 requires 'Mouse'                => '0.55';
 requires 'MouseX::NativeTraits' => '0.002';
 requires 'MouseX::Getopt'       => '0.2601';

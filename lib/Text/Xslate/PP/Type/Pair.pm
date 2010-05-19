@@ -1,21 +1,21 @@
 package Text::Xslate::PP::Type::Pair;
-use Mouse;
-
-{
-    package
-        Text::Xslate::Type::Pair;
-    use Mouse;
-    extends 'Text::Xslate::PP::Type::Pair';
-    no Mouse;
-    __PACKAGE__->meta->make_immutable();
-}
+use Any::Moose;
 
 has [qw(key value)] => (
-    is => 'rw',
+    is       => 'rw',
+    required => 1,
 );
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
+
+package
+    Text::Xslate::Type::Pair;
+use Any::Moose;
+extends 'Text::Xslate::PP::Type::Pair';
+no Any::Moose;
+__PACKAGE__->meta->make_immutable();
+
 __END__
 
 =head1 NAME

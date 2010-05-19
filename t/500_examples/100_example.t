@@ -22,6 +22,10 @@ sub perl {
     close OUT;
     close ERR;
 
+    foreach my $s($out, $err) {
+        $s =~ s/\r\n/\n/g;
+    }
+
     return($out, $err);
 }
 

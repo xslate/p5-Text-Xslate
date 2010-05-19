@@ -1,6 +1,6 @@
 package Text::Xslate::Syntax::Metakolon;
 use 5.010;
-use Mouse;
+use Any::Moose;
 
 extends qw(Text::Xslate::Parser);
 
@@ -9,7 +9,7 @@ sub _build_line_start { qr/\Q%/xms  }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 
 __END__

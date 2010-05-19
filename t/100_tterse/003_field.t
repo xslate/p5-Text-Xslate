@@ -18,7 +18,7 @@ my @data = (
 
 {
     package A;
-    use Mouse;
+    use Any::Moose;
 
     has foo => (
         is => 'rw',

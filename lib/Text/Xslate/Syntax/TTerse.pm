@@ -1,6 +1,6 @@
 package Text::Xslate::Syntax::TTerse;
 use 5.010;
-use Mouse;
+use Any::Moose;
 
 extends qw(Text::Xslate::Parser);
 
@@ -136,7 +136,7 @@ sub std_command {
     return $command;
 }
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 __END__
 

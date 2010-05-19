@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 package App::Xslate;
-use Mouse;
-use Mouse::Util::TypeConstraints;
+use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 use Cwd ();
 use File::Basename ();
 use File::Path ();
 use Text::Xslate;
 
-with 'MouseX::Getopt';
+with any_moose 'X::Getopt';
 
 has cache_dir => (
     is => 'ro',
@@ -46,7 +46,7 @@ has syntax => (
 );
 
 # --ignore=pattern
-MouseX::Getopt::OptionTypeMap->add_option_type_to_map(
+any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
     RegexpRef => '=s'
 );
 coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
