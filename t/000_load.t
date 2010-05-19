@@ -14,5 +14,5 @@ diag "Testing Text::Xslate/$Text::Xslate::VERSION";
 
 diag "Backend: ", B::svref_2object(Text::Xslate->can('render'))->XSUB ? "XS" : "PP";
 
-diag "Any::Moose Backend: ", Any::Moose::moose_is_preferred() ? "Moose" : "Mouse";
+diag "Any::Moose Backend: ", any_moose(), "/", any_moose()->VERSION;
 
