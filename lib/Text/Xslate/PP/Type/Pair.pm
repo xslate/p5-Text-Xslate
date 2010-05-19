@@ -1,12 +1,12 @@
 package Text::Xslate::PP::Type::Pair;
-use Mouse;
+use Any::Moose;
 
 {
     package
         Text::Xslate::Type::Pair;
-    use Mouse;
+    use Any::Moose;
     extends 'Text::Xslate::PP::Type::Pair';
-    no Mouse;
+    no Any::Moose;
     __PACKAGE__->meta->make_immutable();
 }
 
@@ -14,7 +14,7 @@ has [qw(key value)] => (
     is => 'rw',
 );
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 __END__
 

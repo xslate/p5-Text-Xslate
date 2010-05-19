@@ -1,6 +1,7 @@
 package Text::Xslate::Parser;
 use 5.010;
-use Mouse;
+use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
@@ -640,7 +641,8 @@ sub is_valid_field {
             return 1;
         }
         when("literal") {
-            return Mouse::Util::TypeConstraints::Int($token->id);
+            my $constraint = find_type_constraint('Int');
+            return $constraint->check($token->id);
         }
     }
     return 0;
@@ -1223,7 +1225,7 @@ sub _error {
         $near ne ';' ? ", near '$near'" : '');
 }
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 __END__
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 package App::Xslate;
-use Mouse;
-use Mouse::Util::TypeConstraints;
+use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 use Cwd ();
 use File::Basename ();
 use File::Path ();
 use Text::Xslate;
 
-with 'MouseX::Getopt';
+with any_moose 'X::Getopt';
 
 has cache_dir => (
     is => 'ro',

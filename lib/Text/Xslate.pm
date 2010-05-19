@@ -279,8 +279,9 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        require Mouse::Util;
-        $compiler = Mouse::Util::load_class($compiler)->new(
+        require Any::Moose;
+        Any::Moose::load_class($compiler);
+        $compiler = $compiler->new(
             engine       => $self,
             syntax      => $self->{syntax},
             escape_mode => $self->{escape},

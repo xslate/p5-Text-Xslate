@@ -1,12 +1,12 @@
 package Text::Xslate::PP::Type::Array;
-use Mouse;
+use Any::Moose;
 
 {
     package
         Text::Xslate::Type::Array;
-    use Mouse;
+    use Any::Moose;
     extends 'Text::Xslate::PP::Type::Array';
-    no Mouse;
+    no Any::Moose;
     __PACKAGE__->meta->make_immutable();
 }
 
@@ -62,7 +62,7 @@ sub reverse :method {
 }
 
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 __END__
 

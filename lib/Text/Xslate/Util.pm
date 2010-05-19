@@ -81,10 +81,22 @@ T
     };
     Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;
 
-    require 'Mouse/Util.pm';
+    require Any::Moose;
+    if (! __PACKAGE__->can('_get_code_ref')) {
+        *_get_code_ref = Any::Moose::moose_is_preferred() ?
+            sub {
+                my($package, $name) = @_;
+                no strict 'refs';
+                no warnings 'once';
+                use warnings FATAL => 'uninitialized';
+                return *{$package . '::' . $name}{CODE};
+            } :
+            *Mouse::Util::get_code_ref
+        ;
+    }
 
     my @funcs = map {
-            my $c = Mouse::Util::get_code_ref('Text::Xslate::Util::_import', $_);
+            my $c = _get_code_ref('Text::Xslate::Util::_import', $_);
             $c ? ($_ => $c) : ();
         } keys %Text::Xslate::Util::_import::;
 

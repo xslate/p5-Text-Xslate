@@ -34,7 +34,7 @@ my @data = (
 
 {
     package A;
-    use Mouse;
+    use Any::Moose;
     use overload '""' => sub{ "as_string" };
 
     has foo => (

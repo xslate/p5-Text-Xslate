@@ -1,6 +1,6 @@
 package Text::Xslate::PP::State;
 
-use Mouse; # we don't need Mouse for this module?
+use Any::Moose; # we don't need Any::Moose for this module?
 
 has tmpl => ( is => 'rw' );
 
@@ -26,7 +26,7 @@ sub pc_arg {
 }
 
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 1;
 __END__

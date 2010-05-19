@@ -1,12 +1,12 @@
 package Text::Xslate::PP::Type::Hash;
-use Mouse;
+use Any::Moose;
 
 {
     package
         Text::Xslate::Type::Hash;
-    use Mouse;
+    use Any::Moose;
     extends 'Text::Xslate::PP::Type::Hash';
-    no Mouse;
+    no Any::Moose;
     __PACKAGE__->meta->make_immutable();
 }
 
@@ -52,7 +52,7 @@ sub kv :method {
     ];
 }
 
-no Mouse;
+no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 __END__
 

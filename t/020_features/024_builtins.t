@@ -7,7 +7,7 @@ use Text::Xslate;
 
 {
     package MyArray;
-    use Mouse;
+    use Any::Moose;
 
     use overload
         '@{}' => sub{ shift->items() },
@@ -22,7 +22,7 @@ use Text::Xslate;
     );
 
     package MyKV;
-    use Mouse;
+    use Any::Moose;
 
     use overload
         '%{}' => sub{ shift->items() },
