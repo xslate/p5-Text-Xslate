@@ -81,7 +81,7 @@ b=2
 c=3
 X
 
-    [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'reversed kv' ],
+    [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'reversed kv (pairs as struct)' ],
 <:
     for $h.reverse() -> $pair {
         print $pair.key, "=", $pair.value, "\n";
@@ -93,6 +93,17 @@ b=2
 a=1
 X
 
+    [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'reversed kv (pairs as objects)' ],
+<:
+    for $h.reverse() -> $pair {
+        print $pair.key(), "=", $pair.value(), "\n";
+    }
+-:>
+T
+c=3
+b=2
+a=1
+X
 
     ['<: $o.size() :>', { o => MyArray->new() },                   '0', 'for object'],
     ['<: $o.size() :>', { o => MyArray->new(items => [0 .. 9]) }, '10'],

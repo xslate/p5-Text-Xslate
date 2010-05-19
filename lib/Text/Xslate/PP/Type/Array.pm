@@ -1,15 +1,6 @@
 package Text::Xslate::PP::Type::Array;
 use Mouse;
 
-{
-    package
-        Text::Xslate::Type::Array;
-    use Mouse;
-    extends 'Text::Xslate::PP::Type::Array';
-    no Mouse;
-    __PACKAGE__->meta->make_immutable();
-}
-
 use Text::Xslate::PP::Type::Pair;
 
 has _items => (
@@ -29,7 +20,7 @@ sub BUILDARGS {
         }
         elsif(ref($arg) eq 'HASH') {
             $items = [
-                map  { Text::Xslate::Type::Pair->new( key => $_, value => $arg->{$_} ) }
+                map  { Text::Xslate::PP::Type::Pair->new( key => "$_", value => $arg->{$_} ) }
                 sort { $a cmp $b } keys %{$arg},
             ];
         }
@@ -61,7 +52,13 @@ sub reverse :method {
     return [ reverse @{$self->_items} ];
 }
 
+no Mouse;
+__PACKAGE__->meta->make_immutable();
 
+package
+    Text::Xslate::Type::Array;
+use Mouse;
+extends 'Text::Xslate::PP::Type::Array';
 no Mouse;
 __PACKAGE__->meta->make_immutable();
 __END__
