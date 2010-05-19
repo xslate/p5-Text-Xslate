@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+0.1018 Wed May 19 15:34:47 2010
+    [CHANGES]
+    - Use Any::Moose (lestrrat)
+
+    [BUG FIXES]
+    - There was several issues on Mouse::PurePerl
+
 0.1017 Tue May 18 14:35:30 2010
     [NEW FEATURES]
     - Support hex/oct/binary literals (e.g. 0xCAFE)
