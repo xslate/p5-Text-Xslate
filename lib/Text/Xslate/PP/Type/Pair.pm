@@ -1,21 +1,21 @@
 package Text::Xslate::PP::Type::Pair;
 use Any::Moose;
 
-{
-    package
-        Text::Xslate::Type::Pair;
-    use Any::Moose;
-    extends 'Text::Xslate::PP::Type::Pair';
-    no Any::Moose;
-    __PACKAGE__->meta->make_immutable();
-}
-
 has [qw(key value)] => (
-    is => 'rw',
+    is       => 'rw',
+    required => 1,
 );
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
+
+package
+    Text::Xslate::Type::Pair;
+use Any::Moose;
+extends 'Text::Xslate::PP::Type::Pair';
+no Any::Moose;
+__PACKAGE__->meta->make_immutable();
+
 __END__
 
 =head1 NAME

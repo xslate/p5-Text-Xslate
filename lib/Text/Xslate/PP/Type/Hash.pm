@@ -1,15 +1,6 @@
 package Text::Xslate::PP::Type::Hash;
 use Any::Moose;
 
-{
-    package
-        Text::Xslate::Type::Hash;
-    use Any::Moose;
-    extends 'Text::Xslate::PP::Type::Hash';
-    no Any::Moose;
-    __PACKAGE__->meta->make_immutable();
-}
-
 use Text::Xslate::PP::Type::Pair;
 
 has [qw(_kv)] => (
@@ -54,6 +45,14 @@ sub kv :method {
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
+
+package
+    Text::Xslate::Type::Hash;
+use Any::Moose;
+extends 'Text::Xslate::PP::Type::Hash';
+no Any::Moose;
+__PACKAGE__->meta->make_immutable();
+
 __END__
 
 =head1 NAME
