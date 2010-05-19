@@ -1162,7 +1162,7 @@ __END__
 
 Text::Xslate::PP::Booster - Text::Xslate::PP speed up!!!!
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
