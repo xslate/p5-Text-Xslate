@@ -8,10 +8,9 @@ use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
 
-our $VERSION = '0.1017';
+our $VERSION = '0.1019';
 
 my %CODE_MANIP = ();
-my $TX_OPS = \%Text::Xslate::OPS;
 
 
 has indent_depth => ( is => 'rw', default => 1 );
@@ -41,75 +40,20 @@ has strict => ( is => 'rw', predicate => 1 );
 # public APIs
 #
 
-sub convert_opcode {
-    my ( $self, $proto, $parent, $opt ) = @_;
-    my $len = scalar( @$proto );
-
-    unless ( ref $self ) {
-        $self = $self->new(
-            strict => $opt->{ strict },
-        );
-    }
-
-    $self->ops( $proto );
-
-    if ( $parent ) { # 引き継ぐ
-        $self->sa( $parent->sa );
-        $self->sb( $parent->sb );
-        $self->lvar( [ @{ $parent->lvar } ] );
-    }
-
-    # コード生成
-    my $i = 0;
-
-    while ( $self->current_line < $len ) {
-        my $pair = $proto->[ $i ];
-
-        unless ( $pair and ref $pair eq 'ARRAY' ) {
-            Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
-        }
-
-        my ( $opname, $arg, $line ) = @$pair;
-        my $opnum = $TX_OPS->{ $opname };
-
-        unless ( $CODE_MANIP{ $opname } ) {
-            Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented on Booster", $opname ) );
-        }
-
-        my $manip  = $CODE_MANIP{ $opname };
-
-        if ( my $proc = $self->{ proc }->{ $i } ) {
-
-            if ( $proc->{ skip } ) {
-                $self->current_line( ++$i );
-                next;
-            }
-
-        }
-
-        $manip->( $self, $arg, defined $line ? $line : '' );
-
-        $self->current_line( ++$i );
-    }
-
-    return $self;
-}
-
-
-sub opcode2perlcode_str {
-    my ( $self, $proto, $opt ) = @_;
+sub opcode_to_perlcode_str {
+    my ( $self, $opcode, $opt ) = @_;
 
     #my $tx = Text::Xslate->new;
-    #print $tx->_compiler->as_assembly( $proto );
+    #print $tx->_compiler->as_assembly( $opcode );
 
-    $self->convert_opcode( $proto, undef, $opt );
+    $self->convert_opcode( $opcode, undef, $opt );
 
     # 書き出し
 
     my $perlcode =<<'CODE';
 sub { no warnings 'recursion';
     my ( $st ) = $_[0];
-    my ( $sa, $sb, $sv, $st2, $pad, %macro, $depth );
+    my ( $sv, $st2, $pad, %macro, $depth );
     my $output = '';
     my $vars  = $st->{ vars };
 
@@ -147,10 +91,10 @@ CODE
 }
 
 
-sub opcode2perlcode {
-    my ( $self, $proto ) = @_;
+sub opcode_to_perlcode {
+    my ( $self, $opcode ) = @_;
 
-    my $perlcode = $self->opcode2perlcode_str( $proto );
+    my $perlcode = $self->opcode_to_perlcode_str( $opcode );
 
     # TEST
     print "$perlcode\n" if $ENV{ BOOST_DISP };
@@ -162,9 +106,9 @@ sub opcode2perlcode {
     return $evaled_code;
 }
 
-sub is_strict { $_[0]->{strict} }
+
 #
-#
+# op to perl
 #
 
 $CODE_MANIP{ 'noop' } = sub {
@@ -364,6 +308,8 @@ CODE
 $CODE_MANIP{ 'for_start' } = sub {
     my ( $self, $arg, $line ) = @_;
 
+    $self->{ for_start_line } = $self->current_line;
+
     push @{ $self->{ for_level } }, {
         stack_id => $arg,
         ar       => $self->sa,
@@ -384,8 +330,9 @@ $CODE_MANIP{ 'for_iter' } = sub {
     }
 
     if ( $self->is_strict ) {
+        my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->{ for_start_line } );
         $self->write_lines(
-            sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $self->frame_and_line )
+            sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
         );
     }
     else {
@@ -662,9 +609,63 @@ $CODE_MANIP{ 'end' } = sub {
     $self->write_lines( "# process end" );
 };
 
+
 #
+# Internal
 #
-#
+
+sub convert_opcode {
+    my ( $self, $proto, $parent, $opt ) = @_;
+    my $len = scalar( @$proto );
+
+    unless ( ref $self ) {
+        $self = $self->new(
+            strict => $opt->{ strict },
+        );
+    }
+
+    $self->ops( $proto );
+
+    if ( $parent ) { # 引き継ぐ
+        $self->sa( $parent->sa );
+        $self->sb( $parent->sb );
+        $self->lvar( [ @{ $parent->lvar } ] );
+    }
+
+    # コード生成
+    my $i = 0;
+
+    while ( $self->current_line < $len ) {
+        my $pair = $proto->[ $i ];
+
+        unless ( $pair and ref $pair eq 'ARRAY' ) {
+            Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
+        }
+
+        my ( $opname, $arg, $line ) = @$pair;
+
+        unless ( $CODE_MANIP{ $opname } ) {
+            Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented on Booster", $opname ) );
+        }
+
+        my $manip  = $CODE_MANIP{ $opname };
+
+        if ( my $proc = $self->{ proc }->{ $i } ) {
+
+            if ( $proc->{ skip } ) {
+                $self->current_line( ++$i );
+                next;
+            }
+
+        }
+
+        $manip->( $self, $arg, defined $line ? $line : '' );
+
+        $self->current_line( ++$i );
+    }
+
+    return $self;
+}
 
 
 sub check_logic {
@@ -783,7 +784,7 @@ sub check_logic {
 
         $self->write_code( "\n" );
     }
-    elsif ( logic_is_max_main( $ops, $i, $arg ) ) { # min, max
+    elsif ( logic_is_max_min( $ops, $i, $arg ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
             $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
@@ -828,7 +829,7 @@ CODE
 }
 
 
-sub logic_is_max_main {
+sub logic_is_max_min {
     my ( $ops, $i, $arg ) = @_;
         $ops->[ $i     ]->[ 0 ] eq 'or'
     and $ops->[ $i + 1 ]->[ 0 ] eq 'load_lvar_to_sb'
@@ -840,6 +841,8 @@ sub logic_is_max_main {
 #
 # methods
 #
+
+sub is_strict { $_[0]->{strict} }
 
 
 sub code {
@@ -1160,20 +1163,41 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Booster - Text::Xslate::PP speed up!!!!
+Text::Xslate::PP::Booster - Text::Xslate::PP booster
 
 =head1 SYNOPSIS
 
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
     
+    my $optext  = q{<: $value :>};
     my $tx      = Text::Xslate->new();
-    my $code    = Text::Xslate::PP::Booster->opcode2perlcode_str( $tx->_compiler->compile( ... ) );
-    my $coderef = Text::Xslate::PP::Booster->opcode2perlcode( $tx->_compiler->compile( ... ) );
+    my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
+    my $code    = $booster->opcode_to_perlcode_str( $tx->_compiler->compile( $optext ) );
+    my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
 
 =head1 DESCRIPTION
 
 This module is called by Text::Xslate::PP internally.
+
+=head1 APIs
+
+=head2 new
+
+Constructor.
+
+  $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
+
+=head2 opcode_to_perlcode
+
+
+  $coderef = $booster->opcode_to_perlcode( $ops );
+
+=head2 opcode_to_perlcode_str
+
+
+  $str = $booster->opcode_to_perlcode_str( $ops );
+
 
 =head1 SEE ALSO
 

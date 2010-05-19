@@ -185,7 +185,7 @@ sub _initialize {
         my $strict = $boost eq '1' ? 1
                    : $boost eq '2' ? 0
                    : 0;
-        $st->{ boost_code } = Text::Xslate::PP::Booster->new( { strict => $strict } )->opcode2perlcode( $proto );
+        $st->{ boost_code } = Text::Xslate::PP::Booster->new({ strict => $strict })->opcode_to_perlcode( $proto );
     }
 
     $st->{code} = $code;
