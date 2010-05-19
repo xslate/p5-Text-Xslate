@@ -46,7 +46,7 @@ has syntax => (
 );
 
 # --ignore=pattern
-MouseX::Getopt::OptionTypeMap->add_option_type_to_map(
+any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
     RegexpRef => '=s'
 );
 coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
