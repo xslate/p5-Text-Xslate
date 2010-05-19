@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1019 Wed May 19 15:48:53 2010
+    [BUG FIXES]
+    - Workaround Win32 CRLF issues on tests
+
 0.1018 Wed May 19 15:34:47 2010
     [CHANGES]
     - Use Any::Moose (lestrrat)
