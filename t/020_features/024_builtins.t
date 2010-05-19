@@ -22,19 +22,18 @@ use Text::Xslate;
     );
 
     package MyKV;
-    use Any::Moose;
-
     use overload
         '%{}' => sub{ shift->items() },
         fallback => 1,
     ;
 
-    has items => (
-        is  => 'ro',
-        isa => 'HashRef',
+    sub new {
+        my($class, %args) = @_;
+        return bless [ $args{items} || {} ], $class;
+    }
 
-        default => sub { {} },
-    );
+    sub items { $_[0][0] }
+
 }
 
 my $tx = Text::Xslate->new(
