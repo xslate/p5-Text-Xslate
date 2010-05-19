@@ -180,9 +180,12 @@ sub _initialize {
 
     }
 
-    if ( $ENV{ XSLATE_PP_BOOST } ) {
+    if ( my $boost = $ENV{ XSLATE_PP_BOOST } ) {
         require Text::Xslate::PP::Booster;
-        $st->{ boost_code } = Text::Xslate::PP::Booster->opcode2perlcode( $proto );
+        my $strict = $boost eq '1' ? 1
+                   : $boost eq '2' ? 0
+                   : 0;
+        $st->{ boost_code } = Text::Xslate::PP::Booster->new( { strict => $strict } )->opcode2perlcode( $proto );
     }
 
     $st->{code} = $code;

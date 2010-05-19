@@ -32,28 +32,37 @@ has sb => ( is => 'rw' );
 
 has lvar => ( is => 'rw', default => sub { []; } );
 
+has framename => ( is => 'rw', default => 'main' );
+
+has strict => ( is => 'rw', predicate => 1 );
+
+
 #
 # public APIs
 #
 
 sub convert_opcode {
-    my ( $class, $proto, $parent ) = @_;
+    my ( $self, $proto, $parent, $opt ) = @_;
     my $len = scalar( @$proto );
 
-    my $state = $class->new(
-        ops => $proto,
-    );
+    unless ( ref $self ) {
+        $self = $self->new(
+            strict => $opt->{ strict },
+        );
+    }
+
+    $self->ops( $proto );
 
     if ( $parent ) { # 引き継ぐ
-        $state->sa( $parent->sa );
-        $state->sb( $parent->sb );
-        $state->lvar( [ @{ $parent->lvar } ] );
+        $self->sa( $parent->sa );
+        $self->sb( $parent->sb );
+        $self->lvar( [ @{ $parent->lvar } ] );
     }
 
     # コード生成
     my $i = 0;
 
-    while ( $state->current_line < $len ) {
+    while ( $self->current_line < $len ) {
         my $pair = $proto->[ $i ];
 
         unless ( $pair and ref $pair eq 'ARRAY' ) {
@@ -69,31 +78,31 @@ sub convert_opcode {
 
         my $manip  = $CODE_MANIP{ $opname };
 
-        if ( my $proc = $state->{ proc }->{ $i } ) {
+        if ( my $proc = $self->{ proc }->{ $i } ) {
 
             if ( $proc->{ skip } ) {
-                $state->current_line( ++$i );
+                $self->current_line( ++$i );
                 next;
             }
 
         }
 
-        $manip->( $state, $arg, defined $line ? $line : '' );
+        $manip->( $self, $arg, defined $line ? $line : '' );
 
-        $state->current_line( ++$i );
+        $self->current_line( ++$i );
     }
 
-    return $state;
+    return $self;
 }
 
 
 sub opcode2perlcode_str {
-    my ( $class, $proto ) = @_;
+    my ( $self, $proto, $opt ) = @_;
 
     #my $tx = Text::Xslate->new;
     #print $tx->_compiler->as_assembly( $proto );
 
-    my $state = $class->convert_opcode( $proto );
+    $self->convert_opcode( $proto, undef, $opt );
 
     # 書き出し
 
@@ -108,16 +117,16 @@ sub { no warnings 'recursion';
 
 CODE
 
-    if ( $state->{ macro_mem } ) {
-        for ( reverse @{ $state->{ macro_mem } } ) {
-            push @{ $state->{ macro_lines } }, splice( @{ $state->{ lines } },  $_->[0], $_->[1] );
+    if ( $self->{ macro_mem } ) {
+        for ( reverse @{ $self->{ macro_mem } } ) {
+            push @{ $self->{ macro_lines } }, splice( @{ $self->{ lines } },  $_->[0], $_->[1] );
         }
 
         $perlcode .=<<'CODE';
     # macro
 CODE
 
-        $perlcode .= join ( '', grep { defined } @{ $state->{ macro_lines } } );
+        $perlcode .= join ( '', grep { defined } @{ $self->{ macro_lines } } );
     }
 
     $perlcode .=<<'CODE';
@@ -126,7 +135,7 @@ CODE
 
 CODE
 
-    $perlcode .= join( '', grep { defined } @{ $state->{lines} } );
+    $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
 
 
 $perlcode .=<<'CODE';
@@ -139,9 +148,9 @@ CODE
 
 
 sub opcode2perlcode {
-    my ( $class, $proto, $codes ) = @_;
+    my ( $self, $proto ) = @_;
 
-    my $perlcode = opcode2perlcode_str( @_ );
+    my $perlcode = $self->opcode2perlcode_str( $proto );
 
     # TEST
     print "$perlcode\n" if $ENV{ BOOST_DISP };
@@ -153,7 +162,7 @@ sub opcode2perlcode {
     return $evaled_code;
 }
 
-
+sub is_strict { $_[0]->{strict} }
 #
 #
 #
@@ -163,120 +172,159 @@ $CODE_MANIP{ 'noop' } = sub {
 
 
 $CODE_MANIP{ 'move_to_sb' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sb( $state->sa );
+    my ( $self, $arg, $line ) = @_;
+    $self->sb( $self->sa );
 };
 
 
 $CODE_MANIP{ 'move_from_sb' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( $state->sb );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( $self->sb );
 
-    if ( $state->{ within_cond } ) {
-        $state->write_lines( sprintf( '$sa = %s;', $state->sb ) );
+    if ( $self->{ within_cond } ) {
+        $self->write_lines( sprintf( '$sa = %s;', $self->sb ) );
     }
 
 };
 
 
 $CODE_MANIP{ 'save_to_lvar' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $v = sprintf( '( $pad->[ -1 ]->[ %s ] = %s )', $arg, $state->sa );
-    $state->lvar->[ $arg ] = $state->sa;
-    $state->sa( $v );
+    my ( $self, $arg, $line ) = @_;
+    my $v = sprintf( '( $pad->[ -1 ]->[ %s ] = %s )', $arg, $self->sa );
+    $self->lvar->[ $arg ] = $self->sa;
+    $self->sa( $v );
 
-    my $op = $state->{ ops }->[ $state->current_line + 1 ];
+    my $op = $self->{ ops }->[ $self->current_line + 1 ];
 
     unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)/ ) { # ...
-        $state->write_lines( sprintf( '%s;', $v )  );
+        $self->write_lines( sprintf( '%s;', $v )  );
     }
 
 };
 
 
 $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sb( $state->lvar->[ $arg ] );
+    my ( $self, $arg, $line ) = @_;
+    $self->sb( $self->lvar->[ $arg ] );
 };
 
 
 $CODE_MANIP{ 'push' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    push @{ $state->{ SP }->[ -1 ] }, $state->sa;
+    my ( $self, $arg, $line ) = @_;
+    push @{ $self->{ SP }->[ -1 ] }, $self->sa;
 };
 
 
 $CODE_MANIP{ 'pushmark' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    push @{ $state->{ SP } }, [];
+    my ( $self, $arg, $line ) = @_;
+    push @{ $self->{ SP } }, [];
 };
 
 
 $CODE_MANIP{ 'nil' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( 'undef' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( 'undef' );
 };
 
 
 $CODE_MANIP{ 'literal' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( '"' . escape( $arg ) . '"' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( '"' . escape( $arg ) . '"' );
 };
 
 
 $CODE_MANIP{ 'literal_i' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( $arg );
-    $state->optimize_to_print( 'num' );
-    $state->optimize_to_expr();
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( $arg );
+    $self->optimize_to_print( 'num' );
+    $self->optimize_to_expr();
 };
 
 
 $CODE_MANIP{ 'fetch_s' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '$vars->{ "%s" }', escape( $arg ) ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '$vars->{ "%s" }', escape( $arg ) ) );
 };
 
 
 $CODE_MANIP{ 'fetch_lvar' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
+    my ( $self, $arg, $line ) = @_;
+
+    $self->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
+
+    return unless $self->is_strict;
+
+    if ( $self->{ in_macro } ) {
+        my $macro = $self->{ in_macro };
+        unless ( exists $self->{ macro_args_num }->{ $macro }->{ $arg } ) {
+            $self->write_lines(
+                sprintf(
+                    'error_in_booster( $st, %s, %s, "Too few arguments for %s" );',
+                    $self->frame_and_line, $self->{ in_macro }
+                )
+            );
+        }
+    }
+
 };
 
 
 $CODE_MANIP{ 'fetch_field' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( 'fetch( $st, %s, %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+
+    if ( $self->is_strict ) {
+        $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
+    }
+    else {
+        $self->sa( sprintf( 'fetch( $st, %s, %s )', $self->sb(), $self->sa() ) );
+    }
+
+
 };
 
 
 $CODE_MANIP{ 'fetch_field_s' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $sv = $state->sa();
-    $state->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, escape( $arg ) ) );
+    my ( $self, $arg, $line ) = @_;
+    my $sv = $self->sa();
+
+    if ( $self->is_strict ) {
+        $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, escape( $arg ), $self->frame_and_line ) );
+    }
+    else {
+        $self->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, escape( $arg ) ) );
+    }
 };
 
 
 $CODE_MANIP{ 'print_raw' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $sv = $state->sa();
-    $state->write_lines( sprintf('$output .= %s;', $sv) );
-    $state->write_code( "\n" );
+    my ( $self, $arg, $line ) = @_;
+    my $sv = $self->sa();
+    $self->write_lines( sprintf('$output .= %s;', $sv) );
+    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'print_raw_s' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->write_lines( sprintf('$output .= "%s";', escape( $arg ) ) );
-    $state->write_code( "\n" );
+    my ( $self, $arg, $line ) = @_;
+    $self->write_lines( sprintf('$output .= "%s";', escape( $arg ) ) );
+    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'print' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $sv = $state->sa();
+    my ( $self, $arg, $line ) = @_;
+    my $sv = $self->sa();
+    my $err;
 
-    $state->write_lines( sprintf( <<'CODE', $sv) );
+    if ( $self->is_strict ) {
+        $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be printed" );', $self->frame_and_line );
+    }
+    else {
+        $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be printed" );' );
+    }
+
+
+    $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 $sv = %s;
 
 if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
@@ -293,17 +341,17 @@ elsif ( defined $sv ) {
     $output .= $sv;
 }
 else {
-    warn_in_booster( $st, "Use of nil to be printed" );
+    %s
 }
 CODE
 
-    $state->write_code( "\n" );
+    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'include' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->write_lines( sprintf( <<'CODE', $state->sa ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
 Text::Xslate::PP::tx_execute( $st2, undef, $vars );
 $output .= $st2->{ output };
@@ -314,251 +362,294 @@ CODE
 
 
 $CODE_MANIP{ 'for_start' } = sub {
-    my ( $state, $arg, $line ) = @_;
+    my ( $self, $arg, $line ) = @_;
 
-    push @{ $state->{ for_level } }, {
+    push @{ $self->{ for_level } }, {
         stack_id => $arg,
-        ar       => $state->sa,
+        ar       => $self->sa,
     };
 };
 
 
 $CODE_MANIP{ 'for_iter' } = sub {
-    my ( $state, $arg, $line ) = @_;
+    my ( $self, $arg, $line ) = @_;
 
-    $state->{ loop }->{ $state->current_line } = 1; # marked
+    $self->{ loop }->{ $self->current_line } = 1; # marked
 
-    my $stack_id = $state->{ for_level }->[ -1 ]->{ stack_id };
-    my $ar       = $state->{ for_level }->[ -1 ]->{ ar };
+    my $stack_id = $self->{ for_level }->[ -1 ]->{ stack_id };
+    my $ar       = $self->{ for_level }->[ -1 ]->{ ar };
 
-    $state->write_lines( sprintf( 'for ( @{ %s } ) {', $ar ) );
-    $state->write_code( "\n" );
+    if ( $self->{ in_macro } ) { # fetch_lvarのチェック用
+        $self->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
+    }
 
-    $state->indent_depth( $state->indent_depth + 1 );
+    if ( $self->is_strict ) {
+        $self->write_lines(
+            sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $self->frame_and_line )
+        );
+    }
+    else {
+        $self->write_lines( sprintf( 'for ( @{ %s } ) {', $ar eq 'undef' ? '[]' : $ar ) );
+    }
 
-    $state->write_lines( sprintf( '$pad->[ -1 ]->[ %s ] = $_;', $state->sa() ) );
-    $state->write_code( "\n" );
+    $self->write_code( "\n" );
+
+    $self->indent_depth( $self->indent_depth + 1 );
+
+    $self->write_lines( sprintf( '$pad->[ -1 ]->[ %s ] = $_;', $self->sa() ) );
+    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'add' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s + %s )', $state->sb(), $state->sa() ) );
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s + %s )', $self->sb(), $self->sa() ) );
+    $self->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'sub' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s - %s )', $state->sb(), $state->sa() ) );
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s - %s )', $self->sb(), $self->sa() ) );
+    $self->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'mul' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s * %s )', $state->sb(), $state->sa() ) );
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s * %s )', $self->sb(), $self->sa() ) );
+    $self->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'div' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s / %s )', $state->sb(), $state->sa() ) );
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s / %s )', $self->sb(), $self->sa() ) );
+    $self->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'mod' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s %% %s )', $state->sb(), $state->sa() ) );
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s %% %s )', $self->sb(), $self->sa() ) );
+    $self->optimize_to_print( 'num' );
 };
 
 
 $CODE_MANIP{ 'concat' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s . %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s . %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'filt' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $i = $state->{ i };
-    my $ops = $state->{ ops };
+    my ( $self, $arg, $line ) = @_;
+    my $i = $self->{ i };
+    my $ops = $self->{ ops };
 
-    $state->sa( sprintf('( eval { %s->( %s ) } )', $state->sa, $state->sb ) );
+    $self->sa( sprintf('( eval { %s->( %s ) } )', $self->sa, $self->sb ) );
 };
 
 
 $CODE_MANIP{ 'and' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    return check_logic( $state, $state->current_line, $arg, 'and' );
+    my ( $self, $arg, $line ) = @_;
+    return check_logic( $self, $self->current_line, $arg, 'and' );
 };
 
 
 $CODE_MANIP{ 'dand' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    return check_logic( $state, $state->current_line, $arg, 'dand' );
+    my ( $self, $arg, $line ) = @_;
+    return check_logic( $self, $self->current_line, $arg, 'dand' );
 };
 
 
 $CODE_MANIP{ 'or' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    return check_logic( $state, $state->current_line, $arg, 'or' );
+    my ( $self, $arg, $line ) = @_;
+    return check_logic( $self, $self->current_line, $arg, 'or' );
 };
 
 
 $CODE_MANIP{ 'dor' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    return check_logic( $state, $state->current_line, $arg, 'dor' );
+    my ( $self, $arg, $line ) = @_;
+    return check_logic( $self, $self->current_line, $arg, 'dor' );
 };
 
 
 $CODE_MANIP{ 'not' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $sv = $state->sa();
-    $state->sa( sprintf( '( !%s )', $sv ) );
+    my ( $self, $arg, $line ) = @_;
+    my $sv = $self->sa();
+    $self->sa( sprintf( '( !%s )', $sv ) );
 };
 
 
 $CODE_MANIP{ 'plus' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '+ %s', $state->sa ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '+ %s', $self->sa ) );
 };
 
 
 $CODE_MANIP{ 'minus' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '- %s', $state->sa ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '- %s', $self->sa ) );
 };
 
 
 $CODE_MANIP{ 'eq' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( 'cond_eq( %s, %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'cond_eq( %s, %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'ne' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( 'cond_ne( %s, %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'cond_ne( %s, %s )', $self->sb(), $self->sa() ) );
 };
 
 
 
 $CODE_MANIP{ 'lt' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s < %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s < %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'le' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s <= %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s <= %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'gt' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s > %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s > %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'ge' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( sprintf( '( %s >= %s )', $state->sb(), $state->sa() ) );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s >= %s )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'macrocall' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $ops  = $state->ops;
-    $state->optimize_to_print( 'num' );
+    my ( $self, $arg, $line ) = @_;
+    my $ops  = $self->ops;
 
-    $state->sa( sprintf( '$macro{\'%s\'}->(%s)',
-        $state->sa(),
-        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $state->{ SP } } } ) )
+    $self->optimize_to_print( 'num' );
+
+    # 引数の値をマーク
+    for my $i ( 0 .. $#{ $self->{ SP }->[ -1 ] } ) {
+        $self->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
+    }
+
+    $self->sa( sprintf( '$macro{\'%s\'}->(%s)',
+        $self->sa(),
+        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $self->{ SP } } } ) )
     ) );
 };
 
 
 $CODE_MANIP{ 'macro_begin' } = sub {
-    my ( $state, $arg, $line ) = @_;
+    my ( $self, $arg, $line ) = @_;
 
-    $state->{ macro_begin } = $state->current_line;
+    $self->{ macro_begin } = $self->current_line;
+    $self->{ in_macro } = $arg;
+    $self->framename( $arg );
 
-    $state->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
-    $state->indent_depth( $state->indent_depth + 1 );
+    $self->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
+    $self->indent_depth( $self->indent_depth + 1 );
+    $self->write_lines( sprintf( 'my $output;' ) );
+    $self->write_code( "\n" );
 
-    $state->write_lines(
+    $self->write_lines(
         sprintf( q{Carp::croak('Macro call is too deep (> 100) at "%s"') if ++$depth > 100;}, $arg )
     );
-
-    $state->write_lines( sprintf( 'my $output;' ) );
+    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'macro_end' } = sub {
-    my ( $state, $arg, $line ) = @_;
+    my ( $self, $arg, $line ) = @_;
 
-    $state->write_lines( sprintf( '$depth--;' ) );
-    $state->write_lines( sprintf( 'pop( @$pad );' ) );
-    $state->write_code( "\n" );
-    $state->write_lines( sprintf( '$output;' ) );
+    $self->write_lines( sprintf( '$depth--;' ) );
+    $self->write_lines( sprintf( 'pop( @$pad );' ) );
+    $self->write_code( "\n" );
+    $self->write_lines( sprintf( '$output;' ) );
 
-    $state->indent_depth( $state->indent_depth - 1 );
+    $self->indent_depth( $self->indent_depth - 1 );
 
-    $state->write_lines( sprintf( "};\n" ) );
+    $self->write_lines( sprintf( "};\n" ) );
 
-    push @{ $state->{ macro_mem } }, [ $state->{ macro_begin }, $state->current_line ];
+    delete $self->{ in_macro };
+
+    push @{ $self->{ macro_mem } }, [ $self->{ macro_begin }, $self->current_line ];
 };
 
 
 $CODE_MANIP{ 'macro' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa( $arg );
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( $arg );
 };
 
 
 $CODE_MANIP{ 'function' } = sub { # not yet implemebted
-    my ( $state, $arg, $line ) = @_;
-    $state->sa(
+    my ( $self, $arg, $line ) = @_;
+    $self->sa(
         sprintf('$st->function->{ %s }', $arg )
     );
 };
 
 
 $CODE_MANIP{ 'funcall' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa(
-        sprintf('call( $st, 0, %s, %s )', $state->sa, join( ', ', @{ pop @{ $state->{ SP } } } ) )
-    );
+    my ( $self, $arg, $line ) = @_;
+
+    if ( $self->is_strict ) {
+        $self->sa(
+            sprintf('call( $st, %s, %s, 0, %s, %s )',
+                $self->frame_and_line, $self->sa, join( ', ', @{ pop @{ $self->{ SP } } } )
+            )
+        );
+    }
+    else {
+        $self->sa(
+            sprintf('call( $st, undef, undef, 0, %s, %s )', $self->sa, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+        );
+    }
+
 };
 
 
 $CODE_MANIP{ 'methodcall_s' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->sa(
-        sprintf('methodcall( $st, "%s", %s )', $arg, join( ', ', @{ pop @{ $state->{ SP } } } ) )
-    );
+    my ( $self, $arg, $line ) = @_;
+
+    if ( $self->is_strict ) {
+        $self->sa(
+            sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+        );
+    }
+    else {
+        $self->sa(
+            sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+        );
+    }
+
 };
 
 
 $CODE_MANIP{ 'goto' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    my $i = $state->current_line;
+    my ( $self, $arg, $line ) = @_;
+    my $i = $self->current_line;
 
-    if ( delete $state->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
-        $state->indent_depth( $state->indent_depth - 1 );
-        pop @{ $state->{ for_level } };
-        $state->write_lines( '}' );
+    if ( delete $self->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
+        $self->indent_depth( $self->indent_depth - 1 );
+        pop @{ $self->{ for_level } };
+        $self->write_lines( '}' );
     }
     else {
         die "invalid goto op";
     }
 
-    $state->write_code( "\n" );
+    $self->write_code( "\n" );
 };
 
 
@@ -567,8 +658,8 @@ $CODE_MANIP{ 'depend' } = sub {
 
 
 $CODE_MANIP{ 'end' } = sub {
-    my ( $state, $arg, $line ) = @_;
-    $state->write_lines( "# process end" );
+    my ( $self, $arg, $line ) = @_;
+    $self->write_lines( "# process end" );
 };
 
 #
@@ -577,8 +668,8 @@ $CODE_MANIP{ 'end' } = sub {
 
 
 sub check_logic {
-    my ( $state, $i, $arg, $type ) = @_;
-    my $ops = $state->ops;
+    my ( $self, $i, $arg, $type ) = @_;
+    my $ops = $self->ops;
     my $type_store = $type;
 
     my $next_opname = $ops->[ $i + $arg ]->[ 0 ] || '';
@@ -590,8 +681,8 @@ sub check_logic {
               : $type eq 'dor'  ? '!(defined( %s ))'
               : die
               ;
-        my $pre_exprs = $state->exprs || '';
-        $state->exprs( $pre_exprs . $state->sa() . $type ); # 保存
+        my $pre_exprs = $self->exprs || '';
+        $self->exprs( $pre_exprs . $self->sa() . $type ); # 保存
         return;
     }
 
@@ -613,22 +704,24 @@ sub check_logic {
 
         my ( $sa_1st, $sa_2nd );
 
-        $state->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
 
         for ( $if_block_start .. $if_block_end ) {
-            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        my $st_1st = ref($state)->convert_opcode( [ @{ $ops }[ $if_block_start .. $if_block_end ] ] );
+        my $st_1st = ref($self)->convert_opcode(
+            [ @{ $ops }[ $if_block_start .. $if_block_end ] ], undef, { strict => $self->strict }
+        );
 
         my $code = $st_1st->code;
         if ( $code and $code !~ /^\n+$/ ) {
-            my $expr = $state->sa;
-            $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
-            $state->write_lines( sprintf( 'if ( %s ) {' , sprintf( $type, $expr ) ) );
-            $state->exprs( '' );
-            $state->write_lines( $code );
-            $state->write_lines( sprintf( '}' ) );
+            my $expr = $self->sa;
+            $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+            $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $type, $expr ) ) );
+            $self->exprs( '' );
+            $self->write_lines( $code );
+            $self->write_lines( sprintf( '}' ) );
         }
         else { # 三項演算子として扱う
             $sa_1st = $st_1st->sa;
@@ -637,17 +730,19 @@ sub check_logic {
         if ( $else_block_end >= $else_block_start ) {
 
             for (  $else_block_start .. $else_block_end ) { # 2
-                $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+                $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
             }
 
-            my $st_2nd = ref($state)->convert_opcode( [ @{ $ops }[ $else_block_start .. $else_block_end ] ] );
+            my $st_2nd = ref($self)->convert_opcode(
+                [ @{ $ops }[ $else_block_start .. $else_block_end ] ], undef, { strict => $self->strict }
+            );
 
             my $code = $st_2nd->code;
 
             if ( $code and $code !~ /^\n+$/ ) {
-                $state->write_lines( sprintf( 'else {' ) );
-                $state->write_lines( $code );
-                $state->write_lines( sprintf( '}' ) );
+                $self->write_lines( sprintf( 'else {' ) );
+                $self->write_lines( $code );
+                $self->write_lines( sprintf( '}' ) );
             }
             else { # 三項演算子として扱う
                 $sa_2nd = $st_2nd->sa;
@@ -656,12 +751,12 @@ sub check_logic {
         }
 
         if ( defined $sa_1st and defined $sa_2nd ) {
-            my $expr = $state->sa;
-            $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
-            $state->sa( sprintf( '(%s ? %s : %s)', sprintf( $type, $expr ), $sa_1st, $sa_2nd ) );
+            my $expr = $self->sa;
+            $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+            $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $type, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
-            $state->write_code( "\n" );
+            $self->write_code( "\n" );
         }
 
     }
@@ -670,29 +765,31 @@ sub check_logic {
         my $while_block_end     = $i + $arg - 2;           # whileブロック終了行 - goto分も引く
 
         for ( $while_block_start .. $while_block_end ) {
-            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        $state->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
 
-        my $st_wh = ref($state)->convert_opcode( [ @{ $ops }[ $while_block_start .. $while_block_end ] ] );
+        my $st_wh = ref($self)->convert_opcode(
+            [ @{ $ops }[ $while_block_start .. $while_block_end ] ], undef, { strict => $self->strict }
+        );
 
-        my $expr = $state->sa;
-        $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
-        $state->write_lines( sprintf( 'while ( %s ) {' , sprintf( $type, $expr ) ) );
-        $state->exprs( '' );
-        $state->write_lines( $st_wh->code );
-        $state->write_lines( sprintf( '}' ) );
+        my $expr = $self->sa;
+        $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+        $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $type, $expr ) ) );
+        $self->exprs( '' );
+        $self->write_lines( $st_wh->code );
+        $self->write_lines( sprintf( '}' ) );
 
-        $state->write_code( "\n" );
+        $self->write_code( "\n" );
     }
     elsif ( logic_is_max_main( $ops, $i, $arg ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
-            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        $state->sa( sprintf( '%s ? %s : %s', $state->sa, $state->sb, $state->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
+        $self->sa( sprintf( '%s ? %s : %s', $self->sa, $self->sb, $self->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
     }
     else { # それ以外の処理
 
@@ -703,13 +800,15 @@ sub check_logic {
             $false_line--; # 出力される場合は省略、falseで設定される値もない
 
         for ( $true_start .. $true_end ) {
-            $state->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        my $st_true  = ref($state)->convert_opcode( [ @{ $ops }[ $true_start .. $true_end ] ], $state );
+        my $st_true  = ref($self)->convert_opcode(
+            [ @{ $ops }[ $true_start .. $true_end ] ], $self, { strict => $self->strict }
+        );
 
-        my $expr = $state->sa;
-        $expr = ( $state->exprs || '' ) . $expr; # 前に式があれば加える
+        my $expr = $self->sa;
+        $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
 
             $type = $type_store eq 'and'  ? 'cond_and'
                   : $type_store eq 'or'   ? 'cond_or'
@@ -718,7 +817,7 @@ sub check_logic {
                   : die
                   ;
 
-$state->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
+$self->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
 %s( %s, sub {
 %s
 }, )
@@ -748,37 +847,43 @@ sub code {
 }
 
 
+sub frame_and_line {
+    my ( $self ) = @_;
+    ( "'" . $self->framename . "'", $self->current_line );
+}
+
+
 sub write_lines {
-    my ( $state, $lines, $idx ) = @_;
+    my ( $self, $lines, $idx ) = @_;
     my $code = '';
 
-    $idx = $state->current_line unless defined $idx;
+    $idx = $self->current_line unless defined $idx;
 
     for my $line ( split/\n/, $lines ) {
-        $code .= $state->indent . $line . "\n";
+        $code .= $self->indent . $line . "\n";
     }
 
-    $state->lines->[ $idx ] .= $code;
+    $self->lines->[ $idx ] .= $code;
 }
 
 
 sub write_code {
-    my ( $state, $code, $idx ) = @_;
-    $idx = $state->current_line unless defined $idx;
-    $state->lines->[ $idx ] .= $code;
+    my ( $self, $code, $idx ) = @_;
+    $idx = $self->current_line unless defined $idx;
+    $self->lines->[ $idx ] .= $code;
 }
 
 
 sub reset_line {
-    my ( $state, $idx ) = @_;
-    $idx = $state->current_line unless defined $idx;
-    $state->lines->[ $idx ] = '';
+    my ( $self, $idx ) = @_;
+    $idx = $self->current_line unless defined $idx;
+    $self->lines->[ $idx ] = '';
 }
 
 
 sub optimize_to_print {
-    my ( $state, $type ) = @_;
-    my $ops = $state->ops->[ $state->current_line + 1 ];
+    my ( $self, $type ) = @_;
+    my $ops = $self->ops->[ $self->current_line + 1 ];
 
     return unless $ops;
     return unless ( $ops->[0] eq 'print' );
@@ -791,14 +896,14 @@ sub optimize_to_print {
 
 
 sub optimize_to_expr {
-    my ( $state ) = @_;
-    my $ops = $state->ops->[ $state->current_line + 1 ];
+    my ( $self ) = @_;
+    my $ops = $self->ops->[ $self->current_line + 1 ];
 
     return unless $ops;
     return unless ( $ops->[0] eq 'goto' );
 
-    $state->write_lines( sprintf( '$sa = %s;', $state->sa ) );
-    $state->sa( '$sa' );
+    $self->write_lines( sprintf( '$sa = %s;', $self->sa ) );
+    $self->sa( '$sa' );
 
 }
 
@@ -843,13 +948,13 @@ sub neat {
 
 
 sub call {
-    my ( $st, $flag, $proc, @args ) = @_;
+    my ( $st, $frame, $line, $flag, $proc, @args ) = @_;
     my $obj = shift @args if ( $flag );
     my $ret;
 
     if ( $flag ) { # method call ... fetch() doesn't use methodcall for speed
         unless ( defined $obj ) {
-            warn_in_booster( $st, "Use of nil to invoke method %s", $proc );
+            warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
         }
         else {
             local $SIG{__DIE__}; # oops
@@ -886,14 +991,14 @@ my %builtin_method = (
 );
 
 sub methodcall {
-    my ( $st, $method, $invocant, @args ) = @_;
+    my ( $st, $frame, $line, $method, $invocant, @args ) = @_;
 
     my $retval;
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
             $retval = eval { $invocant->$method(@args) };
             if($@) {
-                error_in_booster($st, "%s" . "\t...", $@);
+                error_in_booster( $st, $frame, $line, "%s" . "\t...", $@ );
             }
             return $retval;
         }
@@ -901,14 +1006,14 @@ sub methodcall {
     }
 
     if(!defined $invocant) {
-        warn_in_booster($st, "Use of nil to invoke method %s", $method);
+        warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $method );
     }
     else {
         my $bm = $builtin_method{$method} || return undef;
 
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
-            error_in_booster($st,
+            error_in_booster($st, $frame, $line,
                 "Builtin method %s requres exactly %d argument(s), "
                 . "but supplied %d",
                 $method, $nargs, scalar @args);
@@ -925,18 +1030,18 @@ sub methodcall {
 
 
 sub fetch {
-    my ( $st, $var, $key ) = @_;
+    my ( $st, $var, $key, $frame, $line ) = @_;
     my $ret;
 
     if ( Scalar::Util::blessed $var ) {
-        $ret = call( $st, 1, $key, $var );
+        $ret = call( $st, $frame, $line, 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {
             $ret = $var->{ $key };
         }
         else {
-            warn_in_booster( $st, "Use of nil as a field key" );
+            warn_in_booster( $st, $frame, $line, "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
@@ -944,18 +1049,34 @@ sub fetch {
             $ret = $var->[ $key ];
         }
         else {
-            warn_in_booster( $st, "Use of %s as an array index", neat( $key ) );
+            warn_in_booster( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
         }
     }
     elsif ( defined $var ) {
-        error_in_booster( $st, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+        error_in_booster( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
-        print Dumper $var;
-        warn_in_booster( $st, "Use of nil to access %s", neat( $key ) );
+        warn_in_booster( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
     }
 
     return $ret;
+}
+
+
+sub check_itr_ar {
+    my ( $st, $ar, $frame, $line ) = @_;
+
+    unless ( $ar and ref $ar eq 'ARRAY' ) {
+        if ( defined $ar ) {
+            error_in_booster( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
+        }
+        else {
+            warn_in_booster( $st, $frame, $line, "Use of nil to iterate" );
+        }
+        $ar = [];
+    }
+
+    return $ar;
 }
 
 
@@ -1010,16 +1131,24 @@ sub is_verbose {
 
 
 sub warn_in_booster {
-    my ( $st, $fmt, @args ) = @_;
+    my ( $st, $frame, $line, $fmt, @args ) = @_;
     if( is_verbose( $st ) > Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+        if ( defined $line ) {
+            $st->{ pc } = $line;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+        }
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }
 
 
 sub error_in_booster {
-    my ( $st, $fmt, @args ) = @_;
+    my ( $st, $frame, $line, $fmt, @args ) = @_;
     if( is_verbose( $st ) >= Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+        if ( defined $line ) {
+            $st->{ pc } = $line;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+        }
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }
