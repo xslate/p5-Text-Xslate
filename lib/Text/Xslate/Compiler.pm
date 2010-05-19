@@ -129,11 +129,7 @@ has parser => (
             return $syntax;
         }
         else {
-            my $func = Any::Moose::moose_is_preferred() ? 
-                \&Class::MOP::load_first_existing_class :
-                \&Mouse::Util::load_first_existing_class
-            ;
-            my $parser_class = $func->(
+            my $parser_class = Any::Moose::load_first_existing_class(
                 "Text::Xslate::Syntax::" . $syntax,
                 $syntax,
             );
