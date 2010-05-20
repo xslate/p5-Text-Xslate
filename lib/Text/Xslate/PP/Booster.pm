@@ -36,7 +36,7 @@ has framename => ( is => 'rw', default => 'main' );
 
 has strict => ( is => 'rw' );
 
-has is_completed => ( is => 'rw', default => 0 );
+has is_completed => ( is => 'rw', default => 1 );
 
 
 #
@@ -46,7 +46,7 @@ has is_completed => ( is => 'rw', default => 0 );
 sub opcode_to_perlcode {
     my ( $self, $opcode ) = @_;
 
-    my $perlcode = $self->opcode_to_perlcode_str( $opcode );
+    my $perlcode = $self->opcode_to_perlcode_string( $opcode );
 
     # TEST
     print "$perlcode\n" if $ENV{ BOOST_DISP };
@@ -59,7 +59,7 @@ sub opcode_to_perlcode {
 }
 
 
-sub opcode_to_perlcode_str {
+sub opcode_to_perlcode_string {
     my ( $self, $opcode, $opt ) = @_;
 
     #my $tx = Text::Xslate->new;
@@ -1160,7 +1160,7 @@ Text::Xslate::PP::Booster - Text::Xslate::PP booster
     my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
     
     my $optext  = q{<: $value :>};
-    my $code    = $booster->opcode_to_perlcode_str( $tx->_compiler->compile( $optext ) );
+    my $code    = $booster->opcode_to_perlcode_string( $tx->_compiler->compile( $optext ) );
     my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
     # $coderef takes a Text::Xslate::PP::State object
 
