@@ -30,7 +30,7 @@ has sa => ( is => 'rw' );
 
 has sb => ( is => 'rw' );
 
-has lvar => ( is => 'rw', default => sub { []; } );
+has lvar => ( is => 'rw', default => sub { []; } ); # local variable
 
 has framename => ( is => 'rw', default => 'main' );
 
@@ -1196,7 +1196,7 @@ But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
 
 Text::Xslate::PP becomes to be faster!
 
-And L<XSLATE_PP_BOOST=2> may be faster (no strict error handling compatibility mode).
+And L<XSLATE_PP_BOOST=2> may be much faster (no strict error handling compatibility mode).
 
 
 =head1 APIs
@@ -1214,28 +1214,33 @@ It can take a hash reference option:
 =item strict
 
 If set a true value, it enhances a compatibility of Text::Xslate error handling
-at the cost of speed a bit. Default by false.
+at the cost of speed a bit. Default by true.
 
 =back
 
 =head2 opcode_to_perlcode
 
-Takes a virtual machine code created by Text::Xslate::Compiler,
+Takes a virtual machine code created by L<Text::Xslate::Compiler>,
 and returns a code reference.
 
   $coderef = $booster->opcode_to_perlcode( $ops );
 
-=head2 opcode_to_perlcode_str
+The code reference takes C<Text::Xslate::PP::State> object in Xslate runtime processes.
+Don't execute this code reference directly.
 
-Takes a virtual machine code created by Text::Xslate::Compiler,
-and returns a perl code text.
+=head2 opcode_to_perlcode_string
 
-  $str = $booster->opcode_to_perlcode_str( $ops );
+Takes a virtual machine code created by C<Text::Xslate::Compiler>,
+and returns a perl subroutine code text.
 
-=head1 BOOST CODE
+  $str = $booster->opcode_to_perlcode_string( $ops );
 
-This module creates a code reference from a virtual machine code.
+=head1 ABOUT BOOST CODE
 
+C<Text::Xslate::PP::Booster> creates a code reference from a virtual machine code.
+
+    $ENV{ XSLATE_PP_BOOST } = 1;
+    
     $tx->render_string( <<'CODE', {} );
     : macro foo -> $arg {
         Hello <:= $arg :>!
@@ -1243,23 +1248,23 @@ This module creates a code reference from a virtual machine code.
     : foo($value)
     CODE
 
-The template data is converted opcodes:
+Firstly the template data is converted to opcodes:
 
-    pushmark // foo
-    fetch_s "value" #4
+    pushmark
+    fetch_s "value"
     push
     macro "foo"
-    macrocall #4
-    print #4
+    macrocall
+    print
     end
-    macro_begin "foo" #1
-    print_raw_s "    Hello " #2
-    fetch_lvar 0 #2 // $arg
-    print #2
-    print_raw_s "!\n" #2
+    macro_begin "foo"
+    print_raw_s "    Hello "
+    fetch_lvar 0
+    print
+    print_raw_s "!\n"
     macro_end
 
-And the booster converted a perl subroutine code (strict option set in this case).
+And the booster converted them into a perl subroutine code (strict option set in this case).
 
     sub { no warnings 'recursion';
         my ( $st ) = $_[0];
@@ -1303,21 +1308,25 @@ And the booster converted a perl subroutine code (strict option set in this case
             pop( @$pad );
 
             $output;
-    };
+        };
 
-    # process start
+        # process start
 
-    $output .= $macro{'foo'}->(push @{ $pad }, [ $vars->{ "value" } ]);
+        $output .= $macro{'foo'}->(push @{ $pad }, [ $vars->{ "value" } ]);
 
-    # process end
+        # process end
 
-    $st->{ output } = $output;
-}
+        $st->{ output } = $output;
+    }
 
-
-So it makes the runtime speed faster.
+So it makes the runtime speed much faster.
 Of course, its initial converting process takes a little cost of CPU and time.
 
+=head1 CAVEAT
+
+Boost codes have the error handling compatibility as possible.
+But if you set C<strict> option false, it is different from the original behavior,
+especially the line where an error occurs becomes uncertain.
 
 =head1 SEE ALSO
 
