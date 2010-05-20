@@ -109,11 +109,6 @@ $CODE_MANIP{ 'move_to_sb' } = sub {
 $CODE_MANIP{ 'move_from_sb' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( $self->sb );
-
-    if ( $self->{ within_cond } ) {
-        $self->write_lines( sprintf( '$sa = %s;', $self->sb ) );
-    }
-
 };
 
 
@@ -609,7 +604,7 @@ sub _spawn_child {
 
 
 sub _convert_opcode {
-    my ( $self, $ops_orig, $parent, $opt ) = @_;
+    my ( $self, $ops_orig ) = @_;
 
     my $ops  = [ map { [ @$_ ] } @$ops_orig ]; # this method is destructive to $ops. so need to copy.
     my $len  = scalar( @$ops );
@@ -626,13 +621,7 @@ sub _convert_opcode {
 
     $self->ops( $ops );
 
-    if ( $parent ) { # 引き継ぐ
-        $self->sa( $parent->sa );
-        $self->sb( $parent->sb );
-        $self->lvar( [ @{ $parent->lvar } ] );
-    }
-
-    # コード生成
+    # create code
     my $i = 0;
 
     while ( $self->current_line < $len ) {
@@ -685,7 +674,7 @@ sub _check_logic {
               : die
               ;
         my $pre_exprs = $self->exprs || '';
-        $self->exprs( $pre_exprs . $self->sa() . $type ); # 保存
+        $self->exprs( $pre_exprs . $self->sa() . $type ); # store
         return;
     }
 
@@ -699,18 +688,18 @@ sub _check_logic {
           : die
           ;
 
-    if ( $opname eq 'goto' and $oparg > 0 ) { # if-elseか三項演算子？
-        my $if_block_start   = $i + 1;                  # ifブロック開始行
-        my $if_block_end     = $i + $arg - 2;           # ifブロック終了行 - goto分も引く
-        my $else_block_start = $i + $arg;               # elseブロック開始行
-        my $else_block_end   = $i + $arg + $oparg - 2;  # elseブロック終了行 - goto分を引く
+    if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
+        my $if_block_start   = $i + 1;                  # open if block
+        my $if_block_end     = $i + $arg - 2;           # close if block - subtract goto line
+        my $else_block_start = $i + $arg;               # open else block
+        my $else_block_end   = $i + $arg + $oparg - 2;  # close else block - subtract goto line
 
         my ( $sa_1st, $sa_2nd );
 
-        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
 
         for ( $if_block_start .. $if_block_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # mark skip
         }
 
         my $st_1st = $self->_spawn_child->_convert_opcode(
@@ -720,20 +709,20 @@ sub _check_logic {
         my $code = $st_1st->code;
         if ( $code and $code !~ /^\n+$/ ) {
             my $expr = $self->sa;
-            $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+            $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
             $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $type, $expr ) ) );
             $self->exprs( '' );
             $self->write_lines( $code );
             $self->write_lines( sprintf( '}' ) );
         }
-        else { # 三項演算子として扱う
+        else { # treat as ternary
             $sa_1st = $st_1st->sa;
         }
 
         if ( $else_block_end >= $else_block_start ) {
 
             for (  $else_block_start .. $else_block_end ) { # 2
-                $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+                $self->{ proc }->{ $_ }->{ skip } = 1; # skip
             }
 
             my $st_2nd = $self->_spawn_child->_convert_opcode(
@@ -747,7 +736,7 @@ sub _check_logic {
                 $self->write_lines( $code );
                 $self->write_lines( sprintf( '}' ) );
             }
-            else { # 三項演算子として扱う
+            else { # treat as ternary
                 $sa_2nd = $st_2nd->sa;
             }
 
@@ -755,7 +744,7 @@ sub _check_logic {
 
         if ( defined $sa_1st and defined $sa_2nd ) {
             my $expr = $self->sa;
-            $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+            $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
             $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $type, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
@@ -764,21 +753,21 @@ sub _check_logic {
 
     }
     elsif ( $opname eq 'goto' and $oparg < 0 ) { # while
-        my $while_block_start   = $i + 1;                  # whileブロック開始行
-        my $while_block_end     = $i + $arg - 2;           # whileブロック終了行 - goto分も引く
+        my $while_block_start   = $i + 1;                  # open while block
+        my $while_block_end     = $i + $arg - 2;           # close while block - subtract goto line
 
         for ( $while_block_start .. $while_block_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
-        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
+        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
 
         my $st_wh = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $while_block_start .. $while_block_end ] ], undef, { strict => $self->strict }
         );
 
         my $expr = $self->sa;
-        $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+        $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
         $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $type, $expr ) ) );
         $self->exprs( '' );
         $self->write_lines( $st_wh->code );
@@ -789,21 +778,18 @@ sub _check_logic {
     elsif ( _logic_is_max_min( $ops, $i, $arg ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
         $self->sa( sprintf( '%s ? %s : %s', $self->sa, $self->sb, $self->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
     }
-    else { # それ以外の処理
+    else { # 
 
         my $true_start = $i + 1;
-        my $true_end   = $i + $arg - 1; # 次の行までで完成のため、1足す
-        my $false_line = $i + $arg;
-
-            $false_line--; # 出力される場合は省略、falseで設定される値もない
+        my $true_end   = $i + $arg - 1; # add 1 for complete process line is next.
 
         for ( $true_start .. $true_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
+            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
         my $opts = { sa => $self->sa, sb => $self->sb, lvar => $self->lvar };
@@ -812,7 +798,7 @@ sub _check_logic {
         );
 
         my $expr = $self->sa;
-        $expr = ( $self->exprs || '' ) . $expr; # 前に式があれば加える
+        $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
             $type = $type_store eq 'and'  ? 'cond_and'
                   : $type_store eq 'or'   ? 'cond_or'
