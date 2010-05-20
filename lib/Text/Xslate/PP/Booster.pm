@@ -32,12 +32,15 @@ has sb => ( is => 'rw' );
 
 has lvar => ( is => 'rw', default => sub { []; } ); # local variable
 
-has framename => ( is => 'rw', default => 'main' );
+has framename => ( is => 'rw', default => 'main' ); # current frame name
+
+has SP => ( is => 'rw', default => sub { []; } ); # stack
 
 has strict => ( is => 'rw' );
 
 has is_completed => ( is => 'rw', default => 1 );
 
+has stash => ( is => 'rw', default => sub { {}; } ); # store misc data
 
 #
 # public APIs
@@ -118,7 +121,7 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
     $self->lvar->[ $arg ] = $self->sa;
     $self->sa( $v );
 
-    my $op = $self->{ ops }->[ $self->current_line + 1 ];
+    my $op = $self->ops->[ $self->current_line + 1 ];
 
     unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)/ ) { # ...
         $self->write_lines( sprintf( '%s;', $v )  );
@@ -135,13 +138,13 @@ $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
 
 $CODE_MANIP{ 'push' } = sub {
     my ( $self, $arg, $line ) = @_;
-    push @{ $self->{ SP }->[ -1 ] }, $self->sa;
+    push @{ $self->SP->[ -1 ] }, $self->sa;
 };
 
 
 $CODE_MANIP{ 'pushmark' } = sub {
     my ( $self, $arg, $line ) = @_;
-    push @{ $self->{ SP } }, [];
+    push @{ $self->SP }, [];
 };
 
 
@@ -178,13 +181,13 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
     return unless $self->is_strict;
 
-    if ( $self->{ in_macro } ) {
-        my $macro = $self->{ in_macro };
-        unless ( exists $self->{ macro_args_num }->{ $macro }->{ $arg } ) {
+    if ( $self->stash->{ in_macro } ) {
+        my $macro = $self->stash->{ in_macro };
+        unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
             $self->write_lines(
                 sprintf(
                     'error_in_booster( $st, %s, %s, "Too few arguments for %s" );',
-                    $self->frame_and_line, $self->{ in_macro }
+                    $self->frame_and_line, $self->stash->{ in_macro }
                 )
             );
         }
@@ -202,7 +205,6 @@ $CODE_MANIP{ 'fetch_field' } = sub {
     else {
         $self->sa( sprintf( 'fetch( $st, %s, %s )', $self->sb(), $self->sa() ) );
     }
-
 
 };
 
@@ -288,9 +290,9 @@ CODE
 $CODE_MANIP{ 'for_start' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    $self->{ for_start_line } = $self->current_line;
+    $self->stash->{ for_start_line } = $self->current_line;
 
-    push @{ $self->{ for_level } }, {
+    push @{ $self->stash->{ for_level } }, {
         stack_id => $arg,
         ar       => $self->sa,
     };
@@ -300,17 +302,17 @@ $CODE_MANIP{ 'for_start' } = sub {
 $CODE_MANIP{ 'for_iter' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    $self->{ loop }->{ $self->current_line } = 1; # marked
+    $self->stash->{ loop }->{ $self->current_line } = 1; # marked
 
-    my $stack_id = $self->{ for_level }->[ -1 ]->{ stack_id };
-    my $ar       = $self->{ for_level }->[ -1 ]->{ ar };
+    my $stack_id = $self->stash->{ for_level }->[ -1 ]->{ stack_id };
+    my $ar       = $self->stash->{ for_level }->[ -1 ]->{ ar };
 
-    if ( $self->{ in_macro } ) { # check for fetch_lvar
-        $self->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
+    if ( $self->stash->{ in_macro } ) { # check for fetch_lvar
+        $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
     if ( $self->is_strict ) {
-        my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->{ for_start_line } );
+        my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->stash->{ for_start_line } );
         $self->write_lines(
             sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
         );
@@ -465,13 +467,13 @@ $CODE_MANIP{ 'macrocall' } = sub {
     $self->optimize_to_print( 'num' );
 
     # mark argument value
-    for my $i ( 0 .. $#{ $self->{ SP }->[ -1 ] } ) {
-        $self->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
+    for my $i ( 0 .. $#{ $self->SP->[ -1 ] } ) {
+        $self->stash->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
     }
 
     $self->sa( sprintf( '$macro{\'%s\'}->(%s)',
         $self->sa(),
-        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $self->{ SP } } } ) )
+        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $self->SP } } ) )
     ) );
 };
 
@@ -479,8 +481,8 @@ $CODE_MANIP{ 'macrocall' } = sub {
 $CODE_MANIP{ 'macro_begin' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    $self->{ macro_begin } = $self->current_line;
-    $self->{ in_macro } = $arg;
+    $self->stash->{ macro_begin } = $self->current_line;
+    $self->stash->{ in_macro } = $arg;
     $self->framename( $arg );
 
     $self->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
@@ -507,9 +509,10 @@ $CODE_MANIP{ 'macro_end' } = sub {
 
     $self->write_lines( sprintf( "};\n" ) );
 
-    delete $self->{ in_macro };
+    delete $self->stash->{ in_macro };
 
-    push @{ $self->macro_lines }, splice( @{ $self->{ lines } },  $self->{ macro_begin }, $self->current_line );
+    push @{ $self->macro_lines },
+        splice( @{ $self->{ lines } },  $self->stash->{ macro_begin }, $self->current_line );
 };
 
 
@@ -529,7 +532,7 @@ $CODE_MANIP{ 'function' } = sub {
 
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $self, $arg, $line ) = @_;
-    my $args_str = join( ', ', @{ pop @{ $self->{ SP } } } );
+    my $args_str = join( ', ', @{ pop @{ $self->SP } } );
 
     $args_str = ', ' . $args_str if length $args_str;
 
@@ -554,12 +557,12 @@ $CODE_MANIP{ 'methodcall_s' } = sub {
 
     if ( $self->is_strict ) {
         $self->sa(
-            sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+            sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
         );
     }
     else {
         $self->sa(
-            sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+            sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->SP } } ) )
         );
     }
 
@@ -570,9 +573,9 @@ $CODE_MANIP{ 'goto' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $i = $self->current_line;
 
-    if ( delete $self->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
+    if ( delete $self->stash->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
         $self->indent_depth( $self->indent_depth - 1 );
-        pop @{ $self->{ for_level } };
+        pop @{ $self->stash->{ for_level } };
         $self->write_lines( '}' );
     }
     else {
@@ -599,7 +602,7 @@ $CODE_MANIP{ 'end' } = sub {
 sub _spawn_child {
     my ( $self, $opts ) = @_;
     $opts ||= {};
-    ( ref $self )->new( { %$opts, strict => $self->strict } ); # don't inherit strict
+    ( ref $self )->new( { %$opts, strict => $self->strict } ); # inherit strict
 }
 
 
@@ -615,7 +618,8 @@ sub _convert_opcode {
         $self->sb( undef );
         $self->lvar( [] );
         $self->lines( [] );
-        $self->sa( undef );
+        $self->SP( [] );
+        $self->stash( {} );
         $self->is_completed( 0 );
     }
 
@@ -639,7 +643,7 @@ sub _convert_opcode {
 
         my $manip  = $CODE_MANIP{ $opname };
 
-        if ( my $proc = $self->{ proc }->{ $i } ) {
+        if ( my $proc = $self->stash->{ proc }->{ $i } ) {
 
             if ( $proc->{ skip } ) {
                 $self->current_line( ++$i );
@@ -696,14 +700,14 @@ sub _check_logic {
 
         my ( $sa_1st, $sa_2nd );
 
-        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
+        $self->stash->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
 
         for ( $if_block_start .. $if_block_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # mark skip
+            $self->stash->{ proc }->{ $_ }->{ skip } = 1; # mark skip
         }
 
         my $st_1st = $self->_spawn_child->_convert_opcode(
-            [ @{ $ops }[ $if_block_start .. $if_block_end ] ], undef, { strict => $self->strict }
+            [ @{ $ops }[ $if_block_start .. $if_block_end ] ]
         );
 
         my $code = $st_1st->code;
@@ -722,11 +726,11 @@ sub _check_logic {
         if ( $else_block_end >= $else_block_start ) {
 
             for (  $else_block_start .. $else_block_end ) { # 2
-                $self->{ proc }->{ $_ }->{ skip } = 1; # skip
+                $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
             }
 
             my $st_2nd = $self->_spawn_child->_convert_opcode(
-                [ @{ $ops }[ $else_block_start .. $else_block_end ] ], undef, { strict => $self->strict }
+                [ @{ $ops }[ $else_block_start .. $else_block_end ] ]
             );
 
             my $code = $st_2nd->code;
@@ -757,13 +761,13 @@ sub _check_logic {
         my $while_block_end     = $i + $arg - 2;           # close while block - subtract goto line
 
         for ( $while_block_start .. $while_block_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
+            $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
-        $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
+        $self->stash->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
 
         my $st_wh = $self->_spawn_child->_convert_opcode(
-            [ @{ $ops }[ $while_block_start .. $while_block_end ] ], undef, { strict => $self->strict }
+            [ @{ $ops }[ $while_block_start .. $while_block_end ] ]
         );
 
         my $expr = $self->sa;
@@ -778,7 +782,7 @@ sub _check_logic {
     elsif ( _logic_is_max_min( $ops, $i, $arg ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
+            $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
         $self->sa( sprintf( '%s ? %s : %s', $self->sa, $self->sb, $self->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
@@ -789,12 +793,12 @@ sub _check_logic {
         my $true_end   = $i + $arg - 1; # add 1 for complete process line is next.
 
         for ( $true_start .. $true_end ) {
-            $self->{ proc }->{ $_ }->{ skip } = 1; # skip
+            $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
         my $opts = { sa => $self->sa, sb => $self->sb, lvar => $self->lvar };
         my $st_true  = $self->_spawn_child( $opts )->_convert_opcode(
-            [ @{ $ops }[ $true_start .. $true_end ] ], $self, { strict => $self->strict }
+            [ @{ $ops }[ $true_start .. $true_end ] ]
         );
 
         my $expr = $self->sa;
