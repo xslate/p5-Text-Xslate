@@ -490,7 +490,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 
     $self->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
     $self->indent_depth( $self->indent_depth + 1 );
-    $self->write_lines( sprintf( 'my $output;' ) );
+    $self->write_lines( sprintf( 'my $output = \'\';' ) );
     $self->write_code( "\n" );
 
     $self->write_lines(
