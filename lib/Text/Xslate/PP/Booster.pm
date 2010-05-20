@@ -534,17 +534,20 @@ $CODE_MANIP{ 'function' } = sub {
 
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $self, $arg, $line ) = @_;
+    my $args_str = join( ', ', @{ pop @{ $self->{ SP } } } );
+
+    $args_str = ', ' . $args_str if length $args_str;
 
     if ( $self->is_strict ) {
         $self->sa(
-            sprintf('call( $st, %s, %s, 0, %s, %s )',
-                $self->frame_and_line, $self->sa, join( ', ', @{ pop @{ $self->{ SP } } } )
+            sprintf('call( $st, %s, %s, 0, %s%s )',
+                $self->frame_and_line, $self->sa, $args_str
             )
         );
     }
     else {
         $self->sa(
-            sprintf('call( $st, undef, undef, 0, %s, %s )', $self->sa, join( ', ', @{ pop @{ $self->{ SP } } } ) )
+            sprintf('call( $st, undef, undef, 0, %s%s )', $self->sa, $args_str )
         );
     }
 
