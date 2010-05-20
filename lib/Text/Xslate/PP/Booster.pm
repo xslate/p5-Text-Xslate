@@ -1157,25 +1157,61 @@ sub error_in_booster {
 1;
 __END__
 
-
 =head1 NAME
 
 Text::Xslate::PP::Booster - Text::Xslate::PP booster
 
 =head1 SYNOPSIS
 
+    # When you set a true value to the environmental variable XSLATE_PP_BOOST,
+    # this module is used in Text::Xslate::PP.
+    
+    # If you want to check created codes, you can use it directly.
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
     
-    my $optext  = q{<: $value :>};
     my $tx      = Text::Xslate->new();
     my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
+    
+    my $optext  = q{<: $value :>};
     my $code    = $booster->opcode_to_perlcode_str( $tx->_compiler->compile( $optext ) );
     my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
+    # $coderef takes a Text::Xslate::PP::State object
 
 =head1 DESCRIPTION
 
-This module is called by Text::Xslate::PP internally.
+This module boosts L<Text::Xslate::PP> runtime speed.
+
+Text::Xslate::PP is very very slow, you know. Example:
+
+    > XSLATE=pp perl benchmark/others.pl
+    
+    Text::Xslate/0.1019
+    Text::MicroTemplate/0.11
+    Text::ClearSilver/0.10.5.4
+    Template/2.22
+    ...
+             Rate xslate     tt     mt     cs
+    xslate  119/s     --   -58%   -84%   -95%
+    tt      285/s   139%     --   -61%   -88%
+    mt      725/s   507%   154%     --   -69%
+    cs     2311/s  1835%   711%   219%     --
+
+All right, slower than template-toolkit!
+But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
+
+    > XSLATE=pp XSLATE_PP_BOOST=1 perl benchmark/others.pl
+    
+             Rate     tt     mt xslate     cs
+    tt      288/s     --   -60%   -62%   -86%
+    mt      710/s   147%     --    -5%   -66%
+    xslate  749/s   160%     5%     --   -65%
+    cs     2112/s   634%   197%   182%     --
+
+Text::Xslate::PP becomes to be faster!
+
+And L<XSLATE_PP_BOOST=2> may be faster (no strict error handling compatibility mode).
+
 
 =head1 APIs
 
@@ -1183,17 +1219,118 @@ This module is called by Text::Xslate::PP internally.
 
 Constructor.
 
-  $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
+  $booster = Text::Xslate::PP::Booster->new( $opts );
+
+It can take a hash reference option:
+
+=over
+
+=item strict
+
+If set a true value, it enhances a compatibility of Text::Xslate error handling
+at the cost of speed a bit. Default by false.
+
+=back
 
 =head2 opcode_to_perlcode
 
+Takes a virtual machine code created by Text::Xslate::Compiler,
+and returns a code reference.
 
   $coderef = $booster->opcode_to_perlcode( $ops );
 
 =head2 opcode_to_perlcode_str
 
+Takes a virtual machine code created by Text::Xslate::Compiler,
+and returns a perl code text.
 
   $str = $booster->opcode_to_perlcode_str( $ops );
+
+=head1 BOOST CODE
+
+This module creates a code reference from a virtual machine code.
+
+    $tx->render_string( <<'CODE', {} );
+    : macro foo -> $arg {
+        Hello <:= $arg :>!
+    : }
+    : foo($value)
+    CODE
+
+The template data is converted opcodes:
+
+    pushmark // foo
+    fetch_s "value" #4
+    push
+    macro "foo"
+    macrocall #4
+    print #4
+    end
+    macro_begin "foo" #1
+    print_raw_s "    Hello " #2
+    fetch_lvar 0 #2 // $arg
+    print #2
+    print_raw_s "!\n" #2
+    macro_end
+
+And the booster converted a perl subroutine code (strict option set in this case).
+
+    sub { no warnings 'recursion';
+        my ( $st ) = $_[0];
+        my ( $sv, $st2, $pad, %macro, $depth );
+        my $output = '';
+        my $vars   = $st->{ vars };
+
+        $pad = [ [ ] ];
+
+        # macro
+
+        $macro{'foo'} = sub {
+            my $output = '';
+
+            Carp::croak('Macro call is too deep (> 100) at "foo"') if ++$depth > 100;
+
+            $output .= "    Hello ";
+
+            $sv = $pad->[ -1 ]->[ 0 ];
+
+            if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+                $output .= $sv;
+            }
+            elsif ( defined $sv ) {
+                if ( $sv =~ /[&<>"']/ ) {
+                    $sv =~ s/&/&amp;/g;
+                    $sv =~ s/</&lt;/g;
+                    $sv =~ s/>/&gt;/g;
+                    $sv =~ s/"/&quot;/g;
+                    $sv =~ s/'/&#39;/g;
+                }
+                $output .= $sv;
+            }
+            else {
+                warn_in_booster( $st, 'foo', 10, "Use of nil to be printed" );
+            }
+
+            $output .= "!\n";
+
+            $depth--;
+            pop( @$pad );
+
+            $output;
+    };
+
+    # process start
+
+    $output .= $macro{'foo'}->(push @{ $pad }, [ $vars->{ "value" } ]);
+
+    # process end
+
+    $st->{ output } = $output;
+}
+
+
+So it makes the runtime speed faster.
+Of course, its initial converting process takes a little cost of CPU and time.
 
 
 =head1 SEE ALSO
