@@ -1,7 +1,6 @@
 package Text::Xslate::PP::Booster;
 
 use Mouse;
-#use strict;
 use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
@@ -19,6 +18,8 @@ has indent_space => ( is => 'rw', default => '    ' );
 
 has lines => ( is => 'rw', default => sub { []; } );
 
+has macro_lines => ( is => 'rw', default => sub { []; } );
+
 has ops => ( is => 'rw', default => sub { []; } );
 
 has current_line => ( is => 'rw', default => 0 );
@@ -33,63 +34,14 @@ has lvar => ( is => 'rw', default => sub { []; } );
 
 has framename => ( is => 'rw', default => 'main' );
 
-has strict => ( is => 'rw', predicate => 1 );
+has strict => ( is => 'rw' );
+
+has is_completed => ( is => 'rw', default => 0 );
 
 
 #
 # public APIs
 #
-
-sub opcode_to_perlcode_str {
-    my ( $self, $opcode, $opt ) = @_;
-
-    #my $tx = Text::Xslate->new;
-    #print $tx->_compiler->as_assembly( $opcode );
-
-    $self->convert_opcode( $opcode, undef, $opt );
-
-    # 書き出し
-
-    my $perlcode =<<'CODE';
-sub { no warnings 'recursion';
-    my ( $st ) = $_[0];
-    my ( $sv, $st2, $pad, %macro, $depth );
-    my $output = '';
-    my $vars  = $st->{ vars };
-
-    $pad = [ [ ] ];
-
-CODE
-
-    if ( $self->{ macro_mem } ) {
-        for ( reverse @{ $self->{ macro_mem } } ) {
-            push @{ $self->{ macro_lines } }, splice( @{ $self->{ lines } },  $_->[0], $_->[1] );
-        }
-
-        $perlcode .=<<'CODE';
-    # macro
-CODE
-
-        $perlcode .= join ( '', grep { defined } @{ $self->{ macro_lines } } );
-    }
-
-    $perlcode .=<<'CODE';
-
-    # process start
-
-CODE
-
-    $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
-
-
-$perlcode .=<<'CODE';
-    $st->{ output } = $output;
-}
-CODE
-
-    return $perlcode;
-}
-
 
 sub opcode_to_perlcode {
     my ( $self, $opcode ) = @_;
@@ -107,12 +59,45 @@ sub opcode_to_perlcode {
 }
 
 
+sub opcode_to_perlcode_str {
+    my ( $self, $opcode, $opt ) = @_;
+
+    #my $tx = Text::Xslate->new;
+    #print $tx->_compiler->as_assembly( $opcode );
+
+    $self->_convert_opcode( $opcode, undef, $opt );
+
+    # 書き出し
+
+    my $perlcode =<<'CODE';
+sub { no warnings 'recursion';
+    my ( $st ) = $_[0];
+    my ( $sv, $st2, $pad, %macro, $depth );
+    my $output = '';
+    my $vars   = $st->{ vars };
+
+    $pad = [ [ ] ];
+
+CODE
+
+    if ( @{ $self->macro_lines } ) {
+        $perlcode .= "    # macro\n\n";
+        $perlcode .= join ( '', grep { defined } @{ $self->macro_lines } );
+    }
+
+    $perlcode .= "\n    # process start\n\n";
+    $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
+    $perlcode .= "\n" . '    $st->{ output } = $output;' . "\n}";
+
+    return $perlcode;
+}
+
+
 #
 # op to perl
 #
 
-$CODE_MANIP{ 'noop' } = sub {
-};
+$CODE_MANIP{ 'noop' } = sub {};
 
 
 $CODE_MANIP{ 'move_to_sb' } = sub {
@@ -173,7 +158,7 @@ $CODE_MANIP{ 'nil' } = sub {
 
 $CODE_MANIP{ 'literal' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( '"' . escape( $arg ) . '"' );
+    $self->sa( '"' . _escape( $arg ) . '"' );
 };
 
 
@@ -187,7 +172,7 @@ $CODE_MANIP{ 'literal_i' } = sub {
 
 $CODE_MANIP{ 'fetch_s' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '$vars->{ "%s" }', escape( $arg ) ) );
+    $self->sa( sprintf( '$vars->{ "%s" }', _escape( $arg ) ) );
 };
 
 
@@ -232,10 +217,10 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
     my $sv = $self->sa();
 
     if ( $self->is_strict ) {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, escape( $arg ), $self->frame_and_line ) );
+        $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
     }
     else {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, escape( $arg ) ) );
+        $self->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, _escape( $arg ) ) );
     }
 };
 
@@ -250,7 +235,7 @@ $CODE_MANIP{ 'print_raw' } = sub {
 
 $CODE_MANIP{ 'print_raw_s' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->write_lines( sprintf('$output .= "%s";', escape( $arg ) ) );
+    $self->write_lines( sprintf('$output .= "%s";', _escape( $arg ) ) );
     $self->write_code( "\n" );
 };
 
@@ -325,7 +310,7 @@ $CODE_MANIP{ 'for_iter' } = sub {
     my $stack_id = $self->{ for_level }->[ -1 ]->{ stack_id };
     my $ar       = $self->{ for_level }->[ -1 ]->{ ar };
 
-    if ( $self->{ in_macro } ) { # fetch_lvarのチェック用
+    if ( $self->{ in_macro } ) { # check for fetch_lvar
         $self->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
@@ -400,25 +385,25 @@ $CODE_MANIP{ 'filt' } = sub {
 
 $CODE_MANIP{ 'and' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return check_logic( $self, $self->current_line, $arg, 'and' );
+    return $self->_check_logic( $self->current_line, $arg, 'and' );
 };
 
 
 $CODE_MANIP{ 'dand' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return check_logic( $self, $self->current_line, $arg, 'dand' );
+    return $self->_check_logic( $self->current_line, $arg, 'dand' );
 };
 
 
 $CODE_MANIP{ 'or' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return check_logic( $self, $self->current_line, $arg, 'or' );
+    return $self->_check_logic( $self->current_line, $arg, 'or' );
 };
 
 
 $CODE_MANIP{ 'dor' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return check_logic( $self, $self->current_line, $arg, 'dor' );
+    return $self->_check_logic( $self->current_line, $arg, 'dor' );
 };
 
 
@@ -484,7 +469,7 @@ $CODE_MANIP{ 'macrocall' } = sub {
 
     $self->optimize_to_print( 'num' );
 
-    # 引数の値をマーク
+    # mark argument value
     for my $i ( 0 .. $#{ $self->{ SP }->[ -1 ] } ) {
         $self->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
     }
@@ -529,7 +514,7 @@ $CODE_MANIP{ 'macro_end' } = sub {
 
     delete $self->{ in_macro };
 
-    push @{ $self->{ macro_mem } }, [ $self->{ macro_begin }, $self->current_line ];
+    push @{ $self->macro_lines }, splice( @{ $self->{ lines } },  $self->{ macro_begin }, $self->current_line );
 };
 
 
@@ -539,7 +524,7 @@ $CODE_MANIP{ 'macro' } = sub {
 };
 
 
-$CODE_MANIP{ 'function' } = sub { # not yet implemebted
+$CODE_MANIP{ 'function' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa(
         sprintf('$st->function->{ %s }', $arg )
@@ -600,8 +585,7 @@ $CODE_MANIP{ 'goto' } = sub {
 };
 
 
-$CODE_MANIP{ 'depend' } = sub {
-};
+$CODE_MANIP{ 'depend' } = sub {};
 
 
 $CODE_MANIP{ 'end' } = sub {
@@ -611,20 +595,33 @@ $CODE_MANIP{ 'end' } = sub {
 
 
 #
-# Internal
+# Internal APIs
 #
 
-sub convert_opcode {
-    my ( $self, $proto, $parent, $opt ) = @_;
-    my $len = scalar( @$proto );
+sub _spawn_child {
+    my ( $self, $opts ) = @_;
+    $opts ||= {};
+    ( ref $self )->new( { %$opts, strict => $self->strict } ); # don't inherit strict
+}
 
-    unless ( ref $self ) {
-        $self = $self->new(
-            strict => $opt->{ strict },
-        );
+
+sub _convert_opcode {
+    my ( $self, $ops_orig, $parent, $opt ) = @_;
+
+    my $ops  = [ map { [ @$_ ] } @$ops_orig ]; # this method is destructive to $ops. so need to copy.
+    my $len  = scalar( @$ops );
+
+    # reset
+    if ( $self->is_completed ) {
+        $self->sa( undef );
+        $self->sb( undef );
+        $self->lvar( [] );
+        $self->lines( [] );
+        $self->sa( undef );
+        $self->is_completed( 0 );
     }
 
-    $self->ops( $proto );
+    $self->ops( $ops );
 
     if ( $parent ) { # 引き継ぐ
         $self->sa( $parent->sa );
@@ -636,7 +633,7 @@ sub convert_opcode {
     my $i = 0;
 
     while ( $self->current_line < $len ) {
-        my $pair = $proto->[ $i ];
+        my $pair = $ops->[ $i ];
 
         unless ( $pair and ref $pair eq 'ARRAY' ) {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
@@ -664,11 +661,13 @@ sub convert_opcode {
         $self->current_line( ++$i );
     }
 
+    $self->is_completed( 1 );
+
     return $self;
 }
 
 
-sub check_logic {
+sub _check_logic {
     my ( $self, $i, $arg, $type ) = @_;
     my $ops = $self->ops;
     my $type_store = $type;
@@ -711,7 +710,7 @@ sub check_logic {
             $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        my $st_1st = ref($self)->convert_opcode(
+        my $st_1st = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $if_block_start .. $if_block_end ] ], undef, { strict => $self->strict }
         );
 
@@ -734,7 +733,7 @@ sub check_logic {
                 $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
             }
 
-            my $st_2nd = ref($self)->convert_opcode(
+            my $st_2nd = $self->_spawn_child->_convert_opcode(
                 [ @{ $ops }[ $else_block_start .. $else_block_end ] ], undef, { strict => $self->strict }
             );
 
@@ -771,7 +770,7 @@ sub check_logic {
 
         $self->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # goto処理飛ばす
 
-        my $st_wh = ref($self)->convert_opcode(
+        my $st_wh = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $while_block_start .. $while_block_end ] ], undef, { strict => $self->strict }
         );
 
@@ -784,7 +783,7 @@ sub check_logic {
 
         $self->write_code( "\n" );
     }
-    elsif ( logic_is_max_min( $ops, $i, $arg ) ) { # min, max
+    elsif ( _logic_is_max_min( $ops, $i, $arg ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
             $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
@@ -804,7 +803,8 @@ sub check_logic {
             $self->{ proc }->{ $_ }->{ skip } = 1; # スキップ処理
         }
 
-        my $st_true  = ref($self)->convert_opcode(
+        my $opts = { sa => $self->sa, sb => $self->sb, lvar => $self->lvar };
+        my $st_true  = $self->_spawn_child( $opts )->_convert_opcode(
             [ @{ $ops }[ $true_start .. $true_end ] ], $self, { strict => $self->strict }
         );
 
@@ -829,7 +829,7 @@ CODE
 }
 
 
-sub logic_is_max_min {
+sub _logic_is_max_min {
     my ( $ops, $i, $arg ) = @_;
         $ops->[ $i     ]->[ 0 ] eq 'or'
     and $ops->[ $i + 1 ]->[ 0 ] eq 'load_lvar_to_sb'
@@ -838,11 +838,27 @@ sub logic_is_max_min {
 }
 
 
+sub _escape {
+    my $str = $_[0];
+    $str =~ s{\\}{\\\\}g;
+    $str =~ s{\n}{\\n}g;
+    $str =~ s{\t}{\\t}g;
+    $str =~ s{"}{\\"}g;
+    $str =~ s{\$}{\\\$}g;
+    return $str;
+}
+
+
 #
 # methods
 #
 
-sub is_strict { $_[0]->{strict} }
+sub is_strict { $_[0]->strict }
+
+
+sub indent {
+    $_[0]->indent_space x $_[0]->indent_depth;
+}
 
 
 sub code {
@@ -891,7 +907,7 @@ sub optimize_to_print {
     return unless $ops;
     return unless ( $ops->[0] eq 'print' );
 
-    if ( $type eq 'num' ) {
+    if ( $type eq 'num' ) { # currently num only
         $ops->[0] = 'print_raw';
     }
 
@@ -912,27 +928,7 @@ sub optimize_to_expr {
 
 
 #
-# utils
-#
-
-sub indent {
-    $_[0]->indent_space x $_[0]->indent_depth;
-}
-
-
-sub escape {
-    my $str = $_[0];
-    $str =~ s{\\}{\\\\}g;
-    $str =~ s{\n}{\\n}g;
-    $str =~ s{\t}{\\t}g;
-    $str =~ s{"}{\\"}g;
-    $str =~ s{\$}{\\\$}g;
-    return $str;
-}
-
-
-#
-# called in booster code
+# functions called in booster code
 #
 
 sub neat {
@@ -973,7 +969,6 @@ sub call {
 
     $ret;
 }
-
 
 
 use Text::Xslate::PP::Type::Pair;
@@ -1034,14 +1029,13 @@ sub methodcall {
 
 sub fetch {
     my ( $st, $var, $key, $frame, $line ) = @_;
-    my $ret;
 
     if ( Scalar::Util::blessed $var ) {
-        $ret = call( $st, $frame, $line, 1, $key, $var );
+        return call( $st, $frame, $line, 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {
-            $ret = $var->{ $key };
+            return $var->{ $key };
         }
         else {
             warn_in_booster( $st, $frame, $line, "Use of nil as a field key" );
@@ -1049,7 +1043,7 @@ sub fetch {
     }
     elsif ( ref $var eq 'ARRAY' ) {
         if ( defined $key and $key =~ /[-.0-9]/ ) {
-            $ret = $var->[ $key ];
+            return $var->[ $key ];
         }
         else {
             warn_in_booster( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
@@ -1062,7 +1056,7 @@ sub fetch {
         warn_in_booster( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
     }
 
-    return $ret;
+    return;
 }
 
 

@@ -301,8 +301,9 @@ sub tx_execute { no warnings 'recursion';
     local $_depth = $_depth + 1;
 
     if ( $ENV{ XSLATE_PP_BOOST } ) {
-        $st->{ boost_code } ? $st->{ boost_code }->( $st )
-                            : $st->{code}->[ 0 ]->{ exec_code }->( $st );
+        $st->{ boost_code }->( $st );
+#        $st->{ boost_code } ? $st->{ boost_code }->( $st )
+#                            : $st->{code}->[ 0 ]->{ exec_code }->( $st );
     }
     else {
         $st->{code}->[ 0 ]->{ exec_code }->( $st );
