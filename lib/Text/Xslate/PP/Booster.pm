@@ -1,6 +1,6 @@
 package Text::Xslate::PP::Booster;
 
-use Mouse;
+use Any::Moose;
 use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
@@ -471,9 +471,9 @@ $CODE_MANIP{ 'macrocall' } = sub {
         $self->stash->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
     }
 
-    $self->sa( sprintf( '$macro{\'%s\'}->(%s)',
+    $self->sa( sprintf( '$macro{\'%s\'}->( $st, %s )',
         $self->sa(),
-        sprintf( 'push @{ $pad }, [ %s ]', join( ', ', @{ pop @{ $self->SP } } ) )
+        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
     ) );
 };
 
@@ -485,8 +485,11 @@ $CODE_MANIP{ 'macro_begin' } = sub {
     $self->stash->{ in_macro } = $arg;
     $self->framename( $arg );
 
-    $self->write_lines( sprintf( '$macro{\'%s\'} = sub {', $arg ) );
+    $self->write_lines( sprintf( '$macro{\'%s\'} = $st->{ booster_macro }->{\'%s\'} ||= sub {', $arg, $arg ) );
     $self->indent_depth( $self->indent_depth + 1 );
+
+    $self->write_lines( 'my ( $st, $pad ) = @_;' );
+    $self->write_lines( 'my $vars = $st->{ vars };' );
     $self->write_lines( sprintf( 'my $output = \'\';' ) );
     $self->write_code( "\n" );
 
@@ -508,6 +511,7 @@ $CODE_MANIP{ 'macro_end' } = sub {
     $self->indent_depth( $self->indent_depth - 1 );
 
     $self->write_lines( sprintf( "};\n" ) );
+    $self->write_code( "\n" );
 
     delete $self->stash->{ in_macro };
 
@@ -1114,6 +1118,12 @@ sub cond_ne {
 }
 
 
+sub push_pad {
+    push @{ $_[0] }, $_[1];
+    $_[0];
+}
+
+
 sub is_verbose {
     my $v = $_[0]->self->{ verbose };
     defined $v ? $v : Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT;
@@ -1144,6 +1154,8 @@ sub error_in_booster {
 }
 
 
+no Any::Moose;
+__PACKAGE__->meta->make_immutable;
 1;
 __END__
 
@@ -1280,12 +1292,14 @@ And the booster converted them into a perl subroutine code (strict option set in
 
         # macro
 
-        $macro{'foo'} = sub {
+        $macro{'foo'} = $st->{ booster_macro }->{'foo'} ||= sub {
+            my ( $st, $pad ) = @_;
+            my $vars = $st->{ vars };
             my $output = '';
 
             Carp::croak('Macro call is too deep (> 100) at "foo"') if ++$depth > 100;
 
-            $output .= "    Hello ";
+            $output .= "        Hello ";
 
             $sv = $pad->[ -1 ]->[ 0 ];
 
@@ -1314,9 +1328,10 @@ And the booster converted them into a perl subroutine code (strict option set in
             $output;
         };
 
+
         # process start
 
-        $output .= $macro{'foo'}->(push @{ $pad }, [ $vars->{ "value" } ]);
+        $output .= $macro{'foo'}->( $st, push_pad( $pad, [ $vars->{ "value" } ] ) );
 
         # process end
 
