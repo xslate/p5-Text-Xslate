@@ -55,7 +55,7 @@ sub new {
     $args{cache}        //= 1;
     $args{cache_dir}    //= File::Spec->tmpdir;
 
-    my %funcs;
+    my %funcs = (raw => \&escaped_string);
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
