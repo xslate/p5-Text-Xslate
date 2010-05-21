@@ -54,6 +54,21 @@ X
 T
 [42]
 X
+
+    [<<'T', { data => [42] }, <<'X', 'no last semicolon'],
+<:
+    block foo -> { "default value\n" }
+-:>
+T
+default value
+X
+
+    [<<'T', { data => [42] }, '', 'empty block'],
+<:
+    block foo -> { }
+-:>
+T
+
 );
 
 foreach my $d(@set) {

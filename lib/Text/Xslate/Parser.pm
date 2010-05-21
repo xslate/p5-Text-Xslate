@@ -348,7 +348,7 @@ sub BUILD {
 sub _define_basic_symbols {
     my($parser) = @_;
 
-    $parser->symbol('(end)')->is_end(1); # EOF
+    $parser->symbol('(end)')->is_block_end(1); # EOF
 
     $parser->symbol('(name)');
 
@@ -437,7 +437,7 @@ sub define_symbols {
 
     # syntax specific separators
     $parser->symbol(']');
-    $parser->symbol('}')->is_end(1); # block end
+    $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
     $parser->symbol('else');
     $parser->symbol('with');
@@ -858,7 +858,8 @@ sub statement { # process one or more statements
     }
 
     my $expr = $parser->expression(0);
-    $parser->advance(";");
+    $parser->token->is_block_end
+        or $parser->advance(";");
     return $parser->symbol('print')->clone(
         arity  => 'command',
         first  => [$expr],
@@ -872,7 +873,7 @@ sub statements { # process statements
     my @a;
 
     my $t = $parser->token;
-    while(!$t->is_end) {
+    while(!$t->is_block_end) {
         push @a, $parser->statement();
         $t = $parser->token;
     }

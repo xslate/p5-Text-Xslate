@@ -14,12 +14,12 @@ sub define_symbols {
 
     # both upper cased and lower cased
 
-    $parser->symbol('END')  ->is_end(1);
-    $parser->symbol('end')  ->is_end(1);
-    $parser->symbol('ELSE') ->is_end(1);
-    $parser->symbol('else') ->is_end(1);
-    $parser->symbol('ELSIF')->is_end(1);
-    $parser->symbol('elsif')->is_end(1);
+    $parser->symbol('END')  ->is_block_end(1);
+    $parser->symbol('end')  ->is_block_end(1);
+    $parser->symbol('ELSE') ->is_block_end(1);
+    $parser->symbol('else') ->is_block_end(1);
+    $parser->symbol('ELSIF')->is_block_end(1);
+    $parser->symbol('elsif')->is_block_end(1);
 
     $parser->symbol('IN');
     $parser->symbol('in');
