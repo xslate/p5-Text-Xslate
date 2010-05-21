@@ -7,6 +7,7 @@ use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
     literal_to_value
+    is_int
     p
 );
 
@@ -824,8 +825,7 @@ sub _optimize_vmcode {
                 }
             }
             when('literal') {
-                my $constraint = find_type_constraint('Int');
-                if($constraint->check($c->[$i][1])) {
+                if(is_int($c->[$i][1])) {
                     $c->[$i][0] = 'literal_i';
                 }
             }

@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1019';
+our $VERSION = '0.1020';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -55,7 +55,7 @@ sub new {
     $args{cache}        //= 1;
     $args{cache_dir}    //= File::Spec->tmpdir;
 
-    my %funcs;
+    my %funcs = (raw => \&escaped_string);
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
@@ -360,7 +360,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1019.
+This document describes Text::Xslate version 0.1020.
 
 =head1 SYNOPSIS
 

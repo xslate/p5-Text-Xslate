@@ -121,6 +121,10 @@ a=1
 b=2
 c=3
 X
+
+    # builtin filters
+    ['<: $value | raw :>', { value => "<em>Xslate</em>" }, "<em>Xslate</em>", 'raw as a filter'],
+    ['<: raw($value) :>',  { value => "<em>Xslate</em>" }, "<em>Xslate</em>", 'raw as a functiun'],
 );
 
 foreach my $d(@set) {

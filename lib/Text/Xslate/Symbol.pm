@@ -45,7 +45,7 @@ has value => (
 #   },
 );
 
-has is_end => (
+has is_block_end => (
     is  => 'rw',
     isa => 'Bool',
 
