@@ -1,11 +1,11 @@
 package Text::Xslate::Parser;
 use 5.010;
 use Any::Moose;
-use Any::Moose '::Util::TypeConstraints';
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
+    is_int
     p
 );
 
@@ -641,8 +641,7 @@ sub is_valid_field {
             return 1;
         }
         when("literal") {
-            my $constraint = find_type_constraint('Int');
-            return $constraint->check($token->id);
+            return is_int($token->id);
         }
     }
     return 0;

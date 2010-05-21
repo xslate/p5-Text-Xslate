@@ -6,6 +6,7 @@ use warnings;
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
     literal_to_value import_from
+    is_int
     p
     $STRING $NUMBER $DEBUG
 );
@@ -30,6 +31,12 @@ our $NUMBER  = qr/ [+-]? (?:
 
 our $DEBUG;
 $DEBUG //= $ENV{XSLATE} // '';
+
+sub is_int {
+    my($s) = @_;
+    no warnings;
+    return $s eq int($s);
+}
 
 my %esc2char = (
     't' => "\t",
