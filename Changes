@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+0.1020 Fri May 21 17:21:03 2010
+    [NEW FEATURES]
+    - Resolve issue#1: make semicolon/{} block unnecessary in
+      block foo -> { ; }
+    - New "raw" builtin filter: <: $value | raw :>
+
 0.1019 Wed May 19 15:48:53 2010
     [BUG FIXES]
     - Workaround Win32 CRLF issues on tests
