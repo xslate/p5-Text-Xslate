@@ -302,8 +302,6 @@ sub tx_execute { no warnings 'recursion';
 
     if ( $ENV{ XSLATE_PP_BOOST } ) {
         $st->{ boost_code }->( $st );
-#        $st->{ boost_code } ? $st->{ boost_code }->( $st )
-#                            : $st->{code}->[ 0 ]->{ exec_code }->( $st );
     }
     else {
         $st->{code}->[ 0 ]->{ exec_code }->( $st );
@@ -387,6 +385,10 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
     use Text::Xslate::PP;
     my $tx = Text::Xslate->new();
+
+Pure perl version is very slow. If you want more speed in a persistent running,
+try to set an environment variable C<XSLATE_PP_BOOST> with C<1> or C<2>.
+See to L<Text::Xslate::PP::Booster>.
 
 =head1 SEE ALSO
 
