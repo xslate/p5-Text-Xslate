@@ -164,7 +164,6 @@ $CODE_MANIP{ 'literal_i' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( $arg );
     $self->optimize_to_print( 'num' );
-    $self->optimize_to_expr();
 };
 
 
@@ -907,19 +906,6 @@ sub optimize_to_print {
     if ( $type eq 'num' ) { # currently num only
         $ops->[0] = 'print_raw';
     }
-
-}
-
-
-sub optimize_to_expr {
-    my ( $self ) = @_;
-    my $ops = $self->ops->[ $self->current_line + 1 ];
-
-    return unless $ops;
-    return unless ( $ops->[0] eq 'goto' );
-
-    $self->write_lines( sprintf( '$sa = %s;', $self->sa ) );
-    $self->sa( '$sa' );
 
 }
 
