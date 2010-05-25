@@ -230,6 +230,7 @@ limited to 100.
 Template cascading is another way to extend templates other than C<include>.
 
     : cascade myapp::base
+    : cascade myapp::base ( local_var1 => value1, local_var2 => value2, ...)
     : cascade myapp::base with myapp::role1, myapp::role2
     : cascade with myapp::role1, myapp::role2
 
