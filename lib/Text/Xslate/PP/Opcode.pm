@@ -134,7 +134,7 @@ sub op_print {
             $sv =~ s/</&lt;/g;
             $sv =~ s/>/&gt;/g;
             $sv =~ s/"/&quot;/g;
-            $sv =~ s/'/&#39;/g; # ' for poor editors
+            $sv =~ s/'/&apos;/g; # ' for poor editors
         }
         $_[0]->{ output } .= $sv;
     }

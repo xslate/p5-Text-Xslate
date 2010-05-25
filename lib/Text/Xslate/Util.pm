@@ -105,7 +105,6 @@ sub p { # for debugging
     my $dd = Data::Dumper->new([$self]);
     $dd->Indent(1);
     $dd->Sortkeys(1);
-    $dd->Useqq(1);
     $dd->Quotekeys(0);
     $dd->Terse(1);
     return $dd->Dump() if defined wantarray;

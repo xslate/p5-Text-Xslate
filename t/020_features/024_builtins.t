@@ -127,13 +127,18 @@ X
     ['<: raw($value) :>',  { value => "<em>Xslate</em>" }, "<em>Xslate</em>", 'raw as a functiun'],
 
     ['<: $value | html :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'html'],
-    ['<: $value | dump :>', { value => "<Xslate>" }, qq{&quot;&lt;Xslate&gt;&quot;\n}, 'dump'],
-    ['<: $value | dump | raw  :>', { value => "<Xslate>" }, qq{"<Xslate>"\n}, 'x | dump | raw'],
+    ['<: $value | dump :>', { value => "<Xslate>" }, qr/&lt;Xslate&gt;/, 'dump'],
+    ['<: $value | dump | raw  :>', { value => "<Xslate>" }, qr/<Xslate>/, 'x | dump | raw'],
 );
 
 foreach my $d(@set) {
-    my($in, $vars, $out, $msg) = @$d;
-    is $tx->render_string($in, $vars), $out, $msg or diag $in;
+    my($in, $vars, $expected, $msg) = @$d;
+    if(ref $expected) {
+        like $tx->render_string($in, $vars), $expected, $msg or diag $in;
+    }
+    else {
+        is $tx->render_string($in, $vars), $expected, $msg or diag $in;
+    }
 }
 
 

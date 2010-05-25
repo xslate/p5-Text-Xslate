@@ -439,8 +439,8 @@ TXC(print) {
                 parts_len = sizeof("&quot;") - 1;
                 break;
             case '\'':
-                parts     =        "&#39;";
-                parts_len = sizeof("&#39;") - 1;
+                parts     =        "&apos;";
+                parts_len = sizeof("&apos;") - 1;
                 break;
             default:
                 parts     = cur;
