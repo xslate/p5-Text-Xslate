@@ -1,5 +1,19 @@
 Revision history for Perl extension Text::Xslate
 
+0.1021 Tue May 25 18:18:06 2010
+    [BUG FIXES]
+    - Fix a bug about for-loops on PP (makamaka)
+
+    [CHANGES]
+    - "'" will be escaped into "&apos;", not "&#39;"
+
+    [NEW FEATURES]
+    - Resolve issue#2: Improve cascade statement:
+        : cascade base ( foo => 42, bar => "baz" )
+    - Add html() and dump() builtins:
+        <: $var | html # explicit html-espace :>
+        <: $var | dump # print $var using Data::Dumper :>
+
 0.1020 Fri May 21 17:21:03 2010
     [NEW FEATURES]
     - Resolve issue#1: make semicolon/{} block unnecessary in
