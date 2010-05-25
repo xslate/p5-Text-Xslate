@@ -439,6 +439,7 @@ sub define_symbols {
     $parser->symbol(']');
     $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
+    $parser->symbol('=>');
     $parser->symbol('else');
     $parser->symbol('with');
     $parser->symbol('::');
@@ -1215,10 +1216,32 @@ sub std_cascade {
         }
     }
 
+    my @vars;
+    if($parser->token->id eq "(") {
+        $parser->advance();
+
+        while(1) {
+            my $t = $parser->token;
+            last if $t->arity ne "name";
+            my $key = $t->id;
+
+            $parser->advance();
+
+            $parser->advance("=>");
+
+            push @vars, [ $key, $parser->expression(0) ];
+
+            last if $parser->token->id eq ")";
+            $parser->advance(",");
+        }
+        $parser->advance(")");
+    }
+
     $parser->finish_statement();
     return $symbol->clone(
         first  => $base,
         second => \@components,
+        third  => \@vars,
         arity  => 'cascade');
 }
 

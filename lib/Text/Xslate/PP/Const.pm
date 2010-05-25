@@ -66,6 +66,7 @@ unless ( %Text::Xslate::OPS ) {
             move_from_sb
             save_to_lvar
             load_lvar_to_sb
+            local_s
             push
             pop
             pushmark
@@ -125,6 +126,7 @@ our $tx_oparg = [
     0,             # move_from_sb
     TXCODE_W_VAR,  # save_to_lvar
     TXCODE_W_VAR,  # load_lvar_to_sb
+    TXCODE_W_KEY,  # local_s
     0,             # push
     0,             # pop
     0,             # pushmark
@@ -187,52 +189,53 @@ sub init_opcode_dispatch_table {
         \&op_move_from_sb,        # 2
         \&op_save_to_lvar,        # 3
         \&op_load_lvar_to_sb,     # 4
-        \&op_push,                # 5
-        \&op_pop,                 # 6
-        \&op_pushmark,            # 7
-        \&op_nil,                 # 8
-        \&op_literal,             # 9
-        \&op_literal_i,           # 10
-        \&op_fetch_s,             # 11
-        \&op_fetch_lvar,          # 12
-        \&op_fetch_field,         # 13
-        \&op_fetch_field_s,       # 14
-        \&op_print,               # 15
-        \&op_print_raw,           # 16
-        \&op_print_raw_s,         # 17
-        \&op_include,             # 18
-        \&op_for_start,           # 19
-        \&op_for_iter,            # 20
-        \&op_add,                 # 21
-        \&op_sub,                 # 22
-        \&op_mul,                 # 23
-        \&op_div,                 # 24
-        \&op_mod,                 # 25
-        \&op_concat,              # 26
-        \&op_filt,                # 27
-        \&op_and,                 # 28
-        \&op_dand,                # 29
-        \&op_or,                  # 30
-        \&op_dor,                 # 31
-        \&op_not,                 # 32
-        \&op_plus,                # 33
-        \&op_minus,               # 34
-        \&op_eq,                  # 35
-        \&op_ne,                  # 36
-        \&op_lt,                  # 37
-        \&op_le,                  # 38
-        \&op_gt,                  # 39
-        \&op_ge,                  # 40
-        \&op_macrocall,           # 41
-        \&op_macro_begin,         # 42
-        \&op_macro_end,           # 43
-        \&op_macro,               # 44
-        \&op_function,            # 45
-        \&op_funcall,             # 46
-        \&op_methodcall_s,        # 47
-        \&op_goto,                # 48
-        \&op_depend,              # 49
-        \&op_end,                 # 50
+        \&op_local_s,             # 5
+        \&op_push,                # 6
+        \&op_pop,                 # 7
+        \&op_pushmark,            # 8
+        \&op_nil,                 # 9
+        \&op_literal,             # 10
+        \&op_literal_i,           # 11
+        \&op_fetch_s,             # 12
+        \&op_fetch_lvar,          # 13
+        \&op_fetch_field,         # 14
+        \&op_fetch_field_s,       # 15
+        \&op_print,               # 16
+        \&op_print_raw,           # 17
+        \&op_print_raw_s,         # 18
+        \&op_include,             # 19
+        \&op_for_start,           # 20
+        \&op_for_iter,            # 21
+        \&op_add,                 # 22
+        \&op_sub,                 # 23
+        \&op_mul,                 # 24
+        \&op_div,                 # 25
+        \&op_mod,                 # 26
+        \&op_concat,              # 27
+        \&op_filt,                # 28
+        \&op_and,                 # 29
+        \&op_dand,                # 30
+        \&op_or,                  # 31
+        \&op_dor,                 # 32
+        \&op_not,                 # 33
+        \&op_plus,                # 34
+        \&op_minus,               # 35
+        \&op_eq,                  # 36
+        \&op_ne,                  # 37
+        \&op_lt,                  # 38
+        \&op_le,                  # 39
+        \&op_gt,                  # 40
+        \&op_ge,                  # 41
+        \&op_macrocall,           # 42
+        \&op_macro_begin,         # 43
+        \&op_macro_end,           # 44
+        \&op_macro,               # 45
+        \&op_function,            # 46
+        \&op_funcall,             # 47
+        \&op_methodcall_s,        # 48
+        \&op_goto,                # 49
+        \&op_depend,              # 50
+        \&op_end,                 # 51
     ];
 }
 
