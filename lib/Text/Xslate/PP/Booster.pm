@@ -130,6 +130,16 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
 };
 
 
+$CODE_MANIP{ 'local_s' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    my $key    = $arg;
+    my $newval = $self->sa;
+
+    $self->write_lines( sprintf( 'local_s( $st, "%s", %s );', $key, $newval ) );
+    $self->write_code( "\n" );
+};
+
+
 $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sb( $self->lvar->[ $arg ] );
@@ -278,8 +288,11 @@ $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-Text::Xslate::PP::tx_execute( $st2, undef, $vars );
-$output .= $st2->{ output };
+{
+    local $st2->{local_stack};
+    Text::Xslate::PP::tx_execute( $st2, undef, $vars );
+    $output .= $st2->{ output };
+}
 
 CODE
 
@@ -1107,6 +1120,23 @@ sub cond_ne {
 sub push_pad {
     push @{ $_[0] }, $_[1];
     $_[0];
+}
+
+
+sub local_s {
+    my( $st, $key, $newval ) = @_;
+    my $vars   = $st->{vars};
+    my $oldval = delete $vars->{$key};
+
+    require Scope::Guard;
+
+    push @{ $st->{local_stack} ||= [] }, Scope::Guard->new(
+        exists $vars->{$key}
+            ? sub {  $vars->{$key} = $oldval; return }
+            : sub { delete $vars->{$key};     return }
+    );
+
+    $vars->{$key} = $newval;
 }
 
 
