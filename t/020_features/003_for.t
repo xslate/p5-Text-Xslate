@@ -90,6 +90,19 @@ world!'
 >>', "<<
 >>"],
 
+    [<<'T', <<'X'],
+: macro foo ->($x, $y) {
+:   for $x -> ($item) {
+        <: $item :>
+:   }
+: }
+: for $data -> ($item) {
+:   foo($item)
+: }
+T
+        Perl
+X
+
 );
 
 foreach my $pair(@data) {
@@ -103,6 +116,8 @@ foreach my $pair(@data) {
         Types => [{ name => 'Void' }, { name => 'Bool' }],
 
         empty => [],
+
+        data => [[qw(Perl)]],
     );
     is $tx->render_string($in, \%vars), $out or diag $in;
 }

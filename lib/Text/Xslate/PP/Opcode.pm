@@ -219,14 +219,16 @@ sub op_for_iter {
     my $av = tx_access_lvar( $_[0], $id + 1 );
     my $i  = tx_access_lvar( $_[0], $id + 2 );
 
-    $av = [ $av ] unless ref $av;
-
-    if ( ++$i <= $#{ $av } ) {
-        tx_access_lvar( $_[0], $id     => $av->[ $i ] );
-        tx_access_lvar( $_[0], $id + 2 => $i );
-        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    if(defined $av) {
+        $av = [ $av ] unless ref $av;
+        if ( ++$i <= $#{ $av } ) {
+            tx_access_lvar( $_[0], $id     => $av->[ $i ] );
+            tx_access_lvar( $_[0], $id + 2 => $i );
+            goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+        }
     }
 
+    # finish
     $_[0]->{ pc } = $_[0]->pc_arg;
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
