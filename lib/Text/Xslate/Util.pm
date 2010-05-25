@@ -104,6 +104,10 @@ sub p { # for debugging
     require 'Data/Dumper.pm'; # we don't want to create its namespace
     my $dd = Data::Dumper->new([$self]);
     $dd->Indent(1);
+    $dd->Sortkeys(1);
+    $dd->Useqq(1);
+    $dd->Quotekeys(0);
+    $dd->Terse(1);
     return $dd->Dump() if defined wantarray;
     print $dd->Dump();
 }

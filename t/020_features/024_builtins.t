@@ -125,6 +125,10 @@ X
     # builtin filters
     ['<: $value | raw :>', { value => "<em>Xslate</em>" }, "<em>Xslate</em>", 'raw as a filter'],
     ['<: raw($value) :>',  { value => "<em>Xslate</em>" }, "<em>Xslate</em>", 'raw as a functiun'],
+
+    ['<: $value | html :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'html'],
+    ['<: $value | dump :>', { value => "<Xslate>" }, qq{&quot;&lt;Xslate&gt;&quot;\n}, 'dump'],
+    ['<: $value | dump | raw  :>', { value => "<Xslate>" }, qq{"<Xslate>"\n}, 'x | dump | raw'],
 );
 
 foreach my $d(@set) {

@@ -13,6 +13,7 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
     import_from
+    p
 );
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
@@ -55,7 +56,13 @@ sub new {
     $args{cache}        //= 1;
     $args{cache_dir}    //= File::Spec->tmpdir;
 
-    my %funcs = (raw => \&escaped_string);
+    my %funcs = (
+        raw  => \&escaped_string,
+        html => \&html_escape,
+        dump => \&p,
+    );
+
+
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
