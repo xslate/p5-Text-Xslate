@@ -261,7 +261,7 @@ elsif ( defined $sv ) {
         $sv =~ s/</&lt;/g;
         $sv =~ s/>/&gt;/g;
         $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&#39;/g;
+        $sv =~ s/'/&apos;/g;
     }
     $output .= $sv;
 }
