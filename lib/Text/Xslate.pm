@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1020';
+our $VERSION = '0.1021';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -13,6 +13,7 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
     import_from
+    p
 );
 
 use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
@@ -55,7 +56,13 @@ sub new {
     $args{cache}        //= 1;
     $args{cache_dir}    //= File::Spec->tmpdir;
 
-    my %funcs = (raw => \&escaped_string);
+    my %funcs = (
+        raw  => \&escaped_string,
+        html => \&html_escape,
+        dump => \&p,
+    );
+
+
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
@@ -342,7 +349,7 @@ sub html_escape {
     $s =~ s/</&lt;/g;
     $s =~ s/>/&gt;/g;
     $s =~ s/"/&quot;/g; # " for poor editors
-    $s =~ s/'/&#39;/g;  # ' for poor editors
+    $s =~ s/'/&apos;/g; # ' for poor editors
 
     return escaped_string($s);
 }
@@ -360,7 +367,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1020.
+This document describes Text::Xslate version 0.1021.
 
 =head1 SYNOPSIS
 

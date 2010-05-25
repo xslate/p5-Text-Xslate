@@ -47,6 +47,25 @@ sub op_load_lvar_to_sb {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_local_s {
+    my($st) = @_;
+    my $key    = $st->pc_arg;
+    my $vars   = $st->{vars};
+    my $newval = $st->{sa};
+    my $oldval = delete $vars->{$key};
+
+    require Scope::Guard;
+
+    push @{ $_[0]->{local_stack} ||= [] }, Scope::Guard->new(
+        exists $vars->{$key}
+            ? sub {  $vars->{$key} = $oldval; return }
+            : sub { delete $vars->{$key};     return }
+    );
+
+    $vars->{$key} = $newval;
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
 sub op_push {
     push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->{sa};
@@ -134,7 +153,7 @@ sub op_print {
             $sv =~ s/</&lt;/g;
             $sv =~ s/>/&gt;/g;
             $sv =~ s/"/&quot;/g;
-            $sv =~ s/'/&#39;/g; # ' for poor editors
+            $sv =~ s/'/&apos;/g; # ' for poor editors
         }
         $_[0]->{ output } .= $sv;
     }
@@ -161,7 +180,10 @@ sub op_print_raw_s {
 sub op_include {
     my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
 
-    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
+    {
+        local $st->{local_stack};
+        Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
+    }
 
     $_[0]->{ output } .= $st->{ output };
 
@@ -197,14 +219,16 @@ sub op_for_iter {
     my $av = tx_access_lvar( $_[0], $id + 1 );
     my $i  = tx_access_lvar( $_[0], $id + 2 );
 
-    $av = [ $av ] unless ref $av;
-
-    if ( ++$i <= $#{ $av } ) {
-        tx_access_lvar( $_[0], $id     => $av->[ $i ] );
-        tx_access_lvar( $_[0], $id + 2 => $i );
-        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    if(defined $av) {
+        $av = [ $av ] unless ref $av;
+        if ( ++$i <= $#{ $av } ) {
+            tx_access_lvar( $_[0], $id     => $av->[ $i ] );
+            tx_access_lvar( $_[0], $id + 2 => $i );
+            goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+        }
     }
 
+    # finish
     $_[0]->{ pc } = $_[0]->pc_arg;
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }

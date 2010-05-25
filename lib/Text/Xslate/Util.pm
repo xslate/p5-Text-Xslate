@@ -73,6 +73,8 @@ package
     Text::Xslate::Util::_import;
 T
 
+    local $Text::Xslate::Util::{'_import::'};
+
     for(my $i = 0; $i < @_; $i++) {
         $code .= "use $_[$i]";
         if(ref $_[$i+1]){
@@ -94,8 +96,6 @@ T
             defined($c) ? ($_ => $c) : ();
         } keys %Text::Xslate::Util::_import::;
 
-    delete $Text::Xslate::Util::{'_import::'};
-
     return @funcs;
 }
 
@@ -104,6 +104,9 @@ sub p { # for debugging
     require 'Data/Dumper.pm'; # we don't want to create its namespace
     my $dd = Data::Dumper->new([$self]);
     $dd->Indent(1);
+    $dd->Sortkeys(1);
+    $dd->Quotekeys(0);
+    $dd->Terse(1);
     return $dd->Dump() if defined wantarray;
     print $dd->Dump();
 }

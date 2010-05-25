@@ -169,10 +169,10 @@ sub compile {
         my $engine = $self->engine
             // $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 
-        my @components = map{ $self->_bare_to_file($_) } @{$cascade->second};
-
         my($base_file, $base_code);
-        my $base = $cascade->first;
+        my $base       = $cascade->first;
+        my @components = map{ $self->_bare_to_file($_) } @{$cascade->second};
+        my $vars       = $cascade->third;
 
         if(defined $base) {
             $base_file = $self->_bare_to_file($base);
@@ -220,11 +220,23 @@ sub compile {
             ### after: $base_code
         }
 
-        # cascade:
+        # pure cascade:
         @{$base_code} = $self->_process_cascade($base_file, $base_code)
             if defined $base;
 
-        # all the main code will be discarded
+        if(defined $vars) {
+            my @local_vars;
+            foreach my $pair(@{$vars}) {
+                my($key, $expr) = @{$pair};
+                push @local_vars,
+                    $self->_generate_expr($expr),
+                    [ local_s => $key ];
+                ;
+            }
+            unshift @{$base_code}, @local_vars;
+        }
+
+        # discards all the main code (if should so)
         if($base_code != \@code) {
             foreach my $c(@code) {
                 if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {

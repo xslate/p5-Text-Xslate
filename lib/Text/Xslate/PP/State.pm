@@ -2,23 +2,50 @@ package Text::Xslate::PP::State;
 
 use Any::Moose; # we don't need Any::Moose for this module?
 
-has tmpl => ( is => 'rw' );
+has vars => (
+    is => 'rw',
+);
 
-has self => ( is => 'rw', weak_ref => 1 );
+has tmpl => (
+    is => 'rw',
+);
 
-has frame => ( is => 'rw' );
+has self => (
+    is => 'rw',
+    weak_ref => 1,
+);
 
-has current_frame => ( is => 'rw' );
+has frame => (
+    is => 'rw',
+);
 
-has pad => ( is => 'rw' );
+has current_frame => (
+    is => 'rw',
+);
 
-has lines => ( is => 'rw' );
+has pad => (
+    is => 'rw',
+);
 
-has code_len => ( is => 'rw' );
+has lines => (
+    is => 'rw',
+);
 
-has macro => ( is => 'rw' );
+has code_len => (
+    is => 'rw',
+);
 
-has function => ( is => 'rw' );
+has macro => (
+    is => 'rw',
+);
+
+has function => (
+    is => 'rw',
+);
+
+has local_stack => (
+    is => 'rw',
+);
 
 
 sub pc_arg {

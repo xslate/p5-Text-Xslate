@@ -322,6 +322,19 @@ TXC_w_var(load_lvar_to_sb) {
     TX_st->pc++;
 }
 
+TXC_w_key(local_s) {
+    SV* const key  = TX_op_arg;
+    HE* const he   = hv_fetch_ent(TX_st->vars, key, TRUE, 0U);
+    SV** const svp = &HeVAL(he);
+    SV*    newval  = TX_st_sa;
+
+    /* local $vars->{$key} = $val */
+    save_helem(TX_st->vars, key, svp);
+    sv_setsv(*svp, newval);
+
+    TX_st->pc++;
+}
+
 TXC(push) {
     dSP;
     XPUSHs(sv_mortalcopy(TX_st_sa));
@@ -439,8 +452,8 @@ TXC(print) {
                 parts_len = sizeof("&quot;") - 1;
                 break;
             case '\'':
-                parts     =        "&#39;";
-                parts_len = sizeof("&#39;") - 1;
+                parts     =        "&apos;";
+                parts_len = sizeof("&apos;") - 1;
                 break;
             default:
                 parts     = cur;

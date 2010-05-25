@@ -439,6 +439,7 @@ sub define_symbols {
     $parser->symbol(']');
     $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
+    $parser->symbol('=>');
     $parser->symbol('else');
     $parser->symbol('with');
     $parser->symbol('::');
@@ -841,6 +842,18 @@ sub pop_scope {
     return;
 }
 
+sub finish_statement {
+    my($parser) = @_;
+
+    my $t = $parser->token;
+    if(!($t->is_block_end or $t->id eq ";")) {
+        $parser->_error("Unexpected token (the statement seems to finish): "
+        . $t->id . " (" . $t->arity . ")");
+    }
+
+    return;
+}
+
 sub statement { # process one or more statements
     my($parser) = @_;
     my $t = $parser->token;
@@ -858,8 +871,8 @@ sub statement { # process one or more statements
     }
 
     my $expr = $parser->expression(0);
-    $parser->token->is_block_end
-        or $parser->advance(";");
+    $parser->finish_statement();
+
     return $parser->symbol('print')->clone(
         arity  => 'command',
         first  => [$expr],
@@ -1140,7 +1153,7 @@ sub std_command {
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
-    $parser->advance(";");
+    $parser->finish_statement();
     return $symbol->clone(first => $args, arity => 'command');
 }
 
@@ -1202,10 +1215,33 @@ sub std_cascade {
             push @components, $parser->_get_bare_name();
         }
     }
-    $parser->advance(";");
+
+    my @vars;
+    if($parser->token->id eq "(") {
+        $parser->advance();
+
+        while(1) {
+            my $t = $parser->token;
+            last if $t->arity ne "name";
+            my $key = $t->id;
+
+            $parser->advance();
+
+            $parser->advance("=>");
+
+            push @vars, [ $key, $parser->expression(0) ];
+
+            last if $parser->token->id eq ")";
+            $parser->advance(",");
+        }
+        $parser->advance(")");
+    }
+
+    $parser->finish_statement();
     return $symbol->clone(
         first  => $base,
         second => \@components,
+        third  => \@vars,
         arity  => 'cascade');
 }
 

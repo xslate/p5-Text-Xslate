@@ -28,6 +28,9 @@ if($want_xs) {
 
     cc_src_paths qw(xs);
 }
+else {
+    requires 'Scope::Guard';
+}
 
 auto_set_repository() if -d '.git';
 
