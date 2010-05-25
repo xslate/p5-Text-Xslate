@@ -73,6 +73,8 @@ package
     Text::Xslate::Util::_import;
 T
 
+    local $Text::Xslate::Util::{'_import::'};
+
     for(my $i = 0; $i < @_; $i++) {
         $code .= "use $_[$i]";
         if(ref $_[$i+1]){
@@ -93,8 +95,6 @@ T
             my $c = ref($glob_ref) eq 'GLOB' ? *{$glob_ref}{CODE} : undef;
             defined($c) ? ($_ => $c) : ();
         } keys %Text::Xslate::Util::_import::;
-
-    delete $Text::Xslate::Util::{'_import::'};
 
     return @funcs;
 }
