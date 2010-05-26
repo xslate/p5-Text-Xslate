@@ -288,11 +288,9 @@ $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-{
-    local $st2->{local_stack};
-    Text::Xslate::PP::tx_execute( $st2, undef, $vars );
-    $output .= $st2->{ output };
-}
+Text::Xslate::PP::tx_execute( $st2, undef, $vars );
+
+$output .= $st2->{ output };
 
 CODE
 
@@ -1125,16 +1123,16 @@ sub push_pad {
 
 sub local_s {
     my( $st, $key, $newval ) = @_;
-    my $vars   = $st->{vars};
-    my $oldval = delete $vars->{$key};
+    my $vars       = $st->{vars};
+    my $preeminent = exists $vars->{$key};
+    my $oldval     = delete $vars->{$key};
 
-    require Scope::Guard;
-
-    push @{ $st->{local_stack} ||= [] }, Scope::Guard->new(
-        exists $vars->{$key}
+    my $cleanup = $preeminent
             ? sub {  $vars->{$key} = $oldval; return }
             : sub { delete $vars->{$key};     return }
-    );
+    ;
+
+    push @{ $st->{local_stack} ||= [] }, bless( $cleanup, 'Text::Xslate::PP::Booster::Guard' );
 
     $vars->{$key} = $newval;
 }
@@ -1167,6 +1165,14 @@ sub error_in_booster {
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }
+}
+
+
+{
+    package
+        Text::Xslate::PP::Booster::Guard;
+
+    sub DESTROY { $_[0]->() }
 }
 
 
