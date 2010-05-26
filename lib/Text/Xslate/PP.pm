@@ -285,20 +285,21 @@ our $_current_st;
 
 sub tx_execute { no warnings 'recursion';
     my ( $st, $output, $vars ) = @_;
-    my $len = $st->code_len;
-
-    $st->{ output } = '';
-    $st->{ pc }     = 0;
-
-    $st->{vars} = $vars;
-
-    local $_current_st = $st;
 
     if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
 
-    local $_depth = $_depth + 1;
+    my $len = $st->code_len;
+
+    $st->{ output } = '';
+    $st->{ pc }     = 0;
+    $st->{vars}     = $vars;
+
+    local $_depth      = $_depth + 1;
+    local $_current_st = $st;
+
+    local $st->{local_stack};
 
     if ( $ENV{ XSLATE_PP_BOOST } ) {
         $st->{ boost_code }->( $st );

@@ -47,20 +47,27 @@ sub op_load_lvar_to_sb {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+{
+    package
+        Text::Xslate::PP::Opcode::Guard;
+
+    sub DESTROY { $_[0]->() }
+}
+
 sub op_local_s {
     my($st) = @_;
-    my $key    = $st->pc_arg;
     my $vars   = $st->{vars};
-    my $newval = $st->{sa};
+    my $key    = $st->pc_arg;
+    my $preeminent
+               = exists $vars->{$key};
     my $oldval = delete $vars->{$key};
+    my $newval = $st->{sa};
 
-    require Scope::Guard;
-
-    push @{ $_[0]->{local_stack} ||= [] }, Scope::Guard->new(
-        exists $vars->{$key}
-            ? sub {  $vars->{$key} = $oldval; return }
-            : sub { delete $vars->{$key};     return }
-    );
+    my $cleanup = $preeminent
+        ? sub { $vars->{$key} = $oldval; return }
+        : sub { delete $vars->{$key};    return };
+    push @{ $_[0]->{local_stack} ||= [] },
+        bless($cleanup, 'Text::Xslate::PP::Opcode::Guard');
 
     $vars->{$key} = $newval;
 
@@ -180,10 +187,7 @@ sub op_print_raw_s {
 sub op_include {
     my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
 
-    {
-        local $st->{local_stack};
-        Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
-    }
+    Text::Xslate::PP::tx_execute( $st, undef, $_[0]->{vars} );
 
     $_[0]->{ output } .= $st->{ output };
 

@@ -457,7 +457,7 @@ sub define_symbols {
     $parser->symbol('when')     ->set_std(\&std_when);
     $parser->symbol('default')  ->set_std(\&std_when);
 
-    $parser->symbol('include')  ->set_std(\&std_command);
+    $parser->symbol('include')  ->set_std(\&std_include);
 
     # template inheritance
 
@@ -1147,12 +1147,30 @@ sub std_when {
     return $proc;
 }
 
+sub std_include {
+    my($parser, $symbol) = @_;
+    my $args;
+    if($parser->token->id ne ";") {
+        $args = $parser->expression_list();
+    }
+
+    my $vars = $parser->localize_vars();
+
+    $parser->finish_statement();
+    return $symbol->clone(
+        first  => $args,
+        second => $vars,
+        arity  => 'command',
+    );
+}
+
 sub std_command {
     my($parser, $symbol) = @_;
     my $args;
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
+
     $parser->finish_statement();
     return $symbol->clone(first => $args, arity => 'command');
 }
@@ -1196,28 +1214,10 @@ sub _get_bare_name {
     return \@parts;
 }
 
-sub std_cascade {
-    my($parser, $symbol) = @_;
-
-    my $base;
-    if($parser->token->id ne "with") {
-        $base = $parser->_get_bare_name();
-    }
-    my @components;
-
-    if($parser->token->id eq "with") {
-        $parser->advance(); # "with"
-
-        push @components, $parser->_get_bare_name();
-        while($parser->token->id eq ",") {
-            $parser->advance(); # ","
-
-            push @components, $parser->_get_bare_name();
-        }
-    }
-
-    my @vars;
-    if($parser->token->id eq "(") {
+sub localize_vars {
+    my($parser) = @_;
+    if($parser->token->id eq "{") {
+        my @vars;
         $parser->advance();
 
         while(1) {
@@ -1231,17 +1231,44 @@ sub std_cascade {
 
             push @vars, [ $key, $parser->expression(0) ];
 
-            last if $parser->token->id eq ")";
+            last if $parser->token->id eq "}";
             $parser->advance(",");
         }
-        $parser->advance(")");
+        $parser->advance("}");
+        return \@vars;
     }
+    return undef;
+}
+
+sub std_cascade {
+    my($parser, $symbol) = @_;
+
+    my $base;
+    if($parser->token->id ne "with") {
+        $base = $parser->_get_bare_name();
+    }
+
+    my $components;
+    if($parser->token->id eq "with") {
+        my @c;
+        $parser->advance(); # "with"
+
+        push @c, $parser->_get_bare_name();
+        while($parser->token->id eq ",") {
+            $parser->advance(); # ","
+
+            push @c, $parser->_get_bare_name();
+        }
+        $components = \@c;
+    }
+
+    my $vars = $parser->localize_vars();
 
     $parser->finish_statement();
     return $symbol->clone(
         first  => $base,
-        second => \@components,
-        third  => \@vars,
+        second => $components,
+        third  => $vars,
         arity  => 'cascade');
 }
 
