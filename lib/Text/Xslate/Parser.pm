@@ -1217,7 +1217,7 @@ sub std_cascade {
     }
 
     my @vars;
-    if($parser->token->id eq "(") {
+    if($parser->token->id eq "{") {
         $parser->advance();
 
         while(1) {
@@ -1231,10 +1231,10 @@ sub std_cascade {
 
             push @vars, [ $key, $parser->expression(0) ];
 
-            last if $parser->token->id eq ")";
+            last if $parser->token->id eq "}";
             $parser->advance(",");
         }
-        $parser->advance(")");
+        $parser->advance("}");
     }
 
     $parser->finish_statement();

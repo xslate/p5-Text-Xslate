@@ -11,7 +11,7 @@ my $tx = Text::Xslate->new(path => [path]);
 
 my @set = (
     [<<'T', { lang => 'Xslate' }, <<'X'],
-: cascade myapp::base (lang => "Perl")
+: cascade myapp::base { lang => "Perl" }
 T
 HEAD
     Hello, Perl world!
@@ -19,7 +19,7 @@ FOOT
 X
 
     [<<'T', { lang => 'Xslate' }, <<'X'],
-: cascade myapp::base ( foo => 43*(1+2), lang => "Perl" )
+: cascade myapp::base { foo => 43*(1+2), lang => "Perl" }
 T
 HEAD
     Hello, Perl world!
