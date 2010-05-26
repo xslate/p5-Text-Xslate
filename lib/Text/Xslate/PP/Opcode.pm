@@ -47,6 +47,13 @@ sub op_load_lvar_to_sb {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+{
+    package
+        Text::Xslate::PP::Opcode::Guard;
+
+    sub DESTROY { $_[0]->() }
+}
+
 sub op_local_s {
     my($st) = @_;
     my $vars   = $st->{vars};
@@ -56,13 +63,11 @@ sub op_local_s {
     my $oldval = delete $vars->{$key};
     my $newval = $st->{sa};
 
-    require Scope::Guard;
-
-    push @{ $_[0]->{local_stack} ||= [] }, Scope::Guard->new(
-        $preeminent
-            ? sub { $vars->{$key} = $oldval; return }
-            : sub { delete $vars->{$key};     return }
-    );
+    my $cleanup = $preeminent
+        ? sub { $vars->{$key} = $oldval; return }
+        : sub { delete $vars->{$key};    return };
+    push @{ $_[0]->{local_stack} ||= [] },
+        bless($cleanup, 'Text::Xslate::PP::Opcode::Guard');
 
     $vars->{$key} = $newval;
 
