@@ -1196,6 +1196,32 @@ sub _get_bare_name {
     return \@parts;
 }
 
+sub localize_vars {
+    my($parser) = @_;
+    if($parser->token->id eq "{") {
+        my @vars;
+        $parser->advance();
+
+        while(1) {
+            my $t = $parser->token;
+            last if $t->arity ne "name";
+            my $key = $t->id;
+
+            $parser->advance();
+
+            $parser->advance("=>");
+
+            push @vars, [ $key, $parser->expression(0) ];
+
+            last if $parser->token->id eq "}";
+            $parser->advance(",");
+        }
+        $parser->advance("}");
+        return @vars;
+    }
+    return;
+}
+
 sub std_cascade {
     my($parser, $symbol) = @_;
 
@@ -1216,26 +1242,7 @@ sub std_cascade {
         }
     }
 
-    my @vars;
-    if($parser->token->id eq "{") {
-        $parser->advance();
-
-        while(1) {
-            my $t = $parser->token;
-            last if $t->arity ne "name";
-            my $key = $t->id;
-
-            $parser->advance();
-
-            $parser->advance("=>");
-
-            push @vars, [ $key, $parser->expression(0) ];
-
-            last if $parser->token->id eq "}";
-            $parser->advance(",");
-        }
-        $parser->advance("}");
-    }
+    my @vars = $parser->localize_vars();
 
     $parser->finish_statement();
     return $symbol->clone(
