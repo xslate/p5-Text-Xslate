@@ -221,8 +221,9 @@ Note that you must use C<()> in order to invoke methods.
 Template inclusion is a traditional way to extend templates.
 
     : include "foo.tx"
+    : include "foo.tx" { var1 => value1, var2 => value2, ... }
 
-Xslate templates may be recursively included, but including depth is
+Xslate templates may be recursively included, but the including depth is
 limited to 100.
 
 =head2 Template cascading
@@ -230,7 +231,7 @@ limited to 100.
 Template cascading is another way to extend templates other than C<include>.
 
     : cascade myapp::base
-    : cascade myapp::base ( local_var1 => value1, local_var2 => value2, ...)
+    : cascade myapp::base { var1 => value1, var2 => value2, ...}
     : cascade myapp::base with myapp::role1, myapp::role2
     : cascade with myapp::role1, myapp::role2
 
