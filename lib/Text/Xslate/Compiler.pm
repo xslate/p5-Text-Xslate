@@ -244,7 +244,7 @@ sub compile {
             }
             @code = @{$base_code};
         }
-    }
+    } # if defined $cascade
 
     push @code, $self->_flush_macro_table(\%mtable) if %mtable;
 
