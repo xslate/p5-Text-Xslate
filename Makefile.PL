@@ -27,6 +27,8 @@ if($want_xs) {
     cc_warnings;
 
     cc_src_paths qw(xs);
+
+    test_requires 'Scope::Guard'; # used by PP
 }
 else {
     requires 'Scope::Guard';
