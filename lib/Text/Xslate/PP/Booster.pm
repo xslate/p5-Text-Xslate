@@ -51,8 +51,8 @@ sub opcode_to_perlcode {
 
     my $perlcode = $self->opcode_to_perlcode_string( $opcode );
 
-    # TEST
-    print "$perlcode\n" if $ENV{ BOOST_DISP };
+    # DEBUG
+    print STDERR "$perlcode\n" if $ENV{ XSLATE_PP_BOOST_DISP };
 
     my $evaled_code = eval $perlcode;
 
