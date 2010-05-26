@@ -68,6 +68,12 @@ has dest => (
     default => Cwd::cwd()
 );
 
+has eval => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_eval',
+);
+
 sub run {
     my $self = shift;
 
@@ -80,6 +86,11 @@ sub run {
     }
 
     my $xslate = Text::Xslate->new(%args);
+
+    if($self->has_eval) {
+        print $xslate->render_string($self->eval, { ARGV => $targets }), "\n";
+        return;
+    }
 
     foreach my $target (@$targets) {
         # XXX if you have a directory, just pushed that into the list of
