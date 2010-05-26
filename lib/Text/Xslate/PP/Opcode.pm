@@ -80,12 +80,6 @@ sub op_push {
 }
 
 
-sub op_pop {
-    #
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
 sub op_pushmark {
     push @{ $_[0]->{ SP } }, [];
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

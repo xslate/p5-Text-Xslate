@@ -355,12 +355,6 @@ TXC(push) {
     TX_st->pc++;
 }
 
-TXC(pop) {
-    TX_st_sa = TX_pop();
-
-    TX_st->pc++;
-}
-
 /* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
