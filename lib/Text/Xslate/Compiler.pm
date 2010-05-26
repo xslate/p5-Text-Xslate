@@ -34,8 +34,6 @@ my %binary = (
 
     '~'  => 'concat',
 
-    '|'  => 'filt',
-
     'min' => 'lt', # a < b ? a : b
     'max' => 'gt', # a > b ? a : b
 
@@ -647,14 +645,24 @@ sub _generate_binary {
                 $self->_generate_expr($node->first),
                 [ fetch_field_s => $node->second->id ];
         }
+        when('|') {
+            # a | b -> b(a)
+            return $self->_generate_call($node->clone(
+                first  =>  $node->second,
+                second => [$node->first],
+            ));
+        }
         when(%binary) {
+            # eval lhs
             my @code = $self->_generate_expr($node->first);
             push @code, [ save_to_lvar => $self->lvar_id ];
 
+            # eval rhs
             $self->lvar_use(1);
             push @code, $self->_generate_expr($node->second);
             $self->lvar_release(1);
 
+            # execute op
             push @code,
                 [ load_lvar_to_sb => $self->lvar_id ],
                 [ $binary{$_}   => undef ];

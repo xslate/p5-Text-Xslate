@@ -31,7 +31,6 @@ TXC(mul);
 TXC(div);
 TXC(mod);
 TXC_w_sv(concat);
-TXC(filt);
 TXC_goto(and);
 TXC_goto(dand);
 TXC_goto(or);
@@ -85,30 +84,29 @@ enum tx_opcode_t {
     TXOP_div, /* 25 */
     TXOP_mod, /* 26 */
     TXOP_concat, /* 27 */
-    TXOP_filt, /* 28 */
-    TXOP_and, /* 29 */
-    TXOP_dand, /* 30 */
-    TXOP_or, /* 31 */
-    TXOP_dor, /* 32 */
-    TXOP_not, /* 33 */
-    TXOP_plus, /* 34 */
-    TXOP_minus, /* 35 */
-    TXOP_eq, /* 36 */
-    TXOP_ne, /* 37 */
-    TXOP_lt, /* 38 */
-    TXOP_le, /* 39 */
-    TXOP_gt, /* 40 */
-    TXOP_ge, /* 41 */
-    TXOP_macrocall, /* 42 */
-    TXOP_macro_begin, /* 43 */
-    TXOP_macro_end, /* 44 */
-    TXOP_macro, /* 45 */
-    TXOP_function, /* 46 */
-    TXOP_funcall, /* 47 */
-    TXOP_methodcall_s, /* 48 */
-    TXOP_goto, /* 49 */
-    TXOP_depend, /* 50 */
-    TXOP_end, /* 51 */
+    TXOP_and, /* 28 */
+    TXOP_dand, /* 29 */
+    TXOP_or, /* 30 */
+    TXOP_dor, /* 31 */
+    TXOP_not, /* 32 */
+    TXOP_plus, /* 33 */
+    TXOP_minus, /* 34 */
+    TXOP_eq, /* 35 */
+    TXOP_ne, /* 36 */
+    TXOP_lt, /* 37 */
+    TXOP_le, /* 38 */
+    TXOP_gt, /* 39 */
+    TXOP_ge, /* 40 */
+    TXOP_macrocall, /* 41 */
+    TXOP_macro_begin, /* 42 */
+    TXOP_macro_end, /* 43 */
+    TXOP_macro, /* 44 */
+    TXOP_function, /* 45 */
+    TXOP_funcall, /* 46 */
+    TXOP_methodcall_s, /* 47 */
+    TXOP_goto, /* 48 */
+    TXOP_depend, /* 49 */
+    TXOP_end, /* 50 */
     TXOP_last
 }; /* enum tx_opcode_t */
 
@@ -141,7 +139,6 @@ static const tx_exec_t tx_opcode[] = {
     TXCODE_div,
     TXCODE_mod,
     TXCODE_concat,
-    TXCODE_filt,
     TXCODE_and,
     TXCODE_dand,
     TXCODE_or,
@@ -197,7 +194,6 @@ static const U8 tx_oparg[] = {
     0U, /* div */
     0U, /* mod */
     TXCODE_W_SV, /* concat */
-    0U, /* filt */
     TXCODE_GOTO, /* and */
     TXCODE_GOTO, /* dand */
     TXCODE_GOTO, /* or */
@@ -253,7 +249,6 @@ tx_init_ops(pTHX_ HV* const ops) {
     (void)hv_stores(ops, STRINGIFY(div), newSViv(TXOP_div));
     (void)hv_stores(ops, STRINGIFY(mod), newSViv(TXOP_mod));
     (void)hv_stores(ops, STRINGIFY(concat), newSViv(TXOP_concat));
-    (void)hv_stores(ops, STRINGIFY(filt), newSViv(TXOP_filt));
     (void)hv_stores(ops, STRINGIFY(and), newSViv(TXOP_and));
     (void)hv_stores(ops, STRINGIFY(dand), newSViv(TXOP_dand));
     (void)hv_stores(ops, STRINGIFY(or), newSViv(TXOP_or));

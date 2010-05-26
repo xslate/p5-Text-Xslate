@@ -621,23 +621,6 @@ TXC_w_sv(concat) {
     TX_st->pc++;
 }
 
-TXC(filt) {
-    SV* const arg    = TX_st_sb;
-    SV* const filter = TX_st_sa;
-    dSP;
-
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    XPUSHs(arg);
-    PUTBACK;
-
-    TX_st_sa = tx_call(aTHX_ TX_st, filter, 0, "filtering");
-
-    TX_st->pc++;
-}
-
 TXC_goto(and) {
     if(sv_true(TX_st_sa)) {
         TX_st->pc++;

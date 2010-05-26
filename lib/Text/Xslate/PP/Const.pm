@@ -89,7 +89,6 @@ unless ( %Text::Xslate::OPS ) {
             div
             mod
             concat
-            filt
             and
             dand
             or
@@ -149,7 +148,6 @@ our $tx_oparg = [
     0,             # div
     0,             # mod
     TXCODE_W_SV,   # concat
-    0,             # filt
     TXCODE_GOTO,   # and
     TXCODE_GOTO,   # dand
     TXCODE_GOTO,   # or
@@ -212,30 +210,29 @@ sub init_opcode_dispatch_table {
         \&op_div,                 # 25
         \&op_mod,                 # 26
         \&op_concat,              # 27
-        \&op_filt,                # 28
-        \&op_and,                 # 29
-        \&op_dand,                # 30
-        \&op_or,                  # 31
-        \&op_dor,                 # 32
-        \&op_not,                 # 33
-        \&op_plus,                # 34
-        \&op_minus,               # 35
-        \&op_eq,                  # 36
-        \&op_ne,                  # 37
-        \&op_lt,                  # 38
-        \&op_le,                  # 39
-        \&op_gt,                  # 40
-        \&op_ge,                  # 41
-        \&op_macrocall,           # 42
-        \&op_macro_begin,         # 43
-        \&op_macro_end,           # 44
-        \&op_macro,               # 45
-        \&op_function,            # 46
-        \&op_funcall,             # 47
-        \&op_methodcall_s,        # 48
-        \&op_goto,                # 49
-        \&op_depend,              # 50
-        \&op_end,                 # 51
+        \&op_and,                 # 28
+        \&op_dand,                # 29
+        \&op_or,                  # 30
+        \&op_dor,                 # 31
+        \&op_not,                 # 32
+        \&op_plus,                # 33
+        \&op_minus,               # 34
+        \&op_eq,                  # 35
+        \&op_ne,                  # 36
+        \&op_lt,                  # 37
+        \&op_le,                  # 38
+        \&op_gt,                  # 39
+        \&op_ge,                  # 40
+        \&op_macrocall,           # 41
+        \&op_macro_begin,         # 42
+        \&op_macro_end,           # 43
+        \&op_macro,               # 44
+        \&op_function,            # 45
+        \&op_funcall,             # 46
+        \&op_methodcall_s,        # 47
+        \&op_goto,                # 48
+        \&op_depend,              # 49
+        \&op_end,                 # 50
     ];
 }
 
