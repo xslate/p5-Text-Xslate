@@ -322,14 +322,26 @@ TXC_w_var(load_lvar_to_sb) {
     TX_st->pc++;
 }
 
+/* local $vars->{$key} = $val */
+/* see pp_helem() in pp_hot.c */
 TXC_w_key(local_s) {
-    SV* const key  = TX_op_arg;
-    HE* const he   = hv_fetch_ent(TX_st->vars, key, TRUE, 0U);
-    SV** const svp = &HeVAL(he);
-    SV*    newval  = TX_st_sa;
+    HV* const vars   = TX_st->vars;
+    SV* const key    = TX_op_arg;
+    bool const preeminent
+                     = hv_exists_ent(vars, key, 0U);
+    HE* const he     = hv_fetch_ent(vars, key, TRUE, 0U);
+    SV* const newval = TX_st_sa;
+    SV** const svp   = &HeVAL(he);
 
-    /* local $vars->{$key} = $val */
-    save_helem(TX_st->vars, key, svp);
+    if(!preeminent) {
+        STRLEN keylen;
+        const char* const keypv = SvPV_const(key, keylen);
+        SAVEDELETE(vars, savepvn(keypv, keylen),
+            SvUTF8(key) ? -(I32)keylen : (I32)keylen);
+    }
+    else {
+        save_helem(vars, key, svp);
+    }
     sv_setsv(*svp, newval);
 
     TX_st->pc++;
