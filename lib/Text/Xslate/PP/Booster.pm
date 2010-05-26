@@ -379,15 +379,6 @@ $CODE_MANIP{ 'concat' } = sub {
 };
 
 
-$CODE_MANIP{ 'filt' } = sub {
-    my ( $self, $arg, $line ) = @_;
-    my $i = $self->{ i };
-    my $ops = $self->{ ops };
-
-    $self->sa( sprintf('( eval { %s->( %s ) } )', $self->sa, $self->sb ) );
-};
-
-
 $CODE_MANIP{ 'and' } = sub {
     my ( $self, $arg, $line ) = @_;
     return $self->_check_logic( $self->current_line, $arg, 'and' );
