@@ -1,4 +1,7 @@
 #!perl -w
+
+# templates: benchmark/template/list.*
+
 use 5.010;
 use strict;
 

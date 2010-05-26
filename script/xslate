@@ -45,6 +45,19 @@ has syntax => (
     predicate => 'has_syntax',
 );
 
+has escape => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_escape',
+);
+
+has verbose => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_verbose',
+);
+
+
 # --ignore=pattern
 any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
     RegexpRef => '=s'
@@ -68,18 +81,32 @@ has dest => (
     default => Cwd::cwd()
 );
 
+has eval => (
+    is => 'ro',
+    isa => 'Str',
+    predicate => 'has_eval',
+);
+
 sub run {
     my $self = shift;
 
     my $targets = $self->extra_argv;
 
     my %args;
-    foreach my $field qw(cache_dir cache module input_layer path syntax) {
+    foreach my $field qw(
+        cache_dir cache module input_layer path syntax
+        escape verbose
+            ) {
         my $method = "has_$field";
         $args{ $field } = $self->$field if $self->$method;
     }
 
     my $xslate = Text::Xslate->new(%args);
+
+    if($self->has_eval) {
+        print $xslate->render_string($self->eval, { ARGV => $targets }), "\n";
+        return;
+    }
 
     foreach my $target (@$targets) {
         # XXX if you have a directory, just pushed that into the list of
@@ -186,6 +213,8 @@ xslate - Process Xslate Templates
         [ --input_layer ... ]
         [ --path=/path/to/templates ... ]
         [ --syntax=moniker ]
+        [ --escape=mode ]
+        [ --verbose=level ]
 
         # Output options
         [ --dest=/path/to/destination ]
@@ -194,6 +223,9 @@ xslate - Process Xslate Templates
 
         # Target to process
         target
+
+    # testing mode
+    xslate --eval 'Hello, <: $ARGV[0] :> world!' Xslate
 
 =head1 DESCRIPTION
 

@@ -8,6 +8,8 @@ END{ File::Path::rmtree( "t/600_app/out" ); }
 system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
     '--dest=t/600_app/out',
+    '--verbose=1',
+    '--escape=html',
     't/600_app/simple/hello.tx'
 ;
 

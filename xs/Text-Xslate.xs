@@ -355,12 +355,6 @@ TXC(push) {
     TX_st->pc++;
 }
 
-TXC(pop) {
-    TX_st_sa = TX_pop();
-
-    TX_st->pc++;
-}
-
 /* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
@@ -617,23 +611,6 @@ TXC_w_sv(concat) {
     sv_catsv_nomg(sv, TX_st_sa);
 
     TX_st_sa = sv;
-
-    TX_st->pc++;
-}
-
-TXC(filt) {
-    SV* const arg    = TX_st_sb;
-    SV* const filter = TX_st_sa;
-    dSP;
-
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    XPUSHs(arg);
-    PUTBACK;
-
-    TX_st_sa = tx_call(aTHX_ TX_st, filter, 0, "filtering");
 
     TX_st->pc++;
 }
@@ -1252,7 +1229,7 @@ CODE:
     st.self = newRV_inc((SV*)self);
     sv_rvweaken(st.self);
 
-    st.hint_size = 64;
+    st.hint_size = TX_HINT_SIZE;
 
     st.macro    = newHV();
 

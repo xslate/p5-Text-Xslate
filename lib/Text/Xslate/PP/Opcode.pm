@@ -80,12 +80,6 @@ sub op_push {
 }
 
 
-sub op_pop {
-    #
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
 sub op_pushmark {
     push @{ $_[0]->{ SP } }, [];
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -279,24 +273,6 @@ sub op_concat {
     $_[0]->{sa} = $sv;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
-
-
-sub op_filt {
-    my $arg    = $_[0]->{sb};
-    my $filter = $_[0]->{sa};
-
-    local $@;
-
-    my $ret = eval { $filter->( $arg ) };
-
-    if ( $@ ) {
-        Carp::croak( sprintf("%s\n\t... exception cought on %s", $@, 'filtering') );
-    }
-
-    $_[0]->{sa} = $ret;
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
 
 sub op_and {
     if ( $_[0]->{sa} ) {
