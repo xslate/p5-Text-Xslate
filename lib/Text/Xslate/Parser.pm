@@ -457,7 +457,7 @@ sub define_symbols {
     $parser->symbol('when')     ->set_std(\&std_when);
     $parser->symbol('default')  ->set_std(\&std_when);
 
-    $parser->symbol('include')  ->set_std(\&std_command);
+    $parser->symbol('include')  ->set_std(\&std_include);
 
     # template inheritance
 
@@ -1147,12 +1147,30 @@ sub std_when {
     return $proc;
 }
 
+sub std_include {
+    my($parser, $symbol) = @_;
+    my $args;
+    if($parser->token->id ne ";") {
+        $args = $parser->expression_list();
+    }
+
+    my $vars = $parser->localize_vars();
+
+    $parser->finish_statement();
+    return $symbol->clone(
+        first  => $args,
+        second => $vars,
+        arity  => 'command',
+    );
+}
+
 sub std_command {
     my($parser, $symbol) = @_;
     my $args;
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
+
     $parser->finish_statement();
     return $symbol->clone(first => $args, arity => 'command');
 }
@@ -1217,9 +1235,9 @@ sub localize_vars {
             $parser->advance(",");
         }
         $parser->advance("}");
-        return @vars;
+        return \@vars;
     }
-    return;
+    return undef;
 }
 
 sub std_cascade {
@@ -1229,26 +1247,28 @@ sub std_cascade {
     if($parser->token->id ne "with") {
         $base = $parser->_get_bare_name();
     }
-    my @components;
 
+    my $components;
     if($parser->token->id eq "with") {
+        my @c;
         $parser->advance(); # "with"
 
-        push @components, $parser->_get_bare_name();
+        push @c, $parser->_get_bare_name();
         while($parser->token->id eq ",") {
             $parser->advance(); # ","
 
-            push @components, $parser->_get_bare_name();
+            push @c, $parser->_get_bare_name();
         }
+        $components = \@c;
     }
 
-    my @vars = $parser->localize_vars();
+    my $vars = $parser->localize_vars();
 
     $parser->finish_statement();
     return $symbol->clone(
         first  => $base,
-        second => \@components,
-        third  => \@vars,
+        second => $components,
+        third  => $vars,
         arity  => 'cascade');
 }
 
