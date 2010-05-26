@@ -88,7 +88,7 @@ CODE
         $perlcode .= join ( '', grep { defined } @{ $self->macro_lines } );
     }
 
-    $perlcode .= "\n    # process start\n\n";
+    $perlcode .= "    # process start\n\n";
     $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
     $perlcode .= "\n" . '    $st->{ output } = $output;' . "\n}";
 
@@ -280,7 +280,6 @@ else {
 }
 CODE
 
-    $self->write_code( "\n" );
 };
 
 
@@ -291,7 +290,6 @@ $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
 Text::Xslate::PP::tx_execute( $st2, undef, $vars );
 
 $output .= $st2->{ output };
-
 CODE
 
 };
@@ -885,7 +883,7 @@ sub write_lines {
 
     $idx = $self->current_line unless defined $idx;
 
-    for my $line ( split/\n/, $lines ) {
+    for my $line ( split/\n/, $lines, -1 ) {
         $code .= $self->indent . $line . "\n";
     }
 
