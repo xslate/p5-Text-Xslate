@@ -2,6 +2,9 @@
 
 #define TX_ESC_CLASS "Text::Xslate::EscapedString"
 
+/* arbitrary initial buffer size */
+#define TX_HINT_SIZE 128
+
 #define TXC(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
 /* TXC_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
 #define TXC_w_sv(n)  TXC(n) /* has TX_op_arg as a SV */

@@ -1252,7 +1252,7 @@ CODE:
     st.self = newRV_inc((SV*)self);
     sv_rvweaken(st.self);
 
-    st.hint_size = 64;
+    st.hint_size = TX_HINT_SIZE;
 
     st.macro    = newHV();
 
