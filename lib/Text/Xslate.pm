@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1021';
+our $VERSION = '0.1022';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -367,7 +367,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1021.
+This document describes Text::Xslate version 0.1022.
 
 =head1 SYNOPSIS
 

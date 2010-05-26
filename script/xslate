@@ -225,7 +225,7 @@ xslate - Process Xslate Templates
         target
 
     # testing mode
-    xslate --eval "Hello, <: $ARGV[0] :> world!" Xslate
+    xslate --eval 'Hello, <: $ARGV[0] :> world!' Xslate
 
 =head1 DESCRIPTION
 
