@@ -45,6 +45,8 @@ sub define_symbols {
     $parser->symbol('unless')  ->set_std(\&std_if);
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
     $parser->symbol('foreach') ->set_std(\&std_foreach);
+    $parser->symbol('FOR')     ->set_std(\&std_foreach);
+    $parser->symbol('for')     ->set_std(\&std_foreach);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_command);
     $parser->symbol('include') ->set_std(\&std_command);

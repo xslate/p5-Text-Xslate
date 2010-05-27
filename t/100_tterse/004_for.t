@@ -74,6 +74,34 @@ Xslate
 * Object
 END
 X
+
+    [<<'T', <<'X', 'FOR-IN'],
+[% lang %]
+[% FOR type IN types -%]
+* [% type %]
+[% end -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
+
+    [<<'T', <<'X', 'for-in'],
+[% lang %]
+[% for type in types -%]
+* [% type %]
+[% end -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
 );
 
 foreach my $d(@data) {
