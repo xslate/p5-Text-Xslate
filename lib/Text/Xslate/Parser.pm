@@ -255,7 +255,7 @@ sub preprocess {
                 $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
                     if $shortcut;
 
-                if($s =~ /[\}]\n?\z/xms){
+                if($s =~ /\A \s* [}] \s* \z/xms){
                     $code .= $s;
                 }
                 elsif(chomp $s) {

@@ -383,7 +383,7 @@ sub _generate_command {
         }
     }
     if(defined(my $vars = $node->second)) {
-        unshift @code, $self->_localize_vars($vars);
+        @code = (['enter'], $self->_localize_vars($vars), @code, ['leave']);
     }
 
     if(!@code) {

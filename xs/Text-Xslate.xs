@@ -832,6 +832,20 @@ TXC_w_key(methodcall_s) {
     TX_st->pc++;
 }
 
+TXC(enter) {
+    ENTER;
+    SAVETMPS;
+
+    TX_st->pc++;
+}
+
+TXC(leave) {
+    FREETMPS;
+    LEAVE;
+
+    TX_st->pc++;
+}
+
 TXC_goto(goto) {
     TX_st->pc = SvUVX(TX_op_arg);
 }

@@ -491,6 +491,17 @@ sub op_methodcall_s {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_enter {
+    push @{$_[0]->{save_local_stack} ||= []}, delete $_[0]->{local_stack};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_leave {
+    $_[0]->{local_stack} = pop @{$_[0]->{save_local_stack}};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
 sub op_goto {
     $_[0]->{ pc } = $_[0]->pc_arg;
