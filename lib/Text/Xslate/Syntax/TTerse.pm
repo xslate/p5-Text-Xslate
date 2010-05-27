@@ -9,6 +9,21 @@ sub _build_line_start { undef       }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
+around split => sub {
+    my $super = shift;
+
+    my $tokens_ref = $super->(@_);
+
+    foreach my $t(@{$tokens_ref}) {
+        my($type, $value) = @{$t};
+        if($type eq 'code' && $value =~ /^#/) {
+            $t->[1] = '';
+        }
+    }
+
+    return $tokens_ref;
+};
+
 sub define_symbols {
     my($parser) = @_;
 
