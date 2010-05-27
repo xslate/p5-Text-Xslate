@@ -72,9 +72,7 @@ sub _assemble {
         $mtime    = time();
     }
 
-    if ( $self->{ function } ) {
-        $st->function( $self->{ function } );
-    }
+    $st->function( $self->{ function } );
 
     my $tmpl = [];
 
@@ -219,7 +217,7 @@ sub tx_load_template {
     }
 
     unless ( $ttobj->{ $name } ) {
-        tx_invoke_load_file( $self, $name );
+        $self->load_file( $name );
         $retried++;
         goto RETRY;
     }
@@ -234,7 +232,7 @@ sub tx_load_template {
         return $self->{ tmpl_st }->{ $name };
     }
     else{
-        tx_invoke_load_file( $self, $name, $cache_mtime );
+        $self->load_file( $name, $cache_mtime );
         $retried++;
         goto RETRY;
     }
@@ -263,12 +261,6 @@ sub tx_all_deps_are_fresh {
     }
 
     return 1;
-}
-
-
-sub tx_invoke_load_file {
-    my ( $self, $name, $mtime ) = @_;
-    $self->load_file( $name, $mtime );
 }
 
 our $_depth = 0;

@@ -294,9 +294,7 @@ sub _compiler {
             escape_mode => $self->{escape},
         );
 
-        if(my $funcs = $self->{function}) {
-            $compiler->define_function(keys %{$funcs});
-        }
+        $compiler->define_function(keys %{ $self->{function} });
 
         $self->{compiler} = $compiler;
     }
