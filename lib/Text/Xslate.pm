@@ -579,9 +579,18 @@ For example:
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
+This function is available in templates as the C<raw> filter:
+
+    <: $var | raw :>
+
 =head3 C<< html_escape($str :Str) -> EscapedString >>
 
 Escapes html special characters in I<$str>, and returns an escaped string (see above).
+
+Although you need not call it explicitly, this function is available in
+templates as the C<html> filter:
+
+    <: $var | html :>
 
 =head1 TEMPLATE SYNTAX
 
@@ -641,6 +650,9 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 =head1 DEPENDENCIES
 
 Perl 5.10.0 or later.
+
+If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
+backend is used.
 
 =head1 BUGS
 
