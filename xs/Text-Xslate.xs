@@ -1135,6 +1135,13 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     croak("Xslate: Cannot load template %s: %s", tx_neat(aTHX_ name), why);
 }
 
+static void
+tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
+    MY_CXT.depth = 0;
+    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+}
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate
 
@@ -1144,10 +1151,7 @@ BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADDMULTI);
     MY_CXT_INIT;
-    MY_CXT.depth = 0;
-    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+    tx_my_cxt_init(aTHX_ aMY_CXT_ FALSE);
     tx_init_ops(aTHX_ ops);
 
     {
@@ -1164,10 +1168,7 @@ CLONE(...)
 CODE:
 {
     MY_CXT_CLONE;
-    MY_CXT.depth = 0;
-    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+    tx_my_cxt_init(aTHX_ aMY_CXT_ FALSE);
     PERL_UNUSED_VAR(items);
 }
 
