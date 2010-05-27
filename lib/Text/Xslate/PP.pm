@@ -61,7 +61,7 @@ sub render {
 }
 
 
-sub _initialize {
+sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
     my $len = scalar( @$proto );
     my $st  = Text::Xslate::PP::State->new;

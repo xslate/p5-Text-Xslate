@@ -1174,7 +1174,7 @@ CODE:
 #endif
 
 void
-_initialize(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
+_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
     MAGIC* mg;

@@ -107,9 +107,9 @@ sub load_string { # for <input>
         $self->_error("LoadError: Template string is not given");
     }
     $self->{string} = $string;
-    my $protocode = $self->_compiler->compile($string);
-    $self->_initialize($protocode, undef, undef, undef, undef);
-    return $protocode;
+    my $asm = $self->_compiler->compile($string);
+    $self->_assemble($asm, undef, undef, undef, undef);
+    return $asm;
 }
 
 sub render_string {
@@ -206,12 +206,12 @@ sub load_file {
         $string = <$in>;
     }
 
-    my $protocode;
+    my $asm;
     if($is_compiled) {
-        $protocode = $self->deserialize($string);
+        $asm = $self->deserialize($string);
 
         # checks the mtime of dependencies
-        foreach my $code(@{$protocode}) {
+        foreach my $code(@{$asm}) {
             if($code->[0] eq 'depend') {
                 my $dep_mtime = (stat $code->[1])[_ST_MTIME];
                 if(!defined $dep_mtime) {
@@ -231,7 +231,7 @@ sub load_file {
         }
     }
     else {
-        $protocode = $self->_compiler->compile($string,
+        $asm = $self->_compiler->compile($string,
             file     => $file,
             fullpath => $fullpath,
         );
@@ -246,7 +246,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->serialize($protocode);
+            print $out $self->serialize($asm);
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -268,8 +268,8 @@ sub load_file {
         }
     }
 
-    $self->_initialize($protocode, $file, $fullpath, $cachepath, $cache_mtime);
-    return $protocode;
+    $self->_assemble($asm, $file, $fullpath, $cachepath, $cache_mtime);
+    return $asm;
 }
 
 sub _magic {
@@ -307,7 +307,7 @@ sub _compiler {
 sub deserialize {
     my($self, $assembly) = @_;
 
-    my @protocode;
+    my @asm;
     while($assembly =~ m{
             ^[ \t]*
                 ($IDENT)                        # an opname
@@ -320,15 +320,15 @@ sub deserialize {
         my $value = $2;
         my $line  = $3;
 
-        push @protocode, [ $name, literal_to_value($value), $line ];
+        push @asm, [ $name, literal_to_value($value), $line ];
     }
 
-    return \@protocode;
+    return \@asm;
 }
 
 sub serialize {
-    my($self, $protocode) = @_;
-    return $self->_magic . $self->_compiler->as_assembly($protocode);
+    my($self, $asm) = @_;
+    return $self->_magic . $self->_compiler->as_assembly($asm);
 }
 
 sub _error {
