@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1023
+    [BUG FIXES]
+    - Fix variable localization for include
+
+    [NEW FEATURES]
+    - TT2 like comment tag [%# ... %] in TTerse
+    - "FOR" and "for" for "FOREACH" in TTerse
+
 0.1022 Wed May 26 17:29:09 2010
     [BUG FIXES]
     - Fix variable localization (used for cascade-with-vars syntax)
@@ -12,7 +20,6 @@ Revision history for Perl extension Text::Xslate
         : include "foo.tx" { var => 42 }
     - Support --escape and --verbose options in xslate(1)
     - Support --eval (like perl's -e) option in xslate(1)
-    
 
 0.1021 Tue May 25 18:18:06 2010
     [BUG FIXES]
