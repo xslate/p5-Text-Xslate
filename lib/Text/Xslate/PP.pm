@@ -32,6 +32,12 @@ require Text::Xslate;
 # public APIs
 #
 
+sub render_string {
+    my($self, $string, $vars) = @_;
+    $self->load_string($string);
+    return $self->render(undef, $vars);
+}
+
 sub render {
     my ( $self, $name, $vars ) = @_;
 

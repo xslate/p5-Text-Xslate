@@ -1343,29 +1343,48 @@ CODE:
 }
 
 SV*
-render(SV* self, SV* name, SV* vars = &PL_sv_undef)
+render(SV* self, SV* source, SV* vars = &PL_sv_undef)
+ALIAS:
+    render        = 0
+    render_string = 1
 CODE:
 {
     dMY_CXT;
     tx_state_t* st;
 
-    SvGETMAGIC(name);
-    if(!SvOK(name)) {
-        dXSTARG;
-        sv_setpvs(TARG, "<input>");
-        name = TARG;
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Xslate: Invalid Xslate instance: %s",
+            tx_neat(aTHX_ self));
     }
 
     if(!SvOK(vars)) {
         vars = sv_2mortal(newRV_noinc((SV*)newHV()));
     }
-
-    if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
+    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
     }
 
-    st = tx_load_template(aTHX_ self, name);
+
+    if(ix == 1) { /* render_string() */
+        PUSHMARK(SP);
+        EXTEND(SP, 2);
+        PUSHs(self);
+        PUSHs(source);
+        PUTBACK;
+        call_method("load_string", G_VOID | G_DISCARD);
+        SPAGAIN;
+        source = &PL_sv_undef;
+    }
+
+    SvGETMAGIC(source);
+    if(!SvOK(source)) {
+        dXSTARG;
+        sv_setpvs(TARG, "<input>");
+        source = TARG;
+    }
+
+    st = tx_load_template(aTHX_ self, source);
 
     /* local $SIG{__WARN__} = \&warn_handler */
     SAVESPTR(PL_warnhook);

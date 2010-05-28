@@ -112,15 +112,6 @@ sub load_string { # for <input>
     return $asm;
 }
 
-sub render_string {
-    my($self, $string, $vars) = @_;
-
-    local $self->{cache} = 0;
-    local $self->{string};
-    $self->load_string($string);
-    return $self->render(undef, $vars);
-}
-
 sub find_file {
     my($self, $file, $mtime) = @_;
 
