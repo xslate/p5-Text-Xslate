@@ -647,6 +647,19 @@ sub _generate_literal {
     }
 }
 
+sub _generate_objectliteral {
+    my($self, $node) = @_;
+
+    my $list = $node->first;
+    my $type = $node->id eq '{' ? 'make_hash' : 'make_array';
+
+    return
+        ['pushmark', undef, undef, $type],
+        (map{ $self->_generate_expr($_), ['push'] } @{$list}),
+        [$type],
+    ;
+}
+
 sub _generate_unary {
     my($self, $node) = @_;
 

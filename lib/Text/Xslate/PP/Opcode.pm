@@ -498,6 +498,19 @@ sub op_methodcall_s {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_make_array {
+    my $args = pop @{ $_[0]->{SP} };
+    $_[0]->{sa} = $args;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_make_hash {
+    my $args = pop @{ $_[0]->{SP} };
+    $_[0]->{sa} = { @{$args} };
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+
 sub op_enter {
     push @{$_[0]->{save_local_stack} ||= []}, delete $_[0]->{local_stack};
 

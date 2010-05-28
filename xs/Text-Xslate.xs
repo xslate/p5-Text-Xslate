@@ -844,6 +844,62 @@ TXC_w_key(methodcall_s) {
     TX_st->pc++;
 }
 
+TXC(make_array) {
+    dSP;
+    dMARK;
+    dORIGMARK;
+    I32 const items = SP - MARK;
+    AV* const av    = newAV();
+    SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
+
+    av_extend(av, items - 1);
+    while(++MARK <= SP) {
+        SV* const val = *MARK;
+        /* the SV is a mortal copy */
+        /* seek 'push' */
+        av_push(av, val);
+        SvREFCNT_inc_simple_void_NN(val);
+    }
+
+    SP = ORIGMARK;
+    PUTBACK;
+
+    TX_st_sa = avref;
+
+    TX_st->pc++;
+}
+
+TXC(make_hash) {
+    dSP;
+    dMARK;
+    dORIGMARK;
+    I32 const items = SP - MARK;
+    HV* const hv    = newHV();
+    SV* const hvref = sv_2mortal(newRV_noinc((SV*)hv));
+
+    if((items % 2) != 0) {
+        tx_error(aTHX_ TX_st, "Odd number of elements for hash literals");
+        XPUSHs(sv_newmortal());
+    }
+
+    while(MARK < SP) {
+        SV* const key = *(++MARK);
+        SV* const val = *(++MARK);
+
+        /* the SVs are a mortal copy */
+        /* seek 'push' */
+        (void)hv_store_ent(hv, key, val, 0U);
+        SvREFCNT_inc_simple_void_NN(val);
+    }
+
+    SP = ORIGMARK;
+    PUTBACK;
+
+    TX_st_sa = hvref;
+
+    TX_st->pc++;
+}
+
 TXC(enter) {
     ENTER;
     SAVETMPS;

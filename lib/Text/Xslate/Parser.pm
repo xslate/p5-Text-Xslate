@@ -377,8 +377,8 @@ sub _define_basic_symbols {
 sub define_basic_operators {
     my($parser) = @_;
 
-    $parser->prefix('{', 256, \&nud_objectliteral);
-    $parser->prefix('[', 256, \&nud_objectliteral);
+    $parser->prefix('{', 256, \&nud_brace);
+    $parser->prefix('[', 256, \&nud_brace);
 
     $parser->infix('(', 256, \&led_call);
     $parser->infix('.', 256, \&led_dot);
@@ -929,7 +929,8 @@ sub nud_paren {
     return $expr;
 }
 
-sub nud_objectliteral {
+# for object literals
+sub nud_brace {
     my($parser, $symbol) = @_;
 
     my $list = $parser->expression_list();
@@ -937,7 +938,7 @@ sub nud_objectliteral {
     my $end = $symbol->id eq '{' ? '}' : ']';
     $parser->advance($end);
     return $symbol->clone(
-        arity => $end eq '}' ? 'hash' : 'array',
+        arity => 'objectliteral',
         first => $list,
     );
 }
