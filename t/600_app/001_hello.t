@@ -10,6 +10,7 @@ system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--dest=t/600_app/out',
     '--verbose=1',
     '--escape=html',
+    '--cache=0',
     't/600_app/simple/hello.tx'
 ;
 
