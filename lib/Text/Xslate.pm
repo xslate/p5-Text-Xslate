@@ -39,7 +39,7 @@ use constant _ST_MTIME => 9; # see perldoc -f stat
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-my $XSLATE_MAGIC = qq{.xslate "%s-%s-%s"\n}; # version-syntax-escape
+my $XSLATE_MAGIC = qq{.xslate "%s/%s/%s/%s"\n}; # version/syntax/escape/path
 
 sub new {
     my $class = shift;
@@ -185,7 +185,7 @@ sub load_file {
         open my($in), '<' . $self->{input_layer}, $to_read
             or $self->_error("LoadError: Cannot open $to_read for reading: $!");
 
-        if($is_compiled && scalar(<$in>) ne $self->_magic) {
+        if($is_compiled && scalar(<$in>) ne $self->_magic($fullpath)) {
             # magic token is not matched
             close $in;
             unlink $cachepath
@@ -237,7 +237,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->serialize($asm);
+            print $out $self->serialize($asm, $fullpath);
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -264,11 +264,12 @@ sub load_file {
 }
 
 sub _magic {
-    my($self) = @_;
+    my($self, $fullpath) = @_;
     return sprintf $XSLATE_MAGIC,
         $VERSION,
         $self->{syntax},
         $self->{escape},
+        $fullpath,
     ;
 }
 
@@ -316,8 +317,8 @@ sub deserialize {
 }
 
 sub serialize {
-    my($self, $asm) = @_;
-    return $self->_magic . $self->_compiler->as_assembly($asm);
+    my($self, $asm, $fullpath) = @_;
+    return $self->_magic($fullpath) . $self->_compiler->as_assembly($asm);
 }
 
 sub _error {
