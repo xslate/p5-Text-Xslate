@@ -2,11 +2,16 @@ Revision history for Perl extension Text::Xslate
 
 0.1023
     [BUG FIXES]
-    - Fix variable localization for include
+    - Fix variable localization for include command
+    - Correct warning location from render_string()
 
     [NEW FEATURES]
-    - TT2 like comment tag [%# ... %] in TTerse
-    - "FOR" and "for" for "FOREACH" in TTerse
+    - For TTerse
+        + TT2 like comment tag [%# ... %]
+        + "FOR" and "for" for "FOREACH"
+        + The _ operator for concatination
+    - For App::xslate
+        + --cache accepts an integer, not a bool
 
 0.1022 Wed May 26 17:29:09 2010
     [BUG FIXES]
