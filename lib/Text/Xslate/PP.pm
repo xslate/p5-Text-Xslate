@@ -375,6 +375,8 @@ If you want to use Text::Xslate::PP, however, you can use it.
     use Text::Xslate::PP;
     my $tx = Text::Xslate->new();
 
+XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
