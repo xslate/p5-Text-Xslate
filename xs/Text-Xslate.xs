@@ -358,9 +358,6 @@ TXC(push) {
 /* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
-    ENTER;
-    SAVETMPS;
-
     PUSHMARK(SP);
 
     TX_st->pc++;
@@ -773,6 +770,9 @@ TXC_w_key(macro_begin) {
 
     sv_setsv(*av_fetch(cframe, TXframe_NAME, TRUE), TX_op_arg);
 
+    ENTER;
+    SAVETMPS;
+
     TX_st->pc++;
 }
 
@@ -827,12 +827,18 @@ TXC_w_key(function) {
 
 TXC(funcall) {
     /* PUSHMARK & PUSH must be done */
+    ENTER;
+    SAVETMPS;
+
     TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");
 
     TX_st->pc++;
 }
 
 TXC_w_key(methodcall_s) {
+    ENTER;
+    SAVETMPS;
+
     TX_st_sa = tx_methodcall(aTHX_ TX_st, TX_op_arg);
 
     TX_st->pc++;
