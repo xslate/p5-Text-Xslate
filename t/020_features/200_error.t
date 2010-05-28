@@ -22,6 +22,8 @@ foreach my $code(
     q{ for nil -> ($item) { print "foobar"; } },
     q{ $h[nil] },
     q{ $a[nil] },
+    q{ nil | raw },
+    q{ nil | html },
 ) {
     $warn = '';
 
@@ -46,6 +48,8 @@ foreach my $code(
     q{ for nil -> ($item) { print "foobar"; } },
     q{ $h[nil] },
     q{ $a[nil] },
+    q{ nil | raw },
+    q{ nil | html },
 ) {
     $warn = '';
     my $out = eval {

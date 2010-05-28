@@ -491,8 +491,14 @@ TXC(print) {
 }
 
 TXC(print_raw) {
-    sv_catsv_nomg(TX_st->output, TX_st_sa);
-
+    SV* const arg = TX_st_sa;
+    SvGETMAGIC(arg);
+    if(SvOK(arg)) {
+        sv_catsv_nomg(TX_st->output, arg);
+    }
+    else {
+        tx_warn(aTHX_ TX_st, "Use of nil to print");
+    }
     TX_st->pc++;
 }
 

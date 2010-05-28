@@ -869,6 +869,30 @@ sub _optimize_vmcode {
                     _noop($prev);
                 }
             }
+            when('function') {
+                my $name = $c->[$i][1];
+
+                break if !($name eq 'raw' or $name eq 'html');
+                break if !($c->[$i+1][0] ~~ 'funcall');
+                break if !($c->[$i+2][0] ~~ [qw(print print_raw)]);
+
+                # find && remove the previous 'push'
+                my $j = $i;
+                1 until($c->[--$j][0] eq 'push');
+                _noop($c->[$j]);
+
+                # find && remove the the previous 'pushmark'
+                1 until($c->[--$j][0] eq 'pushmark');
+                _noop($c->[$j]);
+
+                # remove this 'function' and the next 'funcall'
+                _noop($c->[$i]);
+                _noop($c->[$i+1]);
+
+                $c->[$i+2][0] = $name eq 'raw'
+                    ? 'print_raw'
+                    : 'print';
+            }
         }
     }
 
