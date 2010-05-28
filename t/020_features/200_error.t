@@ -13,6 +13,8 @@ my $tx = Text::Xslate->new(
     warn_handler => \&my_warn,
 );
 
+my $FILE = quotemeta(__FILE__);
+
 foreach my $code(
     q{ nil },
     q{ nil.foo },
@@ -52,7 +54,19 @@ foreach my $code(
 
     is $out,  '', $code;
     like $warn, qr/Use of nil/, $warn;
+    like $warn, qr/at $FILE line \d+/;
     is $@,  '';
 }
+
+$warn = '';
+my $out = eval {
+    $tx->render_string("<: 'a' + 'b' :>");
+};
+
+is $out, '0', 'warn in render_string()';
+like $warn, qr/"a" isn't numeric/;
+like $warn, qr/"b" isn't numeric/;
+like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+is $@,  '';
 
 done_testing;

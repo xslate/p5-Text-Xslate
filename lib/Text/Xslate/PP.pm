@@ -302,6 +302,10 @@ sub _error_handler {
     my ( $str, $die ) = @_;
     my $st = $_current_st;
 
+    if($str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
+        $str = Carp::shortmess($str);
+    }
+
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
 
     my $cframe = $st->frame->[ $st->current_frame ];

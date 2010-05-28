@@ -13,6 +13,8 @@ use Text::Xslate::PP::Const;
 
 no warnings 'recursion';
 
+our @CARP_NOT = qw(Text::Xslate);
+
 #
 #
 #
