@@ -5,8 +5,8 @@ use Test::More;
 use t::lib::TTSimple;
 
 my @data = (
-    ['Hello, [% $lang or "Perl" %] world!'  => 'Hello, Xslate world!'],
-    ['Hello, [% $empty or "Perl" %] world!' => 'Hello, Perl world!'],
+    ['Hello, [% lang or "Perl" %] world!'  => 'Hello, Xslate world!'],
+    ['Hello, [% empty or "Perl" %] world!' => 'Hello, Perl world!'],
 
     ['Hello, [% "foo" _ "bar" %] world!' => 'Hello, foobar world!'],
 );
