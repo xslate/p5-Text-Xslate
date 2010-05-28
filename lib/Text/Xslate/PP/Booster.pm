@@ -234,6 +234,30 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
+    my $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+
+    if ( $self->is_strict ) {
+        $self->write_lines( sprintf( <<'CODE', $sv, $sv, $err ) );
+if ( defined %s ) {
+    $output .= %s;
+}
+else {
+   %s
+}
+CODE
+
+    }
+    else {
+        $self->write_lines( sprintf('$output .= %s;', $sv) );
+    }
+
+    $self->write_code( "\n" );
+};
+
+
+$CODE_MANIP{ 'ex_print_raw' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    my $sv = $self->sa();
     $self->write_lines( sprintf('$output .= %s;', $sv) );
     $self->write_code( "\n" );
 };
@@ -463,7 +487,7 @@ $CODE_MANIP{ 'macrocall' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $ops  = $self->ops;
 
-    $self->optimize_to_print( 'num' );
+    $self->optimize_to_print( 'macro' );
 
     # mark argument value
     for my $i ( 0 .. $#{ $self->SP->[ -1 ] } ) {
@@ -568,6 +592,40 @@ $CODE_MANIP{ 'methodcall_s' } = sub {
             sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->SP } } ) )
         );
     }
+
+};
+
+
+$CODE_MANIP{ 'make_array' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    my $array = sprintf( '[ %s ]', join( ', ', @{ pop @{ $self->SP } } ) );
+
+    $self->sa( $array );
+};
+
+
+$CODE_MANIP{ 'make_hash' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    my $array = sprintf( '{ %s }', join( ', ', @{ pop @{ $self->SP } } ) );
+
+    $self->sa( $array );
+};
+
+
+$CODE_MANIP{ 'enter' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->write_lines( <<'CODE' );
+push @{ $st->{ save_local_stack } ||= [] }, delete $st->{ local_stack };
+CODE
+
+};
+
+
+$CODE_MANIP{ 'leave' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->write_lines( <<'CODE' );
+$st->{ local_stack } = pop @{ $st->{ save_local_stack } };
+CODE
 
 };
 
@@ -905,6 +963,9 @@ sub optimize_to_print {
 
     if ( $type eq 'num' ) { # currently num only
         $ops->[0] = 'print_raw';
+    }
+    elsif ( $type eq 'macro' ) { # extent op code for booster
+        $ops->[0] = 'ex_print_raw';
     }
 
 }
