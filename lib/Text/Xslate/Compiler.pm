@@ -362,6 +362,16 @@ sub _process_cascade {
     our %OPS; # to avoid 'once' warnings;
 }
 
+sub _can_print_optimize {
+    my($self, $name, $arg) = @_;
+
+    return 0 if !($name eq 'print' or $name eq 'print_raw');
+
+    return $arg->id eq '|'
+        && $arg->second->arity eq 'function'
+        && $arg->second->id    ~~ [qw(raw html)];
+}
+
 sub _generate_command {
     my($self, $node) = @_;
 
@@ -372,9 +382,19 @@ sub _generate_command {
         $proc = 'print_raw';
     }
 
+    my $do_optimize = ($self->optimize > 0);
+
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
             push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];
+        }
+        elsif($do_optimize and $self->_can_print_optimize($proc, $arg)){
+            # expr | html
+            # expr | raw
+            my $command = $arg->second->id eq 'html' ? 'print' : 'print_raw';
+            push @code,
+                $self->_generate_expr($arg->first),
+                [ $command => undef, $node->line, "builtin filter" ];
         }
         else {
             push @code,
@@ -868,30 +888,6 @@ sub _optimize_vmcode {
 
                     _noop($prev);
                 }
-            }
-            when('function') {
-                my $name = $c->[$i][1];
-
-                break if !($name eq 'raw' or $name eq 'html');
-                break if !($c->[$i+1][0] ~~ 'funcall');
-                break if !($c->[$i+2][0] ~~ [qw(print print_raw)]);
-
-                # find && remove the previous 'push'
-                my $j = $i;
-                1 until($c->[--$j][0] eq 'push');
-                _noop($c->[$j]);
-
-                # find && remove the the previous 'pushmark'
-                1 until($c->[--$j][0] eq 'pushmark');
-                _noop($c->[$j]);
-
-                # remove this 'function' and the next 'funcall'
-                _noop($c->[$i]);
-                _noop($c->[$i+1]);
-
-                $c->[$i+2][0] = $name eq 'raw'
-                    ? 'print_raw'
-                    : 'print';
             }
         }
     }

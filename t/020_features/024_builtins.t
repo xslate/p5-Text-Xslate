@@ -139,6 +139,16 @@ X
     ['<: raw($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'false'],
 
+    ['<: 1 ? raw($value) : html($value) :>',
+        { value => '<Xslate>' }, '<Xslate>'],
+    ['<: 1 ? html($value) : raw($value) :>',
+        { value => '<Xslate>' }, '&lt;Xslate&gt;'],
+
+    ['<: 0 ? raw($value) : html($value) :>',
+        { value => '<Xslate>' }, '&lt;Xslate&gt;'],
+    ['<: 0 ? html($value) : raw($value) :>',
+        { value => '<Xslate>' }, '<Xslate>'],
+
     ['<: raw :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'raw itself'],
     ['<: html :>',

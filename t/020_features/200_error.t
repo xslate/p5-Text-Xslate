@@ -4,6 +4,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use Text::Xslate::Compiler;
 use t::lib::Util;
 
 my $warn = '';
