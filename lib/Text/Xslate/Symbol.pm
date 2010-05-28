@@ -173,10 +173,11 @@ sub _build_std {
 
 sub _nud_default {
     my($parser, $symbol) = @_;
-    $parser->near_token($parser->token);
-    $parser->_error(
-        sprintf 'Undefined symbol (%s): %s',
-        $symbol->arity, $symbol->id);
+    return $symbol->clone(first => $parser->token);
+#    $parser->near_token($parser->token);
+#    $parser->_error(
+#        sprintf 'Undefined symbol (%s): %s',
+#        $symbol->arity, $symbol->id);
 }
 
 sub _led_default {

@@ -372,6 +372,12 @@ sub _can_print_optimize {
         && $arg->second->id    ~~ [qw(raw html)];
 }
 
+sub _generate_name {
+    my($self, $node) = @_;
+
+    $self->_error("Undefined symbol '$node', before " . $node->first, $node);
+}
+
 sub _generate_command {
     my($self, $node) = @_;
 
