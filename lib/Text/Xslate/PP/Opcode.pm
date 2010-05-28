@@ -13,6 +13,8 @@ use Text::Xslate::PP::Const;
 
 no warnings 'recursion';
 
+our @CARP_NOT = qw(Text::Xslate);
+
 #
 #
 #
@@ -159,7 +161,7 @@ sub op_print {
         $_[0]->{ output } .= $sv;
     }
     else {
-        tx_warn( $_[0], "Use of nil to printed" );
+        tx_warn( $_[0], "Use of nil to print" );
     }
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -167,7 +169,12 @@ sub op_print {
 
 
 sub op_print_raw {
-    $_[0]->{ output } .= $_[0]->{sa};
+    if(defined $_[0]->{sa}) {
+        $_[0]->{ output } .= $_[0]->{sa};
+    }
+    else {
+        tx_warn( $_[0], "Use of nil to print" );
+    }
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -491,6 +498,30 @@ sub op_methodcall_s {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_make_array {
+    my $args = pop @{ $_[0]->{SP} };
+    $_[0]->{sa} = $args;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_make_hash {
+    my $args = pop @{ $_[0]->{SP} };
+    $_[0]->{sa} = { @{$args} };
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+
+sub op_enter {
+    push @{$_[0]->{save_local_stack} ||= []}, delete $_[0]->{local_stack};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_leave {
+    $_[0]->{local_stack} = pop @{$_[0]->{save_local_stack}};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
 sub op_goto {
     $_[0]->{ pc } = $_[0]->pc_arg;

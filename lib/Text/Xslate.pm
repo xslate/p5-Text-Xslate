@@ -4,7 +4,7 @@ use 5.010_000;
 use strict;
 use warnings;
 
-our $VERSION = '0.1022';
+our $VERSION = '0.1023';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -39,7 +39,7 @@ use constant _ST_MTIME => 9; # see perldoc -f stat
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-my $XSLATE_MAGIC = qq{.xslate "%s-%s-%s"\n}; # version-syntax-escape
+my $XSLATE_MAGIC = qq{.xslate "%s/%s/%s/%s"\n}; # version/syntax/escape/path
 
 sub new {
     my $class = shift;
@@ -107,18 +107,9 @@ sub load_string { # for <input>
         $self->_error("LoadError: Template string is not given");
     }
     $self->{string} = $string;
-    my $protocode = $self->_compiler->compile($string);
-    $self->_initialize($protocode, undef, undef, undef, undef);
-    return $protocode;
-}
-
-sub render_string {
-    my($self, $string, $vars) = @_;
-
-    local $self->{cache} = 0;
-    local $self->{string};
-    $self->load_string($string);
-    return $self->render(undef, $vars);
+    my $asm = $self->_compiler->compile($string);
+    $self->_assemble($asm, undef, undef, undef, undef);
+    return $asm;
 }
 
 sub find_file {
@@ -194,7 +185,7 @@ sub load_file {
         open my($in), '<' . $self->{input_layer}, $to_read
             or $self->_error("LoadError: Cannot open $to_read for reading: $!");
 
-        if($is_compiled && scalar(<$in>) ne $self->_magic) {
+        if($is_compiled && scalar(<$in>) ne $self->_magic($fullpath)) {
             # magic token is not matched
             close $in;
             unlink $cachepath
@@ -206,12 +197,12 @@ sub load_file {
         $string = <$in>;
     }
 
-    my $protocode;
+    my $asm;
     if($is_compiled) {
-        $protocode = $self->deserialize($string);
+        $asm = $self->deserialize($string);
 
         # checks the mtime of dependencies
-        foreach my $code(@{$protocode}) {
+        foreach my $code(@{$asm}) {
             if($code->[0] eq 'depend') {
                 my $dep_mtime = (stat $code->[1])[_ST_MTIME];
                 if(!defined $dep_mtime) {
@@ -231,7 +222,7 @@ sub load_file {
         }
     }
     else {
-        $protocode = $self->_compiler->compile($string,
+        $asm = $self->_compiler->compile($string,
             file     => $file,
             fullpath => $fullpath,
         );
@@ -246,7 +237,7 @@ sub load_file {
             open my($out), '>:raw:utf8', $cachepath
                 or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->serialize($protocode);
+            print $out $self->serialize($asm, $fullpath);
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -268,16 +259,17 @@ sub load_file {
         }
     }
 
-    $self->_initialize($protocode, $file, $fullpath, $cachepath, $cache_mtime);
-    return $protocode;
+    $self->_assemble($asm, $file, $fullpath, $cachepath, $cache_mtime);
+    return $asm;
 }
 
 sub _magic {
-    my($self) = @_;
+    my($self, $fullpath) = @_;
     return sprintf $XSLATE_MAGIC,
         $VERSION,
         $self->{syntax},
         $self->{escape},
+        $fullpath,
     ;
 }
 
@@ -294,9 +286,7 @@ sub _compiler {
             escape_mode => $self->{escape},
         );
 
-        if(my $funcs = $self->{function}) {
-            $compiler->define_function(keys %{$funcs});
-        }
+        $compiler->define_function(keys %{ $self->{function} });
 
         $self->{compiler} = $compiler;
     }
@@ -307,7 +297,7 @@ sub _compiler {
 sub deserialize {
     my($self, $assembly) = @_;
 
-    my @protocode;
+    my @asm;
     while($assembly =~ m{
             ^[ \t]*
                 ($IDENT)                        # an opname
@@ -320,15 +310,15 @@ sub deserialize {
         my $value = $2;
         my $line  = $3;
 
-        push @protocode, [ $name, literal_to_value($value), $line ];
+        push @asm, [ $name, literal_to_value($value), $line ];
     }
 
-    return \@protocode;
+    return \@asm;
 }
 
 sub serialize {
-    my($self, $protocode) = @_;
-    return $self->_magic . $self->_compiler->as_assembly($protocode);
+    my($self, $asm, $fullpath) = @_;
+    return $self->_magic($fullpath) . $self->_compiler->as_assembly($asm);
 }
 
 sub _error {
@@ -343,7 +333,9 @@ sub escaped_string;
 # TODO: make it into XS
 sub html_escape {
     my($s) = @_;
-    return $s if ref($s) eq 'Text::Xslate::EscapedString';
+    return $s if
+        ref($s) eq 'Text::Xslate::EscapedString'
+        or !defined($s);
 
     $s =~ s/&/&amp;/g;
     $s =~ s/</&lt;/g;
@@ -367,7 +359,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1022.
+This document describes Text::Xslate version 0.1023.
 
 =head1 SYNOPSIS
 
@@ -427,7 +419,9 @@ This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
 
-The philosophy for Xslate is B<sandboxing> that the template logic should
+The features of templates are strongly influenced by Text::MicroTemplate
+and Template-Toolkit, but the philosophy of Xslate is different from them.
+That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
 
 B<This software is under development>.
@@ -579,9 +573,18 @@ For example:
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
+This function is available in templates as the C<raw> filter:
+
+    <: $var | raw :>
+
 =head3 C<< html_escape($str :Str) -> EscapedString >>
 
 Escapes html special characters in I<$str>, and returns an escaped string (see above).
+
+Although you need not call it explicitly, this function is available in
+templates as the C<html> filter:
+
+    <: $var | html :>
 
 =head1 TEMPLATE SYNTAX
 
@@ -641,6 +644,9 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 =head1 DEPENDENCIES
 
 Perl 5.10.0 or later.
+
+If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
+backend is used.
 
 =head1 BUGS
 

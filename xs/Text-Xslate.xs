@@ -358,9 +358,6 @@ TXC(push) {
 /* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
-    ENTER;
-    SAVETMPS;
-
     PUSHMARK(SP);
 
     TX_st->pc++;
@@ -491,8 +488,14 @@ TXC(print) {
 }
 
 TXC(print_raw) {
-    sv_catsv_nomg(TX_st->output, TX_st_sa);
-
+    SV* const arg = TX_st_sa;
+    SvGETMAGIC(arg);
+    if(SvOK(arg)) {
+        sv_catsv_nomg(TX_st->output, arg);
+    }
+    else {
+        tx_warn(aTHX_ TX_st, "Use of nil to print");
+    }
     TX_st->pc++;
 }
 
@@ -767,6 +770,9 @@ TXC_w_key(macro_begin) {
 
     sv_setsv(*av_fetch(cframe, TXframe_NAME, TRUE), TX_op_arg);
 
+    ENTER;
+    SAVETMPS;
+
     TX_st->pc++;
 }
 
@@ -821,13 +827,89 @@ TXC_w_key(function) {
 
 TXC(funcall) {
     /* PUSHMARK & PUSH must be done */
+    ENTER;
+    SAVETMPS;
+
     TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");
 
     TX_st->pc++;
 }
 
 TXC_w_key(methodcall_s) {
+    ENTER;
+    SAVETMPS;
+
     TX_st_sa = tx_methodcall(aTHX_ TX_st, TX_op_arg);
+
+    TX_st->pc++;
+}
+
+TXC(make_array) {
+    dSP;
+    dMARK;
+    dORIGMARK;
+    I32 const items = SP - MARK;
+    AV* const av    = newAV();
+    SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
+
+    av_extend(av, items - 1);
+    while(++MARK <= SP) {
+        SV* const val = *MARK;
+        /* the SV is a mortal copy */
+        /* seek 'push' */
+        av_push(av, val);
+        SvREFCNT_inc_simple_void_NN(val);
+    }
+
+    SP = ORIGMARK;
+    PUTBACK;
+
+    TX_st_sa = avref;
+
+    TX_st->pc++;
+}
+
+TXC(make_hash) {
+    dSP;
+    dMARK;
+    dORIGMARK;
+    I32 const items = SP - MARK;
+    HV* const hv    = newHV();
+    SV* const hvref = sv_2mortal(newRV_noinc((SV*)hv));
+
+    if((items % 2) != 0) {
+        tx_error(aTHX_ TX_st, "Odd number of elements for hash literals");
+        XPUSHs(sv_newmortal());
+    }
+
+    while(MARK < SP) {
+        SV* const key = *(++MARK);
+        SV* const val = *(++MARK);
+
+        /* the SVs are a mortal copy */
+        /* seek 'push' */
+        (void)hv_store_ent(hv, key, val, 0U);
+        SvREFCNT_inc_simple_void_NN(val);
+    }
+
+    SP = ORIGMARK;
+    PUTBACK;
+
+    TX_st_sa = hvref;
+
+    TX_st->pc++;
+}
+
+TXC(enter) {
+    ENTER;
+    SAVETMPS;
+
+    TX_st->pc++;
+}
+
+TXC(leave) {
+    FREETMPS;
+    LEAVE;
 
     TX_st->pc++;
 }
@@ -905,7 +987,7 @@ mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
         }
     }
 
-    croak("Xslate: Invalid xslate object was passed");
+    croak("Xslate: Invalid template holder was passed");
     return NULL; /* not reached */
 }
 
@@ -1061,7 +1143,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     //PerlIO_stdoutf("load_template(%"SVf")\n", name);
 
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Invalid xslate object");
+        croak("Invalid xslate instance: %s", tx_neat(aTHX_ self));
     }
 
     hv = (HV*)SvRV(self);
@@ -1135,6 +1217,13 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     croak("Xslate: Cannot load template %s: %s", tx_neat(aTHX_ name), why);
 }
 
+static void
+tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
+    MY_CXT.depth = 0;
+    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+}
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate
 
@@ -1144,10 +1233,7 @@ BOOT:
 {
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADDMULTI);
     MY_CXT_INIT;
-    MY_CXT.depth = 0;
-    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+    tx_my_cxt_init(aTHX_ aMY_CXT_ FALSE);
     tx_init_ops(aTHX_ ops);
 
     {
@@ -1164,17 +1250,14 @@ CLONE(...)
 CODE:
 {
     MY_CXT_CLONE;
-    MY_CXT.depth = 0;
-    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+    tx_my_cxt_init(aTHX_ aMY_CXT_ FALSE);
     PERL_UNUSED_VAR(items);
 }
 
 #endif
 
 void
-_initialize(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
+_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
     MAGIC* mg;
@@ -1192,7 +1275,7 @@ CODE:
 
     svp = hv_fetchs(self, "template", FALSE);
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
-        croak("The xslate object has no template table");
+        croak("The xslate instance has no template table");
     }
 
     if(!SvOK(name)) { /* for strings */
@@ -1328,29 +1411,48 @@ CODE:
 }
 
 SV*
-render(SV* self, SV* name, SV* vars = &PL_sv_undef)
+render(SV* self, SV* source, SV* vars = &PL_sv_undef)
+ALIAS:
+    render        = 0
+    render_string = 1
 CODE:
 {
     dMY_CXT;
     tx_state_t* st;
 
-    SvGETMAGIC(name);
-    if(!SvOK(name)) {
-        dXSTARG;
-        sv_setpvs(TARG, "<input>");
-        name = TARG;
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Xslate: Invalid xslate instance: %s",
+            tx_neat(aTHX_ self));
     }
 
     if(!SvOK(vars)) {
         vars = sv_2mortal(newRV_noinc((SV*)newHV()));
     }
-
-    if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
+    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
     }
 
-    st = tx_load_template(aTHX_ self, name);
+
+    if(ix == 1) { /* render_string() */
+        PUSHMARK(SP);
+        EXTEND(SP, 2);
+        PUSHs(self);
+        PUSHs(source);
+        PUTBACK;
+        call_method("load_string", G_VOID | G_DISCARD);
+        SPAGAIN;
+        source = &PL_sv_undef;
+    }
+
+    SvGETMAGIC(source);
+    if(!SvOK(source)) {
+        dXSTARG;
+        sv_setpvs(TARG, "<input>");
+        source = TARG;
+    }
+
+    st = tx_load_template(aTHX_ self, source);
 
     /* local $SIG{__WARN__} = \&warn_handler */
     SAVESPTR(PL_warnhook);
@@ -1361,7 +1463,7 @@ CODE:
     PL_diehook = MY_CXT.die_handler;
 
     RETVAL = sv_newmortal();
-    sv_grow(RETVAL, st->hint_size);
+    sv_grow(RETVAL, st->hint_size + TX_HINT_SIZE);
     SvPOK_on(RETVAL);
 
     tx_execute(aTHX_ st, RETVAL, (HV*)SvRV(vars));

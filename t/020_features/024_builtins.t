@@ -129,6 +129,30 @@ X
     ['<: $value | html :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'html'],
     ['<: $value | dump :>', { value => "<Xslate>" }, qr/&lt;Xslate&gt;/, 'dump'],
     ['<: $value | dump | raw  :>', { value => "<Xslate>" }, qr/<Xslate>/, 'x | dump | raw'],
+
+    ['<: $value | html | html :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'x | html | html'],
+    ['<: $value | html | raw  :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'x | html | raw (-> html)'],
+    ['<: $value | raw | html  :>', { value => "<Xslate>" }, "<Xslate>", 'x | raw | html (-> raw)'],
+
+    ['<: html($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
+        { value => '<Xslate>' }, 'true'],
+    ['<: raw($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
+        { value => '<Xslate>' }, 'false'],
+
+    ['<: 1 ? raw($value) : html($value) :>',
+        { value => '<Xslate>' }, '<Xslate>'],
+    ['<: 1 ? html($value) : raw($value) :>',
+        { value => '<Xslate>' }, '&lt;Xslate&gt;'],
+
+    ['<: 0 ? raw($value) : html($value) :>',
+        { value => '<Xslate>' }, '&lt;Xslate&gt;'],
+    ['<: 0 ? html($value) : raw($value) :>',
+        { value => '<Xslate>' }, '<Xslate>'],
+
+    ['<: raw :>',
+        { value => '<Xslate>' }, qr/\b CODE \b/xms, 'raw itself'],
+    ['<: html :>',
+        { value => '<Xslate>' }, qr/\b CODE \b/xms, 'html itself'],
 );
 
 foreach my $d(@set) {

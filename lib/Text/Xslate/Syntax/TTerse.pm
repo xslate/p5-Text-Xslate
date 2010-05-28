@@ -9,10 +9,28 @@ sub _build_line_start { undef       }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
+around split => sub {
+    my $super = shift;
+
+    my $tokens_ref = $super->(@_);
+
+    foreach my $t(@{$tokens_ref}) {
+        my($type, $value) = @{$t};
+        if($type eq 'code' && $value =~ /^#/) {
+            $t->[1] = '';
+        }
+    }
+
+    return $tokens_ref;
+};
+
 sub define_symbols {
     my($parser) = @_;
 
-    # both upper cased and lower cased
+    $parser->define_basic_operators();
+    $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
+
+    # defines both upper cased and lower cased
 
     $parser->symbol('END')  ->is_block_end(1);
     $parser->symbol('end')  ->is_block_end(1);
@@ -30,11 +48,11 @@ sub define_symbols {
     $parser->symbol('unless')  ->set_std(\&std_if);
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
     $parser->symbol('foreach') ->set_std(\&std_foreach);
+    $parser->symbol('FOR')     ->set_std(\&std_foreach);
+    $parser->symbol('for')     ->set_std(\&std_foreach);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_command);
     $parser->symbol('include') ->set_std(\&std_command);
-
-    $parser->define_basic_operators();
 
     return;
 }
@@ -52,6 +70,12 @@ sub is_valid_field {
             && scalar($token->id !~ /^\$/);
     }
     return 1;
+}
+
+sub led_concat {
+    my($parser, $symbol, $left) = @_;
+
+    return $parser->SUPER::led_infix($symbol->clone(id => '~'), $left);
 }
 
 sub std_if {

@@ -7,7 +7,7 @@ use Text::Xslate;
 eval {
     Text::Xslate->render(undef, {});
 };
-like $@, qr/Invalid xslate object/;
+like $@, qr/Invalid xslate instance/;
 
 my $tx = Text::Xslate->new();
 

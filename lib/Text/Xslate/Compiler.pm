@@ -362,6 +362,22 @@ sub _process_cascade {
     our %OPS; # to avoid 'once' warnings;
 }
 
+sub _can_print_optimize {
+    my($self, $name, $arg) = @_;
+
+    return 0 if !($name eq 'print' or $name eq 'print_raw');
+
+    return $arg->id eq '|'
+        && $arg->second->arity eq 'function'
+        && $arg->second->id    ~~ [qw(raw html)];
+}
+
+sub _generate_name {
+    my($self, $node) = @_;
+
+    $self->_error("Undefined symbol '$node', before " . $node->first, $node);
+}
+
 sub _generate_command {
     my($self, $node) = @_;
 
@@ -372,9 +388,19 @@ sub _generate_command {
         $proc = 'print_raw';
     }
 
+    my $do_optimize = ($self->optimize > 0);
+
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
             push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];
+        }
+        elsif($do_optimize and $self->_can_print_optimize($proc, $arg)){
+            # expr | html
+            # expr | raw
+            my $command = $arg->second->id eq 'html' ? 'print' : 'print_raw';
+            push @code,
+                $self->_generate_expr($arg->first),
+                [ $command => undef, $node->line, "builtin filter" ];
         }
         else {
             push @code,
@@ -383,7 +409,7 @@ sub _generate_command {
         }
     }
     if(defined(my $vars = $node->second)) {
-        unshift @code, $self->_localize_vars($vars);
+        @code = (['enter'], $self->_localize_vars($vars), @code, ['leave']);
     }
 
     if(!@code) {
@@ -619,6 +645,19 @@ sub _generate_literal {
     else {
         return [ nil => undef ];
     }
+}
+
+sub _generate_objectliteral {
+    my($self, $node) = @_;
+
+    my $list = $node->first;
+    my $type = $node->id eq '{' ? 'make_hash' : 'make_array';
+
+    return
+        ['pushmark', undef, undef, $type],
+        (map{ $self->_generate_expr($_), ['push'] } @{$list}),
+        [$type],
+    ;
 }
 
 sub _generate_unary {

@@ -4,7 +4,7 @@ package Text::Xslate::PP;
 use 5.008;
 use strict;
 
-our $VERSION = '0.1022';
+our $VERSION = '0.1023';
 
 use Carp ();
 
@@ -31,6 +31,12 @@ require Text::Xslate;
 #
 # public APIs
 #
+
+sub render_string {
+    my($self, $string, $vars) = @_;
+    $self->load_string($string);
+    return $self->render(undef, $vars);
+}
 
 sub render {
     my ( $self, $name, $vars ) = @_;
@@ -61,7 +67,7 @@ sub render {
 }
 
 
-sub _initialize {
+sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
     my $len = scalar( @$proto );
     my $st  = Text::Xslate::PP::State->new;
@@ -72,9 +78,7 @@ sub _initialize {
         $mtime    = time();
     }
 
-    if ( $self->{ function } ) {
-        $st->function( $self->{ function } );
-    }
+    $st->function( $self->{ function } );
 
     my $tmpl = [];
 
@@ -206,8 +210,8 @@ sub escaped_string {
 sub tx_load_template {
     my ( $self, $name ) = @_;
 
-    unless ( $self && ref $self ) {
-        Carp::croak( "Invalid xslate object" );
+    unless ( ref $self ) {
+        Carp::croak( "Invalid xslate instance" );
     }
 
     my $ttobj = $self->{ template };
@@ -228,7 +232,7 @@ sub tx_load_template {
     }
 
     unless ( $ttobj->{ $name } ) {
-        tx_invoke_load_file( $self, $name );
+        $self->load_file( $name );
         $retried++;
         goto RETRY;
     }
@@ -243,7 +247,7 @@ sub tx_load_template {
         return $self->{ tmpl_st }->{ $name };
     }
     else{
-        tx_invoke_load_file( $self, $name, $cache_mtime );
+        $self->load_file( $name, $cache_mtime );
         $retried++;
         goto RETRY;
     }
@@ -272,12 +276,6 @@ sub tx_all_deps_are_fresh {
     }
 
     return 1;
-}
-
-
-sub tx_invoke_load_file {
-    my ( $self, $name, $mtime ) = @_;
-    $self->load_file( $name, $mtime );
 }
 
 our $_depth = 0;
@@ -317,6 +315,10 @@ sub tx_execute { no warnings 'recursion';
 sub _error_handler {
     my ( $str, $die ) = @_;
     my $st = $_current_st;
+
+    if($str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
+        $str = Carp::shortmess($str);
+    }
 
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
 
@@ -370,7 +372,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.1022.
+This document describes Text::Xslate::PP version 0.1023.
 
 =head1 DESCRIPTION
 
@@ -386,6 +388,8 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
     use Text::Xslate::PP;
     my $tx = Text::Xslate->new();
+
+XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
 Pure perl version is very slow. If you want more speed in a persistent running,
 try to set an environment variable C<XSLATE_PP_BOOST> with C<1> or C<2>.

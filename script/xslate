@@ -17,7 +17,7 @@ has cache_dir => (
 
 has cache => (
     is => 'ro',
-    isa => 'Bool',
+    isa => 'Int',
     predicate => 'has_cache',
 );
 

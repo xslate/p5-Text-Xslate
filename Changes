@@ -1,5 +1,22 @@
 Revision history for Perl extension Text::Xslate
 
+0.1023
+    [BUG FIXES]
+    - Fix variable localization for include command
+    - Correct warning location from render_string()
+    - More robust cache checking
+
+    [NEW FEATURES]
+    - For General
+        + Array literal syntax: [ "foo", "bar", "baz" ]
+        + Hash literal syntax: { foo => 1, baz => 2 }
+    - For TTerse
+        + TT2 like comment tag [%# ... %]
+        + "FOR" and "for" for "FOREACH"
+        + The _ operator for concatination
+    - For App::xslate
+        + --cache accepts an integer, not a bool
+
 0.1022 Wed May 26 17:29:09 2010
     [BUG FIXES]
     - Fix variable localization (used for cascade-with-vars syntax)
@@ -12,7 +29,6 @@ Revision history for Perl extension Text::Xslate
         : include "foo.tx" { var => 42 }
     - Support --escape and --verbose options in xslate(1)
     - Support --eval (like perl's -e) option in xslate(1)
-    
 
 0.1021 Tue May 25 18:18:06 2010
     [BUG FIXES]

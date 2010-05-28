@@ -108,6 +108,10 @@ unless ( %Text::Xslate::OPS ) {
             function
             funcall
             methodcall_s
+            make_array
+            make_hash
+            enter
+            leave
             goto
             depend
             end
@@ -166,6 +170,10 @@ our $tx_oparg = [
     TXCODE_W_KEY,  # function
     0,             # funcall
     TXCODE_W_KEY,  # methodcall_s
+    0,             # make_array
+    0,             # make_hash
+    0,             # enter
+    0,             # leave
     TXCODE_GOTO,   # goto
     TXCODE_W_SV,   # depend
     0,             # end
@@ -227,9 +235,13 @@ sub init_opcode_dispatch_table {
         \&op_function,            # 44
         \&op_funcall,             # 45
         \&op_methodcall_s,        # 46
-        \&op_goto,                # 47
-        \&op_depend,              # 48
-        \&op_end,                 # 49
+        \&op_make_array,          # 47
+        \&op_make_hash,           # 48
+        \&op_enter,               # 49
+        \&op_leave,               # 50
+        \&op_goto,                # 51
+        \&op_depend,              # 52
+        \&op_end,                 # 53
     ];
 }
 

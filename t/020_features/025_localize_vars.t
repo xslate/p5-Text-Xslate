@@ -26,10 +26,18 @@ HEAD
 FOOT
 X
 
-    [<<'T', { lang => 'Xslate' }, <<'X', 'include with local vars'],
+    [<<'T', { lang => 'Xslate' }, <<'X', 'include with vars'],
 : include "hello.tx" { lang => "Perl" }
 T
 Hello, Perl world!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X', 'vars localized'],
+: include "hello.tx" { lang => "Perl" }
+Hello, <: $lang :> world!
+T
+Hello, Perl world!
+Hello, Xslate world!
 X
 
 );

@@ -255,7 +255,7 @@ sub preprocess {
                 $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
                     if $shortcut;
 
-                if($s =~ /[\}]\n?\z/xms){
+                if($s =~ /\A \s* [}] \s* \z/xms){
                     $code .= $s;
                 }
                 elsif(chomp $s) {
@@ -362,6 +362,7 @@ sub _define_basic_symbols {
     $parser->symbol('(');
     $parser->symbol(')');
     $parser->symbol(',');
+    $parser->symbol('=>');
 
     # common commands
     $parser->symbol('print')    ->set_std(\&std_command);
@@ -375,6 +376,9 @@ sub _define_basic_symbols {
 
 sub define_basic_operators {
     my($parser) = @_;
+
+    $parser->prefix('{', 256, \&nud_brace);
+    $parser->prefix('[', 256, \&nud_brace);
 
     $parser->infix('(', 256, \&led_call);
     $parser->infix('.', 256, \&led_dot);
@@ -439,7 +443,6 @@ sub define_symbols {
     $parser->symbol(']');
     $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
-    $parser->symbol('=>');
     $parser->symbol('else');
     $parser->symbol('with');
     $parser->symbol('::');
@@ -568,10 +571,22 @@ sub expression_list {
     if($parser->token->id ne ")") {
         while(1) {
             push @args, $parser->expression(0);
-            if($parser->token->id ne ",") {
+            my $t = $parser->token;
+
+            if($t->id eq ",") {
+                # noop
+            }
+            elsif($t->id eq "=>") {
+                my $lhs = $args[-1];
+                if($lhs->arity ~~ [qw(name macro function)]) {
+                    $lhs->arity('literal');
+                }
+            }
+            else { # "," nor "=>"
                 last;
             }
-            $parser->advance(); # ","
+
+            $parser->advance(); # "," or "=>"
         }
     }
     return \@args;
@@ -912,6 +927,20 @@ sub nud_paren {
     my $expr = $parser->expression(0);
     $parser->advance(')');
     return $expr;
+}
+
+# for object literals
+sub nud_brace {
+    my($parser, $symbol) = @_;
+
+    my $list = $parser->expression_list();
+
+    my $end = $symbol->id eq '{' ? '}' : ']';
+    $parser->advance($end);
+    return $symbol->clone(
+        arity => 'objectliteral',
+        first => $list,
+    );
 }
 
 sub std_block {

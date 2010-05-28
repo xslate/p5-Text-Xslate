@@ -91,7 +91,7 @@ eval {
     Hello, <: foo() :> world!
 T
 };
-like $@, qr/Parser/;
+like $@, qr/Compiler/;
 like $@, qr/\b foo \b/xms;
 
 done_testing;
