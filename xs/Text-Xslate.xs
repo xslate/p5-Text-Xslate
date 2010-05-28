@@ -919,7 +919,7 @@ mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
         }
     }
 
-    croak("Xslate: Invalid xslate object was passed");
+    croak("Xslate: Invalid template holder was passed");
     return NULL; /* not reached */
 }
 
@@ -1075,7 +1075,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     //PerlIO_stdoutf("load_template(%"SVf")\n", name);
 
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Invalid xslate object");
+        croak("Invalid xslate instance: %s", tx_neat(aTHX_ self));
     }
 
     hv = (HV*)SvRV(self);
@@ -1207,7 +1207,7 @@ CODE:
 
     svp = hv_fetchs(self, "template", FALSE);
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
-        croak("The xslate object has no template table");
+        croak("The xslate instance has no template table");
     }
 
     if(!SvOK(name)) { /* for strings */
@@ -1353,7 +1353,7 @@ CODE:
     tx_state_t* st;
 
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Xslate: Invalid Xslate instance: %s",
+        croak("Xslate: Invalid xslate instance: %s",
             tx_neat(aTHX_ self));
     }
 

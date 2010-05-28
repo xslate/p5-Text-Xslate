@@ -201,8 +201,8 @@ sub escaped_string {
 sub tx_load_template {
     my ( $self, $name ) = @_;
 
-    unless ( $self && ref $self ) {
-        Carp::croak( "Invalid xslate object" );
+    unless ( ref $self ) {
+        Carp::croak( "Invalid xslate instance" );
     }
 
     my $ttobj = $self->{ template };
