@@ -161,7 +161,7 @@ sub op_print {
         $_[0]->{ output } .= $sv;
     }
     else {
-        tx_warn( $_[0], "Use of nil to printed" );
+        tx_warn( $_[0], "Use of nil to print" );
     }
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -169,7 +169,12 @@ sub op_print {
 
 
 sub op_print_raw {
-    $_[0]->{ output } .= $_[0]->{sa};
+    if(defined $_[0]->{sa}) {
+        $_[0]->{ output } .= $_[0]->{sa};
+    }
+    else {
+        tx_warn( $_[0], "Use of nil to print" );
+    }
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
