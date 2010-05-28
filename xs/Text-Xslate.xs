@@ -1395,7 +1395,7 @@ CODE:
     PL_diehook = MY_CXT.die_handler;
 
     RETVAL = sv_newmortal();
-    sv_grow(RETVAL, st->hint_size);
+    sv_grow(RETVAL, st->hint_size + TX_HINT_SIZE);
     SvPOK_on(RETVAL);
 
     tx_execute(aTHX_ st, RETVAL, (HV*)SvRV(vars));
