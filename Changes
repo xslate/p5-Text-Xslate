@@ -4,8 +4,12 @@ Revision history for Perl extension Text::Xslate
     [BUG FIXES]
     - Fix variable localization for include command
     - Correct warning location from render_string()
+    - More robust cache checking
 
     [NEW FEATURES]
+    - For General
+        + Array literal syntax: [ "foo", "bar", "baz" ]
+        + Hash literal syntax: { foo => 1, baz => 2 }
     - For TTerse
         + TT2 like comment tag [%# ... %]
         + "FOR" and "for" for "FOREACH"
