@@ -425,7 +425,9 @@ This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
 
-The philosophy for Xslate is B<sandboxing> that the template logic should
+The features of templates are strongly influenced by Text::MicroTemplate
+and Template-Toolkit, but the philosophy of Xslate is different from them.
+That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
 
 B<This software is under development>.
