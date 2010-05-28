@@ -11,6 +11,7 @@ our $VERSION = '0.1019';
 
 my %CODE_MANIP = ();
 
+our @CARP_NOT = qw(Text::Xslate);
 
 has indent_depth => ( is => 'rw', default => 1 );
 
@@ -276,10 +277,10 @@ $CODE_MANIP{ 'print' } = sub {
     my $err;
 
     if ( $self->is_strict ) {
-        $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be printed" );', $self->frame_and_line );
+        $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
     }
     else {
-        $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be printed" );' );
+        $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be print" );' );
     }
 
 
