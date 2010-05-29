@@ -1270,13 +1270,11 @@ sub std_cascade {
 
     my $components;
     if($parser->token->id eq "with") {
-        my @c;
         $parser->advance(); # "with"
 
-        push @c, $parser->_get_bare_name();
+        my @c = $parser->_get_bare_name();
         while($parser->token->id eq ",") {
             $parser->advance(); # ","
-
             push @c, $parser->_get_bare_name();
         }
         $components = \@c;
