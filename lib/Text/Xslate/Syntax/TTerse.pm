@@ -193,6 +193,10 @@ sub set_list {
 
         $key->arity("literal");
         push @args, $key => $value;
+
+        if($parser->token->id eq ",") { # , is optional
+            $parser->advance();
+        }
     }
 
     return \@args;

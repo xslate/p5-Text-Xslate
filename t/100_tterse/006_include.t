@@ -32,5 +32,13 @@ Hello, TTerse world!
 Hello, Xslate world!
 X
 
+is render_str(<<'T', { lang => "Xslate" }), <<'X';
+[% INCLUDE "hello.tt" with pi = 3.14, lang = "TTerse" -%]
+Hello, [% lang %] world!
+T
+Hello, TTerse world!
+Hello, Xslate world!
+X
+
 
 done_testing;
