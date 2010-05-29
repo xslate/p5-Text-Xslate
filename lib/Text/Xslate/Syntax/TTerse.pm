@@ -1,6 +1,7 @@
 package Text::Xslate::Syntax::TTerse;
 use 5.010;
 use Any::Moose;
+use Text::Xslate::Util qw(p);
 
 extends qw(Text::Xslate::Parser);
 
@@ -54,8 +55,10 @@ sub define_symbols {
     $parser->symbol('FOR')     ->set_std(\&std_foreach);
     $parser->symbol('for')     ->set_std(\&std_foreach);
 
-    $parser->symbol('INCLUDE') ->set_std(\&std_command);
-    $parser->symbol('include') ->set_std(\&std_command);
+    $parser->symbol('INCLUDE') ->set_std(\&std_include);
+    $parser->symbol('include') ->set_std(\&std_include);
+    $parser->symbol('WITH');
+    $parser->symbol('with');
 
     return;
 }
@@ -156,11 +159,43 @@ sub std_foreach {
     return $proc;
 }
 
-sub std_command {
+sub std_include {
     my($parser, $symbol) = @_;
-    my $command = $parser->SUPER::std_command($symbol);
-    $command->id( lc( $command->id ) );
+
+    my $command = $parser->SUPER::std_include($symbol);
+    $command->id( lc $command->id );
     return $command;
+}
+
+sub localize_vars {
+    my($parser, $symbol) = @_;
+
+    if($parser->token->id eq "with") {
+        $parser->advance();
+        return  $parser->set_list();
+    }
+    return undef;
+}
+
+sub set_list {
+    my($parser) = @_;
+    my @args;
+    while(1) {
+        my $key = $parser->token;
+
+        if(!($key->arity eq "literal" || $key->arity eq "variable")) {
+            last;
+        }
+        $parser->advance();
+        $parser->advance("=");
+
+        my $value = $parser->expression(0);
+
+        $key->arity("literal");
+        push @args, $key => $value;
+    }
+
+    return \@args;
 }
 
 no Any::Moose;

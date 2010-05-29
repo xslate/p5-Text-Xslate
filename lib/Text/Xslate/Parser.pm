@@ -1184,16 +1184,13 @@ sub std_when {
 
 sub std_include {
     my($parser, $symbol) = @_;
-    my $args;
-    if($parser->token->id ne ";") {
-        $args = $parser->expression_list();
-    }
 
+    my $arg  = $parser->expression(0);
     my $vars = $parser->localize_vars();
 
     $parser->finish_statement();
     return $symbol->clone(
-        first  => $args,
+        first  => [$arg],
         second => $vars,
         arity  => 'command',
     );
