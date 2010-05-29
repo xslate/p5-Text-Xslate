@@ -793,12 +793,14 @@ sub _generate_macro {
 sub _localize_vars {
     my($self, $vars) = @_;
     my @local_vars;
-    foreach my $pair(@{$vars}) {
-        my($key, $expr) = @{$pair};
+    my @pairs = @{$vars};
+    while(my($key, $expr) = splice @pairs, 0, 2) {
+        if($key->arity ne "literal") {
+            $self->_error("You must pass a simple name to localize variables");
+        }
         push @local_vars,
             $self->_generate_expr($expr),
-            [ local_s => $key ];
-        ;
+            [ local_s => $key->id ];
     }
     return @local_vars;
 }

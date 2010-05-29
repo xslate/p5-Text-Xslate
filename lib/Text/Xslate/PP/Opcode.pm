@@ -578,18 +578,22 @@ sub tx_call {
             tx_warn( $st, "Use of nil to invoke method %s", $proc );
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $obj->$proc( @args ) };
         }
     }
     else { # function call
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
+        if(!defined $proc) {
+            my $c = $st->{code}[ $st->{pc} - 1 ];
+            tx_error( $st, "Undefined function%s is called",
+                $c->{exec_code} == \&op_fetch_s ? " $c->{arg}()" : "");
+        }
+        else {
+
             $ret = eval { $proc->( @args ) };
+        }
     }
 
-    $ret;
+    return $ret;
 }
 
 

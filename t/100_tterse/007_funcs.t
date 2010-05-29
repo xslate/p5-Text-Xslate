@@ -67,4 +67,11 @@ foreach my $d(@set) {
     is $tx->render_string($in, $vars), $out or diag $in;
 }
 
+eval {
+    my $tx = Text::Xslate->new( syntax => 'TTerse', warn_handler => sub{ die @_ } );
+    $tx->render_string("[% foobar() %]");
+};
+like $@, qr/Undefined function/;
+like $@, qr/\b foobar \b/xms;
+
 done_testing;

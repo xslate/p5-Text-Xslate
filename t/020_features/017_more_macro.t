@@ -112,7 +112,8 @@ X
 
 foreach my $d(@set) {
     my($in, $vars, $out, $msg) = @$d;
-    is $tx->render_string($in, $vars), $out, $msg or diag $in;
+    is eval { $tx->render_string($in, $vars) }, $out, $msg or diag $in;
+    diag $@ if $@;
 }
 
 eval {
