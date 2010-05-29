@@ -72,6 +72,16 @@ T
     foo=10
 X
 
+    [<<'T', { lang => 'Xslate' }, <<"X", "keywords"],
+: for { not => 10, for => 20 }.kv() -> $pair {
+    <: $pair.key :>=<: $pair.value :>
+: }
+T
+    for=20
+    not=10
+X
+
+
 );
 
 foreach my $d(@set) {
