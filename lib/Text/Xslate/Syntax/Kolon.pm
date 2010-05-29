@@ -50,6 +50,31 @@ Variables may be HASH references, ARRAY references, or objects.
 Because C<$var.field> and C<$var["field"]> are the same semantics,
 C<< $obj["accessor"] >> syntax may be call object methods.
 
+=head2 Literals
+
+Nil:
+    : nil
+
+String:
+
+    : "foo\n" # the same as perl
+    : 'foo\n' # the same as perl
+
+Number:
+
+    : 42
+    : 3.14
+    : 0xFF
+    : 0b1010
+
+Array:
+
+    : for [1, 2, 3] -> $i { ... }
+
+Hash:
+
+    : foo({ foo => "bar" })
+
 =head2 Expressions
 
 Conditional operator (C<< ?: >>):

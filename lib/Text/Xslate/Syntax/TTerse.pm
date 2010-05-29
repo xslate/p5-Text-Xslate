@@ -287,6 +287,14 @@ Almost the same as L<Text::Xslate::Syntax::Kolon>.
     [% INCLUDE "file.tt" %]
     [% INCLUDE $var %]
 
+C<< WITH variablies >> syntax is also supported:
+
+    [% INCLUDE "file.tt" WITH foo = 42, bar = 3.14 %]
+    [% INCLUDE "file.tt" WITH
+        foo = 42
+        bar = 3.14
+    %]
+
 =head2 Template cascading
 
 Not supported.
