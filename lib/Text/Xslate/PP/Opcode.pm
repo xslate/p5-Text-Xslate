@@ -578,8 +578,6 @@ sub tx_call {
             tx_warn( $st, "Use of nil to invoke method %s", $proc );
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $obj->$proc( @args ) };
         }
     }
@@ -590,8 +588,7 @@ sub tx_call {
                 $c->{exec_code} == \&op_fetch_s ? " $c->{arg}()" : "");
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
+
             $ret = eval { $proc->( @args ) };
         }
     }
