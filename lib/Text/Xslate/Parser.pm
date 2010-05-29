@@ -16,7 +16,7 @@ our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
 my $ID      = qr/(?: [A-Za-z_\$][A-Za-z0-9_]* )/xms;
 
-my $OPERATOR = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
+my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ...
     ..
     == != <=> <= >=
@@ -80,6 +80,13 @@ has scope => (
 has token => (
     is  => 'rw',
     isa => 'Maybe[Object]',
+
+    init_arg => undef,
+);
+
+has next_token => ( # to peep the next token
+    is  => 'rw',
+    isa => 'Maybe[ArrayRef]',
 
     init_arg => undef,
 );
@@ -285,12 +292,12 @@ sub lex {
 
     local *_ = \$self->{input};
 
-    s{\G (\s) }{ $1 eq "\n" and $self->line_inc; ""}xmsge;
+    s{\G (\s) }{ $1 eq "\n" and $self->line_inc(); ""}xmsge;
 
     if(s/\A ($ID)//xmso){
         return [ name => $1 ];
     }
-    elsif(s/\A ($OPERATOR)//xmso){
+    elsif(s/\A ($OPERATOR_TOKEN)//xmso){
         return [ operator => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
@@ -325,6 +332,7 @@ sub parse {
 
     $parser->input( $parser->preprocess($input) );
 
+    $parser->next_token( $parser->lex() );
     $parser->advance();
     my $ast = $parser->statements();
 
@@ -332,6 +340,7 @@ sub parse {
         $parser->_error("Syntax error", $parser->token);
     }
     $parser->near_token(undef);
+    $parser->next_token(undef);
 
     return $ast;
 }
@@ -507,16 +516,22 @@ sub advance {
 
     my $symtab = $parser->symbol_table;
 
-    $t = $parser->lex();
+    $t = $parser->next_token();
 
     if(not defined $t) {
         return $parser->token( $symtab->{"(end)"} );
     }
 
-    print STDOUT "[@{$t}]\n" if _DUMP_TOKEN;
+    $parser->next_token( $parser->lex() );
 
     my($arity, $value) = @{$t};
     my $proto;
+
+    if( $arity eq "name" && $parser->next_token->[1] eq "=>" ) {
+        $arity = "string";
+    }
+
+    print STDOUT "[$arity => $value]\n" if _DUMP_TOKEN;
 
     given($arity) {
         when("name") {
@@ -540,7 +555,7 @@ sub advance {
     }
 
     if(not defined $proto) {
-        $parser->_error("Unexpected token: $value ($arity)");
+        Carp::confess("Panic: Unexpected token: $value ($arity)");
     }
 
     return $parser->token( $proto->clone( id => $value, arity => $arity, line => $parser->line + 1 ) );
@@ -573,16 +588,7 @@ sub expression_list {
             push @args, $parser->expression(0);
             my $t = $parser->token;
 
-            if($t->id eq ",") {
-                # noop
-            }
-            elsif($t->id eq "=>") {
-                my $lhs = $args[-1];
-                if($lhs->arity ~~ [qw(name macro function)]) {
-                    $lhs->arity('literal');
-                }
-            }
-            else { # "," nor "=>"
+            if(!($t->id eq "," or $t->id eq "=>")) {
                 last;
             }
 
@@ -1251,7 +1257,8 @@ sub localize_vars {
 
         while(1) {
             my $t = $parser->token;
-            last if $t->arity ne "name";
+
+            last if $t->arity ne "literal";
             my $key = $t->id;
 
             $parser->advance();

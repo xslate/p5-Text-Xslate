@@ -5,7 +5,7 @@ use Any::Moose;
 extends qw(Text::Xslate::Parser);
 
 # [% ... %]
-sub _build_line_start { undef       }
+sub _build_line_start { qr/%%/xms   }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
@@ -26,6 +26,9 @@ around split => sub {
 
 sub define_symbols {
     my($parser) = @_;
+
+    $parser->symbol(']');
+    $parser->symbol('}');
 
     $parser->define_basic_operators();
     $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
