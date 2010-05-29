@@ -584,12 +584,19 @@ sub tx_call {
         }
     }
     else { # function call
+        if(!defined $proc) {
+            my $c = $st->{code}[ $st->{pc} - 1 ];
+            tx_error( $st, "Undefined function%s is called",
+                $c->{exec_code} == \&op_fetch_s ? " $c->{arg}()" : "");
+        }
+        else {
             local $SIG{__DIE__}; # oops
             local $SIG{__WARN__};
             $ret = eval { $proc->( @args ) };
+        }
     }
 
-    $ret;
+    return $ret;
 }
 
 

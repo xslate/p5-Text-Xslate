@@ -176,12 +176,25 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
     if(!(flags & G_METHOD)) { /* functions */
         HV* dummy_stash;
         GV* dummy_gv;
-        CV* const cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
+        CV* cv;
+
+        SvGETMAGIC(proc);
+        if(!SvOK(proc)) {
+            tx_code_t* const c = &(st->code[ st->pc - 1 ]);
+            (void)POPMARK;
+            tx_error(aTHX_ st, "Undefined function%s is called",
+                c->exec_code == TXCODE_fetch_s
+                    ? form(" %"SVf"()", c->arg)
+                    : "");
+            goto finish;
+        }
+
+        cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
         if(!cv) {
+            (void)POPMARK;
             tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
                 tx_neat(aTHX_ proc));
 
-            (void)POPMARK;
             goto finish;
         }
         proc = (SV*)cv;
@@ -189,10 +202,10 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
     else { /* methods */
         SV* const invocant = PL_stack_base[TOPMARK+1];
         if(!SvOK(invocant)) {
+            (void)POPMARK;
             tx_warn(aTHX_ st, "Use of nil to invoke method %s",
                 tx_neat(aTHX_ proc));
 
-            (void)POPMARK;
             goto finish;
         }
     }
