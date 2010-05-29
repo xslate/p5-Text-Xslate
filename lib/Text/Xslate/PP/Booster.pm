@@ -1007,12 +1007,23 @@ sub call {
         }
     }
     else { # function call
+        if(!defined $proc) {
+            if ( defined $line ) {
+                my $c = $st->{code}->[ $line - 1 ];
+                error_in_booster(
+                    $st, $frame, $line, "Undefined function is called%s",
+                    $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
+                );
+            }
+        }
+        else {
             local $SIG{__DIE__}; # oops
             local $SIG{__WARN__};
             $ret = eval { $proc->( @args ) };
+        }
     }
 
-    $ret;
+    return $ret;
 }
 
 
