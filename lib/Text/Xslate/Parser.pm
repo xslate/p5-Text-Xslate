@@ -1252,26 +1252,10 @@ sub _get_bare_name {
 sub localize_vars {
     my($parser) = @_;
     if($parser->token->id eq "{") {
-        my @vars;
         $parser->advance();
-
-        while(1) {
-            my $t = $parser->token;
-
-            last if $t->arity ne "literal";
-            my $key = $t->id;
-
-            $parser->advance();
-
-            $parser->advance("=>");
-
-            push @vars, [ $key, $parser->expression(0) ];
-
-            last if $parser->token->id eq "}";
-            $parser->advance(",");
-        }
+        my $vars = $parser->expression_list();
         $parser->advance("}");
-        return \@vars;
+        return $vars;
     }
     return undef;
 }
