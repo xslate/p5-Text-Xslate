@@ -6,7 +6,7 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
-my $tx = Text::Xslate->new(path => [path]);
+my $tx = Text::Xslate->new(path => [path], cache => 0);
 
 my @set = (
     [<<'T', { lang => 'Xslate' }, <<'X', 'with a component'],
