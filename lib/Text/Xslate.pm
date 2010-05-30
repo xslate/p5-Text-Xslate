@@ -67,10 +67,10 @@ sub new {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
             . " Use 'module' instead");
-        %funcs = import_from(@{$args{import}});
+        %funcs = (%funcs, import_from(@{$args{import}}));
     }
     if(defined $args{module}) {
-        %funcs = import_from(@{$args{module}});
+        %funcs = (%funcs, import_from(@{$args{module}}));
     }
 
     # function => { ... } overrides imported functions

@@ -3,6 +3,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate qw(html_escape);
+use Text::Xslate::Util qw(p);
 use Data::Dumper;
 use Time::localtime qw(localtime);
 
@@ -33,6 +34,12 @@ my @set = (
         { x => bless {} },
         42,
         'function overrides the imported',
+    ],
+    [
+        '<: dump($x) :>',
+        { x => 42 },
+        p(42),
+        'builtins',
     ],
 );
 
