@@ -1,4 +1,6 @@
 package Text::Xslate::PP::Booster;
+# to output perl code, set "XSLATE=pp=dump"
+# XSLATE=strict=0 makes no-strict mode
 
 use Any::Moose;
 use Carp ();
@@ -8,8 +10,6 @@ use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw($DEBUG p);
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
-
-our $VERSION = '0.1019';
 
 my %CODE_MANIP = ();
 
@@ -1250,13 +1250,10 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Booster - Text::Xslate::PP booster
+Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
 
 =head1 SYNOPSIS
 
-    # When you set a true value to the environmental variable XSLATE_PP_BOOST,
-    # this module is used in Text::Xslate::PP.
-    
     # If you want to check created codes, you can use it directly.
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
@@ -1271,12 +1268,11 @@ Text::Xslate::PP::Booster - Text::Xslate::PP booster
 
 =head1 DESCRIPTION
 
-This module boosts L<Text::Xslate::PP> runtime speed.
+This module is a new L<Text::Xslate::PP> runtime engine.
 
-Text::Xslate::PP is very very slow, you know. Example:
+The old Text::Xslate::PP is very very slow, you know. Example:
 
     > XSLATE=pp perl benchmark/others.pl
-    
     Text::Xslate/0.1019
     Text::MicroTemplate/0.11
     Text::ClearSilver/0.10.5.4
@@ -1289,10 +1285,11 @@ Text::Xslate::PP is very very slow, you know. Example:
     cs     2311/s  1835%   711%   219%     --
 
 All right, slower than template-toolkit!
-But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
+But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
 
-    > XSLATE=pp XSLATE_PP_BOOST=1 perl benchmark/others.pl
-    
+    > XSLATE=pp perl benchmark/others.pl
+    Text::Xslate/0.1024
+    ...
              Rate     tt     mt xslate     cs
     tt      288/s     --   -60%   -62%   -86%
     mt      710/s   147%     --    -5%   -66%
@@ -1301,8 +1298,8 @@ But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
 
 Text::Xslate::PP becomes to be faster!
 
-And L<XSLATE_PP_BOOST=2> may be much faster (no strict error handling compatibility mode).
-
+And L<XSLATE=strict=0> may be much faster, alghough it makes the error handling
+not be compatible with XS mode.
 
 =head1 APIs
 
@@ -1343,8 +1340,6 @@ and returns a perl subroutine code text.
 =head1 ABOUT BOOST CODE
 
 C<Text::Xslate::PP::Booster> creates a code reference from a virtual machine code.
-
-    $ENV{ XSLATE_PP_BOOST } = 1;
     
     $tx->render_string( <<'CODE', {} );
     : macro foo -> $arg {
