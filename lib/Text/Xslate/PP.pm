@@ -4,7 +4,7 @@ package Text::Xslate::PP;
 use 5.008;
 use strict;
 
-our $VERSION = '0.1023';
+our $VERSION = '0.1024';
 
 use Carp ();
 
@@ -380,7 +380,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.1023.
+This document describes Text::Xslate::PP version 0.1024.
 
 =head1 DESCRIPTION
 
