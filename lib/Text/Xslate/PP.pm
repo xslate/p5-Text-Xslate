@@ -402,7 +402,7 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
-From 0.1024 ons, pure Perl version is not so slow.
+From 0.1024 on, pure Perl version is not so slow.
 See L<Text::Xslate::PP::Booster> for details.
 
 =head1 SEE ALSO

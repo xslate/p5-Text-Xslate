@@ -640,7 +640,8 @@ $CODE_MANIP{ 'goto' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $i = $self->current_line;
 
-    if ( delete $self->stash->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
+    if ( delete $self->stash->{ loop }->{ $i + $arg + 1 } ) {
+        # finish "for" blocks
         $self->indent_depth( $self->indent_depth - 1 );
         pop @{ $self->stash->{ for_level } };
         $self->write_lines( '}' );
@@ -854,7 +855,7 @@ sub _check_logic {
 
         $self->sa( sprintf( '%s ? %s : %s', $self->sa, $self->sb, $self->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
     }
-    else { # 
+    else {
 
         my $true_start = $i + 1;
         my $true_end   = $i + $arg - 1; # add 1 for complete process line is next.
@@ -1257,10 +1258,10 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
     # If you want to check created codes, you can use it directly.
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
-    
+
     my $tx      = Text::Xslate->new();
     my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
-    
+
     my $optext  = q{<: $value :>};
     my $code    = $booster->opcode_to_perlcode_string( $tx->_compiler->compile( $optext ) );
     my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
@@ -1298,7 +1299,7 @@ But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTempla
 
 Text::Xslate::PP becomes to be faster!
 
-And L<XSLATE=strict=0> may be much faster, alghough it makes the error handling
+And L<XSLATE=strict=0> may be much faster, although it makes the error handling
 not be compatible with XS mode.
 
 =head1 APIs
@@ -1340,7 +1341,7 @@ and returns a perl subroutine code text.
 =head1 ABOUT BOOST CODE
 
 C<Text::Xslate::PP::Booster> creates a code reference from a virtual machine code.
-    
+
     $tx->render_string( <<'CODE', {} );
     : macro foo -> $arg {
         Hello <:= $arg :>!
