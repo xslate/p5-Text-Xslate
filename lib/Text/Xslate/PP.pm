@@ -15,8 +15,6 @@ use Text::Xslate::PP::Booster;
 
 use Text::Xslate::Util qw($DEBUG);
 
-use constant _PP_STRICT => !scalar($DEBUG =~ /\b strict=0 \b/xms);
-
 my $TX_OPS = \%Text::Xslate::OPS;
 
 use parent qw(Exporter);
@@ -188,8 +186,7 @@ sub _assemble {
 
     }
 
-    my $strict = defined($self->{strict}) ? $self->{strict} : _PP_STRICT;
-    $st->{ perlcode } = Text::Xslate::PP::Booster->new(strict => $strict)->opcode_to_perlcode( $proto );
+    $st->{ perlcode } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto );
     $st->{ code     } = $code;
     return;
 }

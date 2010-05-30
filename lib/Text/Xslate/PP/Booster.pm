@@ -1,6 +1,5 @@
 package Text::Xslate::PP::Booster;
 # to output perl code, set "XSLATE=pp=dump"
-# XSLATE=strict=0 makes no-strict mode
 
 use Any::Moose;
 use Carp ();
@@ -38,8 +37,6 @@ has lvar => ( is => 'rw', default => sub { []; } ); # local variable
 has framename => ( is => 'rw', default => 'main' ); # current frame name
 
 has SP => ( is => 'rw', default => sub { []; } ); # stack
-
-has strict => ( is => 'rw' );
 
 has is_completed => ( is => 'rw', default => 1 );
 
@@ -199,8 +196,6 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
     $self->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
 
-    return unless $self->is_strict;
-
     if ( $self->stash->{ in_macro } ) {
         my $macro = $self->stash->{ in_macro };
         unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
@@ -219,13 +214,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 $CODE_MANIP{ 'fetch_field' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    if ( $self->is_strict ) {
-        $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
-    }
-    else {
-        $self->sa( sprintf( 'fetch( $st, %s, %s )', $self->sb(), $self->sa() ) );
-    }
-
+    $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
 };
 
 
@@ -233,12 +222,7 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
 
-    if ( $self->is_strict ) {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
-    }
-    else {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, _escape( $arg ) ) );
-    }
+    $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
 };
 
 
@@ -247,8 +231,7 @@ $CODE_MANIP{ 'print_raw' } = sub {
     my $sv = $self->sa();
     my $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
-    if ( $self->is_strict ) {
-        $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+    $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print_raw
 if ( defined(my $s = %s) ) {
     $output .= $s;
@@ -257,12 +240,6 @@ else {
    %s
 }
 CODE
-
-    }
-    else {
-        $self->write_lines( sprintf('$output .= %s;', $sv) );
-    }
-
     $self->write_code( "\n" );
 };
 
@@ -287,12 +264,7 @@ $CODE_MANIP{ 'print' } = sub {
     my $sv = $self->sa();
     my $err;
 
-    if ( $self->is_strict ) {
-        $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
-    }
-    else {
-        $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be print" );' );
-    }
+    $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print
@@ -349,14 +321,11 @@ $CODE_MANIP{ 'for_iter' } = sub {
         $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
-    if ( $self->is_strict ) {
+    {
         my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->stash->{ for_start_line } );
         $self->write_lines(
             sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
         );
-    }
-    else {
-        $self->write_lines( sprintf( 'for ( @{ %s } ) {', $ar eq 'undef' ? '[]' : $ar ) );
     }
 
     $self->write_code( "\n" );
@@ -569,36 +538,20 @@ $CODE_MANIP{ 'funcall' } = sub {
 
     $args_str = ', ' . $args_str if length $args_str;
 
-    if ( $self->is_strict ) {
-        $self->sa(
-            sprintf('call( $st, %s, %s, 0, %s%s )',
-                $self->frame_and_line, $self->sa, $args_str
-            )
-        );
-    }
-    else {
-        $self->sa(
-            sprintf('call( $st, undef, undef, 0, %s%s )', $self->sa, $args_str )
-        );
-    }
-
+    $self->sa(
+        sprintf('call( $st, %s, %s, 0, %s%s )',
+            $self->frame_and_line, $self->sa, $args_str
+        )
+    );
 };
 
 
 $CODE_MANIP{ 'methodcall_s' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    if ( $self->is_strict ) {
-        $self->sa(
-            sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
-        );
-    }
-    else {
-        $self->sa(
-            sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->SP } } ) )
-        );
-    }
-
+    $self->sa(
+        sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
+    );
 };
 
 
@@ -670,7 +623,7 @@ $CODE_MANIP{ 'end' } = sub {
 sub _spawn_child {
     my ( $self, $opts ) = @_;
     $opts ||= {};
-    ( ref $self )->new( { %$opts, strict => $self->strict } ); # inherit strict
+    ( ref $self )->new($opts);
 }
 
 
@@ -913,9 +866,6 @@ sub _escape {
 #
 # methods
 #
-
-sub is_strict { $_[0]->strict }
-
 
 sub indent {
     $_[0]->indent_space x $_[0]->indent_depth;
@@ -1260,7 +1210,7 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
     use Text::Xslate::PP::Booster;
 
     my $tx      = Text::Xslate->new();
-    my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
+    my $booster = Text::Xslate::PP::Booster->new();
 
     my $optext  = q{<: $value :>};
     my $code    = $booster->opcode_to_perlcode_string( $tx->_compiler->compile( $optext ) );
@@ -1299,27 +1249,13 @@ But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTempla
 
 Text::Xslate::PP becomes to be faster!
 
-And L<XSLATE=strict=0> may be much faster, although it makes the error handling
-not be compatible with XS mode.
-
 =head1 APIs
 
 =head2 new
 
 Constructor.
 
-  $booster = Text::Xslate::PP::Booster->new( $opts );
-
-It can take a hash reference option:
-
-=over
-
-=item strict
-
-If set a true value, it enhances a compatibility of Text::Xslate error handling
-at the cost of speed a bit. Default by true.
-
-=back
+    $booster = Text::Xslate::PP::Booster->new();
 
 =head2 opcode_to_perlcode
 
@@ -1365,7 +1301,7 @@ Firstly the template data is converted to opcodes:
     print_raw_s "!\n"
     macro_end
 
-And the booster converted them into a perl subroutine code (strict option set in this case).
+And the booster converted them into a perl subroutine code.
 
     sub { no warnings 'recursion';
         my ( $st ) = $_[0];
@@ -1419,12 +1355,6 @@ And the booster converted them into a perl subroutine code (strict option set in
 
 So it makes the runtime speed much faster.
 Of course, its initial converting process takes a little cost of CPU and time.
-
-=head1 CAVEAT
-
-Boost codes have the error handling compatibility as possible.
-But if you set C<strict> option false, it is different from the original behavior,
-especially the line where an error occurs becomes uncertain.
 
 =head1 SEE ALSO
 

@@ -1,6 +1,18 @@
 Revision history for Perl extension Text::Xslate
 
-0.1023
+0.1024
+    [BUG FIXES]
+    - 'module' option wiped away builtin functions
+    - Array and Hash literals ware invalid in TTerse
+    - Calling undefined functions produced unreadable messages in TTerse
+    - The parser could not parse <: f({ not => 42 }) :>
+
+    [NEW FEATURES]
+    - For TTerse
+        + Support TT3-like single line code with '%%'
+        + Support INCLUDE-WITH syntax
+
+0.1023 Fri May 28 15:00:38 2010
     [BUG FIXES]
     - Fix variable localization for include command
     - Correct warning location from render_string()
