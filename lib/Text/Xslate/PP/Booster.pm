@@ -1203,16 +1203,16 @@ sub local_s {
 
 sub is_verbose {
     my $v = $_[0]->self->{ verbose };
-    defined $v ? $v : Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT;
+    defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
 }
 
 
 sub warn_in_booster {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) > Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+    if( is_verbose( $st ) > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }
@@ -1221,10 +1221,10 @@ sub warn_in_booster {
 
 sub error_in_booster {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) >= Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+    if( is_verbose( $st ) >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }

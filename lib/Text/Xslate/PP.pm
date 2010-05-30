@@ -90,10 +90,10 @@ sub _assemble {
     $self->{ template }->{ $name } = $tmpl;
     $self->{ tmpl_st }->{ $name }  = $st;
 
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ]      = $name;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ]     = $mtime;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ] = $cachepath;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_FULLPATH ]  = $fullpath;
+    $tmpl->[ Text::Xslate::PP::TXo_NAME ]      = $name;
+    $tmpl->[ Text::Xslate::PP::TXo_MTIME ]     = $mtime;
+    $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ] = $cachepath;
+    $tmpl->[ Text::Xslate::PP::TXo_FULLPATH ]  = $fullpath;
 
     $st->tmpl( $tmpl );
     $st->self( $self ); # weak_ref!
@@ -108,10 +108,10 @@ sub _assemble {
     $st->frame( [] );
     $st->current_frame( -1 );
 
-    my $mainframe = Text::Xslate::PP::Opcode::tx_push_frame( $st );
+    my $mainframe = tx_push_frame( $st );
 
-    $mainframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ]    = 'main';
-    $mainframe->[ Text::Xslate::PP::Opcode::TXframe_RETADDR ] = $len;
+    $mainframe->[ Text::Xslate::PP::TXframe_NAME ]    = 'main';
+    $mainframe->[ Text::Xslate::PP::TXframe_RETADDR ] = $len;
 
     $st->lines( [] );
     $st->{ output } = '';
@@ -134,7 +134,6 @@ sub _assemble {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
-        $code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
         $code->[ $i ]->{ opname }    = $opname; # for test
 
         my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
@@ -206,6 +205,23 @@ sub escaped_string {
 # INTERNAL
 #
 
+sub tx_push_frame {
+    my ( $st ) = @_;
+
+    if ( $st->current_frame > 100 ) {
+        Carp::croak("Macro call is too deep (> 100)");
+    }
+
+    $st->current_frame( $st->current_frame + 1 );
+
+    $st->frame->[ $st->current_frame ] ||= [];
+
+    $st->pad( $st->frame->[ $st->current_frame ] );
+
+    $st->frame->[ $st->current_frame ];
+}
+
+
 
 sub tx_load_template {
     my ( $self, $name ) = @_;
@@ -239,7 +255,7 @@ sub tx_load_template {
 
     my $tmpl = $ttobj->{ $name };
 
-    my $cache_mtime = $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ];
+    my $cache_mtime = $tmpl->[ Text::Xslate::PP::TXo_MTIME ];
 
     return $self->{ tmpl_st }->{ $name } unless $cache_mtime;
 
@@ -260,14 +276,14 @@ sub tx_all_deps_are_fresh {
     my ( $tmpl, $cache_mtime ) = @_;
     my $len = scalar @{$tmpl};
 
-    for ( my $i = Text::Xslate::PP::Opcode::TXo_FULLPATH; $i < $len; $i++ ) {
+    for ( my $i = Text::Xslate::PP::TXo_FULLPATH; $i < $len; $i++ ) {
         my $deppath = $tmpl->[ $i ];
 
         next unless defined $deppath;
 
         if ( ( stat( $deppath ) )[9] > $cache_mtime ) {
-            my $main_cache = $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ];
-            if ( $i != Text::Xslate::PP::Opcode::TXo_FULLPATH and $main_cache ) {
+            my $main_cache = $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ];
+            if ( $i != Text::Xslate::PP::TXo_FULLPATH and $main_cache ) {
                 unlink $main_cache or warn $!;
             }
             return;
@@ -318,13 +334,13 @@ sub _error_handler {
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
 
     my $cframe = $st->frame->[ $st->current_frame ];
-    my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
+    my $name   = $cframe->[ Text::Xslate::PP::TXframe_NAME ];
 
     if( $die ) {
         $_depth = 0;
     }
 
-    my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
+    my $file = $st->tmpl->[ Text::Xslate::PP::TXo_NAME ];
     my $line = $st->lines->[ $st->{ pc } ] || 0;
     my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str );
 

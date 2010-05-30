@@ -24,7 +24,7 @@ $code .= <<'CODE';
 # make %Text::Xslate::OPS if not exists.
 package Text::Xslate;
 
-unless ( %Text::Xslate::OPS ) {
+{
     my $i = 0;
 
     %Text::Xslate::OPS = map { ( $_ => $i++ ) } qw(
@@ -68,32 +68,6 @@ $code .=  <<'CODE';
 ];
 CODE
 
-
-$code .=  <<'CODE';
-
-# make opcode dispatch table.
-package Text::Xslate::PP::Const;
-use strict;
-
-sub init_opcode_dispatch_table {
-
-    package Text::Xslate::PP::Opcode;
-
-    our $Opcode_list = [
-CODE
-
-my $i = 0;
-for my $op ( @ops ) {
-    $code .= sprintf( "        \\&op_%-20s %s\n", $op->[0] . ',', '# ' . $i++ );
-}
-
-
-$code .=  <<'CODE';
-    ];
-}
-CODE
-
-
 for my $line ( @lines ) {
 
     if ( $line =~ /^<<.+?>>$/ ) {
@@ -105,9 +79,11 @@ for my $line ( @lines ) {
 }
 
 __DATA__
-# Text::Xslate::PP::Const;
+package Text::Xslate::PP::Const;
 
 package Text::Xslate::PP;
+
+use strict;
 
 use constant TXARGf_SV      => 0x01;
 use constant TXARGf_INT     => 0x02;
@@ -120,9 +96,6 @@ use constant TXCODE_W_INT   => (TXARGf_SV | TXARGf_INT);
 use constant TXCODE_W_VAR   => (TXARGf_SV | TXARGf_INT | TXARGf_VAR);
 use constant TXCODE_W_KEY   => (TXARGf_SV | TXARGf_KEY);
 use constant TXCODE_GOTO    => (TXARGf_SV | TXARGf_INT | TXARGf_GOTO);
-
-
-package Text::Xslate::PP::Opcode;
 
 # template representation, stored in $self->{template}{$file}
 use constant TXo_NAME           => 0;
@@ -138,24 +111,6 @@ use constant TXframe_RETADDR    => 2;
 use constant TXframe_START_LVAR => 3;
 
 use constant TX_VERBOSE_DEFAULT => 1;
-
-#
-#
-#
-
-package Text::Xslate::PP::Const;
-
-use strict;
-
-my $loaded;
-
-unless ( $loaded ) {
-    require Text::Xslate::PP::Opcode;
-
-    init_opcode_dispatch_table();
-
-    $loaded++;
-}
 
 
 <<This lines will be created by tool/opcode_for_pp.pl>>
