@@ -7,6 +7,7 @@ use Text::Xslate;
 use File::Path;
 
 rmtree('t/template/cache');
+END{ rmtree('t/template/cache') }
 
 system $^X, (map { "-I$_" } @INC), "-we", <<'EOT';
     use Text::Xslate;
@@ -16,6 +17,8 @@ system $^X, (map { "-I$_" } @INC), "-we", <<'EOT';
    );
    $tx->load_file('myapp/derived.tx');
 EOT
+
+ok -d 't/template/cache', '-d "t/template/cache"';
 
 for(1 .. 2) {
     my $tx = Text::Xslate->new(
