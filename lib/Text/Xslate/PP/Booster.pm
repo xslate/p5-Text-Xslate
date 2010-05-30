@@ -1,11 +1,13 @@
 package Text::Xslate::PP::Booster;
 
 use Any::Moose;
-use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
+use Text::Xslate::Util qw($DEBUG p);
+
+use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
 our $VERSION = '0.1019';
 
@@ -53,7 +55,7 @@ sub opcode_to_perlcode {
     my $perlcode = $self->opcode_to_perlcode_string( $opcode );
 
     # DEBUG
-    print STDERR "$perlcode\n" if $ENV{ XSLATE_PP_BOOST_DISP };
+    print STDERR "$perlcode\n" if _DUMP_PP;
 
     my $evaled_code = eval $perlcode;
 
@@ -71,10 +73,9 @@ sub opcode_to_perlcode_string {
 
     $self->_convert_opcode( $opcode, undef, $opt );
 
-    # 書き出し
-
-    my $perlcode =<<'CODE';
-sub { no warnings 'recursion';
+    my $perlcode = sprintf("#line %d %s\n", __LINE__, __FILE__) . <<'CODE';
+sub {
+    no warnings 'recursion';
     my ( $st ) = $_[0];
     my ( $sv, $st2, $pad, %macro, $depth );
     my $output = '';

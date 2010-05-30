@@ -11,6 +11,11 @@ use Carp ();
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
+use Text::Xslate::PP::Booster;
+
+use Text::Xslate::Util qw($DEBUG);
+
+use constant _PP_STRICT => !scalar($DEBUG =~ /\b strict=0 \b/xms);
 
 my $TX_OPS = \%Text::Xslate::OPS;
 
@@ -184,15 +189,10 @@ sub _assemble {
 
     }
 
-    if ( my $boost = $ENV{ XSLATE_PP_BOOST } ) {
-        require Text::Xslate::PP::Booster;
-        my $strict = $boost eq '1' ? 1
-                   : $boost eq '2' ? 0
-                   : 0;
-        $st->{ boost_code } = Text::Xslate::PP::Booster->new({ strict => $strict })->opcode_to_perlcode( $proto );
-    }
-
-    $st->{code} = $code;
+    my $strict = defined($self->{strict}) ? $self->{strict} : _PP_STRICT;
+    $st->{ perlcode } = Text::Xslate::PP::Booster->new(strict => $strict)->opcode_to_perlcode( $proto );
+    $st->{ code     } = $code;
+    return;
 }
 
 
@@ -290,8 +290,8 @@ sub tx_execute { no warnings 'recursion';
 
     my $len = $st->code_len;
 
-    $st->{ output } = '';
-    $st->{ pc }     = 0;
+    $st->{output} = '';
+    $st->{pc}     = 0;
     $st->{vars}     = $vars;
 
     local $_depth      = $_depth + 1;
@@ -299,12 +299,7 @@ sub tx_execute { no warnings 'recursion';
 
     local $st->{local_stack};
 
-    if ( $ENV{ XSLATE_PP_BOOST } ) {
-        $st->{ boost_code }->( $st );
-    }
-    else {
-        $st->{code}->[ 0 ]->{ exec_code }->( $st );
-    }
+    $st->{perlcode}->( $st );
 
     $st->{targ} = undef;
     $st->{sa}   = undef;
