@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+BEGIN{ $INC{'Module/Install/ExtraTests.pm'} = 1 } # M::I::ExtraTests considered harmful!
 use inc::Module::Install;
 use Module::Install::XSUtil 0.24;
 
@@ -19,7 +20,7 @@ test_requires 'Test::Requires';
 
 install_script 'xslate';
 
-tests_recursive 't';
+tests_recursive;
 
 my $want_xs = want_xs();
 if($want_xs) {
