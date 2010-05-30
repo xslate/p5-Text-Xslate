@@ -288,7 +288,7 @@ $CODE_MANIP{ 'print' } = sub {
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 $sv = %s;
 
-if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
     $output .= $sv;
 }
 elsif ( defined $sv ) {
