@@ -45,6 +45,15 @@ has is_completed => ( is => 'rw', default => 1 );
 
 has stash => ( is => 'rw', default => sub { {}; } ); # store misc data
 
+our %html_escape = (
+    '&' => '&amp;',
+    '<' => '&lt;',
+    '>' => '&gt;',
+    '"' => '&quot;',
+    "'" => '&apos;',
+);
+our $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
+
 #
 # public APIs
 #
@@ -73,7 +82,7 @@ sub opcode_to_perlcode_string {
 
     $self->_convert_opcode( $opcode, undef, $opt );
 
-    my $perlcode = sprintf("#line %d %s\n", __LINE__, __FILE__) . <<'CODE';
+    my $perlcode = sprintf("#line %d %s\n", 1, __FILE__) . <<'CODE';
 sub {
     no warnings 'recursion';
     my ( $st ) = $_[0];
@@ -239,9 +248,10 @@ $CODE_MANIP{ 'print_raw' } = sub {
     my $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
     if ( $self->is_strict ) {
-        $self->write_lines( sprintf( <<'CODE', $sv, $sv, $err ) );
-if ( defined %s ) {
-    $output .= %s;
+        $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+# print_raw
+if ( defined(my $s = %s) ) {
+    $output .= $s;
 }
 else {
    %s
@@ -284,21 +294,15 @@ $CODE_MANIP{ 'print' } = sub {
         $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be print" );' );
     }
 
-
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+# print
 $sv = %s;
 
 if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
     $output .= $sv;
 }
 elsif ( defined $sv ) {
-    if ( $sv =~ /[&<>"']/ ) {
-        $sv =~ s/&/&amp;/g;
-        $sv =~ s/</&lt;/g;
-        $sv =~ s/>/&gt;/g;
-        $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&apos;/g;
-    }
+    $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
     $output .= $sv;
 }
 else {
@@ -1392,13 +1396,7 @@ And the booster converted them into a perl subroutine code (strict option set in
                 $output .= $sv;
             }
             elsif ( defined $sv ) {
-                if ( $sv =~ /[&<>"']/ ) {
-                    $sv =~ s/&/&amp;/g;
-                    $sv =~ s/</&lt;/g;
-                    $sv =~ s/>/&gt;/g;
-                    $sv =~ s/"/&quot;/g;
-                    $sv =~ s/'/&#39;/g;
-                }
+                $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
                 $output .= $sv;
             }
             else {

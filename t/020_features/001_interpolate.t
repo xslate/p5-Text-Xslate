@@ -40,6 +40,7 @@ foreach my $pair(@data) {
     my %vars = (lang => 'Xslate', foo => "<bar>");
 
     my $vars_str = Dumper(\%vars);
+    #diag $in;
     is $tx->render_string($in, \%vars), $out or diag $in;
 
     is Dumper(\%vars), $vars_str, 'vars are not changed';
