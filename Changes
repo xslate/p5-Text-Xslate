@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1024
+0.1024 Sun May 30 19:00:56 2010
     [BUG FIXES]
     - 'module' option wiped away builtin functions
     - Array and Hash literals ware invalid in TTerse
@@ -11,6 +11,8 @@ Revision history for Perl extension Text::Xslate
     - For TTerse
         + Support TT3-like single line code with '%%'
         + Support INCLUDE-WITH syntax
+    - New PP engine: Text::Xslate::PP::Booster (makamaka)
+      Now PP is much faster than Template-Toolkit 2.22
 
 0.1023 Fri May 28 15:00:38 2010
     [BUG FIXES]
