@@ -1,26 +1,12 @@
 <html>
-<head></head>
+<head><title>Test</title></head>
 <body>
-interpolation x 20
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
-<: if($hoge) { :> <:= $fuga :> <: } :>
+<ul>
+<: for $books -> $book { :>
+    <li><: $book.title :></li>
+    <li><: $book.title :></li>
+    <li><: $book.title :></li>
+<: } :>
+</ul>
 </body>
 </html>

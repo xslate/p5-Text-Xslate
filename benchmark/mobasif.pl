@@ -14,9 +14,16 @@ foreach my $mod(qw(Text::Xslate MobaSiF::Template)) {
     print $mod, "/", $mod->VERSION, "\n";
 }
 
+my $n = shift(@ARGV) || 10;
+
 my $vars      = {
-    hoge => 1,
-    fuga => "fuga",
+     books => [(
+        { title => 'Islands in the stream' },
+        { title => 'Beautiful code' },
+        { title => 'Introduction to Psychology' },
+        { title => 'Programming Perl' },
+        { title => 'Compilers: Principles, Techniques, and Tools' },
+     ) x $n],
 };
 
 my $mst_in  = "$Bin/template/simple.mst";
