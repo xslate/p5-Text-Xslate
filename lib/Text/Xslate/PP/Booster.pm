@@ -315,12 +315,11 @@ $CODE_MANIP{ 'for_iter' } = sub {
 
     my $iterator = sprintf '$pad->[ -1 ]->[ %s ]', $self->sa() + 1;
     $self->write_lines(sprintf '%s = -1;', $iterator);
-    {
-        my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->stash->{ for_start_line } );
-        $self->write_lines(
-            sprintf( 'for (@{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
-        );
-    }
+
+    $self->write_lines(
+        sprintf( 'for (@{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar,
+             "'" . $self->framename . "'", $self->stash->{ for_start_line } )
+    );
 
     $self->write_code( "\n" );
 
