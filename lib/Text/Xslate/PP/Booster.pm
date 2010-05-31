@@ -60,29 +60,21 @@ sub opcode_to_perlcode {
 
     my $perlcode = $self->opcode_to_perlcode_string( $opcode );
 
-    # DEBUG
     print STDERR "$perlcode\n" if _DUMP_PP;
 
-    my $evaled_code = eval $perlcode;
-
-    die $@ unless $evaled_code;
-
-    return $evaled_code;
+    return eval($perlcode) || Carp::confess("Eval error: $@");
 }
 
 
 sub opcode_to_perlcode_string {
     my ( $self, $opcode, $opt ) = @_;
 
-    #my $tx = Text::Xslate->new;
-    #print $tx->_compiler->as_assembly( $opcode );
-
     $self->_convert_opcode( $opcode, undef, $opt );
 
     my $perlcode = sprintf("#line %d %s\n", 1, __FILE__) . <<'CODE';
 sub {
     no warnings 'recursion';
-    my ( $st ) = $_[0];
+    my ( $st ) = @_;
     my ( $sv, $st2, $pad, %macro, $depth );
     my $output = '';
     my $vars   = $st->{ vars };
@@ -950,16 +942,18 @@ sub neat {
 
 
 sub call {
-    my ( $st, $frame, $line, $flag, $proc, @args ) = @_;
-    my $obj = shift @args if ( $flag );
+    my ( $st, $frame, $line, $method_call, $proc, @args ) = @_;
     my $ret;
 
-    if ( $flag ) { # method call ... fetch() doesn't use methodcall for speed
+    if ( $method_call ) { # XXX: fetch() doesn't use methodcall for speed
+        my $obj = shift @args;
+
         unless ( defined $obj ) {
             _warn( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
         }
         else {
             $ret = eval { $obj->$proc( @args ) };
+            #_error( $st, $frame, $line, "%s\t...", $@) if $@;
         }
     }
     else { # function call
@@ -974,6 +968,7 @@ sub call {
         }
         else {
             $ret = eval { $proc->( @args ) };
+            _error( $st, $frame, $line, "%s\t...", $@) if $@;
         }
     }
 
@@ -1030,7 +1025,7 @@ sub methodcall {
 
          $retval = eval {
             $klass->new($invocant)->$method(@args);
-        };
+         };
     }
 
     return $retval;
