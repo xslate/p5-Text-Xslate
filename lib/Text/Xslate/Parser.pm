@@ -450,7 +450,6 @@ sub define_symbols {
     $parser->symbol('else');
     $parser->symbol('with');
     $parser->symbol('::');
-    $parser->symbol('($_)'); # default topic variable
 
     # operators
     $parser->define_basic_operators();
