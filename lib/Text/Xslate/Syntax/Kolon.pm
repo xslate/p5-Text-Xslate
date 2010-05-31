@@ -1,5 +1,4 @@
 package Text::Xslate::Syntax::Kolon;
-use 5.010;
 use Any::Moose;
 
 extends qw(Text::Xslate::Parser);

@@ -1,5 +1,4 @@
 package Text::Xslate::Symbol;
-use 5.010;
 use Any::Moose;
 
 use overload

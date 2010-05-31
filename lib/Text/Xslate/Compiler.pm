@@ -1,5 +1,4 @@
 package Text::Xslate::Compiler;
-use 5.010;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
 

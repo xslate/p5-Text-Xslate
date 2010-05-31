@@ -1,7 +1,6 @@
 package Text::Xslate::PP;
 # Text::Xslate in pure Perl
-
-use 5.008;
+use 5.008_001;
 use strict;
 
 our $VERSION = '0.1024';

@@ -1,6 +1,6 @@
 package Text::Xslate;
 # The Xslate engine class
-use 5.010_000;
+use 5.008_001;
 use strict;
 use warnings;
 
@@ -16,9 +16,14 @@ use Text::Xslate::Util qw(
     p
 );
 
+use Carp ();
+use File::Spec;
+
 BEGIN {
     my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
     *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
+
+    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 }
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
@@ -34,11 +39,6 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
         Text::Xslate::PP->import(':backend');
     }
 }
-
-use Carp ();
-use File::Spec;
-
-use constant _ST_MTIME => 9; # see perldoc -f stat
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 

@@ -1,5 +1,4 @@
 package Text::Xslate::Parser;
-use 5.010;
 use Any::Moose;
 
 use Text::Xslate::Symbol;
