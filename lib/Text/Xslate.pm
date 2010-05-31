@@ -615,7 +615,8 @@ There are common notes in the Xslate virtual machine.
 
 =head2 Nil handling
 
-Note that nil handling is different from Perl's.
+Note that nil handling is different from Perl's. Basically it does nothing,
+but C<< verbose => 2 >> will produce warnings for it.
 
 =over
 
