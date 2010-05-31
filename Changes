@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+0.1025 Mon May 31 20:29:50 2010
+    - Support 5.8.1
+
 0.1024 Sun May 30 19:00:56 2010
     [BUG FIXES]
     - 'module' option wiped away builtin functions
