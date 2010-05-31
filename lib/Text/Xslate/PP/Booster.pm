@@ -313,10 +313,12 @@ $CODE_MANIP{ 'for_iter' } = sub {
         $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
+    my $iterator = sprintf '$pad->[ -1 ]->[ %s ]', $self->sa() + 1;
+    $self->write_lines(sprintf '%s = -1;', $iterator);
     {
         my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->stash->{ for_start_line } );
         $self->write_lines(
-            sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
+            sprintf( 'for (@{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
         );
     }
 
@@ -325,6 +327,7 @@ $CODE_MANIP{ 'for_iter' } = sub {
     $self->indent_depth( $self->indent_depth + 1 );
 
     $self->write_lines( sprintf( '$pad->[ -1 ]->[ %s ] = $_;', $self->sa() ) );
+    $self->write_lines( sprintf( '%s++;', $iterator ) );
     $self->write_code( "\n" );
 };
 

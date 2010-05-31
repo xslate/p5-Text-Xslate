@@ -456,7 +456,7 @@ sub _generate_for {
     my $it_name = $lvar_name;
     substr($it_name, 1, 0, '^'); # $foo -> $^foo
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id+0, undef, $lvar_name ];
-    local $self->lvar->{$it_name}   = [ fetch_lvar => $lvar_id+2, undef, $it_name   ];
+    local $self->lvar->{$it_name}   = [ fetch_lvar => $lvar_id+1, undef, $it_name   ];
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
