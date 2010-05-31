@@ -61,6 +61,80 @@ BEGIN
 END
 X
 
+
+    [<<'T', <<'X', 'loop.index'],
+[% FOR type IN types -%]
+* [% loop.index %]
+[% END -%]
+END
+T
+* 0
+* 1
+* 2
+END
+X
+
+    [<<'T', <<'X', 'loop.index()'],
+[% FOR type IN types -%]
+* [% loop.index() %]
+[% END -%]
+END
+T
+* 0
+* 1
+* 2
+END
+X
+
+    [<<'T', <<'X', 'loop.count'],
+[% FOR type IN types -%]
+* [% loop.count %]
+[% END -%]
+END
+T
+* 1
+* 2
+* 3
+END
+X
+
+
+    [<<'T', <<'X', 'loop.odd'],
+[% FOR type IN types -%]
+* [% loop.odd %]
+[% END -%]
+END
+T
+* 1
+* 0
+* 1
+END
+X
+
+    [<<'T', <<'X', 'loop.even'],
+[% FOR type IN types -%]
+* [% loop.even %]
+[% END -%]
+END
+T
+* 0
+* 1
+* 0
+END
+X
+
+    [<<'T', <<'X', 'loop.parity'],
+[% FOR type IN types -%]
+* [% loop.parity %]
+[% END -%]
+END
+T
+* odd
+* even
+* odd
+END
+X
+
     [<<'T', <<'X', 'lower cased'],
 [% lang %]
 [% foreach type in types -%]
@@ -106,6 +180,8 @@ X
 
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
+
+    last if $msg eq 'lower cased' && $ENV{USE_TT};
 
     my %vars = (
         lang => 'Xslate',

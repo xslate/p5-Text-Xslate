@@ -274,16 +274,16 @@ sub _compile_ast {
     my($self, $ast) = @_;
     return unless defined $ast;
 
-    Carp::croak("Oops: Not an ARRAY reference: " . p($ast)) if ref($ast) ne 'ARRAY';
+    Carp::confess("Oops: Not an ARRAY reference: " . p($ast)) if ref($ast) ne 'ARRAY';
 
     # TODO
     # $self->_optimize_ast($ast) if $self->optimize;
 
     my @code;
     foreach my $node(@{$ast}) {
-        blessed($node) or Carp::croak("Oops: Not a node object: " . p($node));
+        blessed($node) or Carp::confess("Oops: Not a node object: " . p($node));
         my $generator = $self->can('_generate_' . $node->arity)
-            || Carp::croak("Oops: Unexpected node:  " . p($node));
+            || Carp::confess("Oops: Unexpected node:  " . p($node));
 
         push @code, $self->$generator($node);
     }
@@ -454,7 +454,7 @@ sub _generate_for {
     my $lvar_name = $iter_var->id;
 
     my $it_name = $lvar_name;
-    substr($it_name, 1, 0, '^'); # $foo -> $^foo
+    $it_name =~ s/\A (\$?) /${1}^/xms; # $foo -> $^foo
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id+0, undef, $lvar_name ];
     local $self->lvar->{$it_name}   = [ fetch_lvar => $lvar_id+1, undef, $it_name   ];
 
