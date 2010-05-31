@@ -260,7 +260,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
             }
         }
         else if(SvTYPE(rv) == SVt_PVAV) {
-            if(looks_like_number(key)) {
+            if(LooksLikeNumber(key)) {
                 SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
                 if(svp) {
                     sv = *svp;

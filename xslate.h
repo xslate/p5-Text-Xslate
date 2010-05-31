@@ -15,6 +15,12 @@
 #define newSVpvs_share(s) Perl_newSVpvn_share(aTHX_ STR_WITH_LEN(s), 0U)
 #endif
 
+#if PERL_BCDVERSION < 0x5008005
+#define LooksLikeNumber(x) (SvOK(x) && looks_like_number(x))
+#else
+#define LooksLikeNumber(x) looks_like_number(x)
+#endif
+
 /* xslate stuff */
 
 #define TX_ESC_CLASS "Text::Xslate::EscapedString"

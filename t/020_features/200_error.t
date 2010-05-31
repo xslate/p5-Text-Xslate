@@ -81,12 +81,12 @@ foreach my $code(
 
 $warn = '';
 $out = eval {
-    $tx->render_string("<: 'a' + 'b' :>");
+    $tx->render_string('<: $a + $b :>', { a => 'foo', b => 'bar' });
 };
 
 is $out, '0', 'warn in render_string()';
-like $warn, qr/"a" isn't numeric/;
-like $warn, qr/"b" isn't numeric/;
+like $warn, qr/"foo" isn't numeric/;
+like $warn, qr/"bar" isn't numeric/;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
