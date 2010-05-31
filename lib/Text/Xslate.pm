@@ -643,7 +643,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 =head1 DEPENDENCIES
 
-Perl 5.10.0 or later.
+Perl 5.8.1 or later.
 
 If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
 backend is used.
