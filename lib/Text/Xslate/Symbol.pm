@@ -3,7 +3,8 @@ use 5.010;
 use Any::Moose;
 
 use overload
-    '""' => sub{ $_[0]->id },
+    bool => sub() { 1 },
+    '""' => sub   { $_[0]->id },
     fallback => 1,
 ;
 

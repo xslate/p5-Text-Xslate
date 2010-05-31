@@ -50,21 +50,20 @@ sub new {
 
     # options
 
-    $args{suffix}       //= '.tx';
-    $args{path}         //= [ '.' ];
-    $args{input_layer}  //= ':utf8';
-    $args{compiler}     //= 'Text::Xslate::Compiler';
-    $args{syntax}       //= 'Kolon'; # passed directly to the compiler
-    $args{escape}       //= 'html';
-    $args{cache}        //= 1;
-    $args{cache_dir}    //= File::Spec->tmpdir;
+    defined($args{suffix})      or $args{suffix}      = '.tx';
+    defined($args{path})        or $args{path}        = [ '.' ];
+    defined($args{input_layer}) or $args{input_layer} = ':utf8';
+    defined($args{compiler})    or $args{compiler}    = 'Text::Xslate::Compiler';
+    defined($args{syntax})      or $args{syntax}      = 'Kolon';
+    defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
+    defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
+    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->tmpdir;
 
     my %funcs = (
         raw  => \&escaped_string,
         html => \&html_escape,
         dump => \&p,
     );
-
 
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
@@ -89,13 +88,10 @@ sub new {
     }
 
     # internal data
-    $args{template}       = {};
+    $args{template} = {};
 
     my $self = bless \%args, $class;
 
-    if(defined $args{file}) {
-        Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
-    }
     if(defined $args{string}) {
         Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
         $self->load_string($args{string});
@@ -126,7 +122,8 @@ sub find_file {
 
     foreach my $p(@{$self->{path}}) {
         $fullpath = File::Spec->catfile($p, $file);
-        $orig_mtime = (stat($fullpath))[_ST_MTIME] // next; # does not exist
+        defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
+            or next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
 
@@ -135,7 +132,7 @@ sub find_file {
 
             # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
-            $is_compiled = (($mtime // $cache_mtime) >= $orig_mtime);
+            $is_compiled = (($mtime || $cache_mtime) >= $orig_mtime);
             last;
         }
         else {
@@ -212,12 +209,12 @@ sub load_file {
                     $dep_mtime = '+inf'; # force reload
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
-                if($dep_mtime > ($mtime // $f->{cache_mtime})){
+                if($dep_mtime > ($mtime || $f->{cache_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
                     printf "---> %s(%s) is newer than %s(%s)\n",
                         $code->[1], scalar localtime($dep_mtime),
-                        $cachepath, scalar localtime($mtime // $f->{cache_mtime})
+                        $cachepath, scalar localtime($mtime || $f->{cache_mtime})
                             if _DUMP_LOAD_FILE;
                     goto &load_file; # retry
                 }
@@ -255,7 +252,7 @@ sub load_file {
     my $cache_mtime;
     if($self->{cache} < 2) {
         if($is_compiled) {
-            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[_ST_MTIME];
+            $cache_mtime = $f->{cache_mtime} || ( stat $cachepath )[_ST_MTIME];
         }
         else {
             $cache_mtime = 0; # no compiled cache, always need to reload
