@@ -453,7 +453,10 @@ sub _generate_for {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
-    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
+    my $it_name = $lvar_name;
+    substr($it_name, 1, 0, '^'); # $foo -> $^foo
+    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id+0, undef, $lvar_name ];
+    local $self->lvar->{$it_name}   = [ fetch_lvar => $lvar_id+2, undef, $it_name   ];
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
@@ -622,7 +625,11 @@ sub _generate_variable {
         @fetch = @{$lvar_code};
     }
     else {
-        @fetch = ( fetch_s => $self->_variable_to_value($node) );
+        my $var_name = $self->_variable_to_value($node);
+        if($var_name =~ /\A [^a-zA-Z0-9_]/xms) {
+            $self->_error("Undefined special variable: $node", $node);
+        }
+        @fetch = ( fetch_s => $var_name );
     }
     $fetch[2] = $node->line;
     return \@fetch;

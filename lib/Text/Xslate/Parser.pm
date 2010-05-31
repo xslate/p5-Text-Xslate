@@ -13,7 +13,7 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $ID      = qr/(?: [A-Za-z_\$][A-Za-z0-9_]* )/xms;
+my $ID      = qr/(?: (?:[A-Za-z_]|\$\^?) [A-Za-z0-9_]* )/xms;
 
 my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ...

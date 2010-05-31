@@ -103,6 +103,15 @@ T
         Perl
 X
 
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $^item :>
+: }
+T
+    0
+    1
+    2
+X
 );
 
 foreach my $pair(@data) {

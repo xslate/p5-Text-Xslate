@@ -414,7 +414,6 @@ TXC_w_var(fetch_lvar) {
     else {
         TX_st_sa = TX_lvar_get(id);
     }
-
     TX_st->pc++;
 }
 
@@ -564,6 +563,8 @@ TXC_goto(for_iter) {
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
 
+    SvIOK_only(i); /* for $^item */
+
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     if(LIKELY(SvRMAGICAL(av) == 0)) {
         if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
@@ -582,9 +583,12 @@ TXC_goto(for_iter) {
     }
 
     /* the loop finished */
-    sv_setsv(item,  &PL_sv_undef);
-    sv_setsv(avref, &PL_sv_undef);
-    /* no need to clear the iterator, it's only an integer */
+    {
+        SV* const nil = &PL_sv_undef;
+        sv_setsv(item,  nil);
+        sv_setsv(avref, nil);
+        sv_setsv(i,     nil);
+    }
 
     TX_st->pc = SvUVX(TX_op_arg); /* goto */
 }
