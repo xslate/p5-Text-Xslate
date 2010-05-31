@@ -75,7 +75,7 @@ sub opcode_to_perlcode_string {
 sub {
     no warnings 'recursion';
     my ( $st ) = @_;
-    my ( $sv, $st2, $pad, %macro, $depth );
+    my ( $sv, $pad, %macro, $depth );
     my $output = '';
     my $vars   = $st->{ vars };
 
@@ -280,8 +280,10 @@ CODE
 $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
-$st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-$output .= Text::Xslate::PP::tx_execute( $st2, $vars );
+{
+    my $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
+    $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
+}
 CODE
 
 };
