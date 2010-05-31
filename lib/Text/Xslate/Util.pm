@@ -30,7 +30,7 @@ our $NUMBER  = qr/ [+-]? (?:
     )/xms;
 
 our $DEBUG;
-$DEBUG //= $ENV{XSLATE} // '';
+defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
 
 sub is_int {
     my($s) = @_;

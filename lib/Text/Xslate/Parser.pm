@@ -164,7 +164,8 @@ sub _trim {
 }
 
 sub split {
-    my ($self, $_) = @_;
+    my $self  = shift;
+    local($_) = @_;
 
     my @tokens;
 
