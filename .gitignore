@@ -25,3 +25,5 @@ cover_db*
 *.c
 *.txc
 *.ttc
+xslate_ops.h
+lib/Text/Xslate/PP/Const.pm
