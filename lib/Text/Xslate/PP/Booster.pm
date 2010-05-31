@@ -289,7 +289,7 @@ $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-Text::Xslate::PP::tx_execute( $st2, undef, $vars );
+Text::Xslate::PP::tx_execute( $st2, $vars );
 
 $output .= $st2->{ output };
 CODE
