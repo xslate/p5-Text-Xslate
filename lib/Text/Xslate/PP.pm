@@ -64,7 +64,7 @@ sub render {
     local $SIG{__DIE__}  = \&_die;
     local $SIG{__WARN__} = \&_warn;
 
-    tx_execute( $st, undef, $vars );
+    tx_execute( $st, $vars );
 
     $st->{ output };
 }
@@ -294,14 +294,13 @@ sub tx_all_deps_are_fresh {
 our $_depth = 0;
 our $_current_st;
 
-sub tx_execute { no warnings 'recursion';
-    my ( $st, $output, $vars ) = @_;
+sub tx_execute { 
+    my ( $st, $vars ) = @_;
+    no warnings 'recursion';
 
     if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
-
-    my $len = $st->code_len;
 
     $st->{output} = '';
     $st->{pc}     = 0;
