@@ -63,9 +63,7 @@ sub render {
     local $SIG{__DIE__}  = \&_die;
     local $SIG{__WARN__} = \&_warn;
 
-    tx_execute( $st, $vars );
-
-    $st->{ output };
+    return tx_execute( $st, $vars );
 }
 
 
@@ -99,7 +97,6 @@ sub _assemble {
 
     $st->{sa}   = undef;
     $st->{sb}   = undef;
-    $st->{targ} = '';
 
     # stack frame
     $st->frame( [] );
@@ -111,7 +108,6 @@ sub _assemble {
     $mainframe->[ Text::Xslate::PP::TXframe_RETADDR ] = $len;
 
     $st->lines( [] );
-    $st->{ output } = '';
 
     $st->code_len( $len );
 
@@ -301,20 +297,15 @@ sub tx_execute {
         Carp::croak("Execution is too deep (> 100)");
     }
 
-    $st->{output} = '';
-    $st->{pc}     = 0;
-    $st->{vars}     = $vars;
+    $st->{pc}   = 0;
+    $st->{vars} = $vars;
 
     local $_depth      = $_depth + 1;
     local $_current_st = $st;
 
     local $st->{local_stack};
 
-    $st->{perlcode}->( $st );
-
-    $st->{targ} = undef;
-    $st->{sa}   = undef;
-    $st->{sb}   = undef;
+    return $st->{perlcode}->( $st );
 }
 
 

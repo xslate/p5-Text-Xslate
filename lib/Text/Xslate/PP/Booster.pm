@@ -90,7 +90,7 @@ CODE
 
     $perlcode .= "    # process start\n\n";
     $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
-    $perlcode .= "\n" . '    $st->{ output } = $output;' . "\n}";
+    $perlcode .= "\n" . '    return $output;' . "\n}";
 
     return $perlcode;
 }
@@ -281,9 +281,7 @@ $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-Text::Xslate::PP::tx_execute( $st2, $vars );
-
-$output .= $st2->{ output };
+$output .= Text::Xslate::PP::tx_execute( $st2, $vars );
 CODE
 
 };
@@ -1343,7 +1341,7 @@ And the booster converted them into a perl subroutine code.
 
         # process end
 
-        $st->{ output } = $output;
+        return $output;
     }
 
 So it makes the runtime speed much faster.
