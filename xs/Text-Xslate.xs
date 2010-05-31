@@ -4,6 +4,7 @@
 #include <XSUB.h>
 
 #define NEED_newSVpvn_flags_GLOBAL
+#define NEED_newSVpvn_share
 #include "ppport.h"
 
 #include "xslate.h"
