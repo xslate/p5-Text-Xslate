@@ -819,15 +819,8 @@ sub _check_logic {
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-            $type = $type_store eq 'and'  ? 'cond_and'
-                  : $type_store eq 'or'   ? 'cond_or'
-                  : $type_store eq 'dand' ? 'cond_dand'
-                  : $type_store eq 'dor'  ? 'cond_dor'
-                  : die
-                  ;
-
-$self->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
-%s( %s, sub {
+$self->sa( sprintf( <<'CODE', $type_store, $expr, $st_true->sa ) );
+cond_%s( %s, sub {
 %s
 }, )
 CODE
