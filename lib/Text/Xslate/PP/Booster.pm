@@ -201,7 +201,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
         unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
             $self->write_lines(
                 sprintf(
-                    'error_in_booster( $st, %s, %s, "Too few arguments for %s" );',
+                    '_error( $st, %s, %s, "Too few arguments for %s" );',
                     $self->frame_and_line, $self->stash->{ in_macro }
                 )
             );
@@ -229,7 +229,7 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    my $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+    my $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print_raw
@@ -264,7 +264,7 @@ $CODE_MANIP{ 'print' } = sub {
     my $sv = $self->sa();
     my $err;
 
-    $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+    $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print
@@ -889,8 +889,9 @@ sub write_lines {
 
     $idx = $self->current_line unless defined $idx;
 
+    my $indent = $self->indent;
     for my $line ( split/\n/, $lines, -1 ) {
-        $code .= $self->indent . $line . "\n";
+        $code .= $indent . $line . "\n";
     }
 
     $self->lines->[ $idx ] .= $code;
@@ -933,16 +934,17 @@ sub optimize_to_print {
 #
 
 sub neat {
-    if ( defined $_[0] ) {
-        if ( $_[0] =~ /^-?[.0-9]+$/ ) {
-            return $_[0];
+    my($s) = @_;
+    if ( defined $s ) {
+        if ( ref($s) || Scalar::Util::looks_like_number($s) ) {
+            return $s;
         }
         else {
-            return "'" . $_[0] . "'";
+            return qq{'$s'};
         }
     }
     else {
-        'nil';
+        return 'nil';
     }
 }
 
@@ -954,11 +956,9 @@ sub call {
 
     if ( $flag ) { # method call ... fetch() doesn't use methodcall for speed
         unless ( defined $obj ) {
-            warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
+            _warn( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $obj->$proc( @args ) };
         }
     }
@@ -966,15 +966,13 @@ sub call {
         if(!defined $proc) {
             if ( defined $line ) {
                 my $c = $st->{code}->[ $line - 1 ];
-                error_in_booster(
+                _error(
                     $st, $frame, $line, "Undefined function is called%s",
                     $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
                 );
             }
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $proc->( @args ) };
         }
     }
@@ -1008,7 +1006,7 @@ sub methodcall {
         if($invocant->can($method)) {
             $retval = eval { $invocant->$method(@args) };
             if($@) {
-                error_in_booster( $st, $frame, $line, "%s" . "\t...", $@ );
+                _error( $st, $frame, $line, "%s" . "\t...", $@ );
             }
             return $retval;
         }
@@ -1016,14 +1014,14 @@ sub methodcall {
     }
 
     if(!defined $invocant) {
-        warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $method );
+        _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
     }
     else {
         my $bm = $builtin_method{$method} || return undef;
 
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
-            error_in_booster($st, $frame, $line,
+            _error($st, $frame, $line,
                 "Builtin method %s requres exactly %d argument(s), "
                 . "but supplied %d",
                 $method, $nargs, scalar @args);
@@ -1042,7 +1040,7 @@ sub methodcall {
 sub fetch {
     my ( $st, $var, $key, $frame, $line ) = @_;
 
-    if ( Scalar::Util::blessed $var ) {
+    if ( Scalar::Util::blessed($var) ) {
         return call( $st, $frame, $line, 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
@@ -1050,22 +1048,22 @@ sub fetch {
             return $var->{ $key };
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of nil as a field key" );
+            _warn( $st, $frame, $line, "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
-        if ( defined $key and $key =~ /[-.0-9]/ ) {
+        if ( Scalar::Util::looks_like_number($key) ) {
             return $var->[ $key ];
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
+            _warn( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
         }
     }
     elsif ( defined $var ) {
-        error_in_booster( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+        _error( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
-        warn_in_booster( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
+        _warn( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
     }
 
     return;
@@ -1075,12 +1073,12 @@ sub fetch {
 sub check_itr_ar {
     my ( $st, $ar, $frame, $line ) = @_;
 
-    unless ( $ar and ref $ar eq 'ARRAY' ) {
+    if ( ref($ar) ne 'ARRAY' ) {
         if ( defined $ar ) {
-            error_in_booster( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
+            _error( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of nil to iterate" );
+            _warn( $st, $frame, $line, "Use of nil to iterate" );
         }
         $ar = [];
     }
@@ -1156,15 +1154,15 @@ sub local_s {
 }
 
 
-sub is_verbose {
+sub _verbose {
     my $v = $_[0]->self->{ verbose };
     defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
 }
 
 
-sub warn_in_booster {
+sub _warn {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( _verbose( $st ) > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
             $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
@@ -1174,9 +1172,9 @@ sub warn_in_booster {
 }
 
 
-sub error_in_booster {
+sub _error {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( _verbose( $st ) >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
             $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
@@ -1332,7 +1330,7 @@ And the booster converted them into a perl subroutine code.
                 $output .= $sv;
             }
             else {
-                warn_in_booster( $st, 'foo', 10, "Use of nil to be printed" );
+                _warn( $st, 'foo', 10, "Use of nil to be printed" );
             }
 
             $output .= "!\n";
