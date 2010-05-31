@@ -134,6 +134,17 @@ There are C<for> and C<while> loops.
         [<: $item.field :>]
     : }
 
+You can get the iterator index in C<for> statemenents as C<$^ITERATOR_VAR>:
+
+    : for $data -> $item {
+        : if ($^item % 2) == 0 {
+            Even (0, 2, 4, ...)
+        : }
+        : else {
+            Odd (1, 3, 5, ...)
+        : }
+    : }
+
 C<while> statements are not the same as Perl's. In fact, the above Xslate
 while code is the same as the following Perl while code:
 

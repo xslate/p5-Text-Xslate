@@ -112,6 +112,22 @@ T
     1
     2
 X
+
+    [<<'T', <<'X'],
+: for $types -> $item {
+    : if ($^item % 2) == 0 {
+        Even
+    : }
+    : else {
+        Odd
+    : }
+: }
+T
+        Even
+        Odd
+        Even
+X
+
 );
 
 foreach my $pair(@data) {
