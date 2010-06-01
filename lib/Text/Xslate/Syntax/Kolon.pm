@@ -147,19 +147,15 @@ via the dot operator.
         : $~i.index # the same as $~i
         : $~i.count # the same as $~i + 1
 
-        : if $~i.even {
+        : if ($~i.index % 2) == 0 {
             Even
         : }
-
-        : if $~i.odd {
+        : else {
             Odd
         : }
-
-        : $~i.parity # "even" or "odd"
     : }
 
-Supported iterator elements are C<index :Int>, C<count :Int>, C<even :Bool>,
-C<odd :Bool>, and C<parity :Str>.
+Supported iterator elements are C<index :Int>, C<count :Int>.
 
 C<while> loops are also supported to iterate database-handle-like objects.
 

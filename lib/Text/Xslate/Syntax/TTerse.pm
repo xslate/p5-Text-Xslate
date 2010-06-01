@@ -277,9 +277,6 @@ Loop iterators are partially supported.
     [% FOREACH item IN arrayref %]
         * [% loop.index %]
         * [% loop.count %]
-        * [% loop.even  %]
-        * [% loop.odd   %]
-        * [% loop.parity %]
     [% END %]
 
 =head2 Conditional statements

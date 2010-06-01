@@ -98,43 +98,6 @@ T
 END
 X
 
-
-    [<<'T', <<'X', 'loop.odd'],
-[% FOR type IN types -%]
-* [% loop.odd %]
-[% END -%]
-END
-T
-* 1
-* 0
-* 1
-END
-X
-
-    [<<'T', <<'X', 'loop.even'],
-[% FOR type IN types -%]
-* [% loop.even %]
-[% END -%]
-END
-T
-* 0
-* 1
-* 0
-END
-X
-
-    [<<'T', <<'X', 'loop.parity'],
-[% FOR type IN types -%]
-* [% loop.parity %]
-[% END -%]
-END
-T
-* odd
-* even
-* odd
-END
-X
-
     [<<'T', <<'X', 'lower cased'],
 [% lang %]
 [% foreach type in types -%]

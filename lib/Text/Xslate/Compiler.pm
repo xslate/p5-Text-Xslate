@@ -817,45 +817,6 @@ sub _generate_iterator {
                 second => $one,
             ) );
         }
-        elsif(any_in($name, qw(odd even parity))) {
-            my $on_odd;
-            my $on_even;
-
-            if($name eq 'odd') {
-                $on_odd  = 1;
-                $on_even = 0;
-            }
-            elsif($name eq 'even') {
-                $on_odd  = 0;
-                $on_even = 1;
-            }
-            else {
-                $on_odd  = 'odd';
-                $on_even = 'even';
-            }
-
-            # $~i % 2
-            my $mod2 = $parser->symbol('%')->clone(
-                arity  => 'binary',
-                first  => $node->clone(second => undef),
-                second => $parser->symbol('(literal)')->clone(
-                    value => 2,
-                ),
-            );
-
-            # $~i % 2 ? even : odd
-            # Note that it is *1* origin, not zero origin
-
-            my $cond = $parser->symbol('?')->clone(arity => 'ternary');
-            $cond->first($mod2);
-            $cond->second($parser->symbol('(literal)')->clone(
-                value => $on_even,
-            ));
-            $cond->third($parser->symbol('(literal)')->clone(
-                value => $on_odd,
-            ));
-            return $self->_expr($cond);
-        }
         else {
             $self->_error("Undefined iterator element: $name", $node);
         }
