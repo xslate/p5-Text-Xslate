@@ -122,15 +122,10 @@ Operator precedence is the same as Perl's:
 
 =head2 Loops
 
-There are C<for> and C<while> loops.
+There is C<for> loops that are like Perl's C<foreach>.
 
     : # $data must be an ARRAY reference
     : for $data -> $item {
-        [<: $item.field :>]
-    : }
-
-    : # $obj must be an iteratable object
-    : while $obj.fetch -> $item {
         [<: $item.field :>]
     : }
 
@@ -166,10 +161,17 @@ via the dot operator.
 Supported iterator elements are C<index :Int>, C<count :Int>, C<even :Bool>,
 C<odd :Bool>, and C<parity :Str>.
 
-C<while> statements are not the same as Perl's. In fact, the above Xslate
-while code is the same as the following Perl while code:
+C<while> loops are also supported to iterate database-handle-like objects.
 
-    while(defined(my $item = $obj->fetch)) {
+    : # $obj must be an iteratable object
+    : while $dbh.fetch() -> $item {
+        [<: $item.field :>]
+    : }
+
+Note that C<while> is B<not the same as Perl's>. In fact, the above Xslate
+C<while> code is the same as the following Perl C<while> code:
+
+    while(defined(my $item = $dbh->fetch())) {
         ...
     }
 
@@ -182,7 +184,7 @@ C<if-else>:
     : if $var == nil {
         $var is nil.
     : }
-    : else if $var != "foo" { # elsif ... is okey
+    : else if $var != "foo" { # elsif is okay
         $var is not nil nor "foo".
     : }
     : else {
@@ -193,11 +195,11 @@ C<if-else>:
         $var is 1 .. 10
     : }
 
-Note that C<if> doesn't require parens:
+Note that C<if> doesn't require parens, so the above code is okay:
 
     : if ($var + 10) == 20 { } # OK
 
-C<given-when>:
+C<given-when>(also known as B<switch statement>):
 
     : given $var {
     :   when "foo" {
@@ -211,7 +213,7 @@ C<given-when>:
         }
     : }
 
-Note that you can use the topic variable.
+You can specify the topic variable.
 
     : given $var -> $it {
     :   when "foo" {
@@ -230,7 +232,7 @@ Once you have registered functions, you can call them with C<()> or C<|>.
     : f(1, 2, 3) # with args
     : 42 | f     # the same as f(42)
 
-Dynamic functions/filters:
+You can define dynamic functions/filters:
 
     # code
     sub mk_indent {
@@ -251,6 +253,12 @@ Dynamic functions/filters:
     : $value | indent("> ")
     : indent("> ")($value)
 
+There are several builtin filters:
+
+    : $var | raw  # not to html-escape it
+    : $var | html # explicitly html-escape it (default)
+    : $var | dump # dump it with Data::Dumper
+
 =head2 Methods
 
 When I<$var> is an object instance, you can call its methods.
@@ -258,11 +266,13 @@ When I<$var> is an object instance, you can call its methods.
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
 
-There are the autoboxing mechanism:
+For arrys and hashes, there are builtin methods (i.e. there
+is an autoboxing mechanism):
 
     <: $array.size() :>
     <: $array.join(",") :>
     <: $array.reverse() :>
+
     <: $hash.keys().join(", ") :>
     <: $hash.values().join(", ") :>
     <: for $hash.kv() -> $pair { :>
@@ -286,31 +296,32 @@ limited to 100.
 
 Template cascading is another way to extend templates other than C<include>.
 
-    : cascade myapp::base
-    : cascade myapp::base { var1 => value1, var2 => value2, ...}
-    : cascade myapp::base with myapp::role1, myapp::role2
-    : cascade with myapp::role1, myapp::role2
-
-You can extend templates with block modifiers.
-
-Base templates F<myapp/base.tx>:
+First, make base templates F<myapp/base.tx>:
 
     : block title -> { # with default
         [My Template!]
     : }
 
-    : block body -> {;} # without default
+    : block body -> { } # without default
 
-Another derived template F<myapp/foo.tx>:
+Then extend from base templates with the C<cascade> keyword:
 
-    : # cascade "myapp/base.tx" is also okey
+    : cascade myapp::base
+    : cascade myapp::base { var1 => value1, var2 => value2, ...}
+    : cascade myapp::base with myapp::role1, myapp::role2
+    : cascade with myapp::role1, myapp::role2
+
+In derived templates, you may extend templates (e.g. F<myapp/foo.tx>)
+with block modifiers.
+
+    : # cascade "myapp/base.tx" is also okay
     : cascade myapp::base
     : # use default title
     : around body -> {
         My template body!
     : }
 
-Yet another derived template F<myapp/bar.tx>:
+And, make yet another derived template F<myapp/bar.tx>:
 
     : cascade myapp::foo
     : around title -> {
@@ -325,12 +336,12 @@ Yet another derived template F<myapp/bar.tx>:
         After body!
     : }
 
-Then, Perl code:
+Then render it as usual.
 
     my $tx = Text::Xslate->new( file => 'myapp/bar.tx' );
     $tx->render({});
 
-Output:
+The result is something like this:
 
         --------------
         [My Template!]
@@ -384,7 +395,7 @@ Output:
     :   $x == 0 ? 1 : $x * factorial($x-1)
     : }
 
-Note that return values of macros are values that their routines renders.
+Note that return values of macros are what their routines render.
 That is, macros themselves output nothing.
 
 =head2 Comments

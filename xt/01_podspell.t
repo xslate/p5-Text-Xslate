@@ -30,7 +30,6 @@ plugins
 html
 acknowledgement
 iff
-okey
 EscapedString
 sandboxing
 APIs
