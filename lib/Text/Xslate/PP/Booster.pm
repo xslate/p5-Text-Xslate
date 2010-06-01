@@ -125,6 +125,18 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
     my $op = $self->ops->[ $self->current_line + 1 ];
 
     unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)/ ) { # ...
+
+        my $i = $self->current_line + 1;
+
+        while ( my $op = $self->ops->[ ++$i ] ) {
+            if ( $op->[0] =~ /^(?:print|and|or|dand|dor|push|for|macrocall)/ ) {
+                last;
+            }
+            if ( $op->[0] eq 'load_lvar_to_sb' ) {
+                return;
+            }
+        }
+
         $self->write_lines( sprintf( '%s;', $v )  );
     }
 
