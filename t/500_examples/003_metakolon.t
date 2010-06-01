@@ -15,15 +15,15 @@ TX
 is $tx->render_string($tmpl, { dialect => 'Kolon' }), "Hello, Kolon world!\n", "Hello, world";
 
 $tmpl = <<'TX';
-% if $var == nil {
+%% if $var == nil {
     $var is nil.
-% }
-% else if $var != "foo" {
+%% }
+%% else if $var != "foo" {
     $var is not nil nor "foo".
-% }
-% else {
+%% }
+%% else {
     $var is "foo".
-% }
+%% }
 TX
 
 is $tx->render_string($tmpl, { var => undef }),   "    \$var is nil.\n";
@@ -31,9 +31,9 @@ is $tx->render_string($tmpl, { var => 0 }),     qq{    \$var is not nil nor "foo
 is $tx->render_string($tmpl, { var => "foo" }), qq{    \$var is "foo".\n};
 
 $tmpl = <<'TX';
-% if( $var >= 1 && $var <= 10 ) {
+%% if( $var >= 1 && $var <= 10 ) {
     $var is 1 .. 10
-% }
+%% }
 TX
 
 is $tx->render_string($tmpl, { var =>  5 }), "    \$var is 1 .. 10\n";
@@ -41,16 +41,16 @@ is $tx->render_string($tmpl, { var =>  0 }), "";
 is $tx->render_string($tmpl, { var => 11 }), "";
 
 $tmpl = <<'TX';
-%= $var.value == nil ? "nil" : $var.value
+%%= $var.value == nil ? "nil" : $var.value
 TX
 
 is $tx->render_string($tmpl, { var => {} }), "nil";
 is $tx->render_string($tmpl, { var => { value => "<foo>" }}), "&lt;foo&gt;";
 
 $tmpl = <<'TX';
-% for $data ->($item) {
+%% for $data ->($item) {
 [[%= $item + 5 %]]
-% } # end for
+%% } # end for
 TX
 
 is $tx->render_string($tmpl, { data => [1 .. 100] }),
