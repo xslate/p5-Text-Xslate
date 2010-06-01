@@ -169,8 +169,38 @@ T
 ---- last ----
 X
 
+    [<<'T', <<'X', 'size'],
+: for $types -> ($item) {
+    <: $~item.size :>
+: }
+T
+    3
+    3
+    3
+X
 
-    [<<'T', <<'X', 'nexted $~i'],
+    [<<'T', <<'X', 'max'],
+: for $types -> ($item) {
+    <: $~item.max :>
+: }
+T
+    2
+    2
+    2
+X
+
+
+    [<<'T', <<'X', 'body'],
+: for $types -> ($item) {
+    <: $~item.body[ $~item.index ] :>
+: }
+T
+    Str
+    Int
+    Object
+X
+
+    [<<'T', <<'X', 'nested $~i'],
 : for $types -> $i {
 :   for $types -> $j {
         [<: $~i.index :>][<: $~j.count :>]

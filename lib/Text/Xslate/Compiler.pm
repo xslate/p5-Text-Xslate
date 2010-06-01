@@ -54,7 +54,7 @@ my %unary = (
     '+'   => 'noop',
     '-'   => 'minus',
 
-    'length' => 'length', # for loop context vars
+    'size' => 'size', # for loop context vars
 );
 
 has optimize => (
@@ -819,44 +819,57 @@ sub _generate_iterator {
                 second => $one,
             ) );
         }
-        elsif($name eq 'first' or $name eq 'last') {
-            my $value;
-
-            if($name eq 'first') {
-                $value = $parser->symbol('(literal)')->clone(
-                    value => 0,
-                );
-            }
-            else {
-                my $array = $parser->symbol('(variable)')->clone(
-                    arity => 'iterating_array',
-                    id    => $item_var->id,
-                    first => $item_var,
-                );
-
-                my $length = $parser->symbol('(literal)')->clone(
-                    arity => 'unary',
-                    id    => 'length',
-                    first => $array,
-                );
-
-                my $one   = $parser->symbol('(literal)')->clone(
-                    value => 1,
-                );
-
-                # length($array) - 1
-                $value = $parser->symbol('-')->clone(
-                    arity  => 'binary',
-                    first  => $length,
-                    second => $one,
-                );
-            }
-            # first: $~it == 0
-            # last:  $~it == length($arrayref) - 1
+        elsif($name eq 'first') {
+            my $zero = $parser->symbol('(literal)')->clone(
+                value => 0,
+            );
             return $self->_expr( $parser->symbol('==')->clone(
                 arity  => 'binary',
                 first  => $node->clone(second => undef), # iterator
-                second => $value,
+                second => $zero,
+            ));
+        }
+        elsif(any_in($name, qw(body size max last))) {
+            my $array = $parser->symbol('(variable)')->clone(
+                arity => 'iterating_array',
+                id    => $item_var->id,
+                first => $item_var,
+            );
+
+            if($name eq 'body') {
+                return $self->_expr($array);
+            }
+
+            my $size = $parser->symbol('(literal)')->clone(
+                arity => 'unary',
+                id    => 'size',
+                first => $array,
+            );
+
+            if($name eq 'size') {
+                return $self->_expr($size);
+            }
+
+            my $one   = $parser->symbol('(literal)')->clone(
+                value => 1,
+            );
+
+            # max = size($array) - 1
+            my $max = $parser->symbol('-')->clone(
+                arity  => 'binary',
+                first  => $size,
+                second => $one,
+            );
+
+            if($name eq 'max') {
+                return $self->_expr($max);
+            }
+
+            # last: $~it == max($arrayref)
+            return $self->_expr( $parser->symbol('==')->clone(
+                arity  => 'binary',
+                first  => $node->clone(second => undef), # iterator
+                second => $max,
             ));
         }
         else {

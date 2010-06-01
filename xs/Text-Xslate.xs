@@ -690,11 +690,11 @@ TXC(minus) { /* unary minus */
     TX_st->pc++;
 }
 
-TXC(length) {
+TXC(size) {
     SV* const avref = TX_st_sa;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Oops: Not an ARRAY reference for the length operator: %s",
+        croak("Oops: Not an ARRAY reference for the size operator: %s",
             tx_neat(aTHX_ avref));
     }
 

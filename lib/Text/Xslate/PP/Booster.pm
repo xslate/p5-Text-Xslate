@@ -416,7 +416,7 @@ $CODE_MANIP{ 'minus' } = sub {
     $self->sa( sprintf( '- %s', $self->sa ) );
 };
 
-$CODE_MANIP{ 'length' } = sub {
+$CODE_MANIP{ 'size' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( 'scalar(@{%s})', $self->sa ) );
 };
