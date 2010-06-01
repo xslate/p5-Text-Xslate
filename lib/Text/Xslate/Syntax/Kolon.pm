@@ -156,8 +156,8 @@ via the dot operator.
     : }
 
 Supported iterator elements are C<index :Int>, C<count :Int>,
-C<body : ArrayRef>, C<size : Int>, C<max :Int>, C<first :Bool>,
-and C<last :Bool>.
+C<body : ArrayRef>, C<size : Int>, C<max :Int>, C<is_first :Bool>,
+and C<is_last :Bool>.
 
 C<while> loops are also supported to iterate database-handle-like objects.
 

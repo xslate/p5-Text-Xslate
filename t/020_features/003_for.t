@@ -151,13 +151,13 @@ T
     3
 X
 
-    [<<'T', <<'X', 'first && last'],
+    [<<'T', <<'X', 'is_first && is_last'],
 : for $types -> ($item) {
-    : if $~item.first {
+    : if $~item.is_first {
 ---- first ----
     : }
     <: $~item.count :>
-    : if $~item.last {
+    : if $~item.is_last {
 ---- last ----
     : }
 : }

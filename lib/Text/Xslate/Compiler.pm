@@ -819,7 +819,7 @@ sub _generate_iterator {
                 second => $one,
             ) );
         }
-        elsif($name eq 'first') {
+        elsif($name eq 'is_first' or $name eq 'first') {
             my $zero = $parser->symbol('(literal)')->clone(
                 value => 0,
             );
@@ -829,7 +829,7 @@ sub _generate_iterator {
                 second => $zero,
             ));
         }
-        elsif(any_in($name, qw(body size max last))) {
+        elsif(any_in($name, qw(body size max is_last last))) {
             my $array = $parser->symbol('(variable)')->clone(
                 arity => 'iterating_array',
                 id    => $item_var->id,
@@ -865,7 +865,7 @@ sub _generate_iterator {
                 return $self->_expr($max);
             }
 
-            # last: $~it == max($arrayref)
+            # last/is_last: $~it == max($arrayref)
             return $self->_expr( $parser->symbol('==')->clone(
                 arity  => 'binary',
                 first  => $node->clone(second => undef), # iterator
