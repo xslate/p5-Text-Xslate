@@ -6,32 +6,31 @@ use t::lib::TTSimple;
 
 my @data = (
     [<<'T', <<'X'],
-%% FOR i IN [1, 2, 3]
-    [% i %]
-%% END
+[% MACRO foo BLOCK -%]
+    Hello, [% lang %] world!
+[% END -%]
+[% foo() -%]
 T
-    1
-    2
-    3
+    Hello, Xslate world!
 X
 
     [<<'T', <<'X'],
-    [% { a => 1, b => 2, c => 3 }.a %]
-    [% { a => 1, b => 2, c => 3 }.b %]
-    [% { a => 1, b => 2, c => 3 }.c %]
+[% MACRO foo(lang) BLOCK -%]
+    foo [% lang %] bar
+[% END -%]
+    [%- foo(42) -%]
+    Hello, [% lang %] world!
 T
-    1
-    2
-    3
+    foo 42 bar
+    Hello, Xslate world!
 X
 
-    [<<'T', <<'X', 'with keywords'],
-    [% { if  => 42 }.if  %]
-    [% { not => 42 }.not %]
-    [% { for => 42 }.for %]
+    [<<'T', <<'X'],
+[% MACRO add(a, b) BLOCK -%]
+    [% a + b %]
+[% END -%]
+    [%- add(10, 32) -%]
 T
-    42
-    42
     42
 X
 

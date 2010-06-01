@@ -43,7 +43,7 @@ sub define_symbols {
     $parser->symbol('elsif')->is_block_end(1);
 
     $parser->symbol('IN');
-    $parser->symbol('in');
+    $parser->symbol('in')->id('IN');
 
     $parser->symbol('IF')      ->set_std(\&std_if);
     $parser->symbol('if')      ->set_std(\&std_if);
@@ -57,7 +57,12 @@ sub define_symbols {
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
     $parser->symbol('include') ->set_std(\&std_include);
     $parser->symbol('WITH');
-    $parser->symbol('with');
+    $parser->symbol('with')->id('WITH');
+
+    $parser->symbol('MACRO') ->set_std(\&std_macro);
+    $parser->symbol('macro') ->set_std(\&std_macro);
+    $parser->symbol('BLOCK');
+    $parser->symbol('block')->id('BLOCK');
 
     return;
 }
@@ -146,8 +151,7 @@ sub std_foreach {
     }
 
     my $var = $t;
-    $parser->advance();
-    $parser->token->id eq "in"
+    $parser->advance()
         ? $parser->advance("in")
         : $parser->advance("IN");
 
@@ -179,7 +183,7 @@ sub std_include {
 sub localize_vars {
     my($parser, $symbol) = @_;
 
-    if($parser->token->id eq "with") {
+    if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
         return  $parser->set_list();
     }
@@ -209,6 +213,52 @@ sub set_list {
     }
 
     return \@args;
+}
+
+sub std_macro {
+    my($parser, $symbol) = @_;
+    my $proc = $symbol->clone(
+        arity => 'proc',
+        id    => lc($symbol->id),
+    );
+
+    my $name = $parser->token;
+    if($name->arity ne "variable") {
+        $parser->_error("Expected a name but " . $name);
+    }
+
+    $parser->define_macro($name->id);
+
+    $proc->first( $name->id );
+    $parser->advance();
+
+    my $paren = ($parser->token->id eq "(");
+
+    $parser->advance("(") if $paren;
+
+    my $t = $parser->token;
+    my @vars;
+    while($t->arity eq "variable") {
+        push @vars, $t;
+        $parser->define($t);
+
+        $t = $parser->advance();
+
+        if($t->id eq ",") {
+            $t = $parser->advance(); # ","
+        }
+        else {
+            last;
+        }
+    }
+    $parser->advance(")") if $paren;
+
+    $proc->second(\@vars);
+
+    $parser->advance("BLOCK");
+    $proc->third( $parser->statements() );
+    $parser->advance("END");
+    return $proc;
 }
 
 no Any::Moose;
