@@ -44,7 +44,7 @@ world!'
 [Object|Str]
 [Object|Int]
 [Object|Object]
->>"],
+>>", "nested"],
 
     ['<<
 : for $types -> ($t1) {
@@ -131,6 +131,26 @@ T
         Odd
 X
 
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $~item.index :>
+: }
+T
+    0
+    1
+    2
+X
+
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $~item.count :>
+: }
+T
+    1
+    2
+    3
+X
+
     [<<'T', <<'X', '$~i.even'],
 : for $types -> $item {
     : if $~item.even {
@@ -174,24 +194,24 @@ X
     [<<'T', <<'X', 'nexted $~i'],
 : for $types -> $i {
 :   for $types -> $j {
-        [<: $~i :>][<: $~j :>]
+        [<: $~i.index :>][<: $~j.count :>]
 :   }
 : }
 T
-        [0][0]
         [0][1]
         [0][2]
-        [1][0]
+        [0][3]
         [1][1]
         [1][2]
-        [2][0]
+        [1][3]
         [2][1]
         [2][2]
+        [2][3]
 X
 );
 
 foreach my $pair(@data) {
-    my($in, $out) = @$pair;
+    my($in, $out, $msg) = @$pair;
 
     my %vars = (
         lang => 'Xslate',
@@ -204,7 +224,7 @@ foreach my $pair(@data) {
 
         data => [[qw(Perl)]],
     );
-    is $tx->render_string($in, \%vars), $out or diag $in;
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

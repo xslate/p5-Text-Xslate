@@ -233,8 +233,8 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
 
 =head1 DESCRIPTION
 
-TTerse is a subset of the Template-Toolkit 2 syntax,
-using C<< [% ... %] >> tags.
+TTerse is a subset of the Template-Toolkit 2.0 (and partially  3.0) syntax,
+using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
 =head1 SYNTAX
 
@@ -259,6 +259,8 @@ If I<$var> is an object instance, you can call its methods.
 
     [% $var.method() %]
     [% $var.method(1, 2, 3) %]
+    [% $var.method(foo => [1, 2, 3]) %]
+    [% $var.method({ foo => 'bar' }) %]
 
 =head2 Expressions
 
@@ -268,6 +270,16 @@ Almost the same as L<Text::Xslate::Syntax::Kolon>.
 
     [% FOREACH item IN arrayref %]
         * [% item %]
+    [% END %]
+
+Loop iterators are partially supported.
+
+    [% FOREACH item IN arrayref %]
+        * [% loop.index %]
+        * [% loop.count %]
+        * [% loop.even  %]
+        * [% loop.odd   %]
+        * [% loop.parity %]
     [% END %]
 
 =head2 Conditional statements
