@@ -129,7 +129,7 @@ There is C<for> loops that are like Perl's C<foreach>.
         [<: $item.field :>]
     : }
 
-You can get the iterator index in C<for> statemenents as C<$~ITERATOR_VAR>:
+You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
 
     : for $data -> $item {
         : if ($~item % 2) == 0 {
@@ -266,7 +266,7 @@ When I<$var> is an object instance, you can call its methods.
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
 
-For arrys and hashes, there are builtin methods (i.e. there
+For arrays and hashes, there are builtin methods (i.e. there
 is an autoboxing mechanism):
 
     <: $array.size() :>
