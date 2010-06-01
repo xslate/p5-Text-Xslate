@@ -600,11 +600,11 @@ C<< : ... >> line code, which is explained in L<Text::Xslate::Syntax::Kolon>.
 =item Metakolon
 
 B<Metakolon> is the same as Kolon except for using C<< [% ... %] >> tags and
-C<< % ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
+C<< %% ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 
 =item TTerse
 
-B<TTerse> is a syntax that is a subset of Template-Toolkit 2,
+B<TTerse> is a syntax that is a subset of Template-Toolkit 2 (and partially TT3),
 which is explained in L<Text::Xslate::Syntax::TTerse>.
 
 =back
