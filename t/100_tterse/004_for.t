@@ -149,6 +149,30 @@ T
 END
 X
 
+    [<<'T', <<'X', 'size'],
+[% FOR type IN types -%]
+* [% loop.size %]
+[% END -%]
+END
+T
+* 3
+* 3
+* 3
+END
+X
+
+    [<<'T', <<'X', 'max'],
+[% FOR type IN types -%]
+* [% loop.max + 1 %]
+[% END -%]
+END
+T
+* 3
+* 3
+* 3
+END
+X
+
 
     # ---- TTerse specific features ----
 
