@@ -57,7 +57,9 @@ sub new {
     defined($args{syntax})      or $args{syntax}      = 'Kolon';
     defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
     defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
-    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->tmpdir;
+    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->catfile(
+        $ENV{HOME} || File::Spec->tmpdir, '.xslate_cache',
+    );
 
     my %funcs = (
         raw  => \&escaped_string,
@@ -234,17 +236,20 @@ sub load_file {
                 require File::Path;
                 File::Path::mkpath($cachedir);
             }
-            open my($out), '>:raw:utf8', $cachepath
-                or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->serialize($asm, $fullpath);
+            if(open my($out), '>:raw:utf8', $cachepath) {
+                print $out $self->serialize($asm, $fullpath);
 
-            if(!close $out) {
-                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                 unlink $cachepath;
+                if(!close $out) {
+                     Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
+                     unlink $cachepath;
+                }
+                else {
+                    $is_compiled = 1;
+                }
             }
             else {
-                $is_compiled = 1;
+                Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
             }
         }
     }
@@ -369,7 +374,7 @@ This document describes Text::Xslate version 0.1025.
     my $tx = Text::Xslate->new(
         # the fillowing options are optional.
         path       => ['.'],
-        cache_dir  => File::Spec->tmpdir,
+        cache_dir  => "$ENV{HOME}/.xslate_cache",
         cache      => 1,
     );
 
@@ -480,9 +485,12 @@ will not be checked.
 
 I<$level> == 0 creates no caches. It's provided for testing.
 
-=item C<< cache_dir => $dir // File::Spec->tmpdir >>
+=item C<< cache_dir => $dir // "$ENV{HOME}/.xslate_cache" >>
 
-Specifies the directory used for caches.
+Specifies the directory used for caches. If C<$ENV{HOME}> doesn't exist,
+C<< File::Spec->tmpdir >> will be used.
+
+You B<should> specify this option on productions.
 
 =item C<< function => \%functions >>
 
