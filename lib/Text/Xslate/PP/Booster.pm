@@ -6,7 +6,7 @@ use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-use Text::Xslate::Util qw($DEBUG p);
+use Text::Xslate::Util qw($DEBUG p value_to_literal);
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
@@ -76,7 +76,7 @@ sub {
     no warnings 'recursion';
     my ( $st ) = @_;
     my ( $sv, $pad, %macro, $depth );
-    my $output = '';
+    my $output = q{};
     my $vars   = $st->{ vars };
 
     $pad = [ [ ] ];
@@ -166,7 +166,7 @@ $CODE_MANIP{ 'nil' } = sub {
 
 $CODE_MANIP{ 'literal' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( '"' . _escape( $arg ) . '"' );
+    $self->sa( defined($arg) ? value_to_literal( $arg ) : 'undef' );
 };
 
 
@@ -179,7 +179,7 @@ $CODE_MANIP{ 'literal_i' } = sub {
 
 $CODE_MANIP{ 'fetch_s' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '$vars->{ "%s" }', _escape( $arg ) ) );
+    $self->sa( sprintf( '$vars->{ %s }', value_to_literal( $arg ) ) );
 };
 
 
@@ -214,14 +214,14 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
 
-    $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
+    $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $sv, value_to_literal( $arg ), $self->frame_and_line ) );
 };
 
 
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    my $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+    my $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print_raw
@@ -232,22 +232,25 @@ else {
    %s
 }
 CODE
-    $self->write_code( "\n" );
 };
 
 
 $CODE_MANIP{ 'ex_print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    $self->write_lines( sprintf('$output .= %s;', $sv) );
-    $self->write_code( "\n" );
+    $self->write_lines( sprintf(<<'CODE', $sv) );
+# ex_print_raw
+$output .= %s;
+CODE
 };
 
 
 $CODE_MANIP{ 'print_raw_s' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->write_lines( sprintf('$output .= "%s";', _escape( $arg ) ) );
-    $self->write_code( "\n" );
+    $self->write_lines( sprintf(<<'CODE', value_to_literal( $arg )) );
+# print_raw_s
+$output .= %s;
+CODE
 };
 
 
@@ -256,12 +259,11 @@ $CODE_MANIP{ 'print' } = sub {
     my $sv = $self->sa();
     my $err;
 
-    $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+    $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print
 $sv = %s;
-
 if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
     $output .= $sv;
 }
@@ -280,6 +282,7 @@ CODE
 $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
+# include
 {
     my $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
     $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
@@ -318,7 +321,7 @@ $CODE_MANIP{ 'for_iter' } = sub {
 
     $self->write_lines(
         sprintf( 'for (@{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar,
-             "'" . $self->framename . "'", $self->stash->{ for_start_line } )
+             value_to_literal($self->framename), $self->stash->{ for_start_line } )
     );
 
     $self->write_code( "\n" );
@@ -456,8 +459,8 @@ $CODE_MANIP{ 'macrocall' } = sub {
         $self->stash->{ macro_args_num }->{ $self->sa }->{ $i } = 1;
     }
 
-    $self->sa( sprintf( '$macro{\'%s\'}->( $st, %s )',
-        $self->sa(),
+    $self->sa( sprintf( '$macro{ %s }->( $st, %s )',
+        value_to_literal($self->sa()),
         sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
     ) );
 };
@@ -467,19 +470,21 @@ $CODE_MANIP{ 'macro_begin' } = sub {
     my ( $self, $arg, $line ) = @_;
 
     $self->stash->{ macro_begin } = $self->current_line;
-    $self->stash->{ in_macro } = $arg;
+    $self->stash->{ in_macro }    = $arg;
     $self->framename( $arg );
 
-    $self->write_lines( sprintf( '$macro{\'%s\'} = $st->{ booster_macro }->{\'%s\'} ||= sub {', $arg, $arg ) );
+    my $name = value_to_literal($arg);
+    $self->write_lines( sprintf( '$macro{%s} = $st->{ booster_macro }->{%s} ||= sub {',
+        $name, $name ) );
     $self->indent_depth( $self->indent_depth + 1 );
 
     $self->write_lines( 'my ( $st, $pad ) = @_;' );
     $self->write_lines( 'my $vars = $st->{ vars };' );
-    $self->write_lines( sprintf( 'my $output = \'\';' ) );
+    $self->write_lines( sprintf( 'my $output = q{};' ) );
     $self->write_code( "\n" );
 
     $self->write_lines(
-        sprintf( q{Carp::croak('Macro call is too deep (> 100) at "%s"') if ++$depth > 100;}, $arg )
+        sprintf( q{Carp::croak('Macro call is too deep (> 100) on %s') if ++$depth > 100;}, $name )
     );
     $self->write_code( "\n" );
 };
@@ -514,7 +519,7 @@ $CODE_MANIP{ 'macro' } = sub {
 $CODE_MANIP{ 'function' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa(
-        sprintf('$st->function->{ %s }', $arg )
+        sprintf('$st->function->{ %s }', value_to_literal($arg) )
     );
 };
 
@@ -537,7 +542,8 @@ $CODE_MANIP{ 'methodcall_s' } = sub {
     my ( $self, $arg, $line ) = @_;
 
     $self->sa(
-        sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
+        sprintf('methodcall( $st, %s, %s, %s, %s )', $self->frame_and_line,
+            value_to_literal($arg), join( ', ', @{ pop @{ $self->SP } } ) )
     );
 };
 
@@ -637,13 +643,13 @@ sub _convert_opcode {
     my $i = 0;
 
     while ( $self->current_line < $len ) {
-        my $pair = $ops->[ $i ];
+        my $op = $ops->[ $i ];
 
-        unless ( $pair and ref $pair eq 'ARRAY' ) {
+        if ( ref $op ne 'ARRAY' ) {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
         }
 
-        my ( $opname, $arg, $line ) = @$pair;
+        my ( $opname, $arg, $line ) = @$op;
 
         unless ( $CODE_MANIP{ $opname } ) {
             Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented on Booster", $opname ) );
@@ -831,18 +837,6 @@ sub _logic_is_max_min {
     and $arg == 2
 }
 
-
-sub _escape {
-    my $str = $_[0];
-    $str =~ s{\\}{\\\\}g;
-    $str =~ s{\n}{\\n}g;
-    $str =~ s{\t}{\\t}g;
-    $str =~ s{"}{\\"}g;
-    $str =~ s{\$}{\\\$}g;
-    return $str;
-}
-
-
 #
 # methods
 #
@@ -859,7 +853,7 @@ sub code {
 
 sub frame_and_line {
     my ( $self ) = @_;
-    ( "'" . $self->framename . "'", $self->current_line );
+    ( value_to_literal($self->framename), $self->current_line );
 }
 
 
@@ -871,7 +865,10 @@ sub write_lines {
 
     my $indent = $self->indent;
     for my $line ( split/\n/, $lines, -1 ) {
-        $code .= $indent . $line . "\n";
+        if($line ne '') {
+            $code .= $indent . $line;
+        }
+        $code .= "\n";
     }
 
     $self->lines->[ $idx ] .= $code;
@@ -1201,9 +1198,9 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
 
 =head1 DESCRIPTION
 
-This module is a new L<Text::Xslate::PP> runtime engine.
+This module is a new L<Text::Xslate::PP> runtime.
 
-The old Text::Xslate::PP is very very slow, you know. Example:
+The old Text::Xslate::PP was really slow, you know. For example:
 
     > XSLATE=pp perl benchmark/others.pl
     Text::Xslate/0.1019
@@ -1217,8 +1214,8 @@ The old Text::Xslate::PP is very very slow, you know. Example:
     mt      725/s   507%   154%     --   -69%
     cs     2311/s  1835%   711%   219%     --
 
-All right, slower than template-toolkit!
-But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
+All right, it was slower than Template-Toolkit!
+But now you have Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
 
     > XSLATE=pp perl benchmark/others.pl
     Text::Xslate/0.1024
@@ -1229,7 +1226,7 @@ But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTempla
     xslate  749/s   160%     5%     --   -65%
     cs     2112/s   634%   197%   182%     --
 
-Text::Xslate::PP becomes to be faster!
+Text::Xslate::PP becomes faster!
 
 =head1 APIs
 
@@ -1283,30 +1280,34 @@ Firstly the template data is converted to opcodes:
     print_raw_s "!\n"
     macro_end
 
-And the booster converted them into a perl subroutine code.
+And the booster converted them into a perl subroutine code (you can get that
+code by C<< XSLATE=dump=pp >>).
 
-    sub { no warnings 'recursion';
-        my ( $st ) = $_[0];
-        my ( $sv, $st2, $pad, %macro, $depth );
-        my $output = '';
+    sub {
+        no warnings 'recursion';
+        my ( $st ) = @_;
+        my ( $sv, $pad, %macro, $depth );
+        my $output = q{};
         my $vars   = $st->{ vars };
 
         $pad = [ [ ] ];
 
         # macro
 
-        $macro{'foo'} = $st->{ booster_macro }->{'foo'} ||= sub {
+        $macro{"foo"} = $st->{ booster_macro }->{"foo"} ||= sub {
             my ( $st, $pad ) = @_;
             my $vars = $st->{ vars };
-            my $output = '';
+            my $output = q{};
 
-            Carp::croak('Macro call is too deep (> 100) at "foo"') if ++$depth > 100;
+            Carp::croak('Macro call is too deep (> 100) on "foo"') if ++$depth > 100;
 
+            # print_raw_s
             $output .= "        Hello ";
 
-            $sv = $pad->[ -1 ]->[ 0 ];
 
-            if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+            # print
+            $sv = $pad->[ -1 ]->[ 0 ];
+            if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
                 $output .= $sv;
             }
             elsif ( defined $sv ) {
@@ -1314,10 +1315,12 @@ And the booster converted them into a perl subroutine code.
                 $output .= $sv;
             }
             else {
-                _warn( $st, 'foo', 10, "Use of nil to be printed" );
+                _warn( $st, "foo", 10, "Use of nil to print" );
             }
 
+            # print_raw_s
             $output .= "!\n";
+
 
             $depth--;
             pop( @$pad );
@@ -1328,7 +1331,9 @@ And the booster converted them into a perl subroutine code.
 
         # process start
 
-        $output .= $macro{'foo'}->( $st, push_pad( $pad, [ $vars->{ "value" } ] ) );
+        # ex_print_raw
+        $output .= $macro{ "foo" }->( $st, push_pad( $pad, [ $vars->{ "value" } ] ) );
+
 
         # process end
 
@@ -1336,7 +1341,7 @@ And the booster converted them into a perl subroutine code.
     }
 
 So it makes the runtime speed much faster.
-Of course, its initial converting process takes a little cost of CPU and time.
+Of course, its initial converting process costs time and memory.
 
 =head1 SEE ALSO
 

@@ -5,7 +5,8 @@ use warnings;
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
-    literal_to_value import_from
+    literal_to_value value_to_literal
+    import_from
     is_int any_in
     p
     $STRING $NUMBER $DEBUG
@@ -34,8 +35,11 @@ defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
 
 sub is_int {
     my($s) = @_;
-    no warnings;
-    return $s eq int($s);
+    my $i = do {
+        no warnings;
+        int($s);
+    };
+    return $s eq $i && $i !~ /[^-0-9]/;
 }
 
 sub any_in {
@@ -75,6 +79,29 @@ sub literal_to_value {
     }
 
     return $value;
+}
+
+my %char2esc = (
+    "\\" => '\\\\',
+    "\n" => '\\n',
+    "\r" => '\\r',
+    '"'  => '\\"',
+    '$'  => '\\$',
+    '@'  => '\\@',
+);
+my $value_chars = join '|', map { quotemeta } keys %char2esc;
+
+sub value_to_literal {
+    my($value) = @_;
+    return $value if not defined $value;
+
+    if(is_int($value)){
+        return $value;
+    }
+    else {
+        $value =~ s/($value_chars)/$char2esc{$1}/xmsgeo;
+        return qq{"$value"};
+    }
 }
 
 sub import_from {

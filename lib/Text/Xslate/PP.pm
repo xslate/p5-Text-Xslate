@@ -28,6 +28,15 @@ our %EXPORT_TAGS = (
 
 require Text::Xslate;
 
+{
+    package
+        Text::Xslate;
+    our %OPS;
+    if(!%OPS) {
+        # the compiler use %Text::Xslate::OPS in order to optimize the code
+        *OPS = \%Text::Xslate::PP::OPS;
+    }
+}
 #
 # public APIs
 #

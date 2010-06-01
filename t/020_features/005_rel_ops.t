@@ -58,6 +58,8 @@ my @data = (
     ['<:= ""    != nil :>', T],
     ['<:= 0     != nil :>', T],
     ['<:= nil   != nil :>', 0],
+
+    ['<:= "nan" == "nan" :>', T, '"nan" is a normal string'],
 );
 
 foreach my $pair(@data) {

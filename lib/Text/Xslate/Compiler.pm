@@ -7,6 +7,7 @@ use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
     literal_to_value
+    value_to_literal
     is_int any_in
     p
 );
@@ -1015,18 +1016,7 @@ sub as_assembly {
         # "$opname $arg #$line // $comment"
         $as .= $opname;
         if(defined $arg) {
-            $as .= " ";
-
-            if(Scalar::Util::looks_like_number($arg)){
-                $as .= $arg;
-            }
-            else {
-                $arg =~ s/\\/\\\\/g;
-                $arg =~ s/\n/\\n/g;
-                $arg =~ s/\r/\\r/g;
-                $arg =~ s/"/\\"/g;
-                $as .= qq{"$arg"};
-            }
+            $as .= " " . value_to_literal($arg);
         }
         if(defined $line) {
             $as .= " #$line";
