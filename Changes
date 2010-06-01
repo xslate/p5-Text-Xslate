@@ -1,5 +1,15 @@
 Revision history for Perl extension Text::Xslate
 
+0.1026
+    [CHANGES]
+    - Metakolon's line code has been changed to %% like TT3 and TTerse
+
+    [NEW FEATURES]
+    - Introduce loop iterators:
+        + "$~LOOP_VAR" (e.g. $~item) in Kolon
+        + "loop" (the same as TT) in TTerse
+        + Supported loop elements: index, count, even, odd, parity
+
 0.1025 Mon May 31 20:29:50 2010
     - Support 5.8.1
 

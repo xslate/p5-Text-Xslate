@@ -399,12 +399,12 @@ sub _generate_command {
             # expr | raw
             my $command = $arg->second->id eq 'html' ? 'print' : 'print_raw';
             push @code,
-                $self->_generate_expr($arg->first),
+                $self->_expr($arg->first),
                 [ $command => undef, $node->line, "builtin filter" ];
         }
         else {
             push @code,
-                $self->_generate_expr($arg),
+                $self->_expr($arg),
                 [ $proc => undef, $node->line ];
         }
     }
@@ -448,7 +448,7 @@ sub _generate_for {
     if(@{$vars} != 1) {
         $self->_error("A for-loop requires single variable for each items", $node);
     }
-    my @code = $self->_generate_expr($expr);
+    my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
     my $lvar_id   = $self->lvar_id;
@@ -481,7 +481,7 @@ sub _generate_while {
     if(@{$vars} > 1) {
         $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
-    my @code = $self->_generate_expr($expr);
+    my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
     my($lvar_id, $lvar_name);
@@ -565,7 +565,7 @@ sub _generate_proc { # block, before, around, after
 sub _generate_if {
     my($self, $node) = @_;
 
-    my @expr  = $self->_generate_expr($node->first);
+    my @expr  = $self->_expr($node->first);
     my @then  = $self->_compile_ast($node->second);
 
     my $other = $node->third;
@@ -591,7 +591,7 @@ sub _generate_given {
     if(@{$vars} > 1) {
         $self->_error("A given block requires one or zero variables", $node);
     }
-    my @code = $self->_generate_expr($expr);
+    my @code = $self->_expr($expr);
 
     my($lvar) = @{$vars};
     my $lvar_id   = $self->lvar_id;
@@ -608,7 +608,7 @@ sub _generate_given {
     return @code;
 }
 
-sub _generate_expr {
+sub _expr {
     my($self, $node) = @_;
     my @ast = ($node);
 
@@ -655,7 +655,7 @@ sub _generate_objectliteral {
 
     return
         ['pushmark', undef, undef, $type],
-        (map{ $self->_generate_expr($_), ['push'] } @{$list}),
+        (map{ $self->_expr($_), ['push'] } @{$list}),
         [$type],
     ;
 }
@@ -666,7 +666,7 @@ sub _generate_unary {
     my $id = $node->id;
     if(exists $unary{$id}) {
         return
-            $self->_generate_expr($node->first),
+            $self->_expr($node->first),
             [ $unary{$id} => () ];
     }
     else {
@@ -680,7 +680,7 @@ sub _generate_binary {
     my $id = $node->id;
     if($id eq '.') {
         return
-            $self->_generate_expr($node->first),
+            $self->_expr($node->first),
             [ fetch_field_s => $node->second->id ];
     }
     elsif($id eq '|') {
@@ -692,12 +692,12 @@ sub _generate_binary {
     }
     elsif(exists $binary{$id}) {
         # eval lhs
-        my @code = $self->_generate_expr($node->first);
+        my @code = $self->_expr($node->first);
         push @code, [ save_to_lvar => $self->lvar_id ];
 
         # eval rhs
         $self->lvar_use(1);
-        push @code, $self->_generate_expr($node->second);
+        push @code, $self->_expr($node->second);
         $self->lvar_release(1);
 
         # execute op
@@ -717,9 +717,9 @@ sub _generate_binary {
         return @code;
     }
     elsif(exists $logical_binary{$id}) {
-        my @right = $self->_generate_expr($node->second);
+        my @right = $self->_expr($node->second);
         return
-            $self->_generate_expr($node->first),
+            $self->_expr($node->first),
             [ $logical_binary{$id} => scalar(@right) + 1 ],
             @right;
     }
@@ -729,9 +729,9 @@ sub _generate_binary {
 
 sub _generate_ternary { # the conditional operator
     my($self, $node) = @_;
-    my @expr = $self->_generate_expr($node->first);
-    my @then = $self->_generate_expr($node->second);
-    my @else = $self->_generate_expr($node->third);
+    my @expr = $self->_expr($node->first);
+    my @then = $self->_expr($node->second);
+    my @else = $self->_expr($node->third);
     return(
         @expr,
         [ and  => scalar(@then) + 2, $node->line, 'ternary' ],
@@ -748,9 +748,9 @@ sub _generate_methodcall {
     my $method = $node->second->id;
     return (
         [ pushmark => undef, undef, $method ],
-        $self->_generate_expr($node->first),
+        $self->_expr($node->first),
         [ 'push' ],
-        (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
+        (map { $self->_expr($_), [ 'push' ] } @{$args}),
         [ methodcall_s => $method ],
     );
 }
@@ -762,8 +762,8 @@ sub _generate_call {
 
     my @code = (
         [ pushmark => undef, undef, $callable->id ],
-        (map { $self->_generate_expr($_), [ 'push' ] } @{$args}),
-        $self->_generate_expr($callable),
+        (map { $self->_expr($_), [ 'push' ] } @{$args}),
+        $self->_expr($callable),
     );
 
     if($code[-1][0] eq 'macro') {
@@ -810,7 +810,7 @@ sub _generate_iterator {
             my $one = $parser->symbol('(literal)')->clone(
                 value => 1,
             );
-            return $self->_generate_expr( $parser->symbol('+')->clone(
+            return $self->_expr( $parser->symbol('+')->clone(
                 arity  => 'binary',
                 first  => $node->clone(second => undef), # iterator
                 second => $one,
@@ -853,7 +853,7 @@ sub _generate_iterator {
             $cond->third($parser->symbol('(literal)')->clone(
                 value => $on_odd,
             ));
-            return $self->_generate_expr($cond);
+            return $self->_expr($cond);
         }
         else {
             $self->_error("Undefined iterator element: $name", $node);
@@ -871,7 +871,7 @@ sub _localize_vars {
             $self->_error("You must pass a simple name to localize variables");
         }
         push @local_vars,
-            $self->_generate_expr($expr),
+            $self->_expr($expr),
             [ local_s => $key->id ];
     }
     return @local_vars;
