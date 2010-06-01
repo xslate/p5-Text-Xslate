@@ -708,7 +708,7 @@ Thanks to makamaka for the contribution of Text::Xslate::PP.
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
 
-Makamaka Hannyaharamitu
+Makamaka Hannyaharamitu (makamaka)
 
 Maki, Daisuke (lestrrat)
 
