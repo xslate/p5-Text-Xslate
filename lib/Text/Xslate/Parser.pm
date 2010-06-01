@@ -13,7 +13,7 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $ID      = qr/(?: (?:[A-Za-z_]|\$\^?) [A-Za-z0-9_]* )/xms;
+my $ID      = qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
 
 my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     ...
@@ -360,7 +360,9 @@ sub _define_basic_symbols {
     $s->arity('variable');
     $s->set_nud(\&nud_literal);
 
-    $parser->symbol('(literal)')->set_nud(\&nud_literal);
+    $s = $parser->symbol('(literal)');
+    $s->arity('literal');
+    $s->set_nud(\&nud_literal);
 
     $parser->symbol(';');
     $parser->symbol('(');
@@ -436,6 +438,10 @@ sub define_basic_operators {
     $parser->prefix('not', 70)->is_logical(1);
     $parser->infix('and',  60);
     $parser->infix('or',   50);
+
+    my $it = $parser->symbol('(iterator)');
+    $it->set_nud(\&nud_iterator);
+    $it->arity('iterator');
 
     return;
 }
@@ -936,6 +942,32 @@ sub nud_brace {
     );
 }
 
+# iterator variables ($~iterator)
+# $~iterator . NAME | NAME()
+sub nud_iterator {
+    my($parser, $symbol) = @_;
+
+    my $iterator = $symbol->clone();
+    if($parser->token->id eq ".") {
+        $parser->advance();
+
+        my $t = $parser->token;
+        if(!any_in($t->arity, qw(variable name))) {
+            $parser->_error("Expected name, not $t (" . $t->arity . ")");
+        }
+
+        $parser->advance();
+
+        if($parser->token->id eq "(") {
+            $parser->advance();
+            $parser->advance(")");
+        }
+
+        $iterator->second($t);
+    }
+    return $iterator;
+}
+
 sub std_block {
     my($parser, $symbol) = @_;
     $parser->new_scope();
@@ -979,11 +1011,12 @@ sub std_block {
 # ->      { STATEMENTS }
 #         { STATEMENTS }
 sub pointy {
-    my($parser, $node) = @_;
+    my($parser, $node, $in_for) = @_;
 
     my @vars;
 
     $parser->new_scope();
+
     if($parser->token->id eq "->") {
         $parser->advance("->");
         if($parser->token->id ne "{") {
@@ -995,6 +1028,11 @@ sub pointy {
             while($t->arity eq "variable") {
                 push @vars, $t;
                 $parser->define($t);
+
+                if($in_for) {
+                    $parser->define_iterator($t);
+                }
+
                 $t = $parser->advance();
 
                 if($t->id eq ",") {
@@ -1018,12 +1056,30 @@ sub pointy {
     return;
 }
 
+sub iterator_name {
+    my($parser, $var) = @_;
+    (my $it_name = $var->id) =~ s/\A (\$?) /${1}~/xms; # $foo -> $~foo
+    return $it_name;
+}
+
+sub define_iterator {
+    my($parser, $var) = @_;
+
+    my $it = $parser->symbol('(iterator)')->clone(
+        id    => $parser->iterator_name($var),
+        first => $var,
+    );
+    $parser->define($it);
+    $it->set_nud(\&nud_iterator);
+    return $it;
+}
+
 sub std_for {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => 'for');
     $proc->first( $parser->expression(0) );
-    $parser->pointy($proc);
+    $parser->pointy($proc, 1);
     return $proc;
 }
 

@@ -131,6 +131,10 @@ sub std_if {
     return $top_if;
 }
 
+sub iterator_name {
+    return 'loop'; # always 'loop'
+}
+
 sub std_foreach {
     my($parser, $symbol) = @_;
 
@@ -152,12 +156,7 @@ sub std_foreach {
 
     $parser->new_scope();
 
-    my $loop = $parser->symbol('loop')->clone(arity => 'variable');
-    $parser->define($loop);
-
-    (my $it_name = $var) =~ s/\A (\$?) /${1}^/xms; # $foo -> $^foo
-    $loop->first($var->clone(id => $it_name)); # iterator
-    $loop->set_nud(\&nud_loop);
+    $parser->define_iterator($var);
 
     $proc->third( $parser->statements() );
     $parser->pop_scope();
@@ -167,88 +166,6 @@ sub std_foreach {
         : $parser->advance("END");
 
     return $proc;
-}
-
-sub nud_loop {
-    my($parser, $loop) = @_;
-
-    my $iterator = $loop->first;
-    if($parser->token->id eq ".") {
-        $parser->advance();
-
-        my $t = $parser->token;
-        if(!any_in($t->arity, qw(variable name))) {
-            $parser->_error("Expected name, not $t (" . $t->arity . ")");
-        }
-
-        $parser->advance();
-
-        if($parser->token->id eq "(") {
-            $parser->advance();
-            $parser->advance();
-        }
-
-        my $name = $t->id;
-        if($name eq 'index') {
-            return $iterator;
-        }
-        elsif($name eq 'count') {
-            my $one = $parser->symbol('(literal)')->clone(
-                arity => 'literal',
-                value => 1,
-                line  => $iterator->line,
-            );
-            return $parser->symbol('+')->clone(
-                arity  => 'binary',
-                first  => $iterator,
-                second => $one,
-                line   => $iterator->line,
-            );
-        }
-        elsif(any_in($name, qw(odd even parity))) {
-            my $on_odd;
-            my $on_even;
-
-            if($name eq 'odd') {
-                $on_odd  = 1;
-                $on_even = 0;
-            }
-            elsif($name eq 'even') {
-                $on_odd  = 0;
-                $on_even = 1;
-            }
-            else {
-                $on_odd  = 'odd';
-                $on_even = 'even';
-            }
-
-            my $mod2 = $parser->symbol('%')->clone(
-                arity  => 'binary',
-                first  => $iterator,
-                second => $parser->symbol('(literal)')->clone(
-                    arity => 'literal',
-                    value => 2,
-                    line  => $iterator->line,
-                ),
-                line  => $iterator->line,
-            );
-
-            my $cond = $loop->clone(arity => 'ternary');
-            $cond->first($mod2); # $^i % 2
-            $cond->second($parser->symbol('(literal)')->clone(
-                arity => 'literal',
-                value => $on_even,
-                line  => $iterator->line,
-            ));
-            $cond->third($parser->symbol('(literal)')->clone(
-                arity => 'literal',
-                value => $on_odd,
-                line  => $iterator->line,
-            ));
-            return $cond;
-        }
-    }
-    return $iterator;
 }
 
 sub std_include {

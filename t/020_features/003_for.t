@@ -105,7 +105,7 @@ X
 
     [<<'T', <<'X'],
 : for $types -> ($item) {
-    <: $^item :>
+    <: $~item :>
 : }
 T
     0
@@ -113,9 +113,12 @@ T
     2
 X
 
+
+    # iterators
+
     [<<'T', <<'X'],
 : for $types -> $item {
-    : if ($^item % 2) == 0 {
+    : if (($~item+1) % 2) == 0 {
         Even
     : }
     : else {
@@ -123,11 +126,68 @@ X
     : }
 : }
 T
-        Even
         Odd
         Even
+        Odd
 X
 
+    [<<'T', <<'X', '$~i.even'],
+: for $types -> $item {
+    : if $~item.even {
+        Even
+    : }
+    : else {
+        Odd
+    : }
+: }
+T
+        Odd
+        Even
+        Odd
+X
+
+    [<<'T', <<'X', '$~i.odd'],
+: for $types -> $item {
+    : if not $~item.odd {
+        Even
+    : }
+    : else {
+        Odd
+    : }
+: }
+T
+        Odd
+        Even
+        Odd
+X
+
+    [<<'T', <<'X', '$~i.parity'],
+: for $types -> $item {
+    <: $~item.parity :>
+: }
+T
+    odd
+    even
+    odd
+X
+
+    [<<'T', <<'X', 'nexted $~i'],
+: for $types -> $i {
+:   for $types -> $j {
+        [<: $~i :>][<: $~j :>]
+:   }
+: }
+T
+        [0][0]
+        [0][1]
+        [0][2]
+        [1][0]
+        [1][1]
+        [1][2]
+        [2][0]
+        [2][1]
+        [2][2]
+X
 );
 
 foreach my $pair(@data) {

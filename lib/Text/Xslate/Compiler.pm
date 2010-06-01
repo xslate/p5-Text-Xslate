@@ -1,4 +1,5 @@
 package Text::Xslate::Compiler;
+use warnings FATAL => 'recursion';
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
 
@@ -453,10 +454,7 @@ sub _generate_for {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
-    my $it_name = $lvar_name;
-    $it_name =~ s/\A (\$?) /${1}^/xms; # $foo -> $^foo
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id+0, undef, $lvar_name ];
-    local $self->lvar->{$it_name}   = [ fetch_lvar => $lvar_id+1, undef, $it_name   ];
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
@@ -625,11 +623,7 @@ sub _generate_variable {
         @fetch = @{$lvar_code};
     }
     else {
-        my $var_name = $self->_variable_to_value($node);
-        if($var_name =~ /\A [^a-zA-Z0-9_]/xms) {
-            $self->_error("Undefined special variable: $node", $node);
-        }
-        @fetch = ( fetch_s => $var_name );
+        @fetch = ( fetch_s => $self->_variable_to_value($node) );
     }
     $fetch[2] = $node->line;
     return \@fetch;
@@ -749,6 +743,7 @@ sub _generate_ternary { # the conditional operator
 
 sub _generate_methodcall {
     my($self, $node) = @_;
+
     my $args   = $node->third;
     my $method = $node->second->id;
     return (
@@ -790,6 +785,81 @@ sub _generate_macro {
     my($self, $node) = @_;
 
     return [ macro => $node->value ];
+}
+
+# $~iterator
+sub _generate_iterator {
+    my($self, $node) = @_;
+
+    my $item_var  = $node->first;
+    my $lvar_code = $self->lvar->{$item_var};
+    if(!defined($lvar_code)) {
+        $self->_error("Undefined iterator variable: $item_var", $node);
+    }
+
+    my $parser   = $self->parser; # to create AST
+    my $element  = $node->second; # $^iterator.ELEMENT
+
+    if(defined $element) {
+        my $name = $element->id;
+        if($name eq 'index') {
+            # the same as $^iterator
+            # fallthrough
+        }
+        elsif($name eq 'count') {
+            my $one = $parser->symbol('(literal)')->clone(
+                value => 1,
+            );
+            return $self->_generate_expr( $parser->symbol('+')->clone(
+                arity  => 'binary',
+                first  => $node->clone(second => undef), # iterator
+                second => $one,
+            ) );
+        }
+        elsif(any_in($name, qw(odd even parity))) {
+            my $on_odd;
+            my $on_even;
+
+            if($name eq 'odd') {
+                $on_odd  = 1;
+                $on_even = 0;
+            }
+            elsif($name eq 'even') {
+                $on_odd  = 0;
+                $on_even = 1;
+            }
+            else {
+                $on_odd  = 'odd';
+                $on_even = 'even';
+            }
+
+            # $~i % 2
+            my $mod2 = $parser->symbol('%')->clone(
+                arity  => 'binary',
+                first  => $node->clone(second => undef),
+                second => $parser->symbol('(literal)')->clone(
+                    value => 2,
+                ),
+            );
+
+            # $~i % 2 ? even : odd
+            # Note that it is *1* origin, not zero origin
+
+            my $cond = $parser->symbol('?')->clone(arity => 'ternary');
+            $cond->first($mod2);
+            $cond->second($parser->symbol('(literal)')->clone(
+                value => $on_even,
+            ));
+            $cond->third($parser->symbol('(literal)')->clone(
+                value => $on_odd,
+            ));
+            return $self->_generate_expr($cond);
+        }
+        else {
+            $self->_error("Undefined iterator element: $name", $node);
+        }
+    }
+    return [ fetch_lvar => $lvar_code->[1]+1, $node->line, $node->id ];
 }
 
 sub _localize_vars {

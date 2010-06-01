@@ -152,7 +152,8 @@ has line => (
     is  => 'ro',
     isa => 'Int',
 
-    required => 0,
+    lazy    => 1,
+    default => 0,
 );
 
 
