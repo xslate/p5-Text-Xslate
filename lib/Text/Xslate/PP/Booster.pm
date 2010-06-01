@@ -10,6 +10,10 @@ use Text::Xslate::Util qw($DEBUG p value_to_literal);
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
+use constant _FOR_ITEM  => 0;
+use constant _FOR_ITER  => 1;
+use constant _FOR_ARRAY => 2;
+
 my %CODE_MANIP = ();
 
 our @CARP_NOT = qw(Text::Xslate);
@@ -316,20 +320,22 @@ $CODE_MANIP{ 'for_iter' } = sub {
         $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
-    my $iterator = sprintf '$pad->[ -1 ]->[ %s ]', $self->sa() + 1;
-    $self->write_lines(sprintf '%s = -1;', $iterator);
+    my $item_var = sprintf '$pad->[-1][%s+_FOR_ITEM]',  $self->sa();
+    my $iterator = sprintf '$pad->[-1][%s+_FOR_ITER]',  $self->sa();
+    my $array    = sprintf '$pad->[-1][%s+_FOR_ARRAY]', $self->sa();
 
     $self->write_lines(
-        sprintf( 'for (@{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar,
-             value_to_literal($self->framename), $self->stash->{ for_start_line } )
+        sprintf( '%s = check_itr_ar( $st, %s, %s, %s );',
+            $array, $ar,
+            value_to_literal($self->framename), $self->stash->{ for_start_line } )
     );
-
-    $self->write_code( "\n" );
+    $self->write_lines(sprintf <<'CODE', $iterator, $array);
+for(%1$s = 0; %1$s < @{%2$s}; %1$s++) {
+CODE
 
     $self->indent_depth( $self->indent_depth + 1 );
 
-    $self->write_lines( sprintf( '$pad->[ -1 ]->[ %s ] = $_;', $self->sa() ) );
-    $self->write_lines( sprintf( '%s++;', $iterator ) );
+    $self->write_lines( sprintf( '%s = %s->[ %s ];', $item_var, $array, $iterator ) );
     $self->write_code( "\n" );
 };
 
@@ -408,6 +414,11 @@ $CODE_MANIP{ 'not' } = sub {
 $CODE_MANIP{ 'minus' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( '- %s', $self->sa ) );
+};
+
+$CODE_MANIP{ 'length' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'scalar(@{%s})', $self->sa ) );
 };
 
 

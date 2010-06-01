@@ -151,6 +151,25 @@ T
     3
 X
 
+    [<<'T', <<'X', 'first && last'],
+: for $types -> ($item) {
+    : if $~item.first {
+---- first ----
+    : }
+    <: $~item.count :>
+    : if $~item.last {
+---- last ----
+    : }
+: }
+T
+---- first ----
+    1
+    2
+    3
+---- last ----
+X
+
+
     [<<'T', <<'X', 'nexted $~i'],
 : for $types -> $i {
 :   for $types -> $j {

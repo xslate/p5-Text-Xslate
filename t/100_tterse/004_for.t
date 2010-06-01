@@ -98,6 +98,60 @@ T
 END
 X
 
+    [<<'T', <<'X', 'loop.first'],
+[% FOR type IN types -%]
+[% IF loop.first -%]
+---- first ----
+[% END -%]
+* [% loop.count %]
+[% END -%]
+END
+T
+---- first ----
+* 1
+* 2
+* 3
+END
+X
+
+    [<<'T', <<'X', 'loop.last'],
+[% FOR type IN types -%]
+* [% loop.count %]
+[% IF loop.last -%]
+---- last ----
+[% END -%]
+[% END -%]
+END
+T
+* 1
+* 2
+* 3
+---- last ----
+END
+X
+
+    [<<'T', <<'X', 'first && last'],
+[% FOR type IN types -%]
+[% IF loop.first -%]
+---- first ----
+[% END -%]* [% loop.count %]
+[% IF loop.last -%]
+---- last ----
+[% END -%]
+[% END -%]
+END
+T
+---- first ----
+* 1
+* 2
+* 3
+---- last ----
+END
+X
+
+
+    # ---- TTerse specific features ----
+
     [<<'T', <<'X', 'lower cased'],
 [% lang %]
 [% foreach type in types -%]

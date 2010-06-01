@@ -53,6 +53,8 @@ my %unary = (
     'not' => 'not',
     '+'   => 'noop',
     '-'   => 'minus',
+
+    'length' => 'length', # for loop context vars
 );
 
 has optimize => (
@@ -817,11 +819,63 @@ sub _generate_iterator {
                 second => $one,
             ) );
         }
+        elsif($name eq 'first' or $name eq 'last') {
+            my $value;
+
+            if($name eq 'first') {
+                $value = $parser->symbol('(literal)')->clone(
+                    value => 0,
+                );
+            }
+            else {
+                my $array = $parser->symbol('(variable)')->clone(
+                    arity => 'iterating_array',
+                    id    => $item_var->id,
+                    first => $item_var,
+                );
+
+                my $length = $parser->symbol('(literal)')->clone(
+                    arity => 'unary',
+                    id    => 'length',
+                    first => $array,
+                );
+
+                my $one   = $parser->symbol('(literal)')->clone(
+                    value => 1,
+                );
+
+                # length($array) - 1
+                $value = $parser->symbol('-')->clone(
+                    arity  => 'binary',
+                    first  => $length,
+                    second => $one,
+                );
+            }
+            # first: $~it == 0
+            # last:  $~it == length($arrayref) - 1
+            return $self->_expr( $parser->symbol('==')->clone(
+                arity  => 'binary',
+                first  => $node->clone(second => undef), # iterator
+                second => $value,
+            ));
+        }
         else {
             $self->_error("Undefined iterator element: $name", $node);
         }
     }
     return [ fetch_lvar => $lvar_code->[1]+1, $node->line, $node->id ];
+}
+
+sub _generate_iterating_array {
+    my($self, $node) = @_;
+
+    my $item_var  = $node->first;
+    my $lvar_code = $self->lvar->{$item_var};
+    if(!defined($lvar_code)) {
+        $self->_error("Undefined iterator variable: $item_var", $node);
+    }
+
+    return [ fetch_lvar => $lvar_code->[1]+2, $node->line, $node->id ];
 }
 
 sub _localize_vars {
