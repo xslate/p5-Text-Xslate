@@ -390,7 +390,7 @@ This document describes Text::Xslate version 0.1025.
     my $template = q{
         <h1><: $title :></h1>
         <ul>
-        : for $books ->($book) {
+        : for $books -> $book {
             <li><: $book.title :></li>
         : } # for
         </ul>
@@ -419,8 +419,8 @@ This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
 
-The features of templates are strongly influenced by Text::MicroTemplate
-and Template-Toolkit, but the philosophy of Xslate is different from them.
+The concept of Xslate is strongly influenced by Text::MicroTemplate
+and Template-Toolkit, but the central philosophy of Xslate is different from them.
 That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
 
@@ -450,7 +450,7 @@ The Xslate virtual machine and the parser/compiler are completely separated
 so that one can use alternative parsers.
 
 For example, C<TTerse>, a Template-Toolkit-like parser, is supported as a
-completely different syntax.
+completely different syntax parser.
 
 =head1 INTERFACE
 
@@ -514,7 +514,8 @@ Specifies PerlIO layers for reading templates.
 
 Specifies the template syntax you want to use.
 
-I<$name> may be a short name (moniker), or a fully qualified name.
+I<$name> may be a short name (e.g. C<Kolon>), or a fully qualified name
+(e.g. C<Text::Xslate::Syntax::Kolon>).
 
 =item C<< escape => $mode // 'html' >>
 
