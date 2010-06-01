@@ -62,6 +62,10 @@ my @set = (
     ['<: $a.reverse().join(",") :>', { a => [1, 2, 3] }, '3,2,1'],
     ['<: $a.reverse().join(",") :>', { a => ["foo","bar","baz"] }, 'baz,bar,foo'],
 
+    ['<: $a.sort().join(",") :>', { a => [] },        '', 'sort'],
+    ['<: $a.sort().join(",") :>', { a => ['b', 'c', 'a'] }, 'a,b,c'],
+    ['<: $a.sort().join(",") :>', { a => ['a', 'b', 'c'] }, 'a,b,c'],
+
     # kv
     ['<: $h.keys().join(",") :>', { h => {} }, '', 'keys'],
     ['<: $h.keys().join(",") :>', { h => {a => 1, b => 2, c => 3} }, 'a,b,c'],

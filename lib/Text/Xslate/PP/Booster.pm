@@ -975,6 +975,7 @@ my %builtin_method = (
     size    => [0, TX_ENUMERABLE],
     join    => [1, TX_ENUMERABLE],
     reverse => [0, TX_ENUMERABLE],
+    sort    => [0, TX_ENUMERABLE],
 
     keys    => [0, TX_KV],
     values  => [0, TX_KV],

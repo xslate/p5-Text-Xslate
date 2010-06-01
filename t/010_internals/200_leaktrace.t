@@ -125,8 +125,20 @@ T
     Hello, A B C world!
 X
 
+    [<<'T', <<'X', 'builtin method for array'],
+    Hello, <: ['C', 'B', 'A'].sort().join(" ") :> world!
+T
+    Hello, A B C world!
+X
+
     [<<'T', <<'X', 'builtin method for hash'],
     Hello, <: ({ lang => "Xslate" }).values().join(",") :> world!
+T
+    Hello, Xslate world!
+X
+
+    [<<'T', <<'X', 'builtin method for hash'],
+    Hello, <: ({ "Xslate" => 42 }).keys().join(",") :> world!
 T
     Hello, Xslate world!
 X

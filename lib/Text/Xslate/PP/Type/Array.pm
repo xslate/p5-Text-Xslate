@@ -52,6 +52,11 @@ sub reverse :method {
     return [ reverse @{$self->_items} ];
 }
 
+sub sort :method {
+    my($self) = @_;
+    return [ sort @{$self->_items} ];
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 
