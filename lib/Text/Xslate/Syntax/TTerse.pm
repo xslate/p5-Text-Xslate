@@ -275,8 +275,17 @@ Almost the same as L<Text::Xslate::Syntax::Kolon>.
 Loop iterators are partially supported.
 
     [% FOREACH item IN arrayref %]
+        [%- IF loop.first -%]
+        <first>
+        [%- END -%]
         * [% loop.index %]
-        * [% loop.count %]
+        * [% loop.count # loop.index + 1 %]
+        * [% loop.body  # alias to arrayref %]
+        * [% loop.size  # loop.body.size %]
+        * [% loop.max   # loop.size - 1 %]
+        [%- IF loop.last -%]
+        <first>
+        [%- END -%]
     [% END %]
 
 =head2 Conditional statements
