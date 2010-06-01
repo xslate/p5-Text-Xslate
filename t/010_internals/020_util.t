@@ -3,7 +3,7 @@
 use strict;
 use Test::More;
 
-use Text::Xslate::Util qw(literal_to_value);;
+use Text::Xslate::Util qw(literal_to_value);
 
 my @set = (
     [ q{"foo\\\\template"}, q{foo\template} ],
