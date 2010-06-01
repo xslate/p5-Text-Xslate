@@ -59,6 +59,8 @@ sub define_symbols {
     $parser->symbol('WITH');
     $parser->symbol('with');
 
+    # macros
+
     $parser->symbol('MACRO') ->set_std(\&std_macro);
     $parser->symbol('macro') ->set_std(\&std_macro);
     $parser->symbol('BLOCK');
@@ -374,11 +376,27 @@ C<< WITH variablies >> syntax is also supported:
         bar = 3.14
     %]
 
-=head2 Template cascading
-
-Not supported.
 
 =head2 Macro blocks
+
+Definition:
+
+    [% MACRO foo BLOCK -%]
+        This is a macro.
+    [% END -%]
+
+    [% MACRO add(a, b) BLOCK -%]
+    [%  a + b -%]
+    [% END -%]
+
+Call:
+
+    [% foo()     %]
+    [% add(1, 2) %]
+
+Unlike Template-Toolkit, calling macros requires parens (C<()>).
+
+=head2 Template cascading
 
 Not supported.
 
