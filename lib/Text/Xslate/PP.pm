@@ -1,16 +1,18 @@
 package Text::Xslate::PP;
 # Text::Xslate in pure Perl
-
-use 5.008;
+use 5.008_001;
 use strict;
 
-our $VERSION = '0.1023';
+our $VERSION = '0.1025';
 
 use Carp ();
 
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
+use Text::Xslate::PP::Booster;
+
+use Text::Xslate::Util qw($DEBUG);
 
 my $TX_OPS = \%Text::Xslate::OPS;
 
@@ -61,9 +63,7 @@ sub render {
     local $SIG{__DIE__}  = \&_die;
     local $SIG{__WARN__} = \&_warn;
 
-    tx_execute( $st, undef, $vars );
-
-    $st->{ output };
+    return tx_execute( $st, $vars );
 }
 
 
@@ -85,10 +85,10 @@ sub _assemble {
     $self->{ template }->{ $name } = $tmpl;
     $self->{ tmpl_st }->{ $name }  = $st;
 
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ]      = $name;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ]     = $mtime;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ] = $cachepath;
-    $tmpl->[ Text::Xslate::PP::Opcode::TXo_FULLPATH ]  = $fullpath;
+    $tmpl->[ Text::Xslate::PP::TXo_NAME ]      = $name;
+    $tmpl->[ Text::Xslate::PP::TXo_MTIME ]     = $mtime;
+    $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ] = $cachepath;
+    $tmpl->[ Text::Xslate::PP::TXo_FULLPATH ]  = $fullpath;
 
     $st->tmpl( $tmpl );
     $st->self( $self ); # weak_ref!
@@ -97,19 +97,17 @@ sub _assemble {
 
     $st->{sa}   = undef;
     $st->{sb}   = undef;
-    $st->{targ} = '';
 
     # stack frame
     $st->frame( [] );
     $st->current_frame( -1 );
 
-    my $mainframe = Text::Xslate::PP::Opcode::tx_push_frame( $st );
+    my $mainframe = tx_push_frame( $st );
 
-    $mainframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ]    = 'main';
-    $mainframe->[ Text::Xslate::PP::Opcode::TXframe_RETADDR ] = $len;
+    $mainframe->[ Text::Xslate::PP::TXframe_NAME ]    = 'main';
+    $mainframe->[ Text::Xslate::PP::TXframe_RETADDR ] = $len;
 
     $st->lines( [] );
-    $st->{ output } = '';
 
     $st->code_len( $len );
 
@@ -129,7 +127,6 @@ sub _assemble {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
-        $code->[ $i ]->{ exec_code } = $Text::Xslate::PP::Opcode::Opcode_list->[ $opnum ];
         $code->[ $i ]->{ opname }    = $opname; # for test
 
         my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
@@ -184,15 +181,9 @@ sub _assemble {
 
     }
 
-    if ( my $boost = $ENV{ XSLATE_PP_BOOST } ) {
-        require Text::Xslate::PP::Booster;
-        my $strict = $boost eq '1' ? 1
-                   : $boost eq '2' ? 0
-                   : 0;
-        $st->{ boost_code } = Text::Xslate::PP::Booster->new({ strict => $strict })->opcode_to_perlcode( $proto );
-    }
-
-    $st->{code} = $code;
+    $st->{ perlcode } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto );
+    $st->{ code     } = $code;
+    return;
 }
 
 
@@ -205,6 +196,23 @@ sub escaped_string {
 #
 # INTERNAL
 #
+
+sub tx_push_frame {
+    my ( $st ) = @_;
+
+    if ( $st->current_frame > 100 ) {
+        Carp::croak("Macro call is too deep (> 100)");
+    }
+
+    $st->current_frame( $st->current_frame + 1 );
+
+    $st->frame->[ $st->current_frame ] ||= [];
+
+    $st->pad( $st->frame->[ $st->current_frame ] );
+
+    $st->frame->[ $st->current_frame ];
+}
+
 
 
 sub tx_load_template {
@@ -239,7 +247,7 @@ sub tx_load_template {
 
     my $tmpl = $ttobj->{ $name };
 
-    my $cache_mtime = $tmpl->[ Text::Xslate::PP::Opcode::TXo_MTIME ];
+    my $cache_mtime = $tmpl->[ Text::Xslate::PP::TXo_MTIME ];
 
     return $self->{ tmpl_st }->{ $name } unless $cache_mtime;
 
@@ -260,14 +268,14 @@ sub tx_all_deps_are_fresh {
     my ( $tmpl, $cache_mtime ) = @_;
     my $len = scalar @{$tmpl};
 
-    for ( my $i = Text::Xslate::PP::Opcode::TXo_FULLPATH; $i < $len; $i++ ) {
+    for ( my $i = Text::Xslate::PP::TXo_FULLPATH; $i < $len; $i++ ) {
         my $deppath = $tmpl->[ $i ];
 
         next unless defined $deppath;
 
         if ( ( stat( $deppath ) )[9] > $cache_mtime ) {
-            my $main_cache = $tmpl->[ Text::Xslate::PP::Opcode::TXo_CACHEPATH ];
-            if ( $i != Text::Xslate::PP::Opcode::TXo_FULLPATH and $main_cache ) {
+            my $main_cache = $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ];
+            if ( $i != Text::Xslate::PP::TXo_FULLPATH and $main_cache ) {
                 unlink $main_cache or warn $!;
             }
             return;
@@ -281,34 +289,23 @@ sub tx_all_deps_are_fresh {
 our $_depth = 0;
 our $_current_st;
 
-sub tx_execute { no warnings 'recursion';
-    my ( $st, $output, $vars ) = @_;
+sub tx_execute { 
+    my ( $st, $vars ) = @_;
+    no warnings 'recursion';
 
     if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
 
-    my $len = $st->code_len;
-
-    $st->{ output } = '';
-    $st->{ pc }     = 0;
-    $st->{vars}     = $vars;
+    $st->{pc}   = 0;
+    $st->{vars} = $vars;
 
     local $_depth      = $_depth + 1;
     local $_current_st = $st;
 
     local $st->{local_stack};
 
-    if ( $ENV{ XSLATE_PP_BOOST } ) {
-        $st->{ boost_code }->( $st );
-    }
-    else {
-        $st->{code}->[ 0 ]->{ exec_code }->( $st );
-    }
-
-    $st->{targ} = undef;
-    $st->{sa}   = undef;
-    $st->{sb}   = undef;
+    return $st->{perlcode}->( $st );
 }
 
 
@@ -323,13 +320,13 @@ sub _error_handler {
     Carp::croak( 'Not in $xslate->render()' ) unless $st;
 
     my $cframe = $st->frame->[ $st->current_frame ];
-    my $name   = $cframe->[ Text::Xslate::PP::Opcode::TXframe_NAME ];
+    my $name   = $cframe->[ Text::Xslate::PP::TXframe_NAME ];
 
     if( $die ) {
         $_depth = 0;
     }
 
-    my $file = $st->tmpl->[ Text::Xslate::PP::Opcode::TXo_NAME ];
+    my $file = $st->tmpl->[ Text::Xslate::PP::TXo_NAME ];
     my $line = $st->lines->[ $st->{ pc } ] || 0;
     my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str );
 
@@ -372,7 +369,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.1023.
+This document describes Text::Xslate::PP version 0.1025.
 
 =head1 DESCRIPTION
 
@@ -391,9 +388,8 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
-Pure perl version is very slow. If you want more speed in a persistent running,
-try to set an environment variable C<XSLATE_PP_BOOST> with C<1> or C<2>.
-See to L<Text::Xslate::PP::Booster>.
+From 0.1024 on, pure Perl version is not so slow.
+See L<Text::Xslate::PP::Booster> for details.
 
 =head1 SEE ALSO
 

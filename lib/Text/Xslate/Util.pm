@@ -6,7 +6,7 @@ use warnings;
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
     literal_to_value import_from
-    is_int
+    is_int any_in
     p
     $STRING $NUMBER $DEBUG
 );
@@ -30,12 +30,22 @@ our $NUMBER  = qr/ [+-]? (?:
     )/xms;
 
 our $DEBUG;
-$DEBUG //= $ENV{XSLATE} // '';
+defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
 
 sub is_int {
     my($s) = @_;
     no warnings;
     return $s eq int($s);
+}
+
+sub any_in {
+    my $value = shift;
+    if(defined $value) {
+        return scalar grep { defined($_) && $value eq $_ } @_;
+    }
+    else {
+        return scalar grep { not defined($_) } @_;
+    }
 }
 
 my %esc2char = (

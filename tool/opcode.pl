@@ -1,7 +1,8 @@
 #!perl -w
-use 5.010;
 use strict;
-
+sub say {
+    print @_, "\n";
+}
 binmode STDOUT;
 
 my @ops;

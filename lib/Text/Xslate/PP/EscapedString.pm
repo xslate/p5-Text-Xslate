@@ -1,41 +1,41 @@
 package Text::Xslate::PP::EscapedString;
 
-package
-    Text::Xslate::EscapedString;
-
 use strict;
 use warnings;
 
 use Carp ();
 
 use overload (
-    '""' => sub { ${ $_[0] } }, # don't use 'as_string' or deep recursion.
+    '""'     => 'as_string',
     fallback => 1,
 );
+
+my $the_class = 'Text::Xslate::EscapedString';
 
 sub new {
     my ( $class, $str ) = @_;
 
-    Carp::croak("Usage: Text::Xslate::EscapedString::new(klass, str)") if ( @_ != 2 );
+    Carp::croak("Usage: $the_class->new(str)") if ( @_ != 2 );
 
     if ( ref $class ) {
-        Carp::croak( sprintf( "You cannot call %s->new() as an instance method", __PACKAGE__ ) );
+        Carp::croak("You cannot call $the_class->new() as an instance method");
     }
-    elsif ( $class ne __PACKAGE__ ) {
-        Carp::croak( sprintf( "You cannot extend %s", __PACKAGE__ ) );
+    elsif ( $class ne $the_class ) {
+        Carp::croak("You cannot extend $the_class");
     }
-    bless \$str, 'Text::Xslate::EscapedString';
+    return bless \$str, $class;
 }
 
 sub as_string {
-    unless ( $_[0] and ref $_[0] ) {
-        Carp::croak( sprintf( "You cannot call %s->as_string() a class method", __PACKAGE__ ) );
+    unless ( ref $_[0] ) {
+        Carp::croak("You cannot call $the_class->as_string() as a class method");
     }
     return ${ $_[0] };
 }
 
-
-
+package
+    Text::Xslate::EscapedString;
+our @ISA = qw(Text::Xslate::PP::EscapedString);
 1;
 __END__
 

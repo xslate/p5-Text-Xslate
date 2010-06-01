@@ -1,13 +1,14 @@
 package Text::Xslate::PP::Booster;
+# to output perl code, set "XSLATE=pp=dump"
 
 use Any::Moose;
-use Data::Dumper;
 use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
+use Text::Xslate::Util qw($DEBUG p);
 
-our $VERSION = '0.1019';
+use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
 my %CODE_MANIP = ();
 
@@ -37,11 +38,18 @@ has framename => ( is => 'rw', default => 'main' ); # current frame name
 
 has SP => ( is => 'rw', default => sub { []; } ); # stack
 
-has strict => ( is => 'rw' );
-
 has is_completed => ( is => 'rw', default => 1 );
 
 has stash => ( is => 'rw', default => sub { {}; } ); # store misc data
+
+our %html_escape = (
+    '&' => '&amp;',
+    '<' => '&lt;',
+    '>' => '&gt;',
+    '"' => '&quot;',
+    "'" => '&apos;',
+);
+our $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
 #
 # public APIs
@@ -52,31 +60,22 @@ sub opcode_to_perlcode {
 
     my $perlcode = $self->opcode_to_perlcode_string( $opcode );
 
-    # DEBUG
-    print STDERR "$perlcode\n" if $ENV{ XSLATE_PP_BOOST_DISP };
+    print STDERR "$perlcode\n" if _DUMP_PP;
 
-    my $evaled_code = eval $perlcode;
-
-    die $@ unless $evaled_code;
-
-    return $evaled_code;
+    return eval($perlcode) || Carp::confess("Eval error: $@");
 }
 
 
 sub opcode_to_perlcode_string {
     my ( $self, $opcode, $opt ) = @_;
 
-    #my $tx = Text::Xslate->new;
-    #print $tx->_compiler->as_assembly( $opcode );
-
     $self->_convert_opcode( $opcode, undef, $opt );
 
-    # 書き出し
-
-    my $perlcode =<<'CODE';
-sub { no warnings 'recursion';
-    my ( $st ) = $_[0];
-    my ( $sv, $st2, $pad, %macro, $depth );
+    my $perlcode = sprintf("#line %d %s\n", 1, __FILE__) . <<'CODE';
+sub {
+    no warnings 'recursion';
+    my ( $st ) = @_;
+    my ( $sv, $pad, %macro, $depth );
     my $output = '';
     my $vars   = $st->{ vars };
 
@@ -91,7 +90,7 @@ CODE
 
     $perlcode .= "    # process start\n\n";
     $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
-    $perlcode .= "\n" . '    $st->{ output } = $output;' . "\n}";
+    $perlcode .= "\n" . '    return $output;' . "\n}";
 
     return $perlcode;
 }
@@ -201,14 +200,12 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
     $self->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
 
-    return unless $self->is_strict;
-
     if ( $self->stash->{ in_macro } ) {
         my $macro = $self->stash->{ in_macro };
         unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
             $self->write_lines(
                 sprintf(
-                    'error_in_booster( $st, %s, %s, "Too few arguments for %s" );',
+                    '_error( $st, %s, %s, "Too few arguments for %s" );',
                     $self->frame_and_line, $self->stash->{ in_macro }
                 )
             );
@@ -221,13 +218,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 $CODE_MANIP{ 'fetch_field' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    if ( $self->is_strict ) {
-        $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
-    }
-    else {
-        $self->sa( sprintf( 'fetch( $st, %s, %s )', $self->sb(), $self->sa() ) );
-    }
-
+    $self->sa( sprintf( 'fetch( $st, %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
 };
 
 
@@ -235,35 +226,24 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
 
-    if ( $self->is_strict ) {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
-    }
-    else {
-        $self->sa( sprintf( 'fetch( $st, %s, "%s" )', $sv, _escape( $arg ) ) );
-    }
+    $self->sa( sprintf( 'fetch( $st, %s, "%s", %s, %s )', $sv, _escape( $arg ), $self->frame_and_line ) );
 };
 
 
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    my $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
+    my $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
-    if ( $self->is_strict ) {
-        $self->write_lines( sprintf( <<'CODE', $sv, $sv, $err ) );
-if ( defined %s ) {
-    $output .= %s;
+    $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+# print_raw
+if ( defined(my $s = %s) ) {
+    $output .= $s;
 }
 else {
    %s
 }
 CODE
-
-    }
-    else {
-        $self->write_lines( sprintf('$output .= %s;', $sv) );
-    }
-
     $self->write_code( "\n" );
 };
 
@@ -288,28 +268,17 @@ $CODE_MANIP{ 'print' } = sub {
     my $sv = $self->sa();
     my $err;
 
-    if ( $self->is_strict ) {
-        $err = sprintf( 'warn_in_booster( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
-    }
-    else {
-        $err = sprintf( 'warn_in_booster( $st, undef, undef, "Use of nil to be print" );' );
-    }
-
+    $err = sprintf( '_warn( $st, %s, %s, "Use of nil to be print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+# print
 $sv = %s;
 
-if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
+if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
     $output .= $sv;
 }
 elsif ( defined $sv ) {
-    if ( $sv =~ /[&<>"']/ ) {
-        $sv =~ s/&/&amp;/g;
-        $sv =~ s/</&lt;/g;
-        $sv =~ s/>/&gt;/g;
-        $sv =~ s/"/&quot;/g;
-        $sv =~ s/'/&apos;/g;
-    }
+    $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
     $output .= $sv;
 }
 else {
@@ -323,10 +292,10 @@ CODE
 $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
-$st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
-Text::Xslate::PP::tx_execute( $st2, undef, $vars );
-
-$output .= $st2->{ output };
+{
+    my $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
+    $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
+}
 CODE
 
 };
@@ -356,14 +325,11 @@ $CODE_MANIP{ 'for_iter' } = sub {
         $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
-    if ( $self->is_strict ) {
+    {
         my ( $frame, $line ) = ( "'" . $self->framename . "'", $self->stash->{ for_start_line } );
         $self->write_lines(
             sprintf( 'for ( @{ check_itr_ar( $st, %s, %s, %s ) } ) {', $ar, $frame, $line )
         );
-    }
-    else {
-        $self->write_lines( sprintf( 'for ( @{ %s } ) {', $ar eq 'undef' ? '[]' : $ar ) );
     }
 
     $self->write_code( "\n" );
@@ -576,36 +542,20 @@ $CODE_MANIP{ 'funcall' } = sub {
 
     $args_str = ', ' . $args_str if length $args_str;
 
-    if ( $self->is_strict ) {
-        $self->sa(
-            sprintf('call( $st, %s, %s, 0, %s%s )',
-                $self->frame_and_line, $self->sa, $args_str
-            )
-        );
-    }
-    else {
-        $self->sa(
-            sprintf('call( $st, undef, undef, 0, %s%s )', $self->sa, $args_str )
-        );
-    }
-
+    $self->sa(
+        sprintf('call( $st, %s, %s, 0, %s%s )',
+            $self->frame_and_line, $self->sa, $args_str
+        )
+    );
 };
 
 
 $CODE_MANIP{ 'methodcall_s' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    if ( $self->is_strict ) {
-        $self->sa(
-            sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
-        );
-    }
-    else {
-        $self->sa(
-            sprintf('methodcall( $st, undef, undef, "%s", %s )', $arg, join( ', ', @{ pop @{ $self->SP } } ) )
-        );
-    }
-
+    $self->sa(
+        sprintf('methodcall( $st, %s, %s, "%s", %s )', $self->frame_and_line, $arg, join( ', ', @{ pop @{ $self->SP } } ) )
+    );
 };
 
 
@@ -647,7 +597,8 @@ $CODE_MANIP{ 'goto' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $i = $self->current_line;
 
-    if ( delete $self->stash->{ loop }->{ $i + $arg + 1 } ) { # forブロックを閉じる
+    if ( delete $self->stash->{ loop }->{ $i + $arg + 1 } ) {
+        # finish "for" blocks
         $self->indent_depth( $self->indent_depth - 1 );
         pop @{ $self->stash->{ for_level } };
         $self->write_lines( '}' );
@@ -676,7 +627,7 @@ $CODE_MANIP{ 'end' } = sub {
 sub _spawn_child {
     my ( $self, $opts ) = @_;
     $opts ||= {};
-    ( ref $self )->new( { %$opts, strict => $self->strict } ); # inherit strict
+    ( ref $self )->new($opts);
 }
 
 
@@ -861,7 +812,7 @@ sub _check_logic {
 
         $self->sa( sprintf( '%s ? %s : %s', $self->sa, $self->sb, $self->lvar->[ $ops->[ $i + 1 ]->[ 1 ] ] ) );
     }
-    else { # 
+    else {
 
         my $true_start = $i + 1;
         my $true_end   = $i + $arg - 1; # add 1 for complete process line is next.
@@ -920,9 +871,6 @@ sub _escape {
 # methods
 #
 
-sub is_strict { $_[0]->strict }
-
-
 sub indent {
     $_[0]->indent_space x $_[0]->indent_depth;
 }
@@ -945,8 +893,9 @@ sub write_lines {
 
     $idx = $self->current_line unless defined $idx;
 
+    my $indent = $self->indent;
     for my $line ( split/\n/, $lines, -1 ) {
-        $code .= $self->indent . $line . "\n";
+        $code .= $indent . $line . "\n";
     }
 
     $self->lines->[ $idx ] .= $code;
@@ -989,49 +938,49 @@ sub optimize_to_print {
 #
 
 sub neat {
-    if ( defined $_[0] ) {
-        if ( $_[0] =~ /^-?[.0-9]+$/ ) {
-            return $_[0];
+    my($s) = @_;
+    if ( defined $s ) {
+        if ( ref($s) || Scalar::Util::looks_like_number($s) ) {
+            return $s;
         }
         else {
-            return "'" . $_[0] . "'";
+            return qq{'$s'};
         }
     }
     else {
-        'nil';
+        return 'nil';
     }
 }
 
 
 sub call {
-    my ( $st, $frame, $line, $flag, $proc, @args ) = @_;
-    my $obj = shift @args if ( $flag );
+    my ( $st, $frame, $line, $method_call, $proc, @args ) = @_;
     my $ret;
 
-    if ( $flag ) { # method call ... fetch() doesn't use methodcall for speed
+    if ( $method_call ) { # XXX: fetch() doesn't use methodcall for speed
+        my $obj = shift @args;
+
         unless ( defined $obj ) {
-            warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
+            _warn( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $obj->$proc( @args ) };
+            #_error( $st, $frame, $line, "%s\t...", $@) if $@;
         }
     }
     else { # function call
         if(!defined $proc) {
             if ( defined $line ) {
                 my $c = $st->{code}->[ $line - 1 ];
-                error_in_booster(
+                _error(
                     $st, $frame, $line, "Undefined function is called%s",
                     $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
                 );
             }
         }
         else {
-            local $SIG{__DIE__}; # oops
-            local $SIG{__WARN__};
             $ret = eval { $proc->( @args ) };
+            _error( $st, $frame, $line, "%s\t...", $@) if $@;
         }
     }
 
@@ -1064,7 +1013,7 @@ sub methodcall {
         if($invocant->can($method)) {
             $retval = eval { $invocant->$method(@args) };
             if($@) {
-                error_in_booster( $st, $frame, $line, "%s" . "\t...", $@ );
+                _error( $st, $frame, $line, "%s" . "\t...", $@ );
             }
             return $retval;
         }
@@ -1072,14 +1021,14 @@ sub methodcall {
     }
 
     if(!defined $invocant) {
-        warn_in_booster( $st, $frame, $line, "Use of nil to invoke method %s", $method );
+        _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
     }
     else {
         my $bm = $builtin_method{$method} || return undef;
 
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
-            error_in_booster($st, $frame, $line,
+            _error($st, $frame, $line,
                 "Builtin method %s requres exactly %d argument(s), "
                 . "but supplied %d",
                 $method, $nargs, scalar @args);
@@ -1088,7 +1037,7 @@ sub methodcall {
 
          $retval = eval {
             $klass->new($invocant)->$method(@args);
-        };
+         };
     }
 
     return $retval;
@@ -1098,7 +1047,7 @@ sub methodcall {
 sub fetch {
     my ( $st, $var, $key, $frame, $line ) = @_;
 
-    if ( Scalar::Util::blessed $var ) {
+    if ( Scalar::Util::blessed($var) ) {
         return call( $st, $frame, $line, 1, $key, $var );
     }
     elsif ( ref $var eq 'HASH' ) {
@@ -1106,22 +1055,22 @@ sub fetch {
             return $var->{ $key };
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of nil as a field key" );
+            _warn( $st, $frame, $line, "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
-        if ( defined $key and $key =~ /[-.0-9]/ ) {
+        if ( Scalar::Util::looks_like_number($key) ) {
             return $var->[ $key ];
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
+            _warn( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
         }
     }
     elsif ( defined $var ) {
-        error_in_booster( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+        _error( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
-        warn_in_booster( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
+        _warn( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
     }
 
     return;
@@ -1131,12 +1080,12 @@ sub fetch {
 sub check_itr_ar {
     my ( $st, $ar, $frame, $line ) = @_;
 
-    unless ( $ar and ref $ar eq 'ARRAY' ) {
+    if ( ref($ar) ne 'ARRAY' ) {
         if ( defined $ar ) {
-            error_in_booster( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
+            _error( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
         }
         else {
-            warn_in_booster( $st, $frame, $line, "Use of nil to iterate" );
+            _warn( $st, $frame, $line, "Use of nil to iterate" );
         }
         $ar = [];
     }
@@ -1212,30 +1161,30 @@ sub local_s {
 }
 
 
-sub is_verbose {
+sub _verbose {
     my $v = $_[0]->self->{ verbose };
-    defined $v ? $v : Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT;
+    defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
 }
 
 
-sub warn_in_booster {
+sub _warn {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) > Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+    if( _verbose( $st ) > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }
 
 
-sub error_in_booster {
+sub _error {
     my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( is_verbose( $st ) >= Text::Xslate::PP::Opcode::TX_VERBOSE_DEFAULT ) {
+    if( _verbose( $st ) >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         if ( defined $line ) {
             $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::Opcode::TXframe_NAME ] = $frame;
+            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }
@@ -1257,20 +1206,17 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Booster - Text::Xslate::PP booster
+Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
 
 =head1 SYNOPSIS
 
-    # When you set a true value to the environmental variable XSLATE_PP_BOOST,
-    # this module is used in Text::Xslate::PP.
-    
     # If you want to check created codes, you can use it directly.
     use Text::Xslate::PP;
     use Text::Xslate::PP::Booster;
-    
+
     my $tx      = Text::Xslate->new();
-    my $booster = Text::Xslate::PP::Booster->new( { strict => 0 } );
-    
+    my $booster = Text::Xslate::PP::Booster->new();
+
     my $optext  = q{<: $value :>};
     my $code    = $booster->opcode_to_perlcode_string( $tx->_compiler->compile( $optext ) );
     my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
@@ -1278,12 +1224,11 @@ Text::Xslate::PP::Booster - Text::Xslate::PP booster
 
 =head1 DESCRIPTION
 
-This module boosts L<Text::Xslate::PP> runtime speed.
+This module is a new L<Text::Xslate::PP> runtime engine.
 
-Text::Xslate::PP is very very slow, you know. Example:
+The old Text::Xslate::PP is very very slow, you know. Example:
 
     > XSLATE=pp perl benchmark/others.pl
-    
     Text::Xslate/0.1019
     Text::MicroTemplate/0.11
     Text::ClearSilver/0.10.5.4
@@ -1296,10 +1241,11 @@ Text::Xslate::PP is very very slow, you know. Example:
     cs     2311/s  1835%   711%   219%     --
 
 All right, slower than template-toolkit!
-But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
+But now you get Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
 
-    > XSLATE=pp XSLATE_PP_BOOST=1 perl benchmark/others.pl
-    
+    > XSLATE=pp perl benchmark/others.pl
+    Text::Xslate/0.1024
+    ...
              Rate     tt     mt xslate     cs
     tt      288/s     --   -60%   -62%   -86%
     mt      710/s   147%     --    -5%   -66%
@@ -1308,27 +1254,13 @@ But if you set a true value to the environmental variable L<XSLATE_PP_BOOST>,
 
 Text::Xslate::PP becomes to be faster!
 
-And L<XSLATE_PP_BOOST=2> may be much faster (no strict error handling compatibility mode).
-
-
 =head1 APIs
 
 =head2 new
 
 Constructor.
 
-  $booster = Text::Xslate::PP::Booster->new( $opts );
-
-It can take a hash reference option:
-
-=over
-
-=item strict
-
-If set a true value, it enhances a compatibility of Text::Xslate error handling
-at the cost of speed a bit. Default by true.
-
-=back
+    $booster = Text::Xslate::PP::Booster->new();
 
 =head2 opcode_to_perlcode
 
@@ -1351,8 +1283,6 @@ and returns a perl subroutine code text.
 
 C<Text::Xslate::PP::Booster> creates a code reference from a virtual machine code.
 
-    $ENV{ XSLATE_PP_BOOST } = 1;
-    
     $tx->render_string( <<'CODE', {} );
     : macro foo -> $arg {
         Hello <:= $arg :>!
@@ -1376,7 +1306,7 @@ Firstly the template data is converted to opcodes:
     print_raw_s "!\n"
     macro_end
 
-And the booster converted them into a perl subroutine code (strict option set in this case).
+And the booster converted them into a perl subroutine code.
 
     sub { no warnings 'recursion';
         my ( $st ) = $_[0];
@@ -1403,17 +1333,11 @@ And the booster converted them into a perl subroutine code (strict option set in
                 $output .= $sv;
             }
             elsif ( defined $sv ) {
-                if ( $sv =~ /[&<>"']/ ) {
-                    $sv =~ s/&/&amp;/g;
-                    $sv =~ s/</&lt;/g;
-                    $sv =~ s/>/&gt;/g;
-                    $sv =~ s/"/&quot;/g;
-                    $sv =~ s/'/&#39;/g;
-                }
+                $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
                 $output .= $sv;
             }
             else {
-                warn_in_booster( $st, 'foo', 10, "Use of nil to be printed" );
+                _warn( $st, 'foo', 10, "Use of nil to be printed" );
             }
 
             $output .= "!\n";
@@ -1431,17 +1355,11 @@ And the booster converted them into a perl subroutine code (strict option set in
 
         # process end
 
-        $st->{ output } = $output;
+        return $output;
     }
 
 So it makes the runtime speed much faster.
 Of course, its initial converting process takes a little cost of CPU and time.
-
-=head1 CAVEAT
-
-Boost codes have the error handling compatibility as possible.
-But if you set C<strict> option false, it is different from the original behavior,
-especially the line where an error occurs becomes uncertain.
 
 =head1 SEE ALSO
 

@@ -1,11 +1,10 @@
 package Text::Xslate::Parser;
-use 5.010;
 use Any::Moose;
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
-    is_int
+    is_int any_in
     p
 );
 
@@ -165,7 +164,8 @@ sub _trim {
 }
 
 sub split {
-    my ($self, $_) = @_;
+    my $self  = shift;
+    local($_) = @_;
 
     my @tokens;
 
@@ -220,67 +220,62 @@ sub preprocess {
     my $shortcut_rx    = qr/\A ($shortcut)/xms;
 
     for(my $i = 0; $i < @{$tokens_ref}; $i++) {
-        my $token = $tokens_ref->[$i];
-        given($token->[0]) {
-            when('text') {
-                my $s = $token->[1];
+        my($type, $s) = @{ $tokens_ref->[$i] };
 
-                $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
+        if($type eq 'text') {
+            $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
 
-                # $s may have  single new line
-                my $nl = ($s =~ s/\n/\\n/xms);
+            # $s may have  single new line
+            my $nl = ($s =~ s/\n/\\n/xms);
 
-                my $p = $tokens_ref->[$i-1]; # pre-token
-                if(defined($p) && $p->[0] eq 'postchomp') {
-                    # <: ... -:>  \nfoobar
-                    #           ^^^^
-                    $s =~ s/\A [ \t]* \\n//xms;
+            my $p = $tokens_ref->[$i-1]; # pre-token
+            if(defined($p) && $p->[0] eq 'postchomp') {
+                # <: ... -:>  \nfoobar
+                #           ^^^^
+                $s =~ s/\A [ \t]* \\n//xms;
+            }
+
+            if($nl && defined($p = $tokens_ref->[$i+1])) {
+                if($p->[0] eq 'prechomp') {
+                    # \n  <:- ... -:>
+                    # ^^^^
+                    $s =~ s/\\n [ \t]* \z//xms;
                 }
-
-                if($nl && defined($p = $tokens_ref->[$i+1])) {
-                    if($p->[0] eq 'prechomp') {
-                        # \n  <:- ... -:>
-                        # ^^^^
-                        $s =~ s/\\n [ \t]* \z//xms;
-                    }
-                    elsif($p->[1] =~ /\A [ \t]+ \z/xms){
-                        my $nn = $tokens_ref->[$i+2];
-                        if(defined($nn) && $nn->[0] eq 'prechomp') {
-                            $p->[1] = '';               # chomp the next
-                            $s =~ s/\\n [ \t]* \z//xms; # chomp this
-                        }
+                elsif($p->[1] =~ /\A [ \t]+ \z/xms){
+                    my $nn = $tokens_ref->[$i+2];
+                    if(defined($nn) && $nn->[0] eq 'prechomp') {
+                        $p->[1] = '';               # chomp the next
+                        $s =~ s/\\n [ \t]* \z//xms; # chomp this
                     }
                 }
+            }
 
-                $code .= qq{print_raw "$s";};
-                $code .= qq{\n} if $nl;
-            }
-            when('code') {
-                my $s = $token->[1];
+            $code .= qq{print_raw "$s";};
+            $code .= qq{\n} if $nl;
+        }
+        elsif($type eq 'code') {
+            # shortcut commands
+            $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
+                if $shortcut;
 
-                # shortcut commands
-                $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
-                    if $shortcut;
-
-                if($s =~ /\A \s* [}] \s* \z/xms){
-                    $code .= $s;
-                }
-                elsif(chomp $s) {
-                    $code .= qq{$s;\n};
-                }
-                else {
-                    $code .= qq{$s;};
-                }
+            if($s =~ /\A \s* [}] \s* \z/xms){
+                $code .= $s;
             }
-            when('prechomp') {
-                # noop, just a marker
+            elsif(chomp $s) {
+                $code .= qq{$s;\n};
             }
-            when('postchomp') {
-                # noop, just a marker
+            else {
+                $code .= qq{$s;};
             }
-            default {
-                $self->_error("Oops: Unknown token: $_");
-            }
+        }
+        elsif($type eq 'prechomp') {
+            # noop, just a marker
+        }
+        elsif($type eq 'postchomp') {
+            # noop, just a marker
+        }
+        else {
+            $self->_error("Oops: Unknown token: $s ($type)");
         }
     }
     print STDOUT $code, "\n" if _DUMP_PROTO;
@@ -320,8 +315,8 @@ sub lex {
 sub parse {
     my($parser, $input, %args) = @_;
 
-    $parser->file( $args{file} // '<input>' );
-    $parser->line( $args{line} // 0 );
+    $parser->file( $args{file} || '<input>' );
+    $parser->line( $args{line} || 0 );
     $parser->near_token('(start)');
     $parser->token(undef);
     $parser->init_scope();
@@ -533,25 +528,19 @@ sub advance {
 
     print STDOUT "[$arity => $value]\n" if _DUMP_TOKEN;
 
-    given($arity) {
-        when("name") {
-            $proto = $parser->find($value);
-            $arity = $proto->arity;
+    if($arity eq "name") {
+        $proto = $parser->find($value);
+        $arity = $proto->arity;
+    }
+    elsif($arity eq "operator") {
+        $proto = $symtab->{$value};
+        if(not defined $proto) {
+            $parser->_error("Unknown operator '$value'");
         }
-        when("operator") {
-            $proto = $symtab->{$value};
-            if(not defined $proto) {
-                $parser->_error("Unknown operator '$value'");
-            }
-        }
-        when("string") {
-            $proto = $symtab->{"(literal)"};
-            $arity = "literal";
-        }
-        when("number") {
-            $proto = $symtab->{"(literal)"};
-            $arity = "literal";
-        }
+    }
+    elsif($arity eq "string" or $arity eq "number") {
+        $proto = $symtab->{"(literal)"};
+        $arity = "literal";
     }
 
     if(not defined $proto) {
@@ -658,13 +647,12 @@ sub led_ternary {
 
 sub is_valid_field {
     my($parser, $token) = @_;
-    given($token->arity) {
-        when("name") {
-            return 1;
-        }
-        when("literal") {
-            return is_int($token->id);
-        }
+    my $arity = $token->arity;
+    if($arity eq "name") {
+        return 1;
+    }
+    elsif($arity eq "literal") {
+        return is_int($token->id);
     }
     return 0;
 }
@@ -777,7 +765,7 @@ sub find { # find a name from all the scopes
             return $o;
         }
     }
-    return $parser->symbol_table->{$name} // $parser->undefined_name($name);
+    return $parser->symbol_table->{$name} || $parser->undefined_name($name);
 }
 
 sub reserve { # reserve a name to the scope
@@ -1211,7 +1199,7 @@ sub _get_bare_name {
     my($parser) = @_;
 
     my $t = $parser->token;
-    if(!($t->arity ~~ [qw(name literal)])) {
+    if(!any_in($t->arity, qw(name literal))) {
         $parser->_error("Expected name or string literal");
     }
 
@@ -1297,7 +1285,7 @@ sub std_marker {
 sub _error {
     my($self, $message, $near) = @_;
 
-    $near //= $self->near_token;
+    $near ||= $self->near_token;
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
         $self->file, $self->line+1, $message,
         $near ne ';' ? ", near '$near'" : '');

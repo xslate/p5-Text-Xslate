@@ -1,5 +1,28 @@
 /* xslate.h */
 
+/* portability stuff */
+
+#ifndef __attribute__format__
+#define __attribute__format__(a,b,c) /* nothing */
+#endif
+
+#ifndef LIKELY /* they are just a compiler's hint */
+#define LIKELY(x)   (x)
+#define UNLIKELY(x) (x)
+#endif
+
+#ifndef newSVpvs_share
+#define newSVpvs_share(s) Perl_newSVpvn_share(aTHX_ STR_WITH_LEN(s), 0U)
+#endif
+
+#if PERL_BCDVERSION < 0x5008005
+#define LooksLikeNumber(x) (SvOK(x) && looks_like_number(x))
+#else
+#define LooksLikeNumber(x) looks_like_number(x)
+#endif
+
+/* xslate stuff */
+
 #define TX_ESC_CLASS "Text::Xslate::EscapedString"
 
 /* arbitrary initial buffer size */
@@ -110,10 +133,6 @@ struct tx_code_s {
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal
 #define TXCODE_depend      TXCODE_noop
-
-#ifndef __attribute__format__
-#define __attribute__format__(a,b,c) /* nothing */
-#endif
 
 void
 tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)

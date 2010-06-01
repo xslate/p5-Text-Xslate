@@ -1,0 +1,6 @@
+List:
+$ loop(data) { $
+    * $=h:title$
+    * $=h:title$
+    * $=h:title$
+$ } $

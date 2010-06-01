@@ -1,5 +1,4 @@
 package Text::Xslate::Compiler;
-use 5.010;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
 
@@ -7,7 +6,7 @@ use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
     literal_to_value
-    is_int
+    is_int any_in
     p
 );
 
@@ -58,7 +57,7 @@ has optimize => (
     is  => 'rw',
     isa => 'Int',
 
-    default => _OPTIMIZE // 3,
+    default => defined(_OPTIMIZE) ? _OPTIMIZE : 3,
 );
 
 has lvar_id => ( # local varialbe id
@@ -165,7 +164,7 @@ sub compile {
     my $cascade = $self->cascade;
     if(defined $cascade) {
         my $engine = $self->engine
-            // $self->_error("Cannot cascade templates without Xslate engine", $cascade);
+            || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 
         my($base_file, $base_code);
         my $base       = $cascade->first;
@@ -181,7 +180,7 @@ sub compile {
                 [ depend => $engine->find_file($base_file)->{fullpath} ];
         }
         else { # only "with"
-            $base_file = $args{file} // '<input>'; # only for error messages
+            $base_file = $args{file} || '<input>'; # only for error messages
             $base_code = \@code;
 
             if(defined $args{fullpath}) {
@@ -202,7 +201,7 @@ sub compile {
                 if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
                     if($c->[0] eq 'macro_begin') {
                         $body = [];
-                        push @{ $mtable{$c->[1]} //= [] }, {
+                        push @{ $mtable{$c->[1]} ||= [] }, {
                             name  => $c->[1],
                             line  => $c->[2],
                             body  => $body,
@@ -252,7 +251,7 @@ sub compile {
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
             if _DUMP_ASM;
 
-    $parser->file($old_file // '<input>'); # reset
+    $parser->file($old_file || '<input>'); # reset
 
     return \@code;
 }
@@ -369,7 +368,7 @@ sub _can_print_optimize {
 
     return $arg->id eq '|'
         && $arg->second->arity eq 'function'
-        && $arg->second->id    ~~ [qw(raw html)];
+        && any_in($arg->second->id, qw(raw html));
 }
 
 sub _generate_name {
@@ -537,7 +536,7 @@ sub _generate_proc { # block, before, around, after
 
     my @code;
 
-    if($type ~~ [qw(macro block)]) {
+    if(any_in($type, qw(macro block))) {
         if(exists $self->macro_table->{$name}) {
             $self->_error("Redefinition of $type $name is found", $node);
         }
@@ -554,7 +553,7 @@ sub _generate_proc { # block, before, around, after
     else {
         my $fq_name = sprintf '%s@%s', $name, $type;
         $macro{name} = $fq_name;
-        push @{ $self->macro_table->{ $fq_name } //= [] }, \%macro;
+        push @{ $self->macro_table->{ $fq_name } ||= [] }, \%macro;
     }
 
     $self->lvar_release($arg_ix);
@@ -663,72 +662,68 @@ sub _generate_objectliteral {
 sub _generate_unary {
     my($self, $node) = @_;
 
-    given($node->id) {
-        when(%unary) {
-            return
-                $self->_generate_expr($node->first),
-                [ $unary{$_} => () ];
-        }
-        default {
-            $self->_error("Unary operator $_ is not implemented", $node);
-        }
+    my $id = $node->id;
+    if(exists $unary{$id}) {
+        return
+            $self->_generate_expr($node->first),
+            [ $unary{$id} => () ];
+    }
+    else {
+        $self->_error("Unary operator $id is not implemented", $node);
     }
 }
 
 sub _generate_binary {
     my($self, $node) = @_;
 
-    given($node->id) {
-        when('.') {
-            return
-                $self->_generate_expr($node->first),
-                [ fetch_field_s => $node->second->id ];
-        }
-        when('|') {
-            # a | b -> b(a)
-            return $self->_generate_call($node->clone(
-                first  =>  $node->second,
-                second => [$node->first],
-            ));
-        }
-        when(%binary) {
-            # eval lhs
-            my @code = $self->_generate_expr($node->first);
-            push @code, [ save_to_lvar => $self->lvar_id ];
-
-            # eval rhs
-            $self->lvar_use(1);
-            push @code, $self->_generate_expr($node->second);
-            $self->lvar_release(1);
-
-            # execute op
-            push @code,
-                [ load_lvar_to_sb => $self->lvar_id ],
-                [ $binary{$_}   => undef ];
-
-            if($_ ~~ [qw(min max)]) {
-                splice @code, -1, 0,
-                    [save_to_lvar => $self->lvar_id ]; # save lhs
-                push @code,
-                    [ or              => +2 , undef, undef, $_ ],
-                    [ load_lvar_to_sb => $self->lvar_id ], # on false
-                    # fall through
-                    [ move_from_sb    => () ],             # on true
-            }
-            return @code;
-        }
-        when(%logical_binary) {
-            my @right = $self->_generate_expr($node->second);
-            return
-                $self->_generate_expr($node->first),
-                [ $logical_binary{$_} => scalar(@right) + 1 ],
-                @right;
-        }
-        default {
-            $self->_error("Binary operator $_ is not implemented", $node);
-        }
+    my $id = $node->id;
+    if($id eq '.') {
+        return
+            $self->_generate_expr($node->first),
+            [ fetch_field_s => $node->second->id ];
     }
-    return;
+    elsif($id eq '|') {
+        # a | b -> b(a)
+        return $self->_generate_call($node->clone(
+            first  =>  $node->second,
+            second => [$node->first],
+        ));
+    }
+    elsif(exists $binary{$id}) {
+        # eval lhs
+        my @code = $self->_generate_expr($node->first);
+        push @code, [ save_to_lvar => $self->lvar_id ];
+
+        # eval rhs
+        $self->lvar_use(1);
+        push @code, $self->_generate_expr($node->second);
+        $self->lvar_release(1);
+
+        # execute op
+        push @code,
+            [ load_lvar_to_sb => $self->lvar_id ],
+            [ $binary{$id}   => undef ];
+
+        if(any_in($id, qw(min max))) {
+            splice @code, -1, 0,
+                [save_to_lvar => $self->lvar_id ]; # save lhs
+            push @code,
+                [ or              => +2 , undef, undef, $id ],
+                [ load_lvar_to_sb => $self->lvar_id ], # on false
+                # fall through
+                [ move_from_sb    => () ],             # on true
+        }
+        return @code;
+    }
+    elsif(exists $logical_binary{$id}) {
+        my @right = $self->_generate_expr($node->second);
+        return
+            $self->_generate_expr($node->first),
+            [ $logical_binary{$id} => scalar(@right) + 1 ],
+            @right;
+    }
+
+    $self->_error("Binary operator $id is not implemented", $node);
 }
 
 sub _generate_ternary { # the conditional operator
@@ -817,6 +812,7 @@ my %goto_family;
 @goto_family{qw(
     for_iter
     and
+    dand
     or
     dor
     goto
@@ -856,59 +852,58 @@ sub _optimize_vmcode {
                 : (($i+$addr) .. $i); # negative
 
             foreach my $j(@range) {
-                push @{$goto_addr[$j] //= []}, $c->[$i];
+                push @{$goto_addr[$j] ||= []}, $c->[$i];
             }
         }
     }
 
     for(my $i = 0; $i < @{$c}; $i++) {
-        given($c->[$i][0]) {
-            when('print_raw_s') {
-                # merge a chain of print_raw_s into single command
-                my $j = $i + 1; # from the next op
-                while($j < @{$c}
-                        && $c->[$j][0] eq 'print_raw_s'
-                        && "@{$goto_addr[$i] // []}" eq "@{$goto_addr[$j] // []}") {
+        my $name = $c->[$i][0];
+        if($name eq 'print_raw_s') {
+            # merge a chain of print_raw_s into single command
+            my $j = $i + 1; # from the next op
+            while($j < @{$c}
+                    && $c->[$j][0] eq 'print_raw_s'
+                    && "@{$goto_addr[$i] || []}" eq "@{$goto_addr[$j] || []}") {
 
-                    $c->[$i][1] .= $c->[$j][1];
+                $c->[$i][1] .= $c->[$j][1];
 
-                    _noop($c->[$j]);
-                    $j++;
-                }
+                _noop($c->[$j]);
+                $j++;
             }
-            when('save_to_lvar') {
-                # use registers, instead of local variables
-                #
-                # given:
-                #   save_to_lvar $n
-                #   <single-op>
-                #   load_lvar_to_sb $n
-                # convert into:
-                #   move_to_sb
-                #   <single-op>
-                my $it = $c->[$i];
-                my $nn = $c->[$i+2]; # next next
-                if(defined($nn)
-                    && $nn->[0] eq 'load_lvar_to_sb'
-                    && $nn->[1] == $it->[1]) {
-                    @{$it} = ('move_to_sb', undef, undef, "ex-$it->[0]");
+        }
+        elsif($name eq 'save_to_lvar') {
+            # use registers, instead of local variables
+            #
+            # given:
+            #   save_to_lvar $n
+            #   <single-op>
+            #   load_lvar_to_sb $n
+            # convert into:
+            #   move_to_sb
+            #   <single-op>
+            my $it = $c->[$i];
+            my $nn = $c->[$i+2]; # next next
+            if(defined($nn)
+                && $nn->[0] eq 'load_lvar_to_sb'
+                && $nn->[1] == $it->[1]) {
+                @{$it} = ('move_to_sb', undef, undef, "ex-$it->[0]");
 
-                    _noop($nn);
-                }
+                _noop($nn);
             }
-            when('literal') {
-                if(is_int($c->[$i][1])) {
-                    $c->[$i][0] = 'literal_i';
-                }
+        }
+        elsif($name eq 'literal') {
+            if(is_int($c->[$i][1])) {
+                $c->[$i][0] = 'literal_i';
             }
-            when('fetch_field') {
-                my $prev = $c->[$i-1];
-                if($prev->[0] =~ /^literal/) { # literal or literal_i
-                    $c->[$i][0] = 'fetch_field_s';
-                    $c->[$i][1] = $prev->[1];
+        }
+        elsif($name eq 'fetch_field') {
+            my $prev = $c->[$i-1];
+            if($prev->[0] =~ /^literal/) { # literal or literal_i
+                $c->[$i][0] = 'fetch_field_s';
+                $c->[$i][1] = $prev->[1];
 
-                    _noop($prev);
-                }
+                _noop($prev);
             }
         }
     }

@@ -2,12 +2,20 @@ use strict;
 use Test::More (tests => 4);
 use File::Path ();
 
-File::Path::rmtree( "t/600_app/out" );
-END{ File::Path::rmtree( "t/600_app/out" ); }
+sub clean {
+    File::Path::rmtree( "t/600_app/out" );
+    File::Path::rmtree( ".cache" );
+}
+
+clean();
+END{
+    clean();
+}
 
 system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
     '--dest=t/600_app/out',
+    '--cache_dir=.cache',
     '--verbose=1',
     '--escape=html',
     '--cache=0',

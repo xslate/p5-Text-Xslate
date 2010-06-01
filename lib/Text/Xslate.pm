@@ -1,10 +1,10 @@
 package Text::Xslate;
 # The Xslate engine class
-use 5.010_000;
+use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1023';
+our $VERSION = '0.1025';
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string html_escape);
@@ -16,7 +16,15 @@ use Text::Xslate::Util qw(
     p
 );
 
-use constant _DUMP_LOAD_FILE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
+use Carp ();
+use File::Spec;
+
+BEGIN {
+    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
+    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
+
+    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+}
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
     if($DEBUG !~ /\b pp \b/xms) {
@@ -32,11 +40,6 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
     }
 }
 
-use Carp ();
-use File::Spec;
-
-use constant _ST_MTIME => 9; # see perldoc -f stat
-
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 my $XSLATE_MAGIC = qq{.xslate "%s/%s/%s/%s"\n}; # version/syntax/escape/path
@@ -47,14 +50,14 @@ sub new {
 
     # options
 
-    $args{suffix}       //= '.tx';
-    $args{path}         //= [ '.' ];
-    $args{input_layer}  //= ':utf8';
-    $args{compiler}     //= 'Text::Xslate::Compiler';
-    $args{syntax}       //= 'Kolon'; # passed directly to the compiler
-    $args{escape}       //= 'html';
-    $args{cache}        //= 1;
-    $args{cache_dir}    //= File::Spec->tmpdir;
+    defined($args{suffix})      or $args{suffix}      = '.tx';
+    defined($args{path})        or $args{path}        = [ '.' ];
+    defined($args{input_layer}) or $args{input_layer} = ':utf8';
+    defined($args{compiler})    or $args{compiler}    = 'Text::Xslate::Compiler';
+    defined($args{syntax})      or $args{syntax}      = 'Kolon';
+    defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
+    defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
+    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->tmpdir;
 
     my %funcs = (
         raw  => \&escaped_string,
@@ -62,15 +65,14 @@ sub new {
         dump => \&p,
     );
 
-
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
             . " Use 'module' instead");
-        %funcs = import_from(@{$args{import}});
+        %funcs = (%funcs, import_from(@{$args{import}}));
     }
     if(defined $args{module}) {
-        %funcs = import_from(@{$args{module}});
+        %funcs = (%funcs, import_from(@{$args{module}}));
     }
 
     # function => { ... } overrides imported functions
@@ -86,13 +88,10 @@ sub new {
     }
 
     # internal data
-    $args{template}       = {};
+    $args{template} = {};
 
     my $self = bless \%args, $class;
 
-    if(defined $args{file}) {
-        Carp::carp('"file" option has been deprecated. Use render($file, \%vars) instead');
-    }
     if(defined $args{string}) {
         Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
         $self->load_string($args{string});
@@ -123,7 +122,8 @@ sub find_file {
 
     foreach my $p(@{$self->{path}}) {
         $fullpath = File::Spec->catfile($p, $file);
-        $orig_mtime = (stat($fullpath))[_ST_MTIME] // next; # does not exist
+        defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
+            or next; # does not exist
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
 
@@ -132,7 +132,7 @@ sub find_file {
 
             # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
-            $is_compiled = (($mtime // $cache_mtime) >= $orig_mtime);
+            $is_compiled = (($mtime || $cache_mtime) >= $orig_mtime);
             last;
         }
         else {
@@ -209,12 +209,12 @@ sub load_file {
                     $dep_mtime = '+inf'; # force reload
                     Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
                 }
-                if($dep_mtime > ($mtime // $f->{cache_mtime})){
+                if($dep_mtime > ($mtime || $f->{cache_mtime})){
                     unlink $cachepath
                         or $self->_error("LoadError: Cannot unlink $cachepath: $!");
                     printf "---> %s(%s) is newer than %s(%s)\n",
                         $code->[1], scalar localtime($dep_mtime),
-                        $cachepath, scalar localtime($mtime // $f->{cache_mtime})
+                        $cachepath, scalar localtime($mtime || $f->{cache_mtime})
                             if _DUMP_LOAD_FILE;
                     goto &load_file; # retry
                 }
@@ -252,7 +252,7 @@ sub load_file {
     my $cache_mtime;
     if($self->{cache} < 2) {
         if($is_compiled) {
-            $cache_mtime = $f->{cache_mtime} // ( stat $cachepath )[_ST_MTIME];
+            $cache_mtime = $f->{cache_mtime} || ( stat $cachepath )[_ST_MTIME];
         }
         else {
             $cache_mtime = 0; # no compiled cache, always need to reload
@@ -359,7 +359,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1023.
+This document describes Text::Xslate version 0.1025.
 
 =head1 SYNOPSIS
 
@@ -615,7 +615,8 @@ There are common notes in the Xslate virtual machine.
 
 =head2 Nil handling
 
-Note that nil handling is different from Perl's.
+Note that nil handling is different from Perl's. Basically it does nothing,
+but C<< verbose => 2 >> will produce warnings for it.
 
 =over
 
@@ -643,7 +644,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 =head1 DEPENDENCIES
 
-Perl 5.10.0 or later.
+Perl 5.8.1 or later.
 
 If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
 backend is used.

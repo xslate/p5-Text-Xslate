@@ -48,7 +48,7 @@ sub join :method {
 }
 
 sub reverse :method {
-    my($self, $sep) = @_;
+    my($self) = @_;
     return [ reverse @{$self->_items} ];
 }
 

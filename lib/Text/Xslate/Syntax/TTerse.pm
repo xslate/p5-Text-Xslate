@@ -1,5 +1,4 @@
 package Text::Xslate::Syntax::TTerse;
-use 5.010;
 use Any::Moose;
 use Text::Xslate::Util qw(p);
 

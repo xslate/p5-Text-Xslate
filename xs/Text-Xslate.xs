@@ -4,6 +4,7 @@
 #include <XSUB.h>
 
 #define NEED_newSVpvn_flags_GLOBAL
+#define NEED_newSVpvn_share
 #include "ppport.h"
 
 #include "xslate.h"
@@ -79,7 +80,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name);
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
-    return SvPVx_nolen_const(*av_fetch(st->tmpl, TXo_NAME, TRUE));
+    SV* const filesv = *av_fetch(st->tmpl, TXo_NAME, TRUE);
+    return SvPV_nolen_const(filesv);
 }
 
 static int
@@ -159,7 +161,7 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 
     newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
 
-    SvUPGRADE((SV*)newframe, SVt_PVAV);
+    (void)SvUPGRADE((SV*)newframe, SVt_PVAV);
     if(AvFILLp(newframe) < TXframe_START_LVAR) {
         av_extend(newframe, TXframe_START_LVAR);
     }
@@ -258,7 +260,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
             }
         }
         else if(SvTYPE(rv) == SVt_PVAV) {
-            if(looks_like_number(key)) {
+            if(LooksLikeNumber(key)) {
                 SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
                 if(svp) {
                     sv = *svp;
@@ -1031,7 +1033,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 
 #ifdef USE_ITHREADS
 static SV*
-tx_sv_dup_inc(pTHX_ const SV* const sv, CLONE_PARAMS* const param) {
+tx_sv_dup_inc(pTHX_ SV* const sv, CLONE_PARAMS* const param) {
     SV* const newsv = sv_dup(sv, param);
     SvREFCNT_inc_simple_void(newsv);
     return newsv;
@@ -1078,7 +1080,9 @@ static MGVTBL xslate_vtbl = { /* for identity */
     tx_mg_free, /* free */
     NULL, /* copy */
     tx_mg_dup, /* dup */
+#ifdef MGf_LOCAL
     NULL,  /* local */
+#endif
 };
 
 

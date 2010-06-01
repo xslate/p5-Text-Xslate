@@ -1,5 +1,4 @@
 package Text::Xslate::Syntax::Foo;
-use 5.010;
 use Any::Moose;
 
 extends qw(Text::Xslate::Parser);
