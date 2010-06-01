@@ -402,13 +402,6 @@ $CODE_MANIP{ 'not' } = sub {
     $self->sa( sprintf( '( !%s )', $sv ) );
 };
 
-
-$CODE_MANIP{ 'plus' } = sub {
-    my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '+ %s', $self->sa ) );
-};
-
-
 $CODE_MANIP{ 'minus' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( '- %s', $self->sa ) );

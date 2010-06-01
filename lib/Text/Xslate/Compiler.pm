@@ -50,7 +50,7 @@ my %logical_binary = (
 my %unary = (
     '!'   => 'not',
     'not' => 'not',
-    '+'   => 'plus',
+    '+'   => 'noop',
     '-'   => 'minus',
 );
 

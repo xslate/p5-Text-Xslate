@@ -683,13 +683,9 @@ TXC(not) {
     TX_st->pc++;
 }
 
-TXC(plus) { /* unary plus */
-    sv_setnv(TX_st->targ, +SvNVx(TX_st_sa));
-    TX_st_sa = TX_st->targ;
-    TX_st->pc++;
-}
 TXC(minus) { /* unary minus */
     sv_setnv(TX_st->targ, -SvNVx(TX_st_sa));
+    sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
