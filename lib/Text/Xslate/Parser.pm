@@ -577,7 +577,7 @@ sub expression_list {
     my($parser) = @_;
 
     my @args;
-    if($parser->token->id ne ")") {
+    if($parser->token->has_nud) {
         while(1) {
             push @args, $parser->expression(0);
             my $t = $parser->token;

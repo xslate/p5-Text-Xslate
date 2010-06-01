@@ -30,6 +30,13 @@ raw
 if
 X
 
+    # array
+
+    [<<'T', { lang => 'Xslate' }, '0', "empty array literal"],
+: macro foo -> $a { $a.size() }
+: foo([])
+T
+
     [<<'T', { lang => 'Xslate' }, <<'X', "array literal"],
 : macro foo -> $a { $a.0 ~ "\n" }
 : foo(["foo", "bar", "baz"])
@@ -53,6 +60,13 @@ T
 
     [<<'T', { lang => 'Xslate' }, "Xslate"],
 : (["foo", $lang]).1
+T
+
+    # hash
+
+    [<<'T', { lang => 'Xslate' }, '0', "empty hash literal"],
+: macro foo -> $a { $a.size() }
+: foo({})
 T
 
     [<<'T', { lang => 'Xslate' }, "Xslate"],
