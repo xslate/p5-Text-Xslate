@@ -81,6 +81,25 @@ T
     not=10
 X
 
+    [<<'T', { lang => 'Xslate' }, <<"X", "nested"],
+: for [ [1], [2], [3] ] -> $i {
+    <: $i[0] :>
+: }
+T
+    1
+    2
+    3
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "nested"],
+: for [ { value => 1 }, { value => 2 }, { value => 3 } ] -> $i {
+    <: $i.value :>
+: }
+T
+    1
+    2
+    3
+X
 
 );
 
