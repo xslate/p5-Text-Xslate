@@ -508,7 +508,7 @@ sub advance {
     my($parser, $id) = @_;
 
     my $t = $parser->token;
-    if($id && $t->id ne $id) {
+    if(defined($id) && $t->id ne $id) {
         $parser->_error("Expected '$id' but '$t'");
     }
 

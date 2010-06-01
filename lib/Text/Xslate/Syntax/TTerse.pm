@@ -43,7 +43,7 @@ sub define_symbols {
     $parser->symbol('elsif')->is_block_end(1);
 
     $parser->symbol('IN');
-    $parser->symbol('in')->id('IN');
+    $parser->symbol('in');
 
     $parser->symbol('IF')      ->set_std(\&std_if);
     $parser->symbol('if')      ->set_std(\&std_if);
@@ -57,15 +57,23 @@ sub define_symbols {
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
     $parser->symbol('include') ->set_std(\&std_include);
     $parser->symbol('WITH');
-    $parser->symbol('with')->id('WITH');
+    $parser->symbol('with');
 
     $parser->symbol('MACRO') ->set_std(\&std_macro);
     $parser->symbol('macro') ->set_std(\&std_macro);
     $parser->symbol('BLOCK');
-    $parser->symbol('block')->id('BLOCK');
+    $parser->symbol('block');
 
     return;
 }
+
+around advance => sub {
+    my($super, $parser, $id) = @_;
+    if(defined $id and $parser->token->id eq lc($id)) {
+        $id = lc($id);
+    }
+    return $super->($parser, $id);
+};
 
 sub undefined_name {
     my($parser) = @_;
@@ -130,9 +138,8 @@ sub std_if {
             : $parser->statements());
     }
 
-    $parser->token->id eq "end"
-        ? $parser->advance("end")
-        : $parser->advance("END");
+
+    $parser->advance("END");
     return $top_if;
 }
 
@@ -145,15 +152,12 @@ sub std_foreach {
 
     my $proc = $symbol->clone(arity => "for");
 
-    my $t = $parser->token;
-    if($t->arity ne "variable") {
-        $parser->_error("Expected a variable name but $t");
+    my $var = $parser->token;
+    if($var->arity ne "variable") {
+        $parser->_error("Expected a variable name but $var");
     }
-
-    my $var = $t;
-    $parser->advance()
-        ? $parser->advance("in")
-        : $parser->advance("IN");
+    $parser->advance();
+    $parser->advance("IN");
 
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
@@ -165,9 +169,7 @@ sub std_foreach {
     $proc->third( $parser->statements() );
     $parser->pop_scope();
 
-    $parser->token->id eq "end"
-        ? $parser->advance("end")
-        : $parser->advance("END");
+    $parser->advance("END");
 
     return $proc;
 }
