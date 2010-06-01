@@ -8,7 +8,14 @@ Revision history for Perl extension Text::Xslate
     - Introduce loop iterators:
         + "$~LOOP_VAR" (e.g. $~item) in Kolon
         + "loop" (the same as TT) in TTerse
-        + Supported loop elements: index, count, even, odd, parity
+        + Supported loop elements: index, count, size, max, body,
+          is_first/first, and is_last/last.
+    - For TTerse
+        + Port MACRO foo(...) BLOCK ... END syntax
+
+    [BUG FIXES]
+    - Empty hash/array literals ware not allowed
+    - There ware some other literal issues
 
 0.1025 Mon May 31 20:29:50 2010
     - Support 5.8.1
