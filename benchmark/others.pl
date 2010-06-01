@@ -1,5 +1,4 @@
 #!perl
-
 # templates: benchmark/template/list.*
 
 use strict;

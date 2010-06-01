@@ -69,20 +69,20 @@ my %vars = (
 print "Benchmarks for include commands\n";
 # suppose PSGI response body
 cmpthese -1 => {
-    xslate => sub {
+    Xslate => sub {
         my $body = [$tx->render('including.tx', \%vars)];
         return;
     },
-    mt => sub {
+    MT => sub {
         my $body = [$mt->render('including', \%vars)];
         return;
     },
-    ht => sub {
+    HT => sub {
         $ht->param(\%vars);
         my $body = [$ht->output()];
         return;
     },
-    tt => sub {
+    TT => sub {
         my $body = [''];
         $tt->process('including.tt', \%vars, \$body->[0]) or die $tt->error;
         return;
