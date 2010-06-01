@@ -90,5 +90,15 @@ like $warn, qr/"bar" isn't numeric/;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
+$warn = '';
+$out = eval {
+    $tx->render_string('<: [].keys(1) :>', { a => 'foo', b => 'bar' });
+};
+
+is $out, '', 'warn in render_string()';
+like $warn, qr/requires exactly 0 argument/;
+like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+is $@,  '';
+
 
 done_testing;

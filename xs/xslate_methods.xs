@@ -335,7 +335,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             if(bm.nargs != -1
                 && bm.nargs != items) {
                 tx_error(aTHX_ st,
-                    "Builtin method %"SVf" requres exactly %d argument(s), "
+                    "Builtin method %"SVf" requires exactly %d argument(s), "
                     "but supplied %d",
                     method, (int)bm.nargs, (int)items);
                 goto finish;

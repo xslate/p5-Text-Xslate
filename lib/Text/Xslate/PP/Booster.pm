@@ -1003,7 +1003,7 @@ sub methodcall {
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
             _error($st, $frame, $line,
-                "Builtin method %s requres exactly %d argument(s), "
+                "Builtin method %s requires exactly %d argument(s), "
                 . "but supplied %d",
                 $method, $nargs, scalar @args);
             return undef;
