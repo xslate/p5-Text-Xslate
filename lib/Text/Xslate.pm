@@ -441,6 +441,56 @@ Xslate has a virtual machine written in XS, which is highly optimized.
 According to benchmarks, Xslate is B<2-10 times faster> than other template
 engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
 
+There are benchmarks to compare template engines (see F<benchmark/others.pl> for details).
+
+For loops, give C<list> as the first argument. The second argument indicates
+the data size:
+
+    $ perl -Mblib benchmark/others.pl list 10
+    Perl/5.10.1 i686-linux
+    Text::Xslate/0.1025
+    Text::MicroTemplate/0.11
+    Template/2.22
+    Text::ClearSilver/0.10.5.4
+    MobaSiF::Template/0.02
+    HTML::Template::Pro/0.94
+    1..5
+    ok 1 - TT: Template-Toolkit
+    ok 2 - MT: Text::MicroTemplate
+    ok 3 - TCS: Text::ClearSilver
+    ok 4 - MST: MobaSiF::Template
+    ok 5 - HT: HTML::Template::Pro
+    Benchmarks with 'list' (datasize=10)
+               Rate     MT     TT     HT    TCS    MST Xslate
+    MT       1334/s     --   -36%   -83%   -88%   -90%   -99%
+    TT       2073/s    55%     --   -73%   -82%   -84%   -98%
+    HT       7819/s   486%   277%     --   -32%   -39%   -93%
+    TCS     11487/s   761%   454%    47%     --   -10%   -89%
+    MST     12822/s   861%   519%    64%    12%     --   -88%
+    Xslate 108195/s  8011%  5119%  1284%   842%   744%     --
+
+For C<include> commands, pass C<include> as the first argument:
+
+    $ perl -Mblib benchmark/others.pl include 10
+    Perl/5.10.1 i686-linux
+    Text::Xslate/0.1025
+    Text::MicroTemplate/0.11
+    Template/2.22
+    Text::ClearSilver/0.10.5.4
+    HTML::Template::Pro/0.94
+    1..4
+    ok 1 - TT: Template-Toolkit
+    ok 2 - MT: Text::MicroTemplate
+    ok 3 - TCS: Text::ClearSilver
+    ok 4 - HT: HTML::Template::Pro
+    Benchmarks with 'include' (datasize=10)
+              Rate     MT     TT     HT    TCS Xslate
+    MT       891/s     --   -48%   -82%   -91%   -99%
+    TT      1698/s    91%     --   -66%   -82%   -98%
+    HT      4971/s   458%   193%     --   -49%   -93%
+    TCS     9686/s   988%   470%    95%     --   -87%
+    Xslate 75188/s  8343%  4327%  1413%   676%     --
+
 =head3 Template cascading
 
 Xslate supports B<template cascading>, which allows you to extend

@@ -29,7 +29,7 @@ my $mt = Text::MicroTemplate::Extended->new(
 );
 my $ht = HTML::Template->new(
     path           => \@path,
-    filename       => "including.ht",
+    filename       => "include.ht",
     case_sensitive => 1,
 );
 my $tt = Template->new(
@@ -48,11 +48,11 @@ my %vars = (
 );
 
 {
-    my $expected = $tx->render('including.tx', \%vars);
+    my $expected = $tx->render('include.tx', \%vars);
     $expected =~ s/\n+/\n/g;
 
     plan tests => 3;
-    my $out = $mt->render('including', \%vars);
+    my $out = $mt->render('include', \%vars);
     $out =~ s/\n+/\n/g;
     is $out, $expected, 'MT - Text::MicroTemplate::Extended';
 
@@ -62,7 +62,7 @@ my %vars = (
     is $out, $expected, 'HT - HTML::Template::Pro';
 
     $out = '';
-    $tt->process('including.tt', \%vars, \$out) or die $tt->error;
+    $tt->process('include.tt', \%vars, \$out) or die $tt->error;
     is $out, $expected, 'TT - Template-Toolkit';
 }
 
@@ -70,11 +70,11 @@ print "Benchmarks for include commands\n";
 # suppose PSGI response body
 cmpthese -1 => {
     Xslate => sub {
-        my $body = [$tx->render('including.tx', \%vars)];
+        my $body = [$tx->render('include.tx', \%vars)];
         return;
     },
     MT => sub {
-        my $body = [$mt->render('including', \%vars)];
+        my $body = [$mt->render('include', \%vars)];
         return;
     },
     HT => sub {
@@ -84,7 +84,7 @@ cmpthese -1 => {
     },
     TT => sub {
         my $body = [''];
-        $tt->process('including.tt', \%vars, \$body->[0]) or die $tt->error;
+        $tt->process('include.tt', \%vars, \$body->[0]) or die $tt->error;
         return;
     },
 };
