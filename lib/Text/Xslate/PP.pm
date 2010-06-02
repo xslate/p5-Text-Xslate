@@ -5,26 +5,20 @@ use strict;
 
 our $VERSION = '0.1025';
 
-use Carp ();
-
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
 use Text::Xslate::PP::Booster;
-
 use Text::Xslate::Util qw($DEBUG);
 
+use Carp ();
+
 use parent qw(Exporter);
+
 our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
 our %EXPORT_TAGS = (
     backend => \@EXPORT_OK,
 );
-
-{
-    package Text::Xslate;
-    Text::Xslate::PP->import(':backend');
-    our @ISA = qw(Text::Xslate::PP);
-}
 
 require Text::Xslate;
 
@@ -37,6 +31,9 @@ require Text::Xslate;
         *OPS = \%Text::Xslate::PP::OPS;
     }
 }
+
+unshift @Text::Xslate::ISA, __PACKAGE__;
+
 #
 # public APIs
 #

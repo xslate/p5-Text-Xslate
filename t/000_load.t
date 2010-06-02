@@ -12,7 +12,7 @@ BEGIN { use_ok 'Any::Moose' }
 
 diag "Testing Text::Xslate/$Text::Xslate::VERSION";
 
-diag "Backend: ", B::svref_2object(Text::Xslate->can('render'))->XSUB ? "XS" : "PP";
+diag "Backend: ", Text::Xslate->isa('Text::Xslate::PP') ? "PP" : "XS";
 
 diag "Any::Moose Backend: ", any_moose(), "/", any_moose()->VERSION;
 

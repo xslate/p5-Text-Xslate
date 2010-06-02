@@ -6,24 +6,19 @@ use warnings;
 
 our $VERSION = '0.1025';
 
-use parent qw(Exporter);
+use Text::Xslate::Util qw($DEBUG);
+
+use Carp       ();
+use File::Spec ();
+use Exporter   ();
+
+our @ISA = qw(Text::Xslate::Engine Exporter);
+
 our @EXPORT_OK = qw(escaped_string html_escape);
 
-use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
-    literal_to_value
-    import_from
-    p
-);
-
-use Carp ();
-use File::Spec;
-
-BEGIN {
-    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
-    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
-
-    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+{
+    no warnings 'once';
+    *html_escape    = \&Text::Xslate::Engine::html_escape;
 }
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
@@ -38,6 +33,25 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
         require 'Text/Xslate/PP.pm';
         Text::Xslate::PP->import(':backend');
     }
+}
+
+package
+    Text::Xslate::Engine;
+
+Text::Xslate->import('escaped_string');
+
+use Text::Xslate::Util qw(
+    $NUMBER $STRING $DEBUG
+    literal_to_value
+    import_from
+    p
+);
+
+BEGIN {
+    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
+    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
+
+    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 }
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;

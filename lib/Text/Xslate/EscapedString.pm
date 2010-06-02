@@ -1,7 +1,7 @@
 package Text::Xslate::EscapedString;
 # the package is implemented intentionally in Text::Xslate
-use Text::Xslate;
-1;
+require Text::Xslate;
+1
 __END__
 
 =head1 NAME
