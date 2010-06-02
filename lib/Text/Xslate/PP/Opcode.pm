@@ -366,44 +366,28 @@ sub op_size {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_eq {
-    my $aval = $_[0]->{sa};
-    my $bval = $_[0]->{sb};
-
-    if ( defined $aval and defined $bval ) {
-        # SVf_IOKかどうかのチェック
-        $_[0]->{sa} = $aval eq $bval;
+suv _sv_eq {
+    my($x, $y) = @_;
+    if ( defined $x and defined $y ) {
+        return $x eq $y;
     }
 
-    if ( defined $aval ) {
-        $_[0]->{sa} = defined $bval && $aval eq $bval;
+    if ( defined $x ) {
+        return defined $y && $x eq $y;
     }
     else {
-        $_[0]->{sa} = !defined $bval;
+        return !defined $y;
     }
+}
 
+sub op_eq {
+    $_[0]->{sa} =  _sv_eq($_[0]->{sa}, $_[0]->{sb});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_ne {
-    my $aval = $_[0]->{sa};
-    my $bval = $_[0]->{sb};
-
-    if ( defined $aval and defined $bval ) {
-        # SVf_IOKかどうかのチェック
-        $_[0]->{sa} = $aval eq $bval;
-    }
-
-    if ( defined $aval ) {
-        $_[0]->{sa} = defined $bval && $aval eq $bval;
-    }
-    else {
-        $_[0]->{sa} = !defined $bval;
-    }
-
-    $_[0]->{sa} = ! $_[0]->{sa};
-
+    $_[0]->{sa} = !_sv_eq($_[0]->{sa}, $_[0]->{sb});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
