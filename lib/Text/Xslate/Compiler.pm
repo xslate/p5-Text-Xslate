@@ -711,10 +711,10 @@ sub _generate_binary {
             splice @code, -1, 0,
                 [save_to_lvar => $self->lvar_id ]; # save lhs
             push @code,
-                [ or              => +2 , undef, undef, $id ],
-                [ load_lvar_to_sb => $self->lvar_id ], # on false
+                [ or              => +2 , undef, $id ],
+                [ load_lvar_to_sb => $self->lvar_id, undef, "$id on false" ],
                 # fall through
-                [ move_from_sb    => () ],             # on true
+                [ move_from_sb    => undef, undef, "$id on true" ],
         }
         return @code;
     }
