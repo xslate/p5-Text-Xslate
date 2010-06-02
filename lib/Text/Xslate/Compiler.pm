@@ -176,7 +176,7 @@ sub compile {
 
     $self->_optimize_vmcode(\@code) for 1 .. $self->optimize;
 
-    print "// ", $self->file, "\n",
+    print STDERR "// ", $self->file, "\n",
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
             if _DUMP_ASM;
 
@@ -370,20 +370,21 @@ sub _flush_macro_table {
     our %OPS; # to avoid 'once' warnings;
 }
 
-sub _can_print_optimize {
-    my($self, $name, $arg) = @_;
-
-    return 0 if !($name eq 'print' or $name eq 'print_raw');
-
-    return $arg->id eq '|'
-        && $arg->second->arity eq 'function'
-        && any_in($arg->second->id, qw(raw html));
-}
-
 sub _generate_name {
     my($self, $node) = @_;
 
     $self->_error("Undefined symbol '$node', before " . $node->first, $node);
+}
+
+sub _can_print_optimize {
+    my($self, $name, $node) = @_;
+
+    return 0 if !($name eq 'print' or $name eq 'print_raw');
+
+    return $node->arity eq 'call'
+        && $node->first->arity eq 'function'
+        && any_in($node->first->id, qw(raw html))
+        && @{$node->second} == 1;
 }
 
 sub _generate_command {
@@ -405,9 +406,9 @@ sub _generate_command {
         elsif($do_optimize and $self->_can_print_optimize($proc, $arg)){
             # expr | html
             # expr | raw
-            my $command = $arg->second->id eq 'html' ? 'print' : 'print_raw';
+            my $command = $arg->first->id eq 'html' ? 'print' : 'print_raw';
             push @code,
-                $self->_expr($arg->first),
+                $self->_expr($arg->second->[0]),
                 [ $command => undef, $node->line, "builtin filter" ];
         }
         else {
@@ -690,13 +691,6 @@ sub _generate_binary {
         return
             $self->_expr($node->first),
             [ fetch_field_s => $node->second->id ];
-    }
-    elsif($id eq '|') {
-        # a | b -> b(a)
-        return $self->_generate_call($node->clone(
-            first  =>  $node->second,
-            second => [$node->first],
-        ));
     }
     elsif(exists $binary{$id}) {
         # eval lhs

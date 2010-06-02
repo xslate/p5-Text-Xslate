@@ -438,7 +438,7 @@ sub define_basic_operators {
     $parser->infix('==', 150)->is_logical(1);
     $parser->infix('!=', 150)->is_logical(1);
 
-    $parser->infix('|',  140); # filter
+    $parser->infix('|',  140, \&led_bar);
 
     $parser->infixr('&&', 130)->is_logical(1);
 
@@ -748,6 +748,17 @@ sub led_call {
 
     $call->second( $parser->expression_list() );
     $parser->advance(")");
+
+    return $call;
+}
+
+sub led_bar { # filter
+    my($parser, $symbol, $left) = @_;
+
+    my $call = $symbol->clone(arity => 'call');
+
+    $call->first($parser->expression($call->lbp));
+    $call->second([$left]);
 
     return $call;
 }
