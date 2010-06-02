@@ -438,40 +438,14 @@ Version 0.2xxx and more will be somewhat stable.
 =head3 High performance
 
 Xslate has a virtual machine written in XS, which is highly optimized.
-According to benchmarks, Xslate is B<2-10 times faster> than other template
+According to benchmarks, Xslate is much faster than other template
 engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
 
-There are benchmarks to compare template engines (see F<benchmark/others.pl> for details).
+There are benchmarks to compare template engines (see F<benchmark/> for details).
 
-For loops, give C<list> as the first argument. The second argument indicates
-the data size:
+Here is a result of F<benchmark/others.pl> to compare various template engines.
 
-    $ perl -Mblib benchmark/others.pl list 10
-    Perl/5.10.1 i686-linux
-    Text::Xslate/0.1025
-    Text::MicroTemplate/0.11
-    Template/2.22
-    Text::ClearSilver/0.10.5.4
-    MobaSiF::Template/0.02
-    HTML::Template::Pro/0.94
-    1..5
-    ok 1 - TT: Template-Toolkit
-    ok 2 - MT: Text::MicroTemplate
-    ok 3 - TCS: Text::ClearSilver
-    ok 4 - MST: MobaSiF::Template
-    ok 5 - HT: HTML::Template::Pro
-    Benchmarks with 'list' (datasize=10)
-               Rate     MT     TT     HT    TCS    MST Xslate
-    MT       1334/s     --   -36%   -83%   -88%   -90%   -99%
-    TT       2073/s    55%     --   -73%   -82%   -84%   -98%
-    HT       7819/s   486%   277%     --   -32%   -39%   -93%
-    TCS     11487/s   761%   454%    47%     --   -10%   -89%
-    MST     12822/s   861%   519%    64%    12%     --   -88%
-    Xslate 108195/s  8011%  5119%  1284%   842%   744%     --
-
-For C<include> commands, pass C<include> as the first argument:
-
-    $ perl -Mblib benchmark/others.pl include 10
+    $ perl -Mblib benchmark/others.pl include 100
     Perl/5.10.1 i686-linux
     Text::Xslate/0.1025
     Text::MicroTemplate/0.11
@@ -483,13 +457,16 @@ For C<include> commands, pass C<include> as the first argument:
     ok 2 - MT: Text::MicroTemplate
     ok 3 - TCS: Text::ClearSilver
     ok 4 - HT: HTML::Template::Pro
-    Benchmarks with 'include' (datasize=10)
-              Rate     MT     TT     HT    TCS Xslate
-    MT       891/s     --   -48%   -82%   -91%   -99%
-    TT      1698/s    91%     --   -66%   -82%   -98%
-    HT      4971/s   458%   193%     --   -49%   -93%
-    TCS     9686/s   988%   470%    95%     --   -87%
-    Xslate 75188/s  8343%  4327%  1413%   676%     --
+    Benchmarks with 'include' (datasize=100)
+             Rate     TT     MT    TCS     HT Xslate
+    TT      313/s     --   -55%   -88%   -89%   -97%
+    MT      697/s   123%     --   -72%   -75%   -93%
+    TCS    2512/s   702%   260%     --    -9%   -74%
+    HT     2759/s   781%   296%    10%     --   -71%
+    Xslate 9489/s  2931%  1261%   278%   244%     --
+
+You can see Xslate is 3 times faster than HTML::Template::Pro and Text::ClearSilver,
+which are implemented in XS.
 
 =head3 Template cascading
 
