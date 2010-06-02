@@ -737,9 +737,9 @@ sub _generate_ternary { # the conditional operator
     my @else = $self->_expr($node->third);
     return(
         @expr,
-        [ and  => scalar(@then) + 2, $node->line, 'ternary' ],
+        [ and  => scalar(@then) + 2, $node->line, 'ternary-then' ],
         @then,
-        [ goto => scalar(@else) + 1 ],
+        [ goto => scalar(@else) + 1, undef, 'ternary-else' ],
         @else,
     );
 }

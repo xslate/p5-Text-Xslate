@@ -690,6 +690,9 @@ sub _convert_opcode {
 
 sub _check_logic {
     my ( $self, $i, $arg, $type ) = @_;
+
+    $self->write_lines("# $type");
+
     my $ops = $self->ops;
     my $type_store = $type;
 
@@ -700,8 +703,7 @@ sub _check_logic {
               : $type eq 'dand' ? 'defined( %s )'
               : $type eq 'or'   ? ' || '
               : $type eq 'dor'  ? '!(defined( %s ))'
-              : die
-              ;
+              : die $type;
         my $pre_exprs = $self->exprs || '';
         $self->exprs( $pre_exprs . $self->sa() . $type ); # store
         return;
@@ -714,8 +716,7 @@ sub _check_logic {
           : $type eq 'dand' ? 'defined( %s )'
           : $type eq 'or'   ? '!( %s )'
           : $type eq 'dor'  ? '!(defined( %s ))'
-          : die
-          ;
+          : die $type;
 
     if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
         my $if_block_start   = $i + 1;                  # open if block
@@ -731,11 +732,15 @@ sub _check_logic {
             $self->stash->{ proc }->{ $_ }->{ skip } = 1; # mark skip
         }
 
+        my $has_else_block = ($else_block_end >= $else_block_start);
+
+        # if-then block
         my $st_1st = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $if_block_start .. $if_block_end ] ]
         );
 
         my $code = $st_1st->code;
+
         if ( $code and $code !~ /^\n+$/ ) {
             my $expr = $self->sa;
             $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
@@ -748,18 +753,18 @@ sub _check_logic {
             $sa_1st = $st_1st->sa;
         }
 
-        if ( $else_block_end >= $else_block_start ) {
+        if ( $has_else_block ) {
 
             for (  $else_block_start .. $else_block_end ) { # 2
                 $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
             }
 
+            # else block
             my $st_2nd = $self->_spawn_child->_convert_opcode(
                 [ @{ $ops }[ $else_block_start .. $else_block_end ] ]
             );
 
             my $code = $st_2nd->code;
-
             if ( $code and $code !~ /^\n+$/ ) {
                 $self->write_lines( sprintf( 'else {' ) );
                 $self->write_lines( $code );
