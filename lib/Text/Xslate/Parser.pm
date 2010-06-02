@@ -442,15 +442,15 @@ sub init_basic_operators {
 
     $parser->infix('|',  140, \&led_bar);
 
-    $parser->infixr('&&', 130)->is_logical(1);
+    $parser->infix('&&', 130)->is_logical(1);
 
-    $parser->infixr('||', 120)->is_logical(1);
-    $parser->infixr('//', 120)->is_logical(1);
+    $parser->infix('||', 120)->is_logical(1);
+    $parser->infix('//', 120)->is_logical(1);
     $parser->infix('min', 120);
     $parser->infix('max', 120);
 
     $parser->symbol(':');
-    $parser->infix('?', 110, \&led_ternary);
+    $parser->infixr('?', 110, \&led_ternary);
 
     $parser->assignment('=',   100);
     $parser->assignment('+=',  100);
@@ -687,9 +687,9 @@ sub led_ternary {
     my $cond = $symbol->clone(arity => 'ternary');
 
     $cond->first($left);
-    $cond->second($parser->expression(0));
+    $cond->second($parser->expression( $cond->lbp - 1 ));
     $parser->advance(":");
-    $cond->third($parser->expression(0));
+    $cond->third($parser->expression( $cond->lbp - 1 ));
     return $cond;
 }
 
