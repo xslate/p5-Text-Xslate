@@ -691,32 +691,31 @@ sub _convert_opcode {
 sub _check_logic {
     my ( $self, $i, $arg, $type ) = @_;
 
-    $self->write_lines("# $type");
+    $self->write_lines("# $type [$i]");
 
     my $ops = $self->ops;
-    my $type_store = $type;
 
     my $next_opname = $ops->[ $i + $arg ]->[ 0 ] || '';
 
     if ( $next_opname =~ /and|or/ ) { # &&, ||
-        $type = $type eq 'and'  ? ' && '
-              : $type eq 'dand' ? 'defined( %s )'
-              : $type eq 'or'   ? ' || '
-              : $type eq 'dor'  ? '!(defined( %s ))'
-              : die $type;
+        my $fmt = $type eq 'and'  ? ' && '
+                : $type eq 'dand' ? 'defined( %s )'
+                : $type eq 'or'   ? ' || '
+                : $type eq 'dor'  ? '!(defined( %s ))'
+                : die $type;
         my $pre_exprs = $self->exprs || '';
-        $self->exprs( $pre_exprs . $self->sa() . $type ); # store
+        $self->exprs( $pre_exprs . $self->sa() . $fmt ); # store
         return;
     }
 
     my $opname = $ops->[ $i + $arg - 1 ]->[ 0 ]; # goto or ?
     my $oparg  = $ops->[ $i + $arg - 1 ]->[ 1 ];
 
-    $type = $type eq 'and'  ? '%s'
-          : $type eq 'dand' ? 'defined( %s )'
-          : $type eq 'or'   ? '!( %s )'
-          : $type eq 'dor'  ? '!(defined( %s ))'
-          : die $type;
+    my $fmt = $type eq 'and'  ? '%s'
+            : $type eq 'dand' ? 'defined( %s )'
+            : $type eq 'or'   ? '!( %s )'
+            : $type eq 'dor'  ? '!(defined( %s ))'
+            : die $type;
 
     if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
         my $if_block_start   = $i + 1;                  # open if block
@@ -734,7 +733,6 @@ sub _check_logic {
 
         my $has_else_block = ($else_block_end >= $else_block_start);
 
-        # if-then block
         my $st_1st = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $if_block_start .. $if_block_end ] ]
         );
@@ -744,7 +742,7 @@ sub _check_logic {
         if ( $code and $code !~ /^\n+$/ ) {
             my $expr = $self->sa;
             $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
-            $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $type, $expr ) ) );
+            $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $fmt, $expr ) ) );
             $self->exprs( '' );
             $self->write_lines( $code );
             $self->write_lines( sprintf( '}' ) );
@@ -779,7 +777,7 @@ sub _check_logic {
         if ( defined $sa_1st and defined $sa_2nd ) {
             my $expr = $self->sa;
             $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
-            $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $type, $expr ), $sa_1st, $sa_2nd ) );
+            $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $fmt, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
             $self->write_code( "\n" );
@@ -802,7 +800,7 @@ sub _check_logic {
 
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
-        $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $type, $expr ) ) );
+        $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $fmt, $expr ) ) );
         $self->exprs( '' );
         $self->write_lines( $st_wh->code );
         $self->write_lines( sprintf( '}' ) );
@@ -834,7 +832,7 @@ sub _check_logic {
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-$self->sa( sprintf( <<'CODE', $type_store, $expr, $st_true->sa ) );
+        $self->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
 cond_%s( %s, sub {
 %s
 }, )
@@ -842,6 +840,7 @@ CODE
 
     }
 
+    $self->write_lines("# end $type [$i]");
 }
 
 
