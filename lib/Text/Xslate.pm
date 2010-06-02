@@ -59,6 +59,8 @@ my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 # version syntax compiler escape path
 my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
 
+sub compiler_class() { 'Text::Xslate::Compiler' }
+
 sub new {
     my $class = shift;
     my %args  = (@_ == 1 ? %{$_[0]} : @_);
@@ -68,7 +70,7 @@ sub new {
     defined($args{suffix})      or $args{suffix}      = '.tx';
     defined($args{path})        or $args{path}        = [ '.' ];
     defined($args{input_layer}) or $args{input_layer} = ':utf8';
-    defined($args{compiler})    or $args{compiler}    = 'Text::Xslate::Compiler';
+    defined($args{compiler})    or $args{compiler}    = $class->compiler_class;
     defined($args{syntax})      or $args{syntax}      = 'Kolon';
     defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
     defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2

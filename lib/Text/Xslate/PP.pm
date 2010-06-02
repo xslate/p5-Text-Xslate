@@ -34,6 +34,8 @@ require Text::Xslate;
 
 unshift @Text::Xslate::ISA, __PACKAGE__;
 
+sub compiler_class() { 'Text::Xslate::Compiler' }
+
 #
 # public APIs
 #
