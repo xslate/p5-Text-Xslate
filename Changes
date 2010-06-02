@@ -5,21 +5,24 @@ Revision history for Perl extension Text::Xslate
     - Metakolon's line code has been changed to %% like TT3 and TTerse
     - The default cache_dir is chaned to "$HOME/.xslate_cache"
     - Revive PP::Opcode, the classic pp virtual machine;
-      (XSLATE=pp=booster enables PP::Booster)
+      PP::Boster stil has issues (but XSLATE=pp=booster enables PP::Booster)
 
     [NEW FEATURES]
     - Macros can be called with the filter operator (e.g. expr | my_macro)
-    - Introduce loop iterators:
-        + "$~LOOP_VAR" (e.g. $~item) in Kolon
-        + "loop" (the same as TT) in TTerse
-        + Supported loop elements: index, count, size, max, body,
-          is_first/first, and is_last/last.
+    - For Kolon
+        + Loop iterators as "$~LOOP_VAR" (e.g. $~item)
+        + Loop iterator elements: index, count, size, max, body,
+          is_first, is_last, peep_next, and peep_prev
     - For TTerse
-        + Port MACRO foo(...) BLOCK ... END syntax
+        + Loop iterators as "loop"
+        + Loop iterator elements: index, count, size, max, body
+          is_first/first, is_last/last, peep_next/next, and peep_prev/prev.
+        + MACRO foo(...) BLOCK ... END syntax
 
     [BUG FIXES]
     - Empty hash/array literals ware not allowed
     - There ware several edge-case issues in string literals
+    - The precedence of the ternary operator was wrong
     - Resolve issue #5: [% "foo' %] was silently accepted
 
 0.1025 Mon May 31 20:29:50 2010
@@ -28,7 +31,7 @@ Revision history for Perl extension Text::Xslate
 0.1024 Sun May 30 19:00:56 2010
     [BUG FIXES]
     - 'module' option wiped away builtin functions
-    - Array and Hash literals ware invalid in TTerse
+    - Array/hash literals ware invalid in TTerse
     - Calling undefined functions produced unreadable messages in TTerse
     - The parser could not parse <: f({ not => 42 }) :>
 
