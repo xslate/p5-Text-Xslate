@@ -35,8 +35,7 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
     }
 }
 
-package
-    Text::Xslate::Engine;
+package Text::Xslate::Engine;
 
 Text::Xslate->import('escaped_string');
 
@@ -373,6 +372,7 @@ sub dump :method {
     goto &Text::Xslate::Util::p;
 }
 
+package Text::Xslate;
 1;
 __END__
 
