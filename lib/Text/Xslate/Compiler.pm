@@ -19,6 +19,11 @@ use constant _OPTIMIZE => scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
+{
+    package Text::Xslate;
+    our %OPS; # to avoid 'once' warnings;
+}
+
 my %binary = (
     '==' => 'eq',
     '!=' => 'ne',
@@ -206,6 +211,13 @@ sub _compile_ast {
     return @code;
 }
 
+
+sub _expr {
+    my($self, $node) = @_;
+    my @ast = ($node);
+    return $self->_compile_ast(\@ast);
+}
+
 sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
     my $engine = $self->engine
@@ -363,11 +375,6 @@ sub _flush_macro_table {
     }
     %{$mtable} = ();
     return @code;
-}
-
-{
-    package Text::Xslate;
-    our %OPS; # to avoid 'once' warnings;
 }
 
 sub _generate_name {
@@ -615,13 +622,6 @@ sub _generate_given {
 
     push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ], @block_code;
     return @code;
-}
-
-sub _expr {
-    my($self, $node) = @_;
-    my @ast = ($node);
-
-    return $self->_compile_ast(\@ast);
 }
 
 sub _generate_variable {
