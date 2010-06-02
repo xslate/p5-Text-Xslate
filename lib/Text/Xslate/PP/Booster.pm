@@ -383,25 +383,25 @@ $CODE_MANIP{ 'concat' } = sub {
 
 $CODE_MANIP{ 'and' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return $self->_check_logic( $self->current_line, $arg, 'and' );
+    return $self->_check_logic( and => $arg, $line );
 };
 
 
 $CODE_MANIP{ 'dand' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return $self->_check_logic( $self->current_line, $arg, 'dand' );
+    return $self->_check_logic( dand => $arg, $line );
 };
 
 
 $CODE_MANIP{ 'or' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return $self->_check_logic( $self->current_line, $arg, 'or' );
+    return $self->_check_logic( or => $arg, $line );
 };
 
 
 $CODE_MANIP{ 'dor' } = sub {
     my ( $self, $arg, $line ) = @_;
-    return $self->_check_logic( $self->current_line, $arg, 'dor' );
+    return $self->_check_logic( dor => $arg, $line );
 };
 
 
@@ -662,19 +662,16 @@ sub _convert_opcode {
 
         my ( $opname, $arg, $line ) = @$op;
 
-        unless ( $CODE_MANIP{ $opname } ) {
+        my $manip  = $CODE_MANIP{ $opname };
+        unless ( $manip ) {
             Carp::croak( sprintf( "Oops: opcode '%s' is not yet implemented on Booster", $opname ) );
         }
 
-        my $manip  = $CODE_MANIP{ $opname };
-
         if ( my $proc = $self->stash->{ proc }->{ $i } ) {
-
             if ( $proc->{ skip } ) {
                 $self->current_line( ++$i );
                 next;
             }
-
         }
 
         $manip->( $self, $arg, defined $line ? $line : '' );
@@ -689,13 +686,14 @@ sub _convert_opcode {
 
 
 sub _check_logic {
-    my ( $self, $i, $arg, $type ) = @_;
+    my ( $self, $type, $addr ) = @_;
+    my $i = $self->current_line;
 
     $self->write_lines("# $type [$i]");
 
     my $ops = $self->ops;
 
-    my $next_opname = $ops->[ $i + $arg ]->[ 0 ] || '';
+    my $next_opname = $ops->[ $i + $addr ]->[ 0 ] || '';
 
     if ( $next_opname =~ /and|or/ ) { # &&, ||
         my $fmt = $type eq 'and'  ? ' && '
@@ -708,8 +706,8 @@ sub _check_logic {
         return;
     }
 
-    my $opname = $ops->[ $i + $arg - 1 ]->[ 0 ]; # goto or ?
-    my $oparg  = $ops->[ $i + $arg - 1 ]->[ 1 ];
+    my $opname = $ops->[ $i + $addr - 1 ]->[ 0 ]; # goto or ?
+    my $oparg  = $ops->[ $i + $addr - 1 ]->[ 1 ];
 
     my $fmt = $type eq 'and'  ? '%s'
             : $type eq 'dand' ? 'defined( %s )'
@@ -719,13 +717,13 @@ sub _check_logic {
 
     if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
         my $if_block_start   = $i + 1;                  # open if block
-        my $if_block_end     = $i + $arg - 2;           # close if block - subtract goto line
-        my $else_block_start = $i + $arg;               # open else block
-        my $else_block_end   = $i + $arg + $oparg - 2;  # close else block - subtract goto line
+        my $if_block_end     = $i + $addr - 2;           # close if block - subtract goto line
+        my $else_block_start = $i + $addr;               # open else block
+        my $else_block_end   = $i + $addr + $oparg - 2;  # close else block - subtract goto line
 
         my ( $sa_1st, $sa_2nd );
 
-        $self->stash->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
+        $self->stash->{ proc }->{ $i + $addr - 1 }->{ skip } = 1; # skip goto
 
         for ( $if_block_start .. $if_block_end ) {
             $self->stash->{ proc }->{ $_ }->{ skip } = 1; # mark skip
@@ -786,13 +784,13 @@ sub _check_logic {
     }
     elsif ( $opname eq 'goto' and $oparg < 0 ) { # while
         my $while_block_start   = $i + 1;                  # open while block
-        my $while_block_end     = $i + $arg - 2;           # close while block - subtract goto line
+        my $while_block_end     = $i + $addr - 2;           # close while block - subtract goto line
 
         for ( $while_block_start .. $while_block_end ) {
             $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
         }
 
-        $self->stash->{ proc }->{ $i + $arg - 1 }->{ skip } = 1; # skip goto
+        $self->stash->{ proc }->{ $i + $addr - 1 }->{ skip } = 1; # skip goto
 
         my $st_wh = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $while_block_start .. $while_block_end ] ]
@@ -807,7 +805,7 @@ sub _check_logic {
 
         $self->write_code( "\n" );
     }
-    elsif ( _logic_is_max_min( $ops, $i, $arg ) ) { # min, max
+    elsif ( _logic_is_max_min( $ops, $i, $addr ) ) { # min, max
 
         for ( $i + 1 .. $i + 2 ) {
             $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
@@ -818,7 +816,7 @@ sub _check_logic {
     else {
 
         my $true_start = $i + 1;
-        my $true_end   = $i + $arg - 1; # add 1 for complete process line is next.
+        my $true_end   = $i + $addr - 1; # add 1 for complete process line is next.
 
         for ( $true_start .. $true_end ) {
             $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
