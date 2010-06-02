@@ -108,6 +108,21 @@ T
     6
 X
 
+    [ <<'T', { }, <<'X', "filter operator" ],
+    : macro factorial ->($x) {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+    <: 0 | factorial :>
+    <: 1 | factorial :>
+    <: 2 | factorial :>
+    <: 3 | factorial :>
+T
+    1
+    1
+    2
+    6
+X
+
 );
 
 foreach my $d(@set) {

@@ -6,6 +6,7 @@ Revision history for Perl extension Text::Xslate
     - The default cache_dir is chaned to "$HOME/.xslate_cache"
 
     [NEW FEATURES]
+    - Macros can be called with the filter operator (e.g. expr | my_macro)
     - Introduce loop iterators:
         + "$~LOOP_VAR" (e.g. $~item) in Kolon
         + "loop" (the same as TT) in TTerse
