@@ -157,97 +157,22 @@ sub compile {
     my $parser   = $self->parser;
     my $old_file = $parser->file;
 
+    $args{file} ||= '<input>';
+
     my @code; # main protocode
     {
         my $ast = $parser->parse($str, %args);
 
         @code = $self->_compile_ast($ast);
-        push @code, ['end'];
+        push @code, $self->_generate_exit();
     }
 
     my $cascade = $self->cascade;
     if(defined $cascade) {
-        my $engine = $self->engine
-            || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
-
-        my($base_file, $base_code);
-        my $base       = $cascade->first;
-        my @components = $cascade->second
-            ? (map{ $self->_bare_to_file($_) } @{$cascade->second})
-            : ();
-        my $vars       = $cascade->third;
-
-        if(defined $base) {
-            $base_file = $self->_bare_to_file($base);
-            $base_code = $base_code = $engine->load_file($base_file);
-            unshift @{$base_code},
-                [ depend => $engine->find_file($base_file)->{fullpath} ];
-        }
-        else { # only "with"
-            $base_file = $args{file} || '<input>'; # only for error messages
-            $base_code = \@code;
-
-            if(defined $args{fullpath}) {
-                unshift @{$base_code},
-                    [ depend => $args{fullpath} ];
-            }
-
-            push @code, $self->_flush_macro_table(\%mtable);
-        }
-
-        # overlay:
-        foreach my $cfile(@components) {
-            my $body;
-            my $code     = $engine->load_file($cfile);
-            my $fullpath = $engine->find_file($cfile)->{fullpath};
-
-            foreach my $c(@{$code}) {
-                if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
-                    if($c->[0] eq 'macro_begin') {
-                        $body = [];
-                        push @{ $mtable{$c->[1]} ||= [] }, {
-                            name  => $c->[1],
-                            line  => $c->[2],
-                            body  => $body,
-                        };
-                    }
-                    elsif($c->[0] ne 'macro_end') {
-                        push @{$body}, $c;
-                    }
-                }
-            }
-
-            unshift @{$base_code},
-                [ depend => $fullpath ];
-            @{$base_code} = $self->_process_cascade($cfile, $base_code);
-            ### after: $base_code
-        }
-
-        # pure cascade:
-        @{$base_code} = $self->_process_cascade($base_file, $base_code)
-            if defined $base;
-
-        if(defined $vars) {
-            unshift @{$base_code}, $self->_localize_vars($vars);
-        }
-
-        # discards all the main code (if should so)
-        if($base_code != \@code) {
-            foreach my $c(@code) {
-                if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
-                    if($c->[0] eq 'print_raw_s') {
-                        Carp::carp("Xslate: Uselses use of text '$c->[1]'");
-                    }
-                    else {
-                        #Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
-                    }
-                }
-            }
-            @code = @{$base_code};
-        }
+        $self->_process_cascade($cascade, \%args, \@code);
     } # if defined $cascade
 
-    push @code, $self->_flush_macro_table(\%mtable) if %mtable;
+    push @code, $self->_flush_macro_table() if %mtable;
 
     $self->_optimize_vmcode(\@code) for 1 .. $self->optimize;
 
@@ -258,20 +183,6 @@ sub compile {
     $parser->file($old_file || '<input>'); # reset
 
     return \@code;
-}
-
-sub _flush_macro_table {
-    my($self, $mtable) = @_;
-    my @code;
-    foreach my $macros(values %{$mtable}) {
-        foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
-            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
-            push @code, @{ $macro->{body} };
-            push @code, [ 'macro_end' ];
-        }
-    }
-    %{$mtable} = ();
-    return @code;
 }
 
 sub _compile_ast {
@@ -296,23 +207,101 @@ sub _compile_ast {
 }
 
 sub _process_cascade {
-    my($self, $base_file, $base_code) = @_;
+    my($self, $cascade, $args, $main_code) = @_;
+    my $engine = $self->engine
+        || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
+
+    my($base_file, $base_code);
+    my $base       = $cascade->first;
+    my @components = $cascade->second
+        ? (map{ $self->_bare_to_file($_) } @{$cascade->second})
+        : ();
+    my $vars       = $cascade->third;
+
+    if(defined $base) { # pure cascade
+        $base_file = $self->_bare_to_file($base);
+        $base_code = $engine->load_file($base_file);
+        unshift @{$base_code},
+            [ depend => $engine->find_file($base_file)->{fullpath} ];
+    }
+    else { # overlay
+        $base_file = $args->{file}; # only for error messages
+        $base_code = $main_code;
+
+        if(defined $args->{fullpath}) {
+            unshift @{$base_code},
+                [ depend => $args->{fullpath} ];
+        }
+
+        push @{$main_code}, $self->_flush_macro_table();
+    }
+
+    foreach my $cfile(@components) {
+        my $body;
+        my $code     = $engine->load_file($cfile);
+        my $fullpath = $engine->find_file($cfile)->{fullpath};
+
+        my $mtable   = $self->macro_table;
+        foreach my $c(@{$code}) {
+            if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
+                if($c->[0] eq 'macro_begin') {
+                    $body = [];
+                    push @{ $mtable->{$c->[1]} ||= [] }, {
+                        name  => $c->[1],
+                        line  => $c->[2],
+                        body  => $body,
+                    };
+                }
+                elsif($c->[0] ne 'macro_end') {
+                    push @{$body}, $c;
+                }
+            }
+        }
+
+        unshift @{$base_code}, [ depend => $fullpath ];
+        $self->_process_cascade_file($cfile, $base_code);
+    }
+
+    if(defined $base) { # pure cascade
+        $self->_process_cascade_file($base_file, $base_code);
+        if(defined $vars) {
+            unshift @{$base_code}, $self->_localize_vars($vars);
+        }
+
+        foreach my $c(@{$main_code}) {
+            if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
+                if($c->[0] eq 'print_raw_s') {
+                    Carp::carp("Xslate: Uselses use of text '$c->[1]'");
+                }
+                else {
+                    #Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
+                }
+            }
+        }
+        @{$main_code} = @{$base_code};
+    }
+    else { # overlay
+        return;
+    }
+}
+
+sub _process_cascade_file {
+    my($self, $file, $base_code) = @_;
     my $mtable = $self->macro_table;
 
-    my @code = @{$base_code};
-    for(my $i = 0; $i < @code; $i++) {
-        my $c = $code[$i];
+    for(my $i = 0; $i < @{$base_code}; $i++) {
+        my $c = $base_code->[$i];
         if($c->[0] ne 'macro_begin') {
             next;
         }
 
         # macro
         my $name = $c->[1];
-        #warn "macro ", $name, "\n";
+        #warn "# macro ", $name, "\n";
 
         if(exists $mtable->{$name}) {
             $self->_error(
-                "Redefinition of macro/block $name in " . $base_file
+                "Redefinition of macro/block $name in " . $file
                 . " (you must use before/around/after to override macros/blocks)",
                 $mtable->{$name}{line}
             );
@@ -323,18 +312,18 @@ sub _process_cascade {
         my $after  = delete $mtable->{$name . '@after'};
 
         if(defined $before) {
-            my $n = scalar @code;
+            my $n = scalar @{$base_code};
             foreach my $m(@{$before}) {
-                splice @code, $i+1, 0, @{$m->{body}};
+                splice @{$base_code}, $i+1, 0, @{$m->{body}};
             }
-            $i += scalar(@code) - $n;
+            $i += scalar(@{$base_code}) - $n;
         }
 
         my $macro_start = $i+1;
-        $i++ while($code[$i][0] ne 'macro_end'); # move to the end
+        $i++ while($base_code->[$i][0] ne 'macro_end'); # move to the end
 
         if(defined $around) {
-            my @original = splice @code, $macro_start, ($i - $macro_start);
+            my @original = splice @{$base_code}, $macro_start, ($i - $macro_start);
             $i = $macro_start;
 
             my @body;
@@ -346,17 +335,33 @@ sub _process_cascade {
                     splice @body, $j, 1, @original;
                 }
             }
-            splice @code, $macro_start, 0, @body;
+            splice @{$base_code}, $macro_start, 0, @body;
 
             $i += scalar(@body);
         }
 
         if(defined $after) {
             foreach my $m(@{$after}) {
-                splice @code, $i, 0, @{$m->{body}};
+                splice @{$base_code}, $i, 0, @{$m->{body}};
             }
         }
     }
+    return;
+}
+
+
+sub _flush_macro_table {
+    my($self) = @_;
+    my $mtable = $self->macro_table;
+    my @code;
+    foreach my $macros(values %{$mtable}) {
+        foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
+            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
+            push @code, @{ $macro->{body} };
+            push @code, [ 'macro_end' ];
+        }
+    }
+    %{$mtable} = ();
     return @code;
 }
 
@@ -788,6 +793,11 @@ sub _generate_macro {
     my($self, $node) = @_;
 
     return [ macro => $node->value ];
+}
+
+sub _generate_exit {
+    my($self) = @_;
+    return [ 'end' ];
 }
 
 # $~iterator
