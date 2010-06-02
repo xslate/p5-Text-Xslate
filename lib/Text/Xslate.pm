@@ -42,7 +42,8 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-my $XSLATE_MAGIC = qq{.xslate "%s/%s/%s/%s"\n}; # version/syntax/escape/path
+# version syntax compiler escape path
+my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
 
 sub new {
     my $class = shift;
@@ -273,6 +274,7 @@ sub _magic {
     return sprintf $XSLATE_MAGIC,
         $VERSION,
         $self->{syntax},
+        ref($self->{compiler}) || $self->{compiler},
         $self->{escape},
         $fullpath,
     ;
