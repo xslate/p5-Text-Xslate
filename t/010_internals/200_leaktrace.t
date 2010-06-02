@@ -7,6 +7,8 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
+use if Text::Xslate->isa('Text::Xslate::PP'),
+    'Test::More' => skip_all => 'PP will be safe';
 
 my %vars = (
     lang  => 'Perl',

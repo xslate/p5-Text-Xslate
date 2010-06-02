@@ -49,7 +49,7 @@ lib/Text/Xslate/PP/Const.pm :: xs/Text-Xslate.xs tool/opcode_for_pp.pl
 	$(PERLRUNINST) tool/opcode_for_pp.pl xs/Text-Xslate.xs > lib/Text/Xslate/PP/Const.pm
 M
 
-if(0 && $want_xs) {
+if($want_xs) {
     # repeat testing for pure Perl mode
     # see also ExtUtils::MM_Any::test_via_harness()
     my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}

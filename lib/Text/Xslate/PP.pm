@@ -8,8 +8,7 @@ our $VERSION = '0.1025';
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
-use Text::Xslate::PP::Booster;
-use Text::Xslate::Util qw($DEBUG);
+use Text::Xslate::Util qw($DEBUG p);
 
 use Carp ();
 
@@ -19,6 +18,13 @@ our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
 our %EXPORT_TAGS = (
     backend => \@EXPORT_OK,
 );
+
+use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
+
+use if  _PP_BOOSTER, 'Text::Xslate::PP::Booster';
+use if !_PP_BOOSTER, 'Text::Xslate::PP::Opcode';
+
+our @OPCODE; # defined in PP::Const
 
 require Text::Xslate;
 
@@ -136,6 +142,8 @@ sub _assemble {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
+        $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ]
+            if !_PP_BOOSTER;
         $code->[ $i ]->{ opname }    = $opname; # for test
 
         my $oparg = $OPARGS[ $opnum ];
@@ -190,8 +198,10 @@ sub _assemble {
 
     }
 
-    $st->{ perlcode } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto );
-    $st->{ code     } = $code;
+    $st->{ booster_code } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto )
+        if _PP_BOOSTER;
+
+    $st->{ code } = $code;
     return;
 }
 
@@ -313,8 +323,20 @@ sub tx_execute {
     local $_current_st = $st;
 
     local $st->{local_stack};
+    local $st->{SP} = [];
 
-    return $st->{perlcode}->( $st );
+    if ( $st->{ booster_code } ) {
+        return $st->{ boost_code }->( $st );
+    }
+    else {
+        local $st->{targ};
+        local $st->{sa};
+        local $st->{sb};
+        local $st->{SP} = [];
+        $st->{output} = '';
+        $st->{code}->[0]->{ exec_code }->( $st );
+        return $st->{output};
+    }
 }
 
 
