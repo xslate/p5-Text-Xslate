@@ -15,7 +15,8 @@ Revision history for Perl extension Text::Xslate
 
     [BUG FIXES]
     - Empty hash/array literals ware not allowed
-    - There ware some other literal issues
+    - There ware several edge-case issues in string literals
+    - Resolve issue #5: [% "foo' %] was silently accepted
 
 0.1025 Mon May 31 20:29:50 2010
     - Support 5.8.1
