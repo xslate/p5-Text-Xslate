@@ -138,13 +138,13 @@ like $@, qr/\b foo \b/xms, "don't affect the parser";
 
 eval {
     $tx->render_string(<<'T', {});
-    : macro factorial ->($x) {
-    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : macro foo{
+    :   foo()
     : }
-    : factorial(1_000_000)
+    : foo()
 T
 };
 like $@, qr/too deep/, 'deep recursion';
-like $@, qr/\b factorial \b/xms;
+like $@, qr/\b foo \b/xms;
 
 done_testing;
