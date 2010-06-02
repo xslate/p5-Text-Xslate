@@ -62,6 +62,21 @@ END
 X
 
 
+    [<<'T', <<'X', 'FOR-IN'],
+[% lang %]
+[% FOR type IN types -%]
+* [% type %]
+[% END -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
+
+
     [<<'T', <<'X', 'loop.index'],
 [% FOR type IN types -%]
 * [% loop.index %]
@@ -130,24 +145,6 @@ T
 END
 X
 
-    [<<'T', <<'X', 'is_first && is_last'],
-[% FOR type IN types -%]
-[% IF loop.is_first -%]
----- first ----
-[% END -%]* [% loop.count %]
-[% IF loop.is_last -%]
----- last ----
-[% END -%]
-[% END -%]
-END
-T
----- first ----
-* 1
-* 2
-* 3
----- last ----
-END
-X
 
     [<<'T', <<'X', 'size'],
 [% FOR type IN types -%]
@@ -173,26 +170,35 @@ T
 END
 X
 
+    [<<'T', <<'X', 'next'],
+[% FOR type IN types -%]
+* [% loop.next or "(none)" %]
+[% END -%]
+END
+T
+* Int
+* Object
+* (none)
+END
+X
+
+    [<<'T', <<'X', 'prev'],
+[% FOR type IN types -%]
+* [% loop.prev or "(none)" %]
+[% END -%]
+END
+T
+* (none)
+* Str
+* Int
+END
+X
 
     # ---- TTerse specific features ----
 
     [<<'T', <<'X', 'lower cased'],
 [% lang %]
 [% foreach type in types -%]
-* [% type %]
-[% end -%]
-END
-T
-Xslate
-* Str
-* Int
-* Object
-END
-X
-
-    [<<'T', <<'X', 'FOR-IN'],
-[% lang %]
-[% FOR type IN types -%]
 * [% type %]
 [% end -%]
 END
@@ -215,6 +221,49 @@ Xslate
 * Str
 * Int
 * Object
+END
+X
+
+    [<<'T', <<'X', 'is_first && is_last'],
+[% FOR type IN types -%]
+[% IF loop.is_first -%]
+---- first ----
+[% END -%]* [% loop.count %]
+[% IF loop.is_last -%]
+---- last ----
+[% END -%]
+[% END -%]
+END
+T
+---- first ----
+* 1
+* 2
+* 3
+---- last ----
+END
+X
+
+    [<<'T', <<'X', 'peep_next'],
+[% FOR type IN types -%]
+* [% loop.peep_next or "(none)" %]
+[% END -%]
+END
+T
+* Int
+* Object
+* (none)
+END
+X
+
+    [<<'T', <<'X', 'peep_prev'],
+[% FOR type IN types -%]
+* [% loop.peep_prev or "(none)" %]
+[% END -%]
+END
+T
+* (none)
+* Str
+* Int
 END
 X
 );

@@ -996,7 +996,13 @@ sub nud_iterator {
         if(!any_in($t->arity, qw(variable name))) {
             $parser->_error("Expected name, not $t (" . $t->arity . ")");
         }
-        $parser->advance();
+
+        my $generator = $parser->iterator_element->{$t->id};
+        if(!$generator) {
+            $parser->_error("Undefined iterator element: $t");
+        }
+
+        $parser->advance(); # element name
 
         if($parser->token->id eq "(") {
             $parser->advance();
@@ -1005,10 +1011,6 @@ sub nud_iterator {
             $parser->advance(")");
         }
 
-        my $generator = $parser->iterator_element->{$t->id};
-        if(!$generator) {
-            $parser->_error("Undefined iterator element: $t");
-        }
         $iterator->second($t);
         return $generator->($parser, $iterator);
     }
@@ -1413,7 +1415,7 @@ sub iterator_is_first {
     my($parser, $iterator) = @_;
 
     my $zero = $parser->symbol('(literal)')->clone(
-        value => 0,
+        id => 0,
     );
 
     # $~iterator == 0
@@ -1463,7 +1465,7 @@ sub iterator_max {
     my $size = $parser->iterator_size($iterator);
 
     my $one = $parser->symbol('(literal)')->clone(
-        value => 1,
+        id => 1,
     );
 
     # $~iterator.size - 1
@@ -1471,6 +1473,53 @@ sub iterator_max {
         arity  => 'binary',
         first  => $size,
         second => $one,
+    );
+}
+
+sub _iterator_peep {
+    my($parser, $iterator, $pos) = @_;
+
+    my $body  = $parser->iterator_body($iterator);
+    my $index = $parser->iterator_index($iterator);
+    my $value = $parser->symbol('(literal)')->clone(
+        id => $pos,
+    );
+
+    my $next_index = $parser->symbol('+')->clone(
+        arity  => 'binary',
+        first  => $index,
+        second => $value,
+    );
+
+    # $~iterator.body[ $~iterator.index + $value ]
+    return $parser->symbol('[')->clone(
+        arity  => 'binary',
+        first  => $body,
+        second => $next_index,
+    );
+}
+
+sub iterator_peep_next {
+    my($parser, $iterator) = @_;
+    return $parser->_iterator_peep($iterator, +1);
+}
+
+sub iterator_peep_prev {
+    my($parser, $iterator) = @_;
+    my $prev =  $parser->_iterator_peep($iterator, -1);
+
+    my $is_first = $parser->iterator_is_first($iterator);
+    my $nil      = $parser->symbol('nil')->clone(
+        arity => 'literal',
+        value => undef,
+    );
+
+    # $~iterator.is_first ? nil : <prev>
+    return $parser->symbol('?')->clone(
+        arity  => 'ternary',
+        first  => $is_first,
+        second => $nil,
+        third  => $prev,
     );
 }
 

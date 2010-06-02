@@ -200,6 +200,27 @@ T
     Object
 X
 
+    [<<'T', <<'X', 'peep_next'],
+: for $types -> ($item) {
+    <: $~item.peep_next // "(none)" :>
+: }
+T
+    Int
+    Object
+    (none)
+X
+
+    [<<'T', <<'X', 'peep_prev'],
+: for $types -> ($item) {
+    <: $~item.peep_prev // "(none)" :>
+: }
+T
+    (none)
+    Str
+    Int
+X
+
+
     [<<'T', <<'X', 'nested $~i'],
 : for $types -> $i {
 :   for $types -> $j {
