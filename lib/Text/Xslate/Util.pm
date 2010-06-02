@@ -105,10 +105,7 @@ sub value_to_literal {
 }
 
 sub import_from {
-    my $code = <<'T';
-package
-    Text::Xslate::Util::_import;
-T
+    my $code = '';
 
     local $Text::Xslate::Util::{'_import::'};
 
@@ -122,7 +119,9 @@ T
 
     my $e = do {
         local $@;
-        eval $code;
+        eval  qq{package}
+            . qq{ Text::Xslate::Util::_import;\n}
+            . $code;
         $@;
     };
     Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;

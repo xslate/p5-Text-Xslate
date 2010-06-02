@@ -77,20 +77,16 @@ sub new {
         $ENV{HOME} || File::Spec->tmpdir, '.xslate_cache',
     );
 
-    my %funcs = (
-        raw  => \&escaped_string,
-        html => \&html_escape,
-        dump => \&p,
-    );
+    my %funcs;
 
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
             . " Use 'module' instead");
-        %funcs = (%funcs, import_from(@{$args{import}}));
+        %funcs = import_from(@{$args{import}});
     }
     if(defined $args{module}) {
-        %funcs = (%funcs, import_from(@{$args{module}}));
+        %funcs = import_from(@{$args{module}});
     }
 
     # function => { ... } overrides imported functions
@@ -99,6 +95,18 @@ sub new {
             $funcs{$name} = $body;
         }
     }
+
+    foreach my $builtin(qw(raw html dump)) {
+        if(exists $funcs{$builtin}) {
+            warnings::warnif(redefine =>
+                "You cannot redefine builtin function '$builtin',"
+                . " because it is embeded in the engine");
+        }
+    }
+    $funcs{raw}  = \&escaped_string;
+    $funcs{html} = \&html_escape;
+    $funcs{dump} = \&p;
+
     $args{function} = \%funcs;
 
     if(!ref $args{path}) {
