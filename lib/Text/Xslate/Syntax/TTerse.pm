@@ -24,13 +24,13 @@ around split => sub {
     return $tokens_ref;
 };
 
-sub define_symbols {
+sub init_symbols {
     my($parser) = @_;
 
     $parser->symbol(']');
     $parser->symbol('}');
 
-    $parser->define_basic_operators();
+    $parser->init_basic_operators();
     $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
 
     # defines both upper cased and lower cased
@@ -69,7 +69,7 @@ sub define_symbols {
     return;
 }
 
-after define_iterator_elements => sub {
+after init_iterator_elements => sub {
     my($parser) = @_;
 
     my $tab = $parser->iterator_element;

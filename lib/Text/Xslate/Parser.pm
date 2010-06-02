@@ -367,15 +367,15 @@ sub parse {
 
 sub BUILD {
     my($parser) = @_;
-    $parser->_define_basic_symbols();
-    $parser->define_symbols();
-    $parser->define_iterator_elements();
+    $parser->_init_basic_symbols();
+    $parser->init_symbols();
+    $parser->init_iterator_elements();
     return;
 }
 
 # The grammer
 
-sub _define_basic_symbols {
+sub _init_basic_symbols {
     my($parser) = @_;
 
     $parser->symbol('(end)')->is_block_end(1); # EOF
@@ -406,8 +406,10 @@ sub _define_basic_symbols {
     return;
 }
 
-sub define_basic_operators {
+sub init_basic_operators {
     my($parser) = @_;
+
+    # define operator precedence
 
     $parser->prefix('{', 256, \&nud_brace);
     $parser->prefix('[', 256, \&nud_brace);
@@ -468,7 +470,7 @@ sub define_basic_operators {
     return;
 }
 
-sub define_symbols {
+sub init_symbols {
     my($parser) = @_;
 
     # syntax specific separators
@@ -480,7 +482,7 @@ sub define_symbols {
     $parser->symbol('::');
 
     # operators
-    $parser->define_basic_operators();
+    $parser->init_basic_operators();
 
     # statements
     $parser->symbol('{')        ->set_std(\&std_block);
@@ -506,7 +508,7 @@ sub define_symbols {
     return;
 }
 
-sub define_iterator_elements {
+sub init_iterator_elements {
     my($parser) = @_;
 
     $parser->iterator_element({
