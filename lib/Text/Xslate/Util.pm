@@ -60,7 +60,7 @@ my %esc2char = (
 
 sub literal_to_value {
     my($value) = @_;
-    return undef if not defined $value;
+    return $value if not defined $value;
 
     if($value =~ s/"(.*)"/$1/xms){
         $value =~ s/\\(.)/$esc2char{$1} || $1/xmseg;
@@ -93,7 +93,7 @@ my $value_chars = join '|', map { quotemeta } keys %char2esc;
 
 sub value_to_literal {
     my($value) = @_;
-    return $value if not defined $value;
+    return 'undef' if not defined $value;
 
     if(is_int($value)){
         return $value;

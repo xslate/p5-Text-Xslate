@@ -5,6 +5,7 @@ use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     is_int any_in
+    value_to_literal
     p
 );
 
@@ -163,7 +164,8 @@ sub _trim {
     return $s;
 }
 
-sub split {
+# split templates by tags before tokanizing
+sub split :method {
     my $self  = shift;
     local($_) = @_;
 
@@ -173,39 +175,52 @@ sub split {
     my $tag_start     = $self->tag_start;
     my $tag_end       = $self->tag_end;
 
-    my $lex_line = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
-    my $lex_tag  = qr/\A ([^\n]*?) $tag_start ($CHOMP_FLAGS?) ($CODE) ($CHOMP_FLAGS?) $tag_end /xms;
-    my $lex_text = qr/\A ([^\n]* \n) /xms;
+    my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
+    my $lex_tag_start = qr/\A $tag_start ($CHOMP_FLAGS?)/xms;
+    my $lex_tag_end   = qr/\A ($CODE) ($CHOMP_FLAGS?) $tag_end/xms;
+
+    my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= $tag_start ) | \z ) ) /xms;
+
+    my $in_tag = 0;
 
     while($_) {
-        if($lex_line && s/$lex_line//xms) {
+        if($in_tag) {
+            if(s/$lex_tag_end//xms) {
+                $in_tag = 0;
+
+                my($code, $chomp) = ($1, $2);
+
+                push @tokens, [ code => _trim($code) ];
+                if($chomp) {
+                    push @tokens, [ postchomp => $chomp ];
+                }
+            }
+            else {
+                $self->near_token((split /\n/, $_)[0]);
+                $self->_error("Malformed templates");
+            }
+        }
+        # not $in_tag
+        elsif($lex_line_code && s/$lex_line_code//xms) {
             push @tokens,
                 [ code => _trim($1) ];
         }
-        elsif(s/$lex_tag//xms) {
-            my($text, $prechomp, $code, $postchomp) = ($1, $2, $3, $4);
-            if($text){
-                push @tokens, [ text => $text ];
-            }
-            if($prechomp) {
-                push @tokens, [ 'prechomp' ];
-            }
-            push @tokens, [ code => _trim($code) ];
+        elsif(s/$lex_tag_start//xms) {
+            $in_tag = 1;
 
-            if($postchomp) {
-                push @tokens, [ 'postchomp' ];
+            my $chomp = $1;
+            if($chomp) {
+                push @tokens, [ prechomp => $chomp ];
             }
         }
         elsif(s/$lex_text//xms) {
             push @tokens, [ text => $1 ];
         }
         else {
-            push @tokens, [ text => $_ ];
-            last;
+            confess "Oops: Unreached code, near" . p($_);
         }
     }
-
-    ## tokens: @tokens
+    #p(\@tokens);
     return \@tokens;
 }
 
@@ -509,7 +524,8 @@ sub advance {
 
     my $t = $parser->token;
     if(defined($id) && $t->id ne $id) {
-        $parser->_error("Expected '$id' but '$t'");
+        $parser->_error(sprintf "Expected %s but found %s",
+            value_to_literal($id), value_to_literal($t));
     }
 
     $parser->near_token($t);
@@ -1343,7 +1359,7 @@ sub _error {
     $near ||= $self->near_token;
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
         $self->file, $self->line+1, $message,
-        $near ne ';' ? ", near '$near'" : '');
+        $near ne ';' ? sprintf(", near %s", value_to_literal($near)) : '');
 }
 
 no Any::Moose;

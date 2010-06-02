@@ -18,16 +18,28 @@ my @data = (
 
     ["<p>:</p>",   qr{<p>:</p>}],
     ["<p> : </p>", qr{<p> : </p>}],
+
+    [<<'T', qr/foo/, qr/item/, qr/data/],
+: macro foo ->($x, $y) {
+:   for $x -> ($item) {
+        <: $item :>
+:   }
+: }
+: for $data -> ($item) {
+:   foo($item)
+: }
+T
 );
 
 foreach my $d(@data) {
     my($str, @patterns) = @{$d};
 
+    note($str);
     my $code = p($parser->parse($str));
     note($code);
 
     foreach my $pat(@patterns) {
-        like $code, $pat, $str;
+        like $code, $pat;
     }
 }
 

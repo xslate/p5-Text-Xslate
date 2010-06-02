@@ -170,7 +170,7 @@ $CODE_MANIP{ 'nil' } = sub {
 
 $CODE_MANIP{ 'literal' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( defined($arg) ? value_to_literal( $arg ) : 'undef' );
+    $self->sa( value_to_literal( $arg ) );
 };
 
 

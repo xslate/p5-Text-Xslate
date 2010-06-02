@@ -1412,7 +1412,8 @@ CODE:
             }
             else {
                 if(arg && SvOK(*arg)) {
-                    croak("Oops: Opcode %"SVf" has an extra argument on [%d]", opname, (int)i);
+                    croak("Oops: Opcode %"SVf" has an extra argument %s on [%d]",
+                        opname, tx_neat(aTHX_ *arg), (int)i);
                 }
                 st.code[i].arg = NULL;
             }
