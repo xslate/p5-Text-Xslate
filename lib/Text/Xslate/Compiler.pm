@@ -15,6 +15,7 @@ use Text::Xslate::Util qw(
 use Scalar::Util ();
 
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
+use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
 use constant _OPTIMIZE => scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
@@ -167,7 +168,7 @@ sub compile {
     my @code; # main protocode
     {
         my $ast = $parser->parse($str, %args);
-
+        print STDERR p($ast) if _DUMP_AST;
         @code = $self->_compile_ast($ast);
         push @code, $self->_generate_exit();
     }
