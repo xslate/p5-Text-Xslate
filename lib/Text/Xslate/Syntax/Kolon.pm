@@ -140,7 +140,7 @@ You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
         : }
     : }
 
-C<$~item> looks like an abstract object, so you can access its elements
+C<$~item> looks like a pseudo object, so you can access its elements
 via the dot operator.
 
     : for $data -> $i {
