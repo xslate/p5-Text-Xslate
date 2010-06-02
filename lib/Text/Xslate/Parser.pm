@@ -65,6 +65,16 @@ has symbol_table => ( # the global symbol table
     init_arg => undef,
 );
 
+has iterator_element => (
+    is  => 'rw',
+    isa => 'HashRef',
+
+    lazy     => 1,
+    default  => sub { {} },
+
+    init_arg => undef,
+);
+
 has scope => (
     is  => 'rw',
     isa => 'ArrayRef[HashRef]',
@@ -359,6 +369,7 @@ sub BUILD {
     my($parser) = @_;
     $parser->_define_basic_symbols();
     $parser->define_symbols();
+    $parser->define_iterator_elements();
     return;
 }
 
@@ -454,10 +465,6 @@ sub define_basic_operators {
     $parser->infix('and',  60);
     $parser->infix('or',   50);
 
-    my $it = $parser->symbol('(iterator)');
-    $it->set_nud(\&nud_iterator);
-    $it->arity('iterator');
-
     return;
 }
 
@@ -495,6 +502,24 @@ sub define_symbols {
     $parser->symbol('before')   ->set_std(\&std_proc);
     $parser->symbol('after')    ->set_std(\&std_proc);
     $parser->symbol('super')    ->set_std(\&std_marker);
+
+    return;
+}
+
+sub define_iterator_elements {
+    my($parser) = @_;
+
+    $parser->iterator_element({
+        index     => \&iterator_index,
+        count     => \&iterator_count,
+        is_first  => \&iterator_is_first,
+        is_last   => \&iterator_is_last,
+        body      => \&iterator_body,
+        size      => \&iterator_size,
+        max       => \&iterator_max,
+        peep_next => \&iterator_peep_next,
+        peep_prev => \&iterator_peep_prev,
+    });
 
     return;
 }
@@ -971,15 +996,21 @@ sub nud_iterator {
         if(!any_in($t->arity, qw(variable name))) {
             $parser->_error("Expected name, not $t (" . $t->arity . ")");
         }
-
         $parser->advance();
 
         if($parser->token->id eq "(") {
             $parser->advance();
+            # iterator elements are a psudo method,
+            # so they take no arguments.
             $parser->advance(")");
         }
 
+        my $generator = $parser->iterator_element->{$t->id};
+        if(!$generator) {
+            $parser->_error("Undefined iterator element: $t");
+        }
         $iterator->second($t);
+        return $generator->($parser, $iterator);
     }
     return $iterator;
 }
@@ -1074,15 +1105,16 @@ sub pointy {
 
 sub iterator_name {
     my($parser, $var) = @_;
-    (my $it_name = $var->id) =~ s/\A (\$?) /${1}~/xms; # $foo -> $~foo
+    # $foo -> $~foo
+    (my $it_name = $var->id) =~ s/\A (\$?) /${1}~/xms;
     return $it_name;
 }
 
 sub define_iterator {
     my($parser, $var) = @_;
 
-    my $it = $parser->symbol('(iterator)')->clone(
-        id    => $parser->iterator_name($var),
+    my $it = $parser->symbol( $parser->iterator_name($var) )->clone(
+        arity => 'iterator',
         first => $var,
     );
     $parser->define($it);
@@ -1352,6 +1384,97 @@ sub std_marker {
     $parser->advance(';');
     return $symbol->clone(arity => 'marker');
 }
+
+# iterator elements
+
+sub iterator_index {
+    my($parser, $iterator) = @_;
+
+    # $~iterator itself
+    return $iterator;
+}
+
+sub iterator_count {
+    my($parser, $iterator) = @_;
+
+    my $one = $parser->symbol('(literal)')->clone(
+        value => 1,
+    );
+
+    # $~iterator + 1
+    return $parser->symbol('+')->clone(
+        arity  => 'binary',
+        first  => $iterator,
+        second => $one,
+    );
+}
+
+sub iterator_is_first {
+    my($parser, $iterator) = @_;
+
+    my $zero = $parser->symbol('(literal)')->clone(
+        value => 0,
+    );
+
+    # $~iterator == 0
+    return $parser->symbol('==')->clone(
+        arity  => 'binary',
+        first  => $iterator,
+        second => $zero,
+    );
+}
+
+sub iterator_is_last {
+    my($parser, $iterator) = @_;
+
+    my $max = $parser->iterator_max($iterator);
+
+    # $~iterator == $~iterator.max
+    return $parser->symbol('==')->clone(
+        arity  => 'binary',
+        first  => $iterator,
+        second => $max,
+    );
+}
+
+sub iterator_body {
+    my($parser, $iterator) = @_;
+
+    return $iterator->clone(
+        arity => 'iterator_body',
+    );
+}
+
+sub iterator_size {
+    my($parser, $iterator) = @_;
+
+    my $body = $parser->iterator_body($iterator);
+
+    # __builtin_size($~iterator.body)
+    return $parser->symbol('size')->clone(
+        arity => 'unary',
+        first => $body,
+    );
+}
+
+sub iterator_max {
+    my($parser, $iterator) = @_;
+
+    my $size = $parser->iterator_size($iterator);
+
+    my $one = $parser->symbol('(literal)')->clone(
+        value => 1,
+    );
+
+    # $~iterator.size - 1
+    return $parser->symbol('-')->clone(
+        arity  => 'binary',
+        first  => $size,
+        second => $one,
+    );
+}
+
+# utils
 
 sub _error {
     my($self, $message, $near) = @_;

@@ -69,6 +69,19 @@ sub define_symbols {
     return;
 }
 
+after define_iterator_elements => sub {
+    my($parser) = @_;
+
+    my $tab = $parser->iterator_element;
+
+    $tab->{first} = $tab->{is_first};
+    $tab->{last}  = $tab->{is_last};
+    $tab->{next}  = $tab->{peep_next};
+    $tab->{prev}  = $tab->{peep_prev};
+
+    return;
+};
+
 around advance => sub {
     my($super, $parser, $id) = @_;
     if(defined $id and $parser->token->id eq lc($id)) {

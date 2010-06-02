@@ -130,12 +130,12 @@ T
 END
 X
 
-    [<<'T', <<'X', 'first && last'],
+    [<<'T', <<'X', 'is_first && is_last'],
 [% FOR type IN types -%]
-[% IF loop.first -%]
+[% IF loop.is_first -%]
 ---- first ----
 [% END -%]* [% loop.count %]
-[% IF loop.last -%]
+[% IF loop.is_last -%]
 ---- last ----
 [% END -%]
 [% END -%]

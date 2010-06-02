@@ -797,95 +797,21 @@ sub _generate_iterator {
     my $item_var  = $node->first;
     my $lvar_code = $self->lvar->{$item_var};
     if(!defined($lvar_code)) {
-        $self->_error("Undefined iterator variable: $item_var", $node);
+        $self->_error("Refer to iterator $node, but $item_var is not defined",
+            $node);
     }
 
-    my $parser   = $self->parser; # to create AST
-    my $element  = $node->second; # $^iterator.ELEMENT
-
-    if(defined $element) {
-        my $name = $element->id;
-        if($name eq 'index') {
-            # the same as $^iterator
-            # fallthrough
-        }
-        elsif($name eq 'count') {
-            my $one = $parser->symbol('(literal)')->clone(
-                value => 1,
-            );
-            return $self->_expr( $parser->symbol('+')->clone(
-                arity  => 'binary',
-                first  => $node->clone(second => undef), # iterator
-                second => $one,
-            ) );
-        }
-        elsif($name eq 'is_first' or $name eq 'first') {
-            my $zero = $parser->symbol('(literal)')->clone(
-                value => 0,
-            );
-            return $self->_expr( $parser->symbol('==')->clone(
-                arity  => 'binary',
-                first  => $node->clone(second => undef), # iterator
-                second => $zero,
-            ));
-        }
-        elsif(any_in($name, qw(body size max is_last last))) {
-            my $array = $parser->symbol('(variable)')->clone(
-                arity => 'iterating_array',
-                id    => $item_var->id,
-                first => $item_var,
-            );
-
-            if($name eq 'body') {
-                return $self->_expr($array);
-            }
-
-            my $size = $parser->symbol('(literal)')->clone(
-                arity => 'unary',
-                id    => 'size',
-                first => $array,
-            );
-
-            if($name eq 'size') {
-                return $self->_expr($size);
-            }
-
-            my $one   = $parser->symbol('(literal)')->clone(
-                value => 1,
-            );
-
-            # max = size($array) - 1
-            my $max = $parser->symbol('-')->clone(
-                arity  => 'binary',
-                first  => $size,
-                second => $one,
-            );
-
-            if($name eq 'max') {
-                return $self->_expr($max);
-            }
-
-            # last/is_last: $~it == max($arrayref)
-            return $self->_expr( $parser->symbol('==')->clone(
-                arity  => 'binary',
-                first  => $node->clone(second => undef), # iterator
-                second => $max,
-            ));
-        }
-        else {
-            $self->_error("Undefined iterator element: $name", $node);
-        }
-    }
     return [ fetch_lvar => $lvar_code->[1]+1, $node->line, $node->id ];
 }
 
-sub _generate_iterating_array {
+sub _generate_iterator_body {
     my($self, $node) = @_;
 
     my $item_var  = $node->first;
     my $lvar_code = $self->lvar->{$item_var};
     if(!defined($lvar_code)) {
-        $self->_error("Undefined iterator variable: $item_var", $node);
+        $self->_error("Refer to iterator $node.body, but $item_var is not defined",
+            $node);
     }
 
     return [ fetch_lvar => $lvar_code->[1]+2, $node->line, $node->id ];
