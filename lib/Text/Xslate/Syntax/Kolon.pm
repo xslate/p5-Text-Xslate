@@ -317,7 +317,7 @@ Then extend from base templates with the C<cascade> keyword:
     : cascade with myapp::role1, myapp::role2
 
 In derived templates, you may extend templates (e.g. F<myapp/foo.tx>)
-with block modifiers.
+with block modifiers C<before>, C<around> (or C<override>) and C<after>.
 
     : # cascade "myapp/base.tx" is also okay
     : cascade myapp::base
