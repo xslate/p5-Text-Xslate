@@ -382,7 +382,7 @@ sub _flush_macro_table {
 sub _generate_name {
     my($self, $node) = @_;
 
-    $self->_error("Undefined symbol '$node', before " . $node->first, $node);
+    $self->_error("Undefined symbol '$node'", $node);
 }
 
 sub _can_print_optimize {
@@ -527,10 +527,10 @@ sub _generate_while {
     return @code;
 }
 
-sub _generate_proc { # block, before, around, after
+sub _generate_proc { # macro, block, before, around, after
     my($self, $node) = @_;
     my $type   = $node->id;
-    my $name   = $node->first;
+    my $name   = $node->first->id;
     my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
@@ -556,17 +556,9 @@ sub _generate_proc { # block, before, around, after
 
     if(any_in($type, qw(macro block))) {
         if(exists $self->macro_table->{$name}) {
-            $self->_error("Redefinition of $type $name is found", $node);
+            $self->_error("Redefinition of $type $name is forbidden", $node);
         }
         $self->macro_table->{$name} = \%macro;
-        if($type eq 'block') {
-            @code = (
-                [ pushmark  => () ],
-                [ macro     => $name ],
-                [ macrocall => undef ],
-                [ print     => undef ],
-            );
-        }
     }
     else {
         my $fq_name = sprintf '%s@%s', $name, $type;

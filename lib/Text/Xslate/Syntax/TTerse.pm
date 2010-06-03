@@ -59,6 +59,9 @@ sub init_symbols {
     $parser->symbol('WITH');
     $parser->symbol('with');
 
+    $parser->symbol('FILTER')  ->set_std(\&std_filter);
+    $parser->symbol('filter')  ->set_std(\&std_filter);
+
     # macros
 
     $parser->symbol('MACRO') ->set_std(\&std_macro);
@@ -236,7 +239,7 @@ sub std_macro {
     my($parser, $symbol) = @_;
     my $proc = $symbol->clone(
         arity => 'proc',
-        id    => lc($symbol->id),
+        id    => 'macro',
     );
 
     my $name = $parser->token;
@@ -246,7 +249,7 @@ sub std_macro {
 
     $parser->define_macro($name->id);
 
-    $proc->first( $name->id );
+    $proc->first($name);
     $parser->advance();
 
     my $paren = ($parser->token->id eq "(");
@@ -276,6 +279,19 @@ sub std_macro {
     $proc->third( $parser->statements() );
     $parser->advance("END");
     return $proc;
+}
+
+# [% FILTER html %]
+# ...
+# [% END %]
+# is
+# : macro filter_001 -> {
+#   ...
+# : } filter_001() | html
+# in Kolon
+
+sub std_filter {
+    
 }
 
 no Any::Moose;

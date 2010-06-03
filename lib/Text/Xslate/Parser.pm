@@ -499,10 +499,10 @@ sub init_symbols {
 
     $parser->symbol('cascade')  ->set_std(\&std_cascade);
     $parser->symbol('macro')    ->set_std(\&std_proc);
-    $parser->symbol('block')    ->set_std(\&std_proc);
     $parser->symbol('around')   ->set_std(\&std_proc);
     $parser->symbol('before')   ->set_std(\&std_proc);
     $parser->symbol('after')    ->set_std(\&std_proc);
+    $parser->symbol('block')    ->set_std(\&std_macro_block);
     $parser->symbol('super')    ->set_std(\&std_marker);
 
     return;
@@ -1158,17 +1158,35 @@ sub std_while {
 sub std_proc {
     my($parser, $symbol) = @_;
 
-    my $proc = $symbol->clone(arity => "proc");
-    my $name = $parser->token;
+    my $macro = $symbol->clone(arity => "proc");
+    my $name  = $parser->token;
     if($name->arity ne "name") {
         $parser->_error("Expected a name but " . $parser->token);
     }
 
     $parser->define_macro($name->id);
-    $proc->first( $name->id );
+    $macro->first( $parser->nud_macro($name) );
     $parser->advance();
-    $parser->pointy($proc);
-    return $proc;
+    $parser->pointy($macro);
+    return $macro;
+}
+
+sub std_macro_block {
+    my($parser, $symbol) = @_;
+
+    my $macro = $parser->std_proc($symbol);
+
+    my $call  = $symbol->clone(
+        arity  => 'call',
+        first  => $macro->first, # name
+        second => [],            # args
+    );
+    my $print = $parser->symbol('print')->clone(
+        arity => 'command',
+        first => [$call],
+    );
+    # std() returns a list
+    return( $macro, $print );
 }
 
 sub std_if {
