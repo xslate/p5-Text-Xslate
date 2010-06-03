@@ -4,6 +4,7 @@ Revision history for Perl extension Text::Xslate
     [CHANGES]
     - Metakolon's line code has been changed to %% like TT3 and TTerse
     - The default cache_dir is chaned to "$HOME/.xslate_cache"
+    - Error messages are improved
 
     [NEW FEATURES]
     - Macros can be called with the filter operator (e.g. expr | my_macro)
