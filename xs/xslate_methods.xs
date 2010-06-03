@@ -125,6 +125,24 @@ TXBM(reverse) {
     return resultref;
 }
 
+TXBM(sort) {
+    AV* const av        = (AV*)SvRV(*MARK);
+    I32 const len       = av_len(av) + 1;
+    AV* const result    = newAV();
+    SV* const resultref = sv_2mortal(newRV_noinc((SV*)result));
+    I32 i;
+
+    av_fill(result, len - 1);
+    for(i = 0; i < len; i++) {
+        SV** const svp = av_fetch(av, i, FALSE);
+        av_store(result, i, newSVsv(svp ? *svp : &PL_sv_undef));
+    }
+    sortsv(AvARRAY(result), len, Perl_sv_cmp);
+
+    return resultref;
+}
+
+
 /* Key-Value containers */
 
 TXBM(keys) {
@@ -184,6 +202,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(size,    0, TX_TRAIT_ENUMERABLE),
     TXBM_SETUP(join,    1, TX_TRAIT_ENUMERABLE),
     TXBM_SETUP(reverse, 0, TX_TRAIT_ENUMERABLE),
+    TXBM_SETUP(sort,    0, TX_TRAIT_ENUMERABLE),
 
     TXBM_SETUP(keys,    0, TX_TRAIT_KV),
     TXBM_SETUP(values,  0, TX_TRAIT_KV),
@@ -316,7 +335,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             if(bm.nargs != -1
                 && bm.nargs != items) {
                 tx_error(aTHX_ st,
-                    "Builtin method %"SVf" requres exactly %d argument(s), "
+                    "Builtin method %"SVf" requires exactly %d argument(s), "
                     "but supplied %d",
                     method, (int)bm.nargs, (int)items);
                 goto finish;

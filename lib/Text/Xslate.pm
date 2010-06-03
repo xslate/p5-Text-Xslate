@@ -42,7 +42,8 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-my $XSLATE_MAGIC = qq{.xslate "%s/%s/%s/%s"\n}; # version/syntax/escape/path
+# version syntax compiler escape path
+my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
 
 sub new {
     my $class = shift;
@@ -57,7 +58,9 @@ sub new {
     defined($args{syntax})      or $args{syntax}      = 'Kolon';
     defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
     defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
-    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->tmpdir;
+    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->catfile(
+        $ENV{HOME} || File::Spec->tmpdir, '.xslate_cache',
+    );
 
     my %funcs = (
         raw  => \&escaped_string,
@@ -234,17 +237,20 @@ sub load_file {
                 require File::Path;
                 File::Path::mkpath($cachedir);
             }
-            open my($out), '>:raw:utf8', $cachepath
-                or $self->_error("LoadError: Cannot open $cachepath for writing: $!");
 
-            print $out $self->serialize($asm, $fullpath);
+            if(open my($out), '>:raw:utf8', $cachepath) {
+                print $out $self->serialize($asm, $fullpath);
 
-            if(!close $out) {
-                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                 unlink $cachepath;
+                if(!close $out) {
+                     Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
+                     unlink $cachepath;
+                }
+                else {
+                    $is_compiled = 1;
+                }
             }
             else {
-                $is_compiled = 1;
+                Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
             }
         }
     }
@@ -268,6 +274,7 @@ sub _magic {
     return sprintf $XSLATE_MAGIC,
         $VERSION,
         $self->{syntax},
+        ref($self->{compiler}) || $self->{compiler},
         $self->{escape},
         $fullpath,
     ;
@@ -369,7 +376,7 @@ This document describes Text::Xslate version 0.1025.
     my $tx = Text::Xslate->new(
         # the fillowing options are optional.
         path       => ['.'],
-        cache_dir  => File::Spec->tmpdir,
+        cache_dir  => "$ENV{HOME}/.xslate_cache",
         cache      => 1,
     );
 
@@ -390,7 +397,7 @@ This document describes Text::Xslate version 0.1025.
     my $template = q{
         <h1><: $title :></h1>
         <ul>
-        : for $books ->($book) {
+        : for $books -> $book {
             <li><: $book.title :></li>
         : } # for
         </ul>
@@ -419,8 +426,8 @@ This engine introduces the virtual machine paradigm. That is, templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
 
-The features of templates are strongly influenced by Text::MicroTemplate
-and Template-Toolkit, but the philosophy of Xslate is different from them.
+The concept of Xslate is strongly influenced by Text::MicroTemplate
+and Template-Toolkit, but the central philosophy of Xslate is different from them.
 That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
 
@@ -433,8 +440,35 @@ Version 0.2xxx and more will be somewhat stable.
 =head3 High performance
 
 Xslate has a virtual machine written in XS, which is highly optimized.
-According to benchmarks, Xslate is B<2-10 times faster> than other template
+According to benchmarks, Xslate is much faster than other template
 engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
+
+There are benchmarks to compare template engines (see F<benchmark/> for details).
+
+Here is a result of F<benchmark/others.pl> to compare various template engines.
+
+    $ perl -Mblib benchmark/others.pl include 100
+    Perl/5.10.1 i686-linux
+    Text::Xslate/0.1025
+    Text::MicroTemplate/0.11
+    Template/2.22
+    Text::ClearSilver/0.10.5.4
+    HTML::Template::Pro/0.94
+    1..4
+    ok 1 - TT: Template-Toolkit
+    ok 2 - MT: Text::MicroTemplate
+    ok 3 - TCS: Text::ClearSilver
+    ok 4 - HT: HTML::Template::Pro
+    Benchmarks with 'include' (datasize=100)
+             Rate     TT     MT    TCS     HT Xslate
+    TT      313/s     --   -55%   -88%   -89%   -97%
+    MT      697/s   123%     --   -72%   -75%   -93%
+    TCS    2512/s   702%   260%     --    -9%   -74%
+    HT     2759/s   781%   296%    10%     --   -71%
+    Xslate 9489/s  2931%  1261%   278%   244%     --
+
+You can see Xslate is 3 times faster than HTML::Template::Pro and Text::ClearSilver,
+which are implemented in XS.
 
 =head3 Template cascading
 
@@ -450,7 +484,7 @@ The Xslate virtual machine and the parser/compiler are completely separated
 so that one can use alternative parsers.
 
 For example, C<TTerse>, a Template-Toolkit-like parser, is supported as a
-completely different syntax.
+completely different syntax parser.
 
 =head1 INTERFACE
 
@@ -480,9 +514,12 @@ will not be checked.
 
 I<$level> == 0 creates no caches. It's provided for testing.
 
-=item C<< cache_dir => $dir // File::Spec->tmpdir >>
+=item C<< cache_dir => $dir // "$ENV{HOME}/.xslate_cache" >>
 
-Specifies the directory used for caches.
+Specifies the directory used for caches. If C<$ENV{HOME}> doesn't exist,
+C<< File::Spec->tmpdir >> will be used.
+
+You B<should> specify this option on productions.
 
 =item C<< function => \%functions >>
 
@@ -514,7 +551,8 @@ Specifies PerlIO layers for reading templates.
 
 Specifies the template syntax you want to use.
 
-I<$name> may be a short name (moniker), or a fully qualified name.
+I<$name> may be a short name (e.g. C<Kolon>), or a fully qualified name
+(e.g. C<Text::Xslate::Syntax::Kolon>).
 
 =item C<< escape => $mode // 'html' >>
 
@@ -600,11 +638,11 @@ C<< : ... >> line code, which is explained in L<Text::Xslate::Syntax::Kolon>.
 =item Metakolon
 
 B<Metakolon> is the same as Kolon except for using C<< [% ... %] >> tags and
-C<< % ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
+C<< %% ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 
 =item TTerse
 
-B<TTerse> is a syntax that is a subset of Template-Toolkit 2,
+B<TTerse> is a syntax that is a subset of Template-Toolkit 2 (and partially TT3),
 which is explained in L<Text::Xslate::Syntax::TTerse>.
 
 =back
@@ -708,7 +746,7 @@ Thanks to makamaka for the contribution of Text::Xslate::PP.
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
 
-Makamaka Hannyaharamitu
+Makamaka Hannyaharamitu (makamaka)
 
 Maki, Daisuke (lestrrat)
 

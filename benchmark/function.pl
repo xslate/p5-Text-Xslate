@@ -1,5 +1,4 @@
 #!perl -w
-use 5.010_000;
 use strict;
 
 use Text::Xslate;
@@ -9,7 +8,7 @@ use Benchmark qw(:all);
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
-    say $mod, '/', $mod->VERSION;
+    print $mod, '/', $mod->VERSION, "\n";
 }
 
 my $n = shift(@ARGV) || 100;

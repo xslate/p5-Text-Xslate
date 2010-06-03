@@ -3,8 +3,8 @@ use Any::Moose;
 
 extends qw(Text::Xslate::Parser);
 
-# [% ... %]
-sub _build_line_start { qr/\Q%/xms  }
+# [% ... %] and %% ...
+sub _build_line_start { qr/\Q%%/xms  }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 

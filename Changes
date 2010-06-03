@@ -1,5 +1,24 @@
 Revision history for Perl extension Text::Xslate
 
+0.1026
+    [CHANGES]
+    - Metakolon's line code has been changed to %% like TT3 and TTerse
+    - The default cache_dir is chaned to "$HOME/.xslate_cache"
+
+    [NEW FEATURES]
+    - Introduce loop iterators:
+        + "$~LOOP_VAR" (e.g. $~item) in Kolon
+        + "loop" (the same as TT) in TTerse
+        + Supported loop elements: index, count, size, max, body,
+          is_first/first, and is_last/last.
+    - For TTerse
+        + Port MACRO foo(...) BLOCK ... END syntax
+
+    [BUG FIXES]
+    - Empty hash/array literals ware not allowed
+    - There ware several edge-case issues in string literals
+    - Resolve issue #5: [% "foo' %] was silently accepted
+
 0.1025 Mon May 31 20:29:50 2010
     - Support 5.8.1
 

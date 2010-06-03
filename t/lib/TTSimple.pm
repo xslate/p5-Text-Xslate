@@ -12,6 +12,9 @@ use t::lib::Util;
 my $tt;
 
 if(USE_TT) {
+    require Test::More;
+    Test::More::note('use Template::Toolkit');
+
     require Template;
     $tt = Template->new(
         INCLUDE_PATH => path,

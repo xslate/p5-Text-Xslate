@@ -1,25 +1,27 @@
 #!perl -w
-use 5.010_000;
 use strict;
 
 use Text::Xslate;
 use Text::MicroTemplate::Extended;
 use HTML::Template::Pro;
+use Template;
 
+use Test::More;
 use Benchmark qw(:all);
 use FindBin qw($Bin);
 
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
-foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro)){
-    say $mod, '/', $mod->VERSION;
+foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro Template)){
+    print $mod, '/', $mod->VERSION, "\n";
 }
 
-my $n = shift(@ARGV) || 1;
+my $n = shift(@ARGV) || 10;
 
 my @path = ("$Bin/template");
-my $x  = Text::Xslate->new(
-    path  => \@path,
-    cache => 2,
+my $tx  = Text::Xslate->new(
+    path      => \@path,
+    cache_dir => $path[0],
+    cache     => 2,
 );
 my $mt = Text::MicroTemplate::Extended->new(
     include_path => \@path,
@@ -27,8 +29,12 @@ my $mt = Text::MicroTemplate::Extended->new(
 );
 my $ht = HTML::Template->new(
     path           => \@path,
-    filename       => "including.ht",
+    filename       => "include.ht",
     case_sensitive => 1,
+);
+my $tt = Template->new(
+    INCLUDE_PATH => \@path,
+    COMPILE_EXT  => '.out',
 );
 
 my %vars = (
@@ -41,27 +47,44 @@ my %vars = (
      ) x $n],
 );
 
-if($x->render('including.tx', \%vars) ne $mt->render('including', \%vars)) {
-    print $x->render('including.tx', \%vars);
-    print $mt->render('including',   \%vars);
-}
+{
+    my $expected = $tx->render('include.tx', \%vars);
+    $expected =~ s/\n+/\n/g;
 
-#$ht->param(\%vars);die $ht->output();
+    plan tests => 3;
+    my $out = $mt->render('include', \%vars);
+    $out =~ s/\n+/\n/g;
+    is $out, $expected, 'MT - Text::MicroTemplate::Extended';
+
+    $ht->param(\%vars);
+    $out = $ht->output();
+    $out =~ s/\n+/\n/g;
+    is $out, $expected, 'HT - HTML::Template::Pro';
+
+    $out = '';
+    $tt->process('include.tt', \%vars, \$out) or die $tt->error;
+    is $out, $expected, 'TT - Template-Toolkit';
+}
 
 print "Benchmarks for include commands\n";
 # suppose PSGI response body
 cmpthese -1 => {
-    xslate => sub {
-        my $body = [$x->render('including.tx', \%vars)];
+    Xslate => sub {
+        my $body = [$tx->render('include.tx', \%vars)];
         return;
     },
-    mt => sub {
-        my $body = [$mt->render('including', \%vars)];
+    MT => sub {
+        my $body = [$mt->render('include', \%vars)];
         return;
     },
-    ht => sub{
+    HT => sub {
         $ht->param(\%vars);
         my $body = [$ht->output()];
+        return;
+    },
+    TT => sub {
+        my $body = [''];
+        $tt->process('include.tt', \%vars, \$body->[0]) or die $tt->error;
         return;
     },
 };

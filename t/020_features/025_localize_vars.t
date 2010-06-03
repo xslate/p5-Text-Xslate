@@ -7,7 +7,7 @@ use Text::Xslate;
 use Text::Xslate::Util qw(p);
 use t::lib::Util;
 
-my $tx = Text::Xslate->new(path => [path]);
+my $tx = Text::Xslate->new(path => [path], cache => 0);
 
 my @set = (
     [<<'T', { lang => 'Xslate' }, <<'X', 'cascade with local vars'],

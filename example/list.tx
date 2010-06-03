@@ -1,4 +1,4 @@
 List:
 : for $data ->($item) {
-    [<:= $item["title"] :>]
+    <: $~item.count :>. <: $item.title :>
 : }

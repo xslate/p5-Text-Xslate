@@ -29,7 +29,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
-like $@, qr/Expected '}'/;
+like $@, qr/Expected "}"/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -37,7 +37,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
-like $@, qr/near '}'/;
+like $@, qr/near "}"/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -45,7 +45,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
-like $@, qr/near '}'/;
+like $@, qr/near "}"/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -74,6 +74,15 @@ eval {
 T
 };
 like $@, qr/Parser/;
+
+eval {
+    Text::Xslate::Compiler->new->compile(<<'T');
+Hello, <: "Xslate' :> world! # unmatched quote
+T
+}; # " for poor editors
+like $@, qr/Parser/;
+like $@, qr/Malformed/;
+like $@, qr/"Xslate'/; # " for poor editors
 
 foreach my $assign(qw(= += -= *= /= %= ~= &&= ||= //=)) {
     eval {

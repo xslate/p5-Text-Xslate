@@ -14,8 +14,6 @@ use Text::Xslate::PP::Booster;
 
 use Text::Xslate::Util qw($DEBUG);
 
-my $TX_OPS = \%Text::Xslate::OPS;
-
 use parent qw(Exporter);
 our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
 our %EXPORT_TAGS = (
@@ -30,6 +28,15 @@ our %EXPORT_TAGS = (
 
 require Text::Xslate;
 
+{
+    package
+        Text::Xslate;
+    our %OPS;
+    if(!%OPS) {
+        # the compiler use %Text::Xslate::OPS in order to optimize the code
+        *OPS = \%Text::Xslate::PP::OPS;
+    }
+}
 #
 # public APIs
 #
@@ -71,6 +78,9 @@ sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
     my $len = scalar( @$proto );
     my $st  = Text::Xslate::PP::State->new;
+
+    our %OPS;    # defined in Text::Xslate::PP::Const
+    our @OPARGS; # defined in Text::Xslate::PP::Const
 
     unless ( defined $name ) { # $name ... filename
         $name = '<input>';
@@ -121,7 +131,7 @@ sub _assemble {
         }
 
         my ( $opname, $arg, $line ) = @$pair;
-        my $opnum = $TX_OPS->{ $opname };
+        my $opnum = $OPS{ $opname };
 
         unless ( defined $opnum ) {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
@@ -129,21 +139,21 @@ sub _assemble {
 
         $code->[ $i ]->{ opname }    = $opname; # for test
 
-        my $tx_oparg = $Text::Xslate::PP::tx_oparg->[ $opnum ];
+        my $oparg = $OPARGS[ $opnum ];
 
-        if ( $tx_oparg & TXARGf_SV ) {
+        if ( $oparg & TXARGf_SV ) {
 
             # This line croak at 'concat'!
             # Carp::croak( sprintf( "Oops: Opcode %s must have an argument on [%d]", $opname, $i ) )
             #     unless ( defined $arg );
 
-            if( $tx_oparg & TXARGf_KEY ) {
+            if( $oparg & TXARGf_KEY ) {
                 $code->[ $i ]->{ arg } = $arg;
             }
-            elsif ( $tx_oparg & TXARGf_INT ) {
+            elsif ( $oparg & TXARGf_INT ) {
                 $code->[ $i ]->{ arg } = $arg;
 
-                if( $tx_oparg & TXARGf_GOTO ) {
+                if( $oparg & TXARGf_GOTO ) {
                     my $abs_addr = $i + $arg;
 
                     if( $abs_addr >= $len ) {
@@ -172,10 +182,10 @@ sub _assemble {
         $st->lines->[ $i ] = $line;
 
         # special cases
-        if( $opnum == $TX_OPS->{ macro_begin } ) {
+        if( $opnum == $OPS{ macro_begin } ) {
             $st->macro->{ $code->[ $i ]->{ arg } } = $i;
         }
-        elsif( $opnum == $TX_OPS->{ depend } ) {
+        elsif( $opnum == $OPS{ depend } ) {
             push @{ $tmpl }, $code->[ $i ]->{ arg };
         }
 

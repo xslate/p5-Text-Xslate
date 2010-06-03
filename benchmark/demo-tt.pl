@@ -1,5 +1,4 @@
 #!perl -w
-use 5.010;
 use strict;
 
 use Text::Xslate;
@@ -10,7 +9,7 @@ use FindBin qw($Bin);
 
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Template)){
-    say $mod, '/', $mod->VERSION;
+    print $mod, '/', $mod->VERSION, "\n";
 }
 
 my $tt = Template->new(

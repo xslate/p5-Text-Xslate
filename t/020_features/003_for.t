@@ -44,7 +44,7 @@ world!'
 [Object|Str]
 [Object|Int]
 [Object|Object]
->>"],
+>>", "nested"],
 
     ['<<
 : for $types -> ($t1) {
@@ -103,10 +103,145 @@ T
         Perl
 X
 
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $~item :>
+: }
+T
+    0
+    1
+    2
+X
+
+
+    # iterators
+
+    [<<'T', <<'X'],
+: for $types -> $item {
+    : if (($~item+1) % 2) == 0 {
+        Even
+    : }
+    : else {
+        Odd
+    : }
+: }
+T
+        Odd
+        Even
+        Odd
+X
+
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $~item.index :>
+: }
+T
+    0
+    1
+    2
+X
+
+    [<<'T', <<'X'],
+: for $types -> ($item) {
+    <: $~item.count :>
+: }
+T
+    1
+    2
+    3
+X
+
+    [<<'T', <<'X', 'is_first && is_last'],
+: for $types -> ($item) {
+    : if $~item.is_first {
+---- first ----
+    : }
+    <: $~item.count :>
+    : if $~item.is_last {
+---- last ----
+    : }
+: }
+T
+---- first ----
+    1
+    2
+    3
+---- last ----
+X
+
+    [<<'T', <<'X', 'size'],
+: for $types -> ($item) {
+    <: $~item.size :>
+: }
+T
+    3
+    3
+    3
+X
+
+    [<<'T', <<'X', 'max'],
+: for $types -> ($item) {
+    <: $~item.max :>
+: }
+T
+    2
+    2
+    2
+X
+
+
+    [<<'T', <<'X', 'body'],
+: for $types -> ($item) {
+    <: $~item.body[ $~item.index ] :>
+: }
+T
+    Str
+    Int
+    Object
+X
+
+    [<<'T', <<'X', 'peep_next'],
+: for $types -> ($item) {
+    <: $~item.peep_next // "(none)" :>
+: }
+T
+    Int
+    Object
+    (none)
+X
+
+    [<<'T', <<'X', 'peep_prev'],
+: for $types -> ($item) {
+    <: $~item.peep_prev // "(none)" :>
+: }
+T
+    (none)
+    Str
+    Int
+X
+
+
+    [<<'T', <<'X', 'nested $~i'],
+: for $types -> $i {
+:   for $types -> $j {
+        [<: $~i.index :>][<: $~j.count :>]
+:   }
+: }
+T
+        [0][1]
+        [0][2]
+        [0][3]
+        [1][1]
+        [1][2]
+        [1][3]
+        [2][1]
+        [2][2]
+        [2][3]
+X
 );
 
 foreach my $pair(@data) {
-    my($in, $out) = @$pair;
+    my($in, $out, $msg) = @$pair;
 
     my %vars = (
         lang => 'Xslate',
@@ -119,7 +254,7 @@ foreach my $pair(@data) {
 
         data => [[qw(Perl)]],
     );
-    is $tx->render_string($in, \%vars), $out or diag $in;
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

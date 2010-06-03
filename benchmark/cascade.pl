@@ -1,5 +1,4 @@
 #!perl -w
-use 5.010;
 use strict;
 
 use Text::Xslate;
@@ -11,12 +10,12 @@ use Test::More;
 
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate Text::MicroTemplate::Extended)){
-    say $mod, '/', $mod->VERSION;
+    print $mod, '/', $mod->VERSION, "\n";
 }
 
 my %args = @ARGV;
 
-my $cache = $args{'--cache'} // 2;
+my $cache = defined($args{'--cache'}) ? $args{'--cache'} : 2;
 
 {
     package BlogEntry;

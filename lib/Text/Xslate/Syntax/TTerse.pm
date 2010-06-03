@@ -1,6 +1,6 @@
 package Text::Xslate::Syntax::TTerse;
 use Any::Moose;
-use Text::Xslate::Util qw(p);
+use Text::Xslate::Util qw(p any_in);
 
 extends qw(Text::Xslate::Parser);
 
@@ -59,8 +59,36 @@ sub define_symbols {
     $parser->symbol('WITH');
     $parser->symbol('with');
 
+    # macros
+
+    $parser->symbol('MACRO') ->set_std(\&std_macro);
+    $parser->symbol('macro') ->set_std(\&std_macro);
+    $parser->symbol('BLOCK');
+    $parser->symbol('block');
+
     return;
 }
+
+after define_iterator_elements => sub {
+    my($parser) = @_;
+
+    my $tab = $parser->iterator_element;
+
+    $tab->{first} = $tab->{is_first};
+    $tab->{last}  = $tab->{is_last};
+    $tab->{next}  = $tab->{peep_next};
+    $tab->{prev}  = $tab->{peep_prev};
+
+    return;
+};
+
+around advance => sub {
+    my($super, $parser, $id) = @_;
+    if(defined $id and $parser->token->id eq lc($id)) {
+        $id = lc($id);
+    }
+    return $super->($parser, $id);
+};
 
 sub undefined_name {
     my($parser) = @_;
@@ -125,10 +153,13 @@ sub std_if {
             : $parser->statements());
     }
 
-    $parser->token->id eq "end"
-        ? $parser->advance("end")
-        : $parser->advance("END");
+
+    $parser->advance("END");
     return $top_if;
+}
+
+sub iterator_name {
+    return 'loop'; # always 'loop'
 }
 
 sub std_foreach {
@@ -136,24 +167,24 @@ sub std_foreach {
 
     my $proc = $symbol->clone(arity => "for");
 
-    my $t = $parser->token;
-    if($t->arity ne "variable") {
-        $parser->_error("Expected a variable name but $t");
+    my $var = $parser->token;
+    if($var->arity ne "variable") {
+        $parser->_error("Expected a variable name but $var");
     }
-
-    my $var = $t;
     $parser->advance();
-    $parser->token->id eq "in"
-        ? $parser->advance("in")
-        : $parser->advance("IN");
+    $parser->advance("IN");
 
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
-    $proc->third( $parser->statements() );
 
-    $parser->token->id eq "end"
-        ? $parser->advance("end")
-        : $parser->advance("END");
+    $parser->new_scope();
+
+    $parser->define_iterator($var);
+
+    $proc->third( $parser->statements() );
+    $parser->pop_scope();
+
+    $parser->advance("END");
 
     return $proc;
 }
@@ -169,7 +200,7 @@ sub std_include {
 sub localize_vars {
     my($parser, $symbol) = @_;
 
-    if($parser->token->id eq "with") {
+    if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
         return  $parser->set_list();
     }
@@ -201,6 +232,52 @@ sub set_list {
     return \@args;
 }
 
+sub std_macro {
+    my($parser, $symbol) = @_;
+    my $proc = $symbol->clone(
+        arity => 'proc',
+        id    => lc($symbol->id),
+    );
+
+    my $name = $parser->token;
+    if($name->arity ne "variable") {
+        $parser->_error("Expected a name but " . $name);
+    }
+
+    $parser->define_macro($name->id);
+
+    $proc->first( $name->id );
+    $parser->advance();
+
+    my $paren = ($parser->token->id eq "(");
+
+    $parser->advance("(") if $paren;
+
+    my $t = $parser->token;
+    my @vars;
+    while($t->arity eq "variable") {
+        push @vars, $t;
+        $parser->define($t);
+
+        $t = $parser->advance();
+
+        if($t->id eq ",") {
+            $t = $parser->advance(); # ","
+        }
+        else {
+            last;
+        }
+    }
+    $parser->advance(")") if $paren;
+
+    $proc->second(\@vars);
+
+    $parser->advance("BLOCK");
+    $proc->third( $parser->statements() );
+    $parser->advance("END");
+    return $proc;
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
 __END__
@@ -223,8 +300,8 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
 
 =head1 DESCRIPTION
 
-TTerse is a subset of the Template-Toolkit 2 syntax,
-using C<< [% ... %] >> tags.
+TTerse is a subset of the Template-Toolkit 2.0 (and partially  3.0) syntax,
+using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
 =head1 SYNTAX
 
@@ -249,6 +326,8 @@ If I<$var> is an object instance, you can call its methods.
 
     [% $var.method() %]
     [% $var.method(1, 2, 3) %]
+    [% $var.method(foo => [1, 2, 3]) %]
+    [% $var.method({ foo => 'bar' }) %]
 
 =head2 Expressions
 
@@ -258,6 +337,22 @@ Almost the same as L<Text::Xslate::Syntax::Kolon>.
 
     [% FOREACH item IN arrayref %]
         * [% item %]
+    [% END %]
+
+Loop iterators are partially supported.
+
+    [% FOREACH item IN arrayref %]
+        [%- IF loop.first -%]
+        <first>
+        [%- END -%]
+        * [% loop.index %]
+        * [% loop.count # loop.index + 1 %]
+        * [% loop.body  # alias to arrayref %]
+        * [% loop.size  # loop.body.size %]
+        * [% loop.max   # loop.size - 1 %]
+        [%- IF loop.last -%]
+        <first>
+        [%- END -%]
     [% END %]
 
 =head2 Conditional statements
@@ -294,11 +389,27 @@ C<< WITH variablies >> syntax is also supported:
         bar = 3.14
     %]
 
-=head2 Template cascading
-
-Not supported.
 
 =head2 Macro blocks
+
+Definition:
+
+    [% MACRO foo BLOCK -%]
+        This is a macro.
+    [% END -%]
+
+    [% MACRO add(a, b) BLOCK -%]
+    [%  a + b -%]
+    [% END -%]
+
+Call:
+
+    [% foo()     %]
+    [% add(1, 2) %]
+
+Unlike Template-Toolkit, calling macros requires parens (C<()>).
+
+=head2 Template cascading
 
 Not supported.
 
