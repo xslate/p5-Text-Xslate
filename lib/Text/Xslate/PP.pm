@@ -326,7 +326,7 @@ sub tx_execute {
     local $st->{SP} = [];
 
     if ( $st->{ booster_code } ) {
-        return $st->{ boost_code }->( $st );
+        return $st->{ booster_code }->( $st );
     }
     else {
         local $st->{targ};
