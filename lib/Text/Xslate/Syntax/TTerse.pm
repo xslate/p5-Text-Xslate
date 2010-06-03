@@ -67,6 +67,9 @@ sub init_symbols {
     $parser->symbol('BLOCK');
     $parser->symbol('block');
 
+    $parser->symbol('WRAPPER')->set_std(\&std_wrapper);
+    $parser->symbol('wrapper')->set_std(\&std_wrapper);
+
     return;
 }
 
@@ -203,7 +206,7 @@ sub localize_vars {
 
     if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
-        return  $parser->set_list();
+        return $parser->set_list();
     }
     return undef;
 }
@@ -277,6 +280,54 @@ sub std_macro {
     $proc->third( $parser->statements() );
     $parser->advance("END");
     return $proc;
+}
+
+
+# WRAPPER "foo.tt" ...  END
+# is
+# cascade "foo.tt" { content => content@wrapper() }
+# macro content@wrapper -> { ... }
+sub std_wrapper {
+    my($parser, $symbol) = @_;
+
+    my $base  = $parser->barename();
+    my $vars  = $parser->localize_vars() || [];
+    my $body  = $parser->statements();
+    $parser->advance("END");
+
+    my $cascade = $symbol->clone(
+        arity => 'cascade',
+        first => $base,
+    );
+
+    my $internal_name = $symbol->clone(
+        arity => 'macro',
+        id    => 'content@wrapper',
+    );
+
+    my $into_name = $symbol->clone(
+        arity => 'literal',
+        id    => 'content',
+    );
+
+    my $content = $symbol->clone(
+        arity => 'proc',
+        id    => 'macro',
+
+        first  => $internal_name,
+        second => [],
+        third  => $body,
+    );
+
+    my $call_content = $symbol->clone(
+        arity  => 'call',
+        first  => $internal_name,
+        second => [],
+    );
+
+    push @{$vars}, $into_name => $call_content;
+    $cascade->third($vars);
+    return( $cascade, $content );
 }
 
 # [% FILTER html %]
@@ -443,6 +494,8 @@ to understand.
 
 =head2 Template inclusion
 
+The C<INCLUDE> statement is supported.
+
     [% INCLUDE "file.tt" %]
     [% INCLUDE $var %]
 
@@ -454,6 +507,19 @@ C<< WITH variablies >> syntax is also supported:
         bar = 3.14
     %]
 
+The C<WRAPPER> statement is also supported.
+
+    [% WRAPPER "file.tt" %]
+    Hello, world!
+    [% END %]
+
+    %%# with variable
+    [% WRAPPER "file.tt" WITH title = "Foo!" %]
+    Hello, world!
+    [% END %]
+
+The argument of C<WRAPPER>, however, must be string literals, because
+templates will be statically linked while compiling.
 
 =head2 Macro blocks
 

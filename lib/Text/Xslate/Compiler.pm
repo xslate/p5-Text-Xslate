@@ -316,7 +316,7 @@ sub _process_cascade_file {
         if(exists $mtable->{$name}) {
             $self->_error(
                 "Redefinition of macro/block $name in " . $file
-                . " (you must use before/around/after to override macros/blocks)",
+                . " (you must use block modifiers to override macros/blocks)",
                 $mtable->{$name}{line}
             );
         }
@@ -816,17 +816,17 @@ sub _generate_iterator_body {
 
 sub _localize_vars {
     my($self, $vars) = @_;
-    my @local_vars;
+    my @localize;
     my @pairs = @{$vars};
     while(my($key, $expr) = splice @pairs, 0, 2) {
         if($key->arity ne "literal") {
             $self->_error("You must pass a simple name to localize variables");
         }
-        push @local_vars,
+        push @localize,
             $self->_expr($expr),
-            [ local_s => $key->id ];
+            [ local_s => literal_to_value($key->value) ];
     }
-    return @local_vars;
+    return @localize;
 }
 
 sub _variable_to_value {

@@ -504,6 +504,7 @@ sub init_symbols {
     $parser->symbol('after')    ->set_std(\&std_proc);
     $parser->symbol('block')    ->set_std(\&std_macro_block);
     $parser->symbol('super')    ->set_std(\&std_marker);
+    $parser->symbol('override') ->set_std(\&std_override);
 
     return;
 }
@@ -1189,6 +1190,12 @@ sub std_macro_block {
     return( $macro, $print );
 }
 
+sub std_override { # synonym to 'around'
+    my($parser, $symbol) = @_;
+
+    return $parser->std_proc($symbol->clone(id => 'around'));
+}
+
 sub std_if {
     my($parser, $symbol) = @_;
 
@@ -1405,10 +1412,11 @@ sub std_cascade {
 
     $parser->finish_statement();
     return $symbol->clone(
+        arity  => 'cascade',
         first  => $base,
         second => $components,
         third  => $vars,
-        arity  => 'cascade');
+    );
 }
 
 # markers for the compiler
