@@ -386,7 +386,8 @@ Output:
 
 =head2 Macro blocks
 
-Macros are supported, which are called in the same way as functions.
+Macros are supported, which are called in the same way as functions and
+return a string marked as escaped.
 
     : macro add ->($x, $y) {
     :   $x + $y;
