@@ -441,6 +441,7 @@ Field access:
     [% var.0 %]
     [% var.field %]
     [% var.accessor %]
+    [% var.$field ]%
 
 Variables may be HASH references, ARRAY references, or objects.
 

@@ -715,7 +715,7 @@ sub led_dot {
 
     my $t = $parser->token;
     if(!$parser->is_valid_field($t)) {
-        $parser->_error("Expected a field name but $_ ($t)");
+        $parser->_error("Expected a field name, not $t");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
