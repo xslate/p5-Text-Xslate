@@ -59,6 +59,17 @@ if($want_xs) {
     postamble qq{test_dynamic :: test_pp\n\n}
             . qq{test_pp :: pure_all\n}
             . qq{\t} . $t_pp;
+
+    if($ENV{RELEASE_TESTING}) {
+        my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
+                   .q{ "\$$ENV{XSLATE}='pp=opcode'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+                   .q{ $(TEST_FILES)} . "\n";
+
+        postamble qq{test_dynamic :: test_pp_opcode\n\n}
+                . qq{test_pp_opcode :: pure_all\n}
+                . qq{\t} . $t_pp;
+
+    }
 }
 
 clean_files qw(

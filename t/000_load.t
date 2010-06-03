@@ -11,8 +11,12 @@ BEGIN { use_ok 'Text::Xslate::EscapedString' }
 BEGIN { use_ok 'Any::Moose' }
 
 diag "Testing Text::Xslate/$Text::Xslate::VERSION";
-
-diag "Backend: ", Text::Xslate->isa('Text::Xslate::PP') ? "PP" : "XS";
+if(Text::Xslate->isa('Text::Xslate::PP')) {
+    diag "Backend: PP", Text::Xslate::PP::_PP_BOOSTER() ? "::Booster" : "::Opcode";
+}
+else {
+    diag "Backend: XS";
+}
 
 diag "Any::Moose Backend: ", any_moose(), "/", any_moose()->VERSION;
 

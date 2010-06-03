@@ -450,6 +450,7 @@ Field access:
     [% var.field %]
     [% var.accessor %]
     [% var.$field ]%
+    [% var[$field] # TTerse specific %]
 
 Variables may be HASH references, ARRAY references, or objects.
 
