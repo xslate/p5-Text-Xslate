@@ -366,7 +366,7 @@ sub op_size {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-suv _sv_eq {
+sub _sv_eq {
     my($x, $y) = @_;
     if ( defined $x and defined $y ) {
         return $x eq $y;
