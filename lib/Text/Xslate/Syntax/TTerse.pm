@@ -1,6 +1,7 @@
 package Text::Xslate::Syntax::TTerse;
 use Any::Moose;
 use Text::Xslate::Util qw(p any_in);
+use Scalar::Util ();
 
 extends qw(Text::Xslate::Parser);
 
@@ -58,9 +59,6 @@ sub init_symbols {
     $parser->symbol('include') ->set_std(\&std_include);
     $parser->symbol('WITH');
     $parser->symbol('with');
-
-    $parser->symbol('FILTER')  ->set_std(\&std_filter);
-    $parser->symbol('filter')  ->set_std(\&std_filter);
 
     # macros
 
@@ -285,14 +283,54 @@ sub std_macro {
 # ...
 # [% END %]
 # is
-# : macro filter_001 -> {
+# : macro filter_xxx -> {
 #   ...
 # : } filter_001() | html
 # in Kolon
-
-sub std_filter {
-    
-}
+#
+#sub std_filter {
+#    my($parser, $symbol) = @_;
+#
+#    my $t = $parser->token;
+#    if($t->arity ne 'name') {
+#        $parser->_error("Expected filter name, not $t");
+#    }
+#    my $filter = $t->nud($parser);
+#    $parser->advance();
+#
+#    my $tmpname = $symbol->clone(
+#        arity => 'macro',
+#        id    => sprintf('%s@%d&0x%x', $symbol->id, $parser->line, Scalar::Util::refaddr($symbol)),
+#    );
+#
+#    my $proc = $symbol->clone(
+#        arity => 'proc',
+#        id    => 'macro',
+#    );
+#
+#    $proc->first($tmpname);
+#    $proc->second([]);
+#    $proc->third( $parser->statements() );
+#    $parser->advance("END");
+#
+#    my $callmacro = $symbol->clone(
+#        arity  => 'call',
+#        first  => $tmpname, # name
+#        second => [],       # args
+#    );
+#    my $callfilter  = $symbol->clone(
+#        arity  => 'call',
+#        first  => $filter,      # name
+#        second => [$callmacro], # args
+#    );
+#    my $print = $parser->symbol('print')->clone(
+#        arity => 'command',
+#        first => [$callfilter],
+#        line  => $symbol->line,
+#    );
+#
+#    return( $proc, $print );
+#}
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
