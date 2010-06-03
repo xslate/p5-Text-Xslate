@@ -743,29 +743,25 @@ sub _check_logic {
 
         my $has_else_block = ($else_block_end >= $else_block_start);
 
-        my $last_code = $ops->[ $i + $addr + $oparg - 1 ]->[ 0 ]; # print or move_to_sb
+        my $last_opname = $ops->[ $i + $addr + $oparg - 1 ]->[0]; # check print or move_to_sb
 
         my $st_1st = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $if_block_start .. $if_block_end ] ]
         );
 
         # treat as ternary
-        if ( $has_else_block and $last_code and ( $last_code eq 'print' or $last_code eq 'move_to_sb' ) ) {
+        if ( $has_else_block and $last_opname and ( $last_opname eq 'print' or $last_opname eq 'move_to_sb' ) ) {
 
             for (  $else_block_start .. $else_block_end ) { # 2
                 $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
             }
 
-            my $st_2nd = $self->_spawn_child->_convert_opcode(
-                [ @{ $ops }[ $else_block_start .. $else_block_end ] ]
+            my $st_2nd = $self->_spawn_child->_convert_opcode( # add $last_code for nested ternary
+                [ @{ $ops }[ $else_block_start .. $else_block_end ], [ $last_opname ] ]
             );
 
         $self->sa( sprintf(  <<'CODE', $self->sa, _rm_tailed_lf( $st_1st->sa ), _rm_tailed_lf( $st_2nd->sa ) ) );
-cond_ternary(
-    %s,
-    sub { %s; },
-    sub { %s; }
-)
+cond_ternary( %s, sub { %s; }, sub { %s; } )
 CODE
 
             return;
@@ -887,6 +883,7 @@ sub _logic_is_max_min {
 
 sub _rm_tailed_lf {
     my ( $str ) = @_;
+    return unless defined $str;
     $str =~ s/\n+//;
     return $str;
 }
