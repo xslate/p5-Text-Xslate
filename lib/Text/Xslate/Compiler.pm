@@ -12,6 +12,7 @@ use Text::Xslate::Util qw(
     p
 );
 
+use File::Spec   ();
 use Scalar::Util ();
 
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
@@ -438,8 +439,7 @@ sub _generate_command {
 sub _bare_to_file {
     my($self, $file) = @_;
     if(ref($file) eq 'ARRAY') { # myapp::foo
-        $file  = join '/', @{$file};
-        $file .= $self->engine->{suffix};
+        $file  = File::Spec->catfile(@{$file}) . $self->{engine}->{suffix};
     }
     else { # "myapp/foo.tx"
         $file = literal_to_value($file);

@@ -1313,7 +1313,7 @@ sub std_command {
     return $symbol->clone(first => $args, arity => 'command');
 }
 
-sub _get_bare_name {
+sub barename {
     my($parser) = @_;
 
     my $t = $parser->token;
@@ -1368,17 +1368,17 @@ sub std_cascade {
 
     my $base;
     if($parser->token->id ne "with") {
-        $base = $parser->_get_bare_name();
+        $base = $parser->barename();
     }
 
     my $components;
     if($parser->token->id eq "with") {
         $parser->advance(); # "with"
 
-        my @c = $parser->_get_bare_name();
+        my @c = $parser->barename();
         while($parser->token->id eq ",") {
             $parser->advance(); # ","
-            push @c, $parser->_get_bare_name();
+            push @c, $parser->barename();
         }
         $components = \@c;
     }
