@@ -595,6 +595,10 @@ but severe errors (e.g. for a method to throw the error) will be warned.
 
 If C<< $level >= 2 >>, all the possible errors will be warned.
 
+=item C<< suffix => $ext // '.tx' >>
+
+Specify the template suffix, which is used for template cascading.
+
 =back
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
