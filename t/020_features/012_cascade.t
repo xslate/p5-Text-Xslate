@@ -123,6 +123,22 @@ HEAD
 FOOT
 X
 
+    [<<'T', { lang => 'Xslate' }, <<'X', 'override as around'],
+: cascade myapp::base
+
+: override hello -> {
+    AROUND[
+    : super
+    ]AROUND
+: }
+T
+HEAD
+    AROUND[
+    Hello, Xslate world!
+    ]AROUND
+FOOT
+X
+
 );
 
 foreach my $d(@set) {
