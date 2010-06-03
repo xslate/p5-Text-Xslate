@@ -436,38 +436,38 @@ $CODE_MANIP{ 'size' } = sub {
 
 $CODE_MANIP{ 'eq' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'cond_eq( %s, %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( 'cond_eq( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'ne' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'cond_ne( %s, %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( 'cond_ne( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 
 $CODE_MANIP{ 'lt' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s < %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( %s < %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'le' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s <= %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( %s <= %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'gt' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s > %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( %s > %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'ge' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s >= %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( %s >= %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
@@ -743,9 +743,33 @@ sub _check_logic {
 
         my $has_else_block = ($else_block_end >= $else_block_start);
 
+        my $last_code = $ops->[ $i + $addr + $oparg - 1 ]->[ 0 ]; # print or move_to_sb
+
         my $st_1st = $self->_spawn_child->_convert_opcode(
             [ @{ $ops }[ $if_block_start .. $if_block_end ] ]
         );
+
+        # treat as ternary
+        if ( $has_else_block and $last_code and ( $last_code eq 'print' or $last_code eq 'move_to_sb' ) ) {
+
+            for (  $else_block_start .. $else_block_end ) { # 2
+                $self->stash->{ proc }->{ $_ }->{ skip } = 1; # skip
+            }
+
+            my $st_2nd = $self->_spawn_child->_convert_opcode(
+                [ @{ $ops }[ $else_block_start .. $else_block_end ] ]
+            );
+
+        $self->sa( sprintf(  <<'CODE', $self->sa, _rm_tailed_lf( $st_1st->sa ), _rm_tailed_lf( $st_2nd->sa ) ) );
+cond_ternary(
+    %s,
+    sub { %s; },
+    sub { %s; }
+)
+CODE
+
+            return;
+        }
 
         my $code = $st_1st->code;
 
@@ -842,10 +866,8 @@ sub _check_logic {
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-        $self->sa( sprintf( <<'CODE', $type, $expr, $st_true->sa ) );
-cond_%s( %s, sub {
-%s
-}, )
+        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
+cond_%s( %s, sub { %s } )
 CODE
 
     }
@@ -861,6 +883,14 @@ sub _logic_is_max_min {
     and $ops->[ $i + 2 ]->[ 0 ] eq 'move_from_sb'
     and $arg == 2
 }
+
+
+sub _rm_tailed_lf {
+    my ( $str ) = @_;
+    $str =~ s/\n+//;
+    return $str;
+}
+
 
 #
 # methods
@@ -1090,6 +1120,12 @@ sub check_itr_ar {
     }
 
     return $ar;
+}
+
+
+sub cond_ternary {
+    my ( $value, $subref1, $subref2 ) = @_;
+    $value ? $subref1->() : $subref2->();
 }
 
 
