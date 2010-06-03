@@ -1211,7 +1211,7 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
 
 =head1 DESCRIPTION
 
-This module is a pure Perl engine, which is much faster than the defualt pure
+This module is a pure Perl engine, which is much faster than the default pure
 Perl engine, Text::Xslate::PP::Opcode, but is currently B<unstable>.
 
 The motivation to implement this engine is the performance.

@@ -454,7 +454,7 @@ If I<$var> is an object instance, you can call its methods.
 =head2 Expressions
 
 Almost the same as L<Text::Xslate::Syntax::Kolon>, but the C<_> operator for
-concatination is supported for compatibility.
+concatenation is supported for compatibility.
 
 =head2 Loops
 
