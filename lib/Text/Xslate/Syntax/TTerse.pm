@@ -69,6 +69,8 @@ sub init_symbols {
 
     $parser->symbol('WRAPPER')->set_std(\&std_wrapper);
     $parser->symbol('wrapper')->set_std(\&std_wrapper);
+    $parser->symbol('INTO');
+    $parser->symbol('into');
 
     return;
 }
@@ -291,6 +293,18 @@ sub std_wrapper {
     my($parser, $symbol) = @_;
 
     my $base  = $parser->barename();
+    my $into;
+    if(uc($parser->token->id) eq "INTO") {
+        my $t = $parser->advance();
+        if(!any_in($t->arity, qw(name variable))) {
+            $parser->_error("Expected variable name, not $t");
+        }
+        $parser->advance();
+        $into = $t->id;
+    }
+    else {
+        $into = 'content';
+    }
     my $vars  = $parser->localize_vars() || [];
     my $body  = $parser->statements();
     $parser->advance("END");
@@ -307,7 +321,7 @@ sub std_wrapper {
 
     my $into_name = $symbol->clone(
         arity => 'literal',
-        id    => 'content',
+        id    => $into,
     );
 
     my $content = $symbol->clone(
@@ -508,6 +522,8 @@ C<< WITH variablies >> syntax is also supported:
     %]
 
 The C<WRAPPER> statement is also supported.
+The argument of C<WRAPPER>, however, must be string literals, because
+templates will be statically linked while compiling.
 
     [% WRAPPER "file.tt" %]
     Hello, world!
@@ -518,8 +534,12 @@ The C<WRAPPER> statement is also supported.
     Hello, world!
     [% END %]
 
-The argument of C<WRAPPER>, however, must be string literals, because
-templates will be statically linked while compiling.
+The content will be set into C<content>, but you can specify its name with
+the C<INTO> keyword.
+
+    [% WRAPPER "foo.tt" INTO wrapped_content WITH title = "Foo!" %]
+    ...
+    [% END %]
 
 =head2 Macro blocks
 

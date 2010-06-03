@@ -29,10 +29,18 @@ T
 Hello, Perl world!
 X
 
+    [<<'T', <<'X', 'INTO'],
+[% WRAPPER "hello.tt" INTO lang %]TTerse[% END -%]
+T
+Hello, TTerse world!
+X
+
 );
 
 foreach my $pair(@data) {
     my($in, $out, $msg) = @$pair;
+
+    last if $ENV{USE_TT} && defined($msg) and $msg eq 'INTO';
 
     my %vars = (lang => 'Xslate', foo => "<bar>", '$lang' => 'XXX');
 
