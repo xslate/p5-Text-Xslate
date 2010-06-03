@@ -419,10 +419,16 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
-From 0.1024 on, pure Perl version is not so slow.
-See L<Text::Xslate::PP::Booster> for details.
+From 0.1024 on, two pure Perl engines are implemented.
+C<Text::Xlsate::PP::Opcode>, which is the default, is slow but stable.
+C<Text::Xslate::PP::Booster>, which is used on
+C<< $ENV{XSLATE} = 'pp=booster' >>, is fast but not stable.
 
 =head1 SEE ALSO
+
+L<Text::Xslate::PP::Opcode>
+
+L<Text::Xslate::PP::Booster>
 
 L<Text::Xslate>
 
