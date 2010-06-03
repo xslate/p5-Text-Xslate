@@ -136,7 +136,7 @@ X
 
     ['<: $value | html | html :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'x | html | html'],
     ['<: $value | html | raw  :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'x | html | raw (-> html)'],
-    ['<: $value | raw | html  :>', { value => "<Xslate>" }, "<Xslate>", 'x | raw | html (-> raw)'],
+    ['<: $value | raw  | html :>', { value => "<Xslate>" }, "<Xslate>", 'x | raw | html (-> raw)'],
 
     ['<: html($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'true'],
@@ -168,6 +168,5 @@ foreach my $d(@set) {
         is $tx->render_string($in, $vars), $expected, $msg or diag $in;
     }
 }
-
 
 done_testing;

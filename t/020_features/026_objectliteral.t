@@ -115,6 +115,26 @@ T
     3
 X
 
+    [<<'T', { lang => 'Xslate' }, <<"X", "extra commas"],
+: for [ 1, 2, 3, ] -> $i {
+    <: $i :>
+: }
+T
+    1
+    2
+    3
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "more extra commas"],
+: for [ ,,1,,2,,3,, ] -> $i {
+    <: $i :>
+: }
+T
+    1
+    2
+    3
+X
+
 );
 
 foreach my $d(@set) {

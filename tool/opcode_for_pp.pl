@@ -30,6 +30,20 @@ $code .=  <<'CODE';
 ); # %OPS
 CODE
 
+$code .= <<'CODE';
+
+our @OPCODE = (
+CODE
+
+$i = 0;
+for my $op ( @ops ) {
+    $code .= sprintf( "    \\&Text::Xslate::PP::Opcode::op_%-20s %s\n", $op->[0] . ',', '# ' . $i++ );
+}
+
+$code .= <<'CODE';
+); # @OPCODE
+CODE
+
 
 $code .=  <<'CODE';
 

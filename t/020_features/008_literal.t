@@ -46,4 +46,7 @@ foreach my $pair(@data) {
     is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
+ok  $tx->render_string("<: true  :>");
+ok !$tx->render_string("<: false :>");
+
 done_testing;

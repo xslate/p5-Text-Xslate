@@ -1250,11 +1250,11 @@ static void
 tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::_die",  GV_ADDMULTI));
+    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
 }
 
-MODULE = Text::Xslate    PACKAGE = Text::Xslate
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Engine
 
 PROTOTYPES: DISABLE
 
@@ -1503,14 +1503,6 @@ CODE:
 }
 
 void
-escaped_string(SV* str)
-CODE:
-{
-    ST(0) = tx_escaped_string(aTHX_ str);
-    XSRETURN(1);
-}
-
-void
 _warn(SV* msg)
 ALIAS:
     _warn = 0
@@ -1614,6 +1606,16 @@ CODE:
         /* not reached */
     }
     LEAVE;
+}
+
+MODULE = Text::Xslate    PACKAGE = Text::Xslate
+
+void
+escaped_string(SV* str)
+CODE:
+{
+    ST(0) = tx_escaped_string(aTHX_ str);
+    XSRETURN(1);
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString

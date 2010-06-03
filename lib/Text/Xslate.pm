@@ -6,24 +6,19 @@ use warnings;
 
 our $VERSION = '0.1025';
 
-use parent qw(Exporter);
+use Text::Xslate::Util qw($DEBUG);
+
+use Carp       ();
+use File::Spec ();
+use Exporter   ();
+
+our @ISA = qw(Text::Xslate::Engine Exporter);
+
 our @EXPORT_OK = qw(escaped_string html_escape);
 
-use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
-    literal_to_value
-    import_from
-    p
-);
-
-use Carp ();
-use File::Spec;
-
-BEGIN {
-    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
-    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
-
-    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+{
+    no warnings 'once';
+    *html_escape    = \&Text::Xslate::Engine::html_escape;
 }
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
@@ -40,10 +35,30 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
     }
 }
 
+package Text::Xslate::Engine;
+
+Text::Xslate->import('escaped_string');
+
+use Text::Xslate::Util qw(
+    $NUMBER $STRING $DEBUG
+    literal_to_value
+    import_from
+    p
+);
+
+BEGIN {
+    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
+    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
+
+    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+}
+
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 # version syntax compiler escape path
 my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
+
+sub compiler_class() { 'Text::Xslate::Compiler' }
 
 sub new {
     my $class = shift;
@@ -54,7 +69,7 @@ sub new {
     defined($args{suffix})      or $args{suffix}      = '.tx';
     defined($args{path})        or $args{path}        = [ '.' ];
     defined($args{input_layer}) or $args{input_layer} = ':utf8';
-    defined($args{compiler})    or $args{compiler}    = 'Text::Xslate::Compiler';
+    defined($args{compiler})    or $args{compiler}    = $class->compiler_class;
     defined($args{syntax})      or $args{syntax}      = 'Kolon';
     defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
     defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
@@ -62,20 +77,16 @@ sub new {
         $ENV{HOME} || File::Spec->tmpdir, '.xslate_cache',
     );
 
-    my %funcs = (
-        raw  => \&escaped_string,
-        html => \&html_escape,
-        dump => \&p,
-    );
+    my %funcs;
 
     if(defined $args{import}) {
         Carp::carp("'import' option has been renamed to 'module'"
             . " because of the confliction with Perl's import() method."
             . " Use 'module' instead");
-        %funcs = (%funcs, import_from(@{$args{import}}));
+        %funcs = import_from(@{$args{import}});
     }
     if(defined $args{module}) {
-        %funcs = (%funcs, import_from(@{$args{module}}));
+        %funcs = import_from(@{$args{module}});
     }
 
     # function => { ... } overrides imported functions
@@ -84,6 +95,18 @@ sub new {
             $funcs{$name} = $body;
         }
     }
+
+    foreach my $builtin(qw(raw html dump)) {
+        if(exists $funcs{$builtin}) {
+            warnings::warnif(redefine =>
+                "You cannot redefine builtin function '$builtin',"
+                . " because it is embeded in the engine");
+        }
+    }
+    $funcs{raw}  = \&escaped_string;
+    $funcs{html} = \&html_escape;
+    $funcs{dump} = \&p;
+
     $args{function} = \%funcs;
 
     if(!ref $args{path}) {
@@ -357,6 +380,7 @@ sub dump :method {
     goto &Text::Xslate::Util::p;
 }
 
+package Text::Xslate;
 1;
 __END__
 
@@ -570,6 +594,10 @@ If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ign
 but severe errors (e.g. for a method to throw the error) will be warned.
 
 If C<< $level >= 2 >>, all the possible errors will be warned.
+
+=item C<< suffix => $ext // '.tx' >>
+
+Specify the template suffix, which is used for template cascading.
 
 =back
 

@@ -108,6 +108,21 @@ T
     6
 X
 
+    [ <<'T', { }, <<'X', "filter operator" ],
+    : macro factorial ->($x) {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+    <: 0 | factorial :>
+    <: 1 | factorial :>
+    <: 2 | factorial :>
+    <: 3 | factorial :>
+T
+    1
+    1
+    2
+    6
+X
+
 );
 
 foreach my $d(@set) {
@@ -123,13 +138,13 @@ like $@, qr/\b foo \b/xms, "don't affect the parser";
 
 eval {
     $tx->render_string(<<'T', {});
-    : macro factorial ->($x) {
-    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : macro foo{
+    :   foo()
     : }
-    : factorial(1_000_000)
+    : foo()
 T
 };
 like $@, qr/too deep/, 'deep recursion';
-like $@, qr/\b factorial \b/xms;
+like $@, qr/\b foo \b/xms;
 
 done_testing;

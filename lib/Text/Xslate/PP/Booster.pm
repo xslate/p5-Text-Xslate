@@ -1259,9 +1259,11 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
 
 =head1 DESCRIPTION
 
-This module is a new L<Text::Xslate::PP> runtime.
+This module is a pure Perl engine, which is much faster than the default pure
+Perl engine, Text::Xslate::PP::Opcode, but is currently B<unstable>.
 
-The old Text::Xslate::PP was really slow, you know. For example:
+The motivation to implement this engine is the performance.
+You know the default pure Perl engine is really slow. For example:
 
     > XSLATE=pp perl benchmark/others.pl
     Text::Xslate/0.1019
@@ -1275,10 +1277,10 @@ The old Text::Xslate::PP was really slow, you know. For example:
     mt      725/s   507%   154%     --   -69%
     cs     2311/s  1835%   711%   219%     --
 
-All right, it was slower than Template-Toolkit!
-But now you have Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
+All right, it is slower than Template-Toolkit!
+But you can use Text::Xslate::PP::Booster, which is as fast as Text::MicroTemplate:
 
-    > XSLATE=pp perl benchmark/others.pl
+    > XSLATE=pp=booster perl benchmark/others.pl
     Text::Xslate/0.1024
     ...
              Rate     tt     mt xslate     cs
@@ -1287,7 +1289,9 @@ But now you have Text::Xslate::PP::Booster, which is as fast as Text::MicroTempl
     xslate  749/s   160%     5%     --   -65%
     cs     2112/s   634%   197%   182%     --
 
-Text::Xslate::PP becomes faster!
+Text::Xslate::PP becomes 7 times faster than the default pure Perl engine!
+
+The engine is enabled by C<< $ENV{XSLATE} = 'pp=booster' >>.
 
 =head1 APIs
 

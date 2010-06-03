@@ -367,15 +367,15 @@ sub parse {
 
 sub BUILD {
     my($parser) = @_;
-    $parser->_define_basic_symbols();
-    $parser->define_symbols();
-    $parser->define_iterator_elements();
+    $parser->_init_basic_symbols();
+    $parser->init_symbols();
+    $parser->init_iterator_elements();
     return;
 }
 
 # The grammer
 
-sub _define_basic_symbols {
+sub _init_basic_symbols {
     my($parser) = @_;
 
     $parser->symbol('(end)')->is_block_end(1); # EOF
@@ -393,21 +393,25 @@ sub _define_basic_symbols {
     $parser->symbol(';');
     $parser->symbol('(');
     $parser->symbol(')');
-    $parser->symbol(',');
-    $parser->symbol('=>');
+    $parser->symbol(',')  ->is_comma(1);
+    $parser->symbol('=>') ->is_comma(1);
 
     # common commands
     $parser->symbol('print')    ->set_std(\&std_command);
     $parser->symbol('print_raw')->set_std(\&std_command);
 
     # common constants
-    $parser->define_constant('nil', undef);
+    $parser->define_constant(nil   => undef);
+    $parser->define_constant(true  => 1);
+    $parser->define_constant(false => 0);
 
     return;
 }
 
-sub define_basic_operators {
+sub init_basic_operators {
     my($parser) = @_;
+
+    # define operator precedence
 
     $parser->prefix('{', 256, \&nud_brace);
     $parser->prefix('[', 256, \&nud_brace);
@@ -438,17 +442,17 @@ sub define_basic_operators {
     $parser->infix('==', 150)->is_logical(1);
     $parser->infix('!=', 150)->is_logical(1);
 
-    $parser->infix('|',  140); # filter
+    $parser->infix('|',  140, \&led_bar);
 
-    $parser->infixr('&&', 130)->is_logical(1);
+    $parser->infix('&&', 130)->is_logical(1);
 
-    $parser->infixr('||', 120)->is_logical(1);
-    $parser->infixr('//', 120)->is_logical(1);
+    $parser->infix('||', 120)->is_logical(1);
+    $parser->infix('//', 120)->is_logical(1);
     $parser->infix('min', 120);
     $parser->infix('max', 120);
 
     $parser->symbol(':');
-    $parser->infix('?', 110, \&led_ternary);
+    $parser->infixr('?', 110, \&led_ternary);
 
     $parser->assignment('=',   100);
     $parser->assignment('+=',  100);
@@ -468,7 +472,7 @@ sub define_basic_operators {
     return;
 }
 
-sub define_symbols {
+sub init_symbols {
     my($parser) = @_;
 
     # syntax specific separators
@@ -480,7 +484,7 @@ sub define_symbols {
     $parser->symbol('::');
 
     # operators
-    $parser->define_basic_operators();
+    $parser->init_basic_operators();
 
     # statements
     $parser->symbol('{')        ->set_std(\&std_block);
@@ -497,16 +501,17 @@ sub define_symbols {
 
     $parser->symbol('cascade')  ->set_std(\&std_cascade);
     $parser->symbol('macro')    ->set_std(\&std_proc);
-    $parser->symbol('block')    ->set_std(\&std_proc);
     $parser->symbol('around')   ->set_std(\&std_proc);
     $parser->symbol('before')   ->set_std(\&std_proc);
     $parser->symbol('after')    ->set_std(\&std_proc);
+    $parser->symbol('block')    ->set_std(\&std_macro_block);
     $parser->symbol('super')    ->set_std(\&std_marker);
+    $parser->symbol('override') ->set_std(\&std_override);
 
     return;
 }
 
-sub define_iterator_elements {
+sub init_iterator_elements {
     my($parser) = @_;
 
     $parser->iterator_element({
@@ -618,16 +623,18 @@ sub expression_list {
     my($parser) = @_;
 
     my @args;
-    if($parser->token->has_nud) {
-        while(1) {
-            push @args, $parser->expression(0);
-            my $t = $parser->token;
 
-            if(!($t->id eq "," or $t->id eq "=>")) {
+    if($parser->token->has_nud or $parser->token->is_comma) {
+        while(1) {
+            if($parser->token->has_nud) {
+                push @args, $parser->expression(0);
+            }
+
+            if(!$parser->token->is_comma) {
                 last;
             }
 
-            $parser->advance(); # "," or "=>"
+            $parser->advance(); # comma
         }
     }
     return \@args;
@@ -685,9 +692,9 @@ sub led_ternary {
     my $cond = $symbol->clone(arity => 'ternary');
 
     $cond->first($left);
-    $cond->second($parser->expression(0));
+    $cond->second($parser->expression( $cond->lbp - 1 ));
     $parser->advance(":");
-    $cond->third($parser->expression(0));
+    $cond->third($parser->expression( $cond->lbp - 1 ));
     return $cond;
 }
 
@@ -708,7 +715,7 @@ sub led_dot {
 
     my $t = $parser->token;
     if(!$parser->is_valid_field($t)) {
-        $parser->_error("Expected a field name but $_ ($t)");
+        $parser->_error("Expected a field name, not $t");
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -748,6 +755,17 @@ sub led_call {
 
     $call->second( $parser->expression_list() );
     $parser->advance(")");
+
+    return $call;
+}
+
+sub led_bar { # filter
+    my($parser, $symbol, $left) = @_;
+
+    my $call = $symbol->clone(arity => 'call');
+
+    $call->first($parser->expression($call->lbp));
+    $call->second([$left]);
 
     return $call;
 }
@@ -863,12 +881,10 @@ sub nud_function{
 }
 
 sub define_function {
-    my($compiler, @names) = @_;
+    my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&nud_function);
-        $symbol->value($name);
+        $parser->symbol($name)->set_nud(\&nud_function);
     }
     return;
 }
@@ -880,12 +896,10 @@ sub nud_macro{
 }
 
 sub define_macro {
-    my($compiler, @names) = @_;
+    my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&nud_macro);
-        $symbol->value($name);
+        $parser->symbol($name)->set_nud(\&nud_macro);
     }
     return;
 }
@@ -940,10 +954,8 @@ sub statements { # process statements
     my($parser) = @_;
     my @a;
 
-    my $t = $parser->token;
-    while(!$t->is_block_end) {
+    for(my $t = $parser->token; !$t->is_block_end; $t = $parser->token) {
         push @a, $parser->statement();
-        $t = $parser->token;
     }
 
     return \@a;
@@ -1145,17 +1157,41 @@ sub std_while {
 sub std_proc {
     my($parser, $symbol) = @_;
 
-    my $proc = $symbol->clone(arity => "proc");
-    my $name = $parser->token;
+    my $macro = $symbol->clone(arity => "proc");
+    my $name  = $parser->token;
     if($name->arity ne "name") {
         $parser->_error("Expected a name but " . $parser->token);
     }
 
     $parser->define_macro($name->id);
-    $proc->first( $name->id );
+    $macro->first( $parser->nud_macro($name) );
     $parser->advance();
-    $parser->pointy($proc);
-    return $proc;
+    $parser->pointy($macro);
+    return $macro;
+}
+
+sub std_macro_block {
+    my($parser, $symbol) = @_;
+
+    my $macro = $parser->std_proc($symbol);
+
+    my $call  = $symbol->clone(
+        arity  => 'call',
+        first  => $macro->first, # name
+        second => [],            # args
+    );
+    my $print = $parser->symbol('print')->clone(
+        arity => 'command',
+        first => [$call],
+    );
+    # std() returns a list
+    return( $macro, $print );
+}
+
+sub std_override { # synonym to 'around'
+    my($parser, $symbol) = @_;
+
+    return $parser->std_proc($symbol->clone(id => 'around'));
 }
 
 sub std_if {
@@ -1300,7 +1336,7 @@ sub std_command {
     return $symbol->clone(first => $args, arity => 'command');
 }
 
-sub _get_bare_name {
+sub barename {
     my($parser) = @_;
 
     my $t = $parser->token;
@@ -1355,17 +1391,17 @@ sub std_cascade {
 
     my $base;
     if($parser->token->id ne "with") {
-        $base = $parser->_get_bare_name();
+        $base = $parser->barename();
     }
 
     my $components;
     if($parser->token->id eq "with") {
         $parser->advance(); # "with"
 
-        my @c = $parser->_get_bare_name();
+        my @c = $parser->barename();
         while($parser->token->id eq ",") {
             $parser->advance(); # ","
-            push @c, $parser->_get_bare_name();
+            push @c, $parser->barename();
         }
         $components = \@c;
     }
@@ -1374,10 +1410,11 @@ sub std_cascade {
 
     $parser->finish_statement();
     return $symbol->clone(
+        arity  => 'cascade',
         first  => $base,
         second => $components,
         third  => $vars,
-        arity  => 'cascade');
+    );
 }
 
 # markers for the compiler
