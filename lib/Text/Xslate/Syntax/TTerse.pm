@@ -175,7 +175,7 @@ sub std_foreach {
 
     my $var = $parser->token;
     if($var->arity ne "variable") {
-        $parser->_error("Expected a variable name but $var");
+        $parser->_unexpected("a variable name", $var);
     }
     $parser->advance();
     $parser->advance("IN");
@@ -247,7 +247,7 @@ sub std_macro {
 
     my $name = $parser->token;
     if($name->arity ne "variable") {
-        $parser->_error("Expected a name but " . $name);
+        $parser->_error("a name", $name);
     }
 
     $parser->define_macro($name->id);
@@ -297,7 +297,7 @@ sub std_wrapper {
     if(uc($parser->token->id) eq "INTO") {
         my $t = $parser->advance();
         if(!any_in($t->arity, qw(name variable))) {
-            $parser->_error("Expected variable name, not $t");
+            $parser->_unexpected("a variable name", $t);
         }
         $parser->advance();
         $into = $t->id;

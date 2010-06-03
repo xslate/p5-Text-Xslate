@@ -37,7 +37,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
-like $@, qr/near "}"/;
+like $@, qr/\}/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -45,7 +45,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
-like $@, qr/near "}"/;
+like $@, qr/\}/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -53,6 +53,7 @@ eval {
 T
 };
 like $@, qr/Parser/;
+like $@, qr/\$bar/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -74,6 +75,15 @@ eval {
 T
 };
 like $@, qr/Parser/;
+like $@, qr/\$y/;
+
+eval {
+    Text::Xslate::Compiler->new->compile(<<'T');
+: macro foo -> "foo" { ; }
+T
+};
+like $@, qr/Parser/;
+like $@, qr/"foo"/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
@@ -83,6 +93,15 @@ T
 like $@, qr/Parser/;
 like $@, qr/Malformed/;
 like $@, qr/"Xslate'/; # " for poor editors
+
+eval {
+    Text::Xslate::Compiler->new->compile(<<'T');
+Hello, <: foo(42 :>
+T
+};
+unlike $@, qr/;/, q{don't include ";"}; # '
+like $@, qr/Expected "\)"/;
+like $@, qr/Parser/;
 
 foreach my $assign(qw(= += -= *= /= %= ~= &&= ||= //=)) {
     eval {

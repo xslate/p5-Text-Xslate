@@ -554,8 +554,7 @@ sub advance {
 
     my $t = $parser->token;
     if(defined($id) && $t->id ne $id) {
-        $parser->_error(sprintf "Expected %s but found %s",
-            value_to_literal($id), value_to_literal($t));
+        $parser->_unexpected(value_to_literal($id), $t);
     }
 
     $parser->near_token($t);
@@ -715,7 +714,7 @@ sub led_dot {
 
     my $t = $parser->token;
     if(!$parser->is_valid_field($t)) {
-        $parser->_error("Expected a field name, not $t");
+        $parser->_unexpected("a field name", $t);
     }
 
     my $dot = $symbol->clone(arity => 'binary');
@@ -916,8 +915,7 @@ sub finish_statement {
 
     my $t = $parser->token;
     if(!($t->is_block_end or $t->id eq ";")) {
-        $parser->_error("Unexpected token (the statement seems to finish): "
-        . $t->id . " (" . $t->arity . ")");
+        $parser->_unexpected("a semicolon or block end", $t);
     }
 
     return;
@@ -1006,7 +1004,7 @@ sub nud_iterator {
 
         my $t = $parser->token;
         if(!any_in($t->arity, qw(variable name))) {
-            $parser->_error("Expected name, not $t (" . $t->arity . ")");
+            $parser->_unexpected("a field name", $t);
         }
 
         my $generator = $parser->iterator_element->{$t->id};
@@ -1160,7 +1158,7 @@ sub std_proc {
     my $macro = $symbol->clone(arity => "proc");
     my $name  = $parser->token;
     if($name->arity ne "name") {
-        $parser->_error("Expected a name but " . $parser->token);
+        $parser->_unexpected("a name", $name);
     }
 
     $parser->define_macro($name->id);
@@ -1250,7 +1248,7 @@ sub std_given {
     my $else;
     foreach my $when(@{$proc->third}) {
         if($when->arity ne "when") {
-            $parser->_error("Expected when blocks", $when);
+            $parser->_unexpected("when blocks", $when);
         }
         $when->arity("if");
 
@@ -1341,7 +1339,7 @@ sub barename {
 
     my $t = $parser->token;
     if(!any_in($t->arity, qw(name literal))) {
-        $parser->_error("Expected name or string literal");
+        $parser->_unexpected("a name or string literal", $t)
     }
 
     # "string" is ok
@@ -1362,7 +1360,7 @@ sub barename {
             $t = $parser->advance(); # "::"
 
             if($t->arity ne "name") {
-                $parser->_error("Expected a name but $t");
+                $parser->_unexpected("a name", $t);
             }
 
             push @parts, $t->id;
@@ -1562,13 +1560,31 @@ sub iterator_peep_prev {
 
 # utils
 
+sub _unexpected {
+    my($parser, $expected, $got) = @_;
+    if(defined($got) && $got ne ";") {
+        $got = sprintf '%s (%s)', $got->id, $got->arity
+            if ref $got;
+        $parser->_error("Expected $expected but got $got");
+     }
+     else {
+        $parser->_error("Expected $expected");
+     }
+}
+
 sub _error {
     my($self, $message, $near) = @_;
 
     $near ||= $self->near_token;
+    if($near ne ";") {
+        $near = sprintf ' near %s (%s)', $near->id, $near->arity
+            if ref($near);
+    }
+    else {
+        $near = '';
+    }
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
-        $self->file, $self->line+1, $message,
-        $near ne ';' ? sprintf(", near %s", value_to_literal($near)) : '');
+        $self->file, $self->line+1, $message, $near);
 }
 
 no Any::Moose;
