@@ -140,8 +140,8 @@ You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
         : }
     : }
 
-C<$~item> looks like a pseudo object, so you can access its elements
-via the dot operator.
+C<$~item> is a pseudo object, so you can access its elements
+via the dot-name syntax.
 
     : for $data -> $i {
         : $~i.index # the same as $~i
@@ -157,7 +157,7 @@ via the dot operator.
 
 Supported iterator elements are C<index :Int>, C<count :Int>,
 C<body : ArrayRef>, C<size : Int>, C<max :Int>, C<is_first :Bool>,
-and C<is_last :Bool>.
+and C<is_last :Bool>, C<peep_next :Any>, C<peep_prev :Any>.
 
 C<while> loops are also supported to iterate database-handle-like objects.
 
@@ -224,13 +224,17 @@ You can specify the topic variable.
 
 =head2 Functions and filters
 
-Once you have registered functions, you can call them with C<()> or C<|>.
+You can register functions via C<function> or C<module> options for
+C<< Text::Xslate->new() >>.
+
+Once you have registered functions, you can call them with the C<()> operator.
+The C<|> operator is supported as a syntactic sugar to C<()>.
 
     : f()        # without args
     : f(1, 2, 3) # with args
     : 42 | f     # the same as f(42)
 
-You can define dynamic functions/filters:
+Functions are Perl's subroutines, so you can define dynamic functions:
 
     # code
     sub mk_indent {
@@ -251,11 +255,13 @@ You can define dynamic functions/filters:
     : $value | indent("> ")
     : indent("> ")($value)
 
-There are several builtin filters:
+There are several builtin functions, which you cannot redefine:
 
     : $var | raw  # not to html-escape it
     : $var | html # explicitly html-escape it (default)
     : $var | dump # dump it with Data::Dumper
+
+NOTE: C<raw> and C<html> might be optimized away by the compiler.
 
 =head2 Methods
 
@@ -263,6 +269,7 @@ When I<$var> is an object instance, you can call its methods.
 
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
+    <: $var.method( foo => [ 1, 2, 3 ] ) :>
 
 For arrays and hashes, there are builtin methods (i.e. there
 is an autoboxing mechanism):
@@ -379,6 +386,8 @@ Output:
 
 =head2 Macro blocks
 
+Macros are supported, which are called in the same way as functions.
+
     : macro add ->($x, $y) {
     :   $x + $y;
     : }
@@ -392,6 +401,8 @@ Output:
     : macro factorial -> $x {
     :   $x == 0 ? 1 : $x * factorial($x-1)
     : }
+    : factorial(1)  # as a function
+    : 1 | factorial # as a filter
 
 Note that return values of macros are what their routines render.
 That is, macros themselves output nothing.
@@ -403,6 +414,8 @@ That is, macros themselves output nothing.
       # this is also a comment
       $var
     :>
+
+    <: $foo # this is ok :>
 
 =head1 SEE ALSO
 

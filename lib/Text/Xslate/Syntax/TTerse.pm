@@ -4,7 +4,7 @@ use Text::Xslate::Util qw(p any_in);
 
 extends qw(Text::Xslate::Parser);
 
-# [% ... %]
+# [% ... %] and %% ...
 sub _build_line_start { qr/%%/xms   }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
@@ -16,7 +16,7 @@ around split => sub {
 
     foreach my $t(@{$tokens_ref}) {
         my($type, $value) = @{$t};
-        if($type eq 'code' && $value =~ /^#/) {
+        if($type eq 'code' && $value =~ /^#/) { # multiline comments
             $t->[1] = '';
         }
     }
@@ -305,7 +305,10 @@ using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
 =head1 SYNTAX
 
-Note that lower-cased keywords are also allowed.
+This support Template-Toolkit like syntax, but the details might be different.
+
+Note that lower-cased keywords, which are inspired in Template-Toolkit 3,
+are also allowed.
 
 =head2 Variable access
 
@@ -331,7 +334,8 @@ If I<$var> is an object instance, you can call its methods.
 
 =head2 Expressions
 
-Almost the same as L<Text::Xslate::Syntax::Kolon>.
+Almost the same as L<Text::Xslate::Syntax::Kolon>, but the C<_> operator for
+concatination is supported for compatibility.
 
 =head2 Loops
 
@@ -342,18 +346,25 @@ Almost the same as L<Text::Xslate::Syntax::Kolon>.
 Loop iterators are partially supported.
 
     [% FOREACH item IN arrayref %]
-        [%- IF loop.first -%]
+        [%- IF loop.is_first -%]
         <first>
         [%- END -%]
         * [% loop.index %]
-        * [% loop.count # loop.index + 1 %]
-        * [% loop.body  # alias to arrayref %]
-        * [% loop.size  # loop.body.size %]
-        * [% loop.max   # loop.size - 1 %]
-        [%- IF loop.last -%]
-        <first>
+        * [% loop.count     # loop.index + 1 %]
+        * [% loop.body      # alias to arrayref %]
+        * [% loop.size      # loop.body.size %]
+        * [% loop.max       # loop.size - 1 %]
+        * [% loop.peep_next # loop.body[ loop.index - 1 ]
+        * [% loop.peep_prev # loop\body[ loop.index + 1 ]
+        [%- IF loop.is_last -%]
+        <last>
         [%- END -%]
     [% END %]
+
+For compatibility with Template-Toolkit, C<first> for C<is_first>, C<last>
+for C<is_last>, C<next> for C<peep_next>, C<prev> for C<peep_prev> are
+supported, but the use of them is discouraged because they are hard
+to understand.
 
 =head2 Conditional statements
 
