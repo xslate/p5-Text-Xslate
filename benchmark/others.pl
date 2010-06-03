@@ -12,9 +12,11 @@ use Test::More;
 use Benchmark qw(:all);
 use FindBin qw($Bin);
 
+my $try_mst = grep { $_ eq '--mst' } @ARGV;
+
 my $tmpl   = !Scalar::Util::looks_like_number($ARGV[0]) && shift(@ARGV);
    $tmpl ||= 'list';
-my $n      = shift(@ARGV) || 10;
+my $n      = shift(@ARGV) || ($tmpl eq 'list' ? 100 : 10);
 
 if(!($tmpl eq 'list' or $tmpl eq 'include')) {
     die "$0 [list | include] [n]\n";
@@ -25,7 +27,7 @@ use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 my $has_tcs = eval q{ use Text::ClearSilver 0.10.5.4; 1 };
 warn "Text::CelarSilver is not available ($@)\n" if $@;
 
-my $has_mst = $tmpl eq 'list' && eval q{ use MobaSiF::Template; 1 };
+my $has_mst = $tmpl eq 'list' && $try_mst && eval q{ use MobaSiF::Template; 1 };
 warn "MobaSif::Template is not available ($@)\n" if $@;
 
 my $has_ht = eval q{ use HTML::Template::Pro; 1 };
