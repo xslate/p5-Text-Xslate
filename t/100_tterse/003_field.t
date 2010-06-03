@@ -15,6 +15,8 @@ my @data = (
     ['[% ary.1 %]', 20],
     ['[% ary.2 %]', 30],
 
+    ['[% var.$xyz %]', 'value'],
+
     ['[% g["f"]["x"] %]', 'gfx', 'var["field"]']
 );
 
@@ -42,6 +44,8 @@ foreach my $pair(@data) {
         ary => [10, 20, 30],
 
         foo => 'foo',
+
+        xyz => 'attr',
     );
 
     is render_str($in, \%vars), $out, $msg;

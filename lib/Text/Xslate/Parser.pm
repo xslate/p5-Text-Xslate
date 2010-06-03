@@ -717,13 +717,13 @@ sub led_dot {
         $parser->_unexpected("a field name", $t);
     }
 
-    my $dot = $symbol->clone(arity => 'binary');
-
-    $dot->first($left);
-    $dot->second($t->clone(arity => 'literal'));
+    my $dot = $symbol->clone(
+        arity  => 'binary',
+        first  => $left,
+        second => $t->clone(arity => 'literal'),
+    );
 
     $t = $parser->advance();
-
     if($t->id eq "(") {
         $parser->advance(); # "("
         $dot->third( $parser->expression_list() );

@@ -33,6 +33,7 @@ sub init_symbols {
 
     $parser->init_basic_operators();
     $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
+    $parser->symbol('.')->set_led(\&led_dot); # redefine
 
     # defines both upper cased and lower cased
 
@@ -104,11 +105,18 @@ sub undefined_name {
 
 sub is_valid_field {
     my($parser, $token) = @_;
-    if(!$parser->SUPER::is_valid_field($token)) {
-        return $token->arity eq "variable"
-            && scalar($token->id !~ /^\$/);
+    return $parser->SUPER::is_valid_field($token)
+        || $token->arity eq "variable";
+}
+
+sub led_dot {
+    my($parser, $symbol, $left) = @_;
+    my $dot = $parser->SUPER::led_dot($symbol, $left);
+    if($dot->second->id =~ /\A \$/xms) { # var.$field
+        $dot->id('['); # var[ $field ]
+        $dot->second->arity("variable");
     }
-    return 1;
+    return $dot;
 }
 
 sub led_concat {
