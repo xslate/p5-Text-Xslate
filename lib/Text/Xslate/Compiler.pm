@@ -171,7 +171,7 @@ sub compile {
         my $ast = $parser->parse($str, %args);
         print STDERR p($ast) if _DUMP_AST;
         @code = $self->_compile_ast($ast);
-        push @code, $self->_generate_exit();
+        $self->_finish_main(\@code);
     }
 
     my $cascade = $self->cascade;
@@ -190,6 +190,12 @@ sub compile {
     $parser->file($old_file || '<input>'); # reset
 
     return \@code;
+}
+
+sub _finish_main {
+    my($self, $main_code) = @_;
+    push @{$main_code}, ['end'];
+    return;
 }
 
 sub _compile_ast {
@@ -761,30 +767,24 @@ sub _generate_call {
         $self->_expr($callable),
     );
 
-    if($code[-1][0] eq 'macro') {
-        push @code, [ macrocall => undef, $node->line ];
-    }
-    else {
-        push @code, [ funcall => undef, $node->line ];
-    }
+    my $op = $code[-1][0] eq 'macro'
+        ? 'macrocall'
+        : 'funcall';
+
+    push @code, [ $op => undef, $node->line ];
     return @code;
 }
 
 sub _generate_function {
     my($self, $node) = @_;
 
-    return [ function => $node->value ];
+    return [ function => $node->id ];
 }
 
 sub _generate_macro {
     my($self, $node) = @_;
 
-    return [ macro => $node->value ];
-}
-
-sub _generate_exit {
-    my($self) = @_;
-    return [ 'end' ];
+    return [ macro => $node->id ];
 }
 
 # $~iterator
@@ -836,6 +836,8 @@ sub _variable_to_value {
     $name =~ s/\$//;
     return $name;
 }
+
+# optimizatin stuff
 
 my %goto_family;
 @goto_family{qw(

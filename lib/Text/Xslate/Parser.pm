@@ -881,12 +881,10 @@ sub nud_function{
 }
 
 sub define_function {
-    my($compiler, @names) = @_;
+    my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&nud_function);
-        $symbol->value($name);
+        $parser->symbol($name)->set_nud(\&nud_function);
     }
     return;
 }
@@ -898,12 +896,10 @@ sub nud_macro{
 }
 
 sub define_macro {
-    my($compiler, @names) = @_;
+    my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        my $symbol = $compiler->symbol($name);
-        $symbol->set_nud(\&nud_macro);
-        $symbol->value($name);
+        $parser->symbol($name)->set_nud(\&nud_macro);
     }
     return;
 }
@@ -959,9 +955,8 @@ sub statements { # process statements
     my @a;
 
     my $t = $parser->token;
-    while(!$t->is_block_end) {
+    for(my $t = $parser->token; !$t->is_block_end; $t = $parser->token) {
         push @a, $parser->statement();
-        $t = $parser->token;
     }
 
     return \@a;
