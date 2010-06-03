@@ -18,6 +18,7 @@ Revision history for Perl extension Text::Xslate
         + Loop iterator elements: index, count, size, max, body
           is_first/first, is_last/last, peep_next/next, and peep_prev/prev.
         + MACRO foo(...) BLOCK ... END syntax
+        + WRAPPER "foo.tt" ... END syntax
 
     [BUG FIXES]
     - Empty hash/array literals ware not allowed

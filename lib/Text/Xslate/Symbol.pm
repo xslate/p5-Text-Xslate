@@ -52,6 +52,13 @@ has is_block_end => (
     required => 0,
 );
 
+has is_comma => (
+    is  => 'rw',
+    isa => 'Bool',
+
+    required => 0,
+);
+
 has is_logical => (
     is  => 'rw',
     isa => 'Bool',

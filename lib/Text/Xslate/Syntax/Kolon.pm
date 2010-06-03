@@ -51,8 +51,11 @@ C<< $obj["accessor"] >> syntax may be call object methods.
 
 =head2 Literals
 
-Nil:
-    : nil
+Special:
+
+    : nil   # indicates "nothing"
+    : true  # as the integer 1
+    : false # as the integer 0
 
 String:
 

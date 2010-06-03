@@ -158,7 +158,7 @@ sub _assemble {
                 $code->[ $i ]->{ arg } = $arg;
             }
             elsif ( $oparg & TXARGf_INT ) {
-                $code->[ $i ]->{ arg } = $arg;
+                $code->[ $i ]->{ arg } = int($arg);
 
                 if( $oparg & TXARGf_GOTO ) {
                     my $abs_addr = $i + $arg;

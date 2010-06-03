@@ -393,15 +393,17 @@ sub _init_basic_symbols {
     $parser->symbol(';');
     $parser->symbol('(');
     $parser->symbol(')');
-    $parser->symbol(',');
-    $parser->symbol('=>');
+    $parser->symbol(',')  ->is_comma(1);
+    $parser->symbol('=>') ->is_comma(1);
 
     # common commands
     $parser->symbol('print')    ->set_std(\&std_command);
     $parser->symbol('print_raw')->set_std(\&std_command);
 
     # common constants
-    $parser->define_constant('nil', undef);
+    $parser->define_constant(nil   => undef);
+    $parser->define_constant(true  => 1);
+    $parser->define_constant(false => 0);
 
     return;
 }
@@ -621,16 +623,18 @@ sub expression_list {
     my($parser) = @_;
 
     my @args;
-    if($parser->token->has_nud) {
-        while(1) {
-            push @args, $parser->expression(0);
-            my $t = $parser->token;
 
-            if(!($t->id eq "," or $t->id eq "=>")) {
+    if($parser->token->has_nud or $parser->token->is_comma) {
+        while(1) {
+            if($parser->token->has_nud) {
+                push @args, $parser->expression(0);
+            }
+
+            if(!$parser->token->is_comma) {
                 last;
             }
 
-            $parser->advance(); # "," or "=>"
+            $parser->advance(); # comma
         }
     }
     return \@args;
