@@ -954,7 +954,6 @@ sub statements { # process statements
     my($parser) = @_;
     my @a;
 
-    my $t = $parser->token;
     for(my $t = $parser->token; !$t->is_block_end; $t = $parser->token) {
         push @a, $parser->statement();
     }
