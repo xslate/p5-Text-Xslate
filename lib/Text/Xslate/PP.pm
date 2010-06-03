@@ -19,7 +19,7 @@ our %EXPORT_TAGS = (
     backend => \@EXPORT_OK,
 );
 
-use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
+use constant _PP_BOOSTER => !scalar($DEBUG =~ /\b pp=opcode \b/xms);
 
 use if  _PP_BOOSTER, 'Text::Xslate::PP::Booster';
 use if !_PP_BOOSTER, 'Text::Xslate::PP::Opcode';
