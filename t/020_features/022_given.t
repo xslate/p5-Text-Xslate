@@ -227,9 +227,9 @@ T
         FOO
 X
 
-    [<<'T', { value => 10 }, <<'X', 'non-logical expr'],
+    [<<'T', { value => 10, x => 1 }, <<'X', 'non-logical expr'],
 : given $value -> $it {
-:    when 1 + 9  {
+:    when $x + 9  {
         FOO
 :    }
 :    default {

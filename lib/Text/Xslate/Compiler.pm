@@ -691,19 +691,30 @@ sub _generate_binary {
             [ fetch_field_s => $node->second->id ];
     }
     elsif(exists $binary{$id}) {
-        # eval lhs
-        my @code = $self->_expr($node->first);
-        push @code, [ save_to_lvar => $self->lvar_id ];
+        my @lhs = $self->_expr($node->first);
 
-        # eval rhs
         $self->lvar_use(1);
-        push @code, $self->_expr($node->second);
+        my @rhs = $self->_expr($node->second);
         $self->lvar_release(1);
 
-        # execute op
-        push @code,
+        my @code;
+        if($self->optimize
+            and @lhs == 1 and $lhs[0][0] eq 'literal'
+            and @rhs == 1 and $rhs[0][0] eq 'literal'
+        ) {
+            @code = $self->_fold_constants($id, $lhs[0][1], $rhs[0][1]);
+            if(@code) {
+                return @code;
+            }
+        }
+
+        @code = (
+            @lhs,
+            [ save_to_lvar => $self->lvar_id ],
+            @rhs,
             [ load_lvar_to_sb => $self->lvar_id ],
-            [ $binary{$id}   => undef ];
+            [ $binary{$id}   => undef ],
+        );
 
         if(any_in($id, qw(min max))) {
             splice @code, -1, 0,
@@ -837,6 +848,28 @@ sub _variable_to_value {
 }
 
 # optimizatin stuff
+
+sub _fold_constants {
+    my($self, $op, $lhs, $rhs) = @_;
+
+    return if !defined($lhs) or !defined($rhs);
+    my $result =
+          $op eq '==' ? $lhs eq $rhs
+        : $op eq '!=' ? $lhs ne $rhs
+        : $op eq '<'  ? $lhs <  $rhs
+        : $op eq '<=' ? $lhs <= $rhs
+        : $op eq '>'  ? $lhs >  $rhs
+        : $op eq '>=' ? $lhs >= $rhs
+        : $op eq '+'  ? $lhs +  $rhs
+        : $op eq '-'  ? $lhs -  $rhs
+        : $op eq '*'  ? $lhs *  $rhs
+        : $op eq '/'  ? $lhs /  $rhs
+        : $op eq '%'  ? $lhs %  $rhs
+        : $op eq '~'  ? $lhs .  $rhs
+        : $op eq '%'  ? $lhs %  $rhs
+        :               return;
+    return [ literal => $result, undef, "$lhs $op $rhs"];
+}
 
 my %goto_family;
 @goto_family{qw(

@@ -9,7 +9,7 @@ use Benchmark qw(:all);
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
 foreach my $mod(qw(Text::Xslate Text::MicroTemplate HTML::Template::Pro)){
-    print $mod, '/', $mod->VERSION;
+    print $mod, '/', $mod->VERSION, "\n";
 }
 
 my $n = shift(@ARGV) || 10;

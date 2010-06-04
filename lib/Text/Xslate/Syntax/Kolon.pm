@@ -408,8 +408,9 @@ return a string marked as escaped.
     : factorial(1)  # as a function
     : 1 | factorial # as a filter
 
-Note that return values of macros are what their routines render.
-That is, macros themselves output nothing.
+Macros returns what their body renders. That is, macros themselves output nothing.
+
+Note that you cannot call macros before their definitions.
 
 =head2 Comments
 

@@ -552,6 +552,14 @@ the C<INTO> keyword.
     ...
     [% END %]
 
+This is a syntactic sugar to template cascading. Here is a counterpart of
+the example in Kolon.
+
+    : macro my_content -> {
+        Hello, world!
+    : }
+    : cascade "file.tx" { content => my_content() }
+
 =head2 Macro blocks
 
 Definition:
