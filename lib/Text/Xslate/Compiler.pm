@@ -715,11 +715,7 @@ sub _generate_binary {
                 [ move_from_sb    => undef, undef, "$id on true" ],
         }
 
-        if($self->optimize
-            and @lhs == 1 and $lhs[0][0] eq 'literal' and defined($lhs[0][1])
-            and @rhs == 1 and $rhs[0][0] eq 'literal' and defined($rhs[0][1])
-            ) {
-
+        if($self->optimize) {
             @code = $self->_fold_constants(@code);
         }
         return @code;
@@ -876,14 +872,23 @@ sub _variable_to_value {
 
 sub _fold_constants {
     my($self, @code) = @_;
+    # currently it will be called only by _generate_binary()
 
+    # constant <binop> constant
+    # but constants must not be undef(nil)
+    if(@code == 5
+        and join(' ', map { $_->[0] } @code[0 .. scalar(@code) - 2])
+            eq 'literal save_to_lvar literal load_lvar_to_sb'
+        and defined($code[0][1])
+        and defined($code[2][1]) ) {
+
+        my $engine = $self->engine or return @code;
+
+        push @code, ['print_raw'];
+        $engine->_assemble(\@code, undef, undef, undef, undef);
+        return [ literal => $engine->render(undef), undef, "optimized by constant folding"];
+    }
     return @code;
-
-    my $engine = $self->engine or return @code;
-
-    push @code, ['print_raw'];
-    $engine->_assemble(\@code, undef, undef, undef, undef);
-    return [ literal => $engine->render(undef), undef, "optimized by constant folding"];
 }
 
 my %goto_family;
