@@ -1,13 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
-0.1027
+0.1027 Fri Jun  4 15:09:47 2010
     [CHANGES]
     - s/peep/peek/, which is really what I want
 
     [BUG FIXES]
     - Ternary operators could cause problems in PP::Booster, again (makamaka)
     - "or" and "and" operators could cause problems in given-when
-
 
 0.1026 Thu Jun  3 22:04:02 2010
     [CHANGES]
