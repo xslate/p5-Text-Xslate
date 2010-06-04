@@ -935,12 +935,17 @@ sub statement { # process one or more statements
     my $expr = $parser->expression(0);
     $parser->finish_statement();
 
-    return $parser->symbol('print')->clone(
-        arity  => 'command',
-        first  => [$expr],
-        line   => $expr->line,
-    );
-    #return $expr;
+    if($expr->is_statement) {
+        # expressions can produce statements (e.g. assignment)
+        return $expr;
+    }
+    else {
+        return $parser->symbol('print')->clone(
+            arity  => 'command',
+            first  => [$expr],
+            line   => $expr->line,
+        );
+    }
 }
 
 sub statements { # process statements

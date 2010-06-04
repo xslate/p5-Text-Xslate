@@ -70,6 +70,15 @@ X
 #    Hello, Xslate world!
 #X
 
+    [<<'T', <<'X', 'assignment'],
+[% SET lang = 'TTerse' -%]
+[% lang = 'Perl' -%]
+Hello, [% lang %] world!
+T
+Hello, Perl world!
+X
+
+
     [<<'T', <<'X', 'lower cased'],
 [% set lang = 'TTerse' -%]
 Hello, [% lang %] world!

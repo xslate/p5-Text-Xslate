@@ -823,25 +823,30 @@ sub _generate_iterator_body {
 
 sub _generate_assign {
     my($self, $node) = @_;
-    my $vars = $node->first;
-    my @code;
-    for(my $i = 0; $i < @{$vars}; $i += 2) {
-        my $name  = $vars->[$i  ];
-        my $value = $vars->[$i+1];
+    my $name = $node->first;
+    my $expr = $node->second;
 
-        my $lvar_name = $name->id;
-        my $lvar_id   = $self->lvar_id;
+    my $lvar_name = $name->id;
+    my $lvar      = $self->lvar;
+    my $lvar_id;
 
-        $self->{lvar_id} = $self->lvar_use(1); # don't use local()
+    my $decl_lvar = ($node->id eq 'my');
 
-        $self->lvar->{$lvar_name}
-            = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
-
-        push @code,
-            $self->_expr($value),
-            [ save_to_lvar => $lvar_id, undef, $lvar_name ];
+    if($decl_lvar) {
+        $lvar_id            = $self->lvar_id;
+        $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
+        $lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
     }
-    return @code;
+    else {
+        if(!exists $lvar->{$lvar_name}) {
+            $self->_error("Cannot modify global template variables $name");
+        }
+        $lvar_id = $lvar->{$lvar_name}[1];
+    }
+
+    return
+        $self->_expr($expr),
+        [ save_to_lvar => $lvar_id, undef, $lvar_name ];
 }
 
 sub _localize_vars {

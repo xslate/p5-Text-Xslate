@@ -128,6 +128,26 @@ sub led_concat {
     return $parser->SUPER::led_infix($symbol->clone(id => '~'), $left);
 }
 
+sub led_assignment {
+    my($parser, $symbol, $left) = @_;
+
+    if($symbol->id ne "=") {
+        $parser->_error("Assignment ($symbol) is forbidden");
+    }
+
+    my $assign = $parser->led_infixr($symbol, $left);
+    $assign->arity('assign');
+    $assign->is_statement(1);
+    return $assign;
+}
+
+sub assignment {
+    my($parser, $id, $bp) = @_;
+
+    $parser->symbol($id, $bp)->set_led(\&led_assignment);
+    return;
+}
+
 sub std_if {
     my($parser, $symbol) = @_;
     my $if = $symbol->clone(arity => "if");
@@ -254,10 +274,18 @@ sub set_list {
 
 sub std_set {
     my($parser, $symbol) = @_;
-    return $symbol->clone(
-        arity => 'assign',
-        first => $parser->set_list,
-    );
+
+    my $set_list = $parser->set_list();
+    my @assigns;
+    for(my $i = 0; $i < @{$set_list}; $i += 2) {
+        push @assigns, $symbol->clone(
+            id     => 'my',
+            arity  => 'assign',
+            first  => $set_list->[$i  ],
+            second => $set_list->[$i+1],
+        );
+    }
+    return @assigns;
 }
 
 sub std_macro {
