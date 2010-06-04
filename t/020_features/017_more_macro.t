@@ -124,6 +124,16 @@ T
     6
 X
 
+    [ <<'T', { }, <<'X', "a macro returns escaped string" ],
+<: macro em ->($x) { :><em><: $x :></em><: } -:>
+    <: "foo" | em | raw  :>
+    <: "bar" | em | html :>
+T
+    <em>foo</em>
+    <em>bar</em>
+X
+
+
 );
 
 foreach my $d(@set) {
