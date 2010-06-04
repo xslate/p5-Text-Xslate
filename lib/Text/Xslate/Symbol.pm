@@ -152,8 +152,6 @@ has reserved => (
 #    is  => 'rw',
 #    isa => 'HashRef',
 #
-#    weak_ref => 1,
-#
 #    required => 0,
 #);
 

@@ -851,6 +851,7 @@ sub reserve { # reserve a name to the scope
     }
     $top->{$symbol->id} = $symbol;
     $symbol->reserved(1);
+    #$symbol->scope($top);
     return $symbol;
 }
 
@@ -875,31 +876,31 @@ sub define { # define a name to the scope
 }
 
 sub nud_function{
-    my($p, $s) = @_;
-    my $f = $s->clone(arity => 'function');
-    return $p->reserve($f);
+    my($parser, $s) = @_;
+    return $s->clone(arity => 'function');
 }
 
 sub define_function {
     my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        $parser->symbol($name)->set_nud(\&nud_function);
+        my $s = $parser->symbol($name);
+        $s->set_nud(\&nud_function);
     }
     return;
 }
 
 sub nud_macro{
-    my($p, $s) = @_;
-    my $f = $s->clone(arity => 'macro');
-    return $p->reserve($f);
+    my($parser, $s) = @_;
+    return $s->clone(arity => 'macro');
 }
 
 sub define_macro {
     my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        $parser->symbol($name)->set_nud(\&nud_macro);
+        my $s = $parser->symbol($name);
+        $s->set_nud(\&nud_macro);
     }
     return;
 }

@@ -387,7 +387,6 @@ sub _flush_macro_table {
 
 sub _generate_name {
     my($self, $node) = @_;
-
     $self->_error("Undefined symbol '$node'", $node);
 }
 
