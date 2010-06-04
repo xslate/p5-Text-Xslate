@@ -10,6 +10,8 @@ use t::lib::Util;
 my $tx = Text::Xslate->new(path => [path], cache => 0);
 
 my @set = (
+    # cascade
+
     [<<'T', { lang => 'Xslate' }, <<'X', 'cascade with local vars'],
 : cascade myapp::base { lang => "Perl" }
 T
@@ -25,6 +27,17 @@ HEAD
     Hello, Perl world!
 FOOT
 X
+
+    [<<'T', { lang => 'Xslate' }, <<'X'],
+: macro content -> { "Perl" }
+: cascade myapp::base { lang => content() }
+T
+HEAD
+    Hello, Perl world!
+FOOT
+X
+
+    # include
 
     [<<'T', { lang => 'Xslate' }, <<'X', 'include with vars'],
 : include "hello.tx" { lang => "Perl" }
