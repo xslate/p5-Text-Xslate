@@ -2,11 +2,11 @@ Revision history for Perl extension Text::Xslate
 
 0.1027
     [CHANGES]
+    - s/peep/peek/, which is really what I want
 
     [BUG FIXES]
-    - Ternary operators could break the code in PP::Booster, again (makamaka)
-
-    [NEW FEATURES]
+    - Ternary operators could cause problems in PP::Booster, again (makamaka)
+    - "or" and "and" operators could cause problems in given-when
 
 
 0.1026 Thu Jun  3 22:04:02 2010
@@ -20,7 +20,7 @@ Revision history for Perl extension Text::Xslate
     - There ware several edge-case issues in string literals
     - The precedence of the ternary operator was wrong
     - Resolve issue #5: [% "foo' %] was silently accepted
-    - Ternary operators could break the code in PP::Booster (makamaka)
+    - Ternary operators could cause problems in PP::Booster (makamaka)
 
     [NEW FEATURES]
     - Macros can be called with the filter operator (e.g. expr | my_macro)
