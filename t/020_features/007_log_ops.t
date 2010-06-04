@@ -86,6 +86,15 @@ my @data = (
          : $value0  == 20 ? 200
          : $value0  == 30 ? 300
          :                  400 :>', 400 ],
+
+    [': macro foo ->($x) { $x.foo }
+    : foo( { foo => $value10 == 10 ? 100 : $value10 == 20 ? 200 : 300 } )',
+    '100'],
+
+    [': macro foo ->($x) { $x.foo }
+    : foo( { foo => $value20 == 10 ? 100 : $value20 == 20 ? 200 : 300 } )',
+    '200'],
+
 );
 
 foreach my $pair(@data) {
