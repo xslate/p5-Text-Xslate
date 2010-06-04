@@ -55,6 +55,8 @@ sub init_symbols {
     $parser->symbol('foreach') ->set_std(\&std_foreach);
     $parser->symbol('FOR')     ->set_std(\&std_foreach);
     $parser->symbol('for')     ->set_std(\&std_foreach);
+    $parser->symbol('WHILE')   ->set_std(\&std_while);
+    $parser->symbol('while')   ->set_std(\&std_while);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
     $parser->symbol('include') ->set_std(\&std_include);
@@ -210,20 +212,28 @@ sub std_foreach {
     }
     $parser->advance();
     $parser->advance("IN");
-
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
-
     $parser->new_scope();
-
     $parser->define_iterator($var);
-
     $proc->third( $parser->statements() );
-    $parser->pop_scope();
-
     $parser->advance("END");
-
+    $parser->pop_scope();
     return $proc;
+}
+
+sub std_while {
+    my($parser, $symbol) = @_;
+
+    my $while = $symbol->clone(arity => "while");
+
+    $while->first( $parser->expression(0) );
+    $while->second([]); # no vars
+    $parser->new_scope();
+    $while->third( $parser->statements() );
+    $parser->advance("END");
+    $parser->pop_scope();
+    return $while;
 }
 
 sub std_include {
