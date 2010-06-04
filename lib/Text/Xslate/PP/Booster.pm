@@ -198,7 +198,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
         my $macro = $self->stash->{ in_macro };
         unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
 
-            return if exists $self->stash->{ exception_macro_args_num }->{ $self->framename }->{ $arg };
+            return if exists $self->stash->{ exception_macro_args_num }->{ $macro }->{ $arg };
 
             $self->write_lines(
                 sprintf(
