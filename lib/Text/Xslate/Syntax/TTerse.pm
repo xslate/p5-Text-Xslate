@@ -55,11 +55,16 @@ sub init_symbols {
     $parser->symbol('foreach') ->set_std(\&std_foreach);
     $parser->symbol('FOR')     ->set_std(\&std_foreach);
     $parser->symbol('for')     ->set_std(\&std_foreach);
+    $parser->symbol('WHILE')   ->set_std(\&std_while);
+    $parser->symbol('while')   ->set_std(\&std_while);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
     $parser->symbol('include') ->set_std(\&std_include);
     $parser->symbol('WITH');
     $parser->symbol('with');
+
+    $parser->symbol('SET')     ->set_std(\&std_set);
+    $parser->symbol('set')     ->set_std(\&std_set);
 
     # macros
 
@@ -125,6 +130,26 @@ sub led_concat {
     return $parser->SUPER::led_infix($symbol->clone(id => '~'), $left);
 }
 
+sub led_assignment {
+    my($parser, $symbol, $left) = @_;
+
+    if($symbol->id ne "=") {
+        $parser->_error("Assignment ($symbol) is forbidden");
+    }
+
+    my $assign = $parser->led_infixr($symbol, $left);
+    $assign->arity('assign');
+    $assign->is_statement(1);
+    return $assign;
+}
+
+sub assignment {
+    my($parser, $id, $bp) = @_;
+
+    $parser->symbol($id, $bp)->set_led(\&led_assignment);
+    return;
+}
+
 sub std_if {
     my($parser, $symbol) = @_;
     my $if = $symbol->clone(arity => "if");
@@ -187,20 +212,28 @@ sub std_foreach {
     }
     $parser->advance();
     $parser->advance("IN");
-
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
-
     $parser->new_scope();
-
     $parser->define_iterator($var);
-
     $proc->third( $parser->statements() );
-    $parser->pop_scope();
-
     $parser->advance("END");
-
+    $parser->pop_scope();
     return $proc;
+}
+
+sub std_while {
+    my($parser, $symbol) = @_;
+
+    my $while = $symbol->clone(arity => "while");
+
+    $while->first( $parser->expression(0) );
+    $while->second([]); # no vars
+    $parser->new_scope();
+    $while->third( $parser->statements() );
+    $parser->advance("END");
+    $parser->pop_scope();
+    return $while;
 }
 
 sub std_include {
@@ -216,7 +249,10 @@ sub localize_vars {
 
     if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
-        return $parser->set_list();
+        $parser->new_scope();
+        my $vars = $parser->set_list();
+        $parser->pop_scope();
+        return $vars;
     }
     return undef;
 }
@@ -227,7 +263,7 @@ sub set_list {
     while(1) {
         my $key = $parser->token;
 
-        if(!($key->arity eq "literal" || $key->arity eq "variable")) {
+        if($key->arity ne "variable") {
             last;
         }
         $parser->advance();
@@ -235,7 +271,7 @@ sub set_list {
 
         my $value = $parser->expression(0);
 
-        $key->arity("literal");
+        $parser->define($key);
         push @args, $key => $value;
 
         if($parser->token->id eq ",") { # , is optional
@@ -244,6 +280,22 @@ sub set_list {
     }
 
     return \@args;
+}
+
+sub std_set {
+    my($parser, $symbol) = @_;
+
+    my $set_list = $parser->set_list();
+    my @assigns;
+    for(my $i = 0; $i < @{$set_list}; $i += 2) {
+        push @assigns, $symbol->clone(
+            id     => 'my',
+            arity  => 'assign',
+            first  => $set_list->[$i  ],
+            second => $set_list->[$i+1],
+        );
+    }
+    return @assigns;
 }
 
 sub std_macro {
@@ -262,6 +314,8 @@ sub std_macro {
 
     $proc->first($name);
     $parser->advance();
+
+    $parser->new_scope();
 
     my $paren = ($parser->token->id eq "(");
 
@@ -289,6 +343,7 @@ sub std_macro {
     $parser->advance("BLOCK");
     $proc->third( $parser->statements() );
     $parser->advance("END");
+    $parser->pop_scope();
     return $proc;
 }
 

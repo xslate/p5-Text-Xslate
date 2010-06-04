@@ -75,12 +75,6 @@ has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
 
-    traits  => [qw(Counter)],
-    handles => {
-        lvar_use     => 'inc',
-        lvar_release => 'dec',
-    },
-
     default  => 0,
     init_arg => undef,
 );
@@ -154,12 +148,20 @@ has cascade => (
     isa => 'Object',
 );
 
+sub lvar_use {
+    my($self, $n) = @_;
+
+    return $self->lvar_id + $n;
+}
+
 sub compile {
     my($self, $str, %args) = @_;
 
     my %mtable;
     local $self->{macro_table} = \%mtable;
     local $self->{cascade};
+    local $self->{lvar_id} = 0;
+    local $self->{lvar}    = {};
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
@@ -470,6 +472,8 @@ sub _generate_for {
     if(@{$vars} != 1) {
         $self->_error("A for-loop requires single variable for each items", $node);
     }
+    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -481,9 +485,8 @@ sub _generate_for {
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(3);
+    local $self->{lvar_id} = $self->lvar_use(3);
     my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(3);
 
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
@@ -503,6 +506,8 @@ sub _generate_while {
     if(@{$vars} > 1) {
         $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
+    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -517,29 +522,29 @@ sub _generate_while {
         if @{$vars};
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(scalar @{$vars});
+    local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(scalar @{$vars});
 
     push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ]
         if @{$vars};
 
     push @code,
-        [ dand  => scalar(@block_code) + 2, undef, "while" ],
+        [ and  => scalar(@block_code) + 2, undef, "while" ],
         @block_code,
         [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
 
     return @code;
 }
 
-sub _generate_proc { # macro, block, before, around, after
+sub _generate_proc { # definition of macro, block, before, around, after
     my($self, $node) = @_;
     my $type   = $node->id;
     my $name   = $node->first->id;
     my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
-    local @{ $self->lvar }{ @args };
+    local $self->{lvar} = { %{$self->lvar} }; # new scope
+
     my $arg_ix = 0;
     foreach my $arg(@args) {
         # to fetch ST(ix)
@@ -547,7 +552,7 @@ sub _generate_proc { # macro, block, before, around, after
         $self->lvar->{$arg} = [ fetch_lvar => $arg_ix++, $node->line, $arg ];
     }
 
-    $self->lvar_use($arg_ix);
+    local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
     my %macro = (
         name   => $name,
@@ -570,8 +575,6 @@ sub _generate_proc { # macro, block, before, around, after
         $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } ||= [] }, \%macro;
     }
-
-    $self->lvar_release($arg_ix);
 
     return @code;
 }
@@ -614,11 +617,10 @@ sub _generate_given {
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(1);
-    my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(1);
+    local $self->{lvar_id} = $self->lvar_use(1);
+    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ],
+        $self->_compile_ast($block);
 
-    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ], @block_code;
     return @code;
 }
 
@@ -693,22 +695,9 @@ sub _generate_binary {
     elsif(exists $binary{$id}) {
         my @lhs = $self->_expr($node->first);
 
-        $self->lvar_use(1);
+       local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
-        $self->lvar_release(1);
-
-        my @code;
-        if($self->optimize
-            and @lhs == 1 and $lhs[0][0] eq 'literal'
-            and @rhs == 1 and $rhs[0][0] eq 'literal'
-        ) {
-            @code = $self->_fold_constants($id, $lhs[0][1], $rhs[0][1]);
-            if(@code) {
-                return @code;
-            }
-        }
-
-        @code = (
+        my @code = (
             @lhs,
             [ save_to_lvar => $self->lvar_id ],
             @rhs,
@@ -724,6 +713,14 @@ sub _generate_binary {
                 [ load_lvar_to_sb => $self->lvar_id, undef, "$id on false" ],
                 # fall through
                 [ move_from_sb    => undef, undef, "$id on true" ],
+        }
+
+        if($self->optimize
+            and @lhs == 1 and $lhs[0][0] eq 'literal' and defined($lhs[0][1])
+            and @rhs == 1 and $rhs[0][0] eq 'literal' and defined($rhs[0][1])
+            ) {
+
+            @code = $self->_fold_constants(@code);
         }
         return @code;
     }
@@ -824,12 +821,40 @@ sub _generate_iterator_body {
     return [ fetch_lvar => $lvar_code->[1]+2, $node->line, $node->id ];
 }
 
+sub _generate_assign {
+    my($self, $node) = @_;
+    my $name = $node->first;
+    my $expr = $node->second;
+
+    my $lvar_name = $name->id;
+    my $lvar      = $self->lvar;
+    my $lvar_id;
+
+    my $decl_lvar = ($node->id eq 'my');
+
+    if($decl_lvar) {
+        $lvar_id            = $self->lvar_id;
+        $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
+        $lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
+    }
+    else {
+        if(!exists $lvar->{$lvar_name}) {
+            $self->_error("Cannot modify global template variables $name");
+        }
+        $lvar_id = $lvar->{$lvar_name}[1];
+    }
+
+    return
+        $self->_expr($expr),
+        [ save_to_lvar => $lvar_id, undef, $lvar_name ];
+}
+
 sub _localize_vars {
     my($self, $vars) = @_;
     my @localize;
     my @pairs = @{$vars};
     while(my($key, $expr) = splice @pairs, 0, 2) {
-        if($key->arity ne "literal") {
+        if(!any_in($key->arity, qw(literal variable))) {
             $self->_error("You must pass a simple name to localize variables");
         }
         push @localize,
@@ -850,25 +875,15 @@ sub _variable_to_value {
 # optimizatin stuff
 
 sub _fold_constants {
-    my($self, $op, $lhs, $rhs) = @_;
+    my($self, @code) = @_;
 
-    return if !defined($lhs) or !defined($rhs);
-    my $result =
-          $op eq '==' ? $lhs eq $rhs
-        : $op eq '!=' ? $lhs ne $rhs
-        : $op eq '<'  ? $lhs <  $rhs
-        : $op eq '<=' ? $lhs <= $rhs
-        : $op eq '>'  ? $lhs >  $rhs
-        : $op eq '>=' ? $lhs >= $rhs
-        : $op eq '+'  ? $lhs +  $rhs
-        : $op eq '-'  ? $lhs -  $rhs
-        : $op eq '*'  ? $lhs *  $rhs
-        : $op eq '/'  ? $lhs /  $rhs
-        : $op eq '%'  ? $lhs %  $rhs
-        : $op eq '~'  ? $lhs .  $rhs
-        : $op eq '%'  ? $lhs %  $rhs
-        :               return;
-    return [ literal => $result, undef, "$lhs $op $rhs"];
+    return @code;
+
+    my $engine = $self->engine or return @code;
+
+    push @code, ['print_raw'];
+    $engine->_assemble(\@code, undef, undef, undef, undef);
+    return [ literal => $engine->render(undef), undef, "optimized by constant folding"];
 }
 
 my %goto_family;
@@ -1017,8 +1032,8 @@ sub as_assembly {
 sub _error {
     my($self, $message, $node) = @_;
 
-    my $line = ref($node) ? $node->line : $node;
-    Carp::croak(sprintf 'Xslate::Compiler(%s:%d): %s', $self->file, $line, $message);
+    my $line = (ref($node) ? $node->line : $node) || 'unknown';
+    Carp::croak(sprintf 'Xslate::Compiler(%s:%s): %s', $self->file, $line, $message);
 }
 
 no Any::Moose;

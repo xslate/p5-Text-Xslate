@@ -935,12 +935,17 @@ sub statement { # process one or more statements
     my $expr = $parser->expression(0);
     $parser->finish_statement();
 
-    return $parser->symbol('print')->clone(
-        arity  => 'command',
-        first  => [$expr],
-        line   => $expr->line,
-    );
-    #return $expr;
+    if($expr->is_statement) {
+        # expressions can produce statements (e.g. assignment)
+        return $expr;
+    }
+    else {
+        return $parser->symbol('print')->clone(
+            arity  => 'command',
+            first  => [$expr],
+            line   => $expr->line,
+        );
+    }
 }
 
 sub statements { # process statements
@@ -1367,7 +1372,9 @@ sub localize_vars {
     my($parser) = @_;
     if($parser->token->id eq "{") {
         $parser->advance();
+        $parser->new_scope();
         my $vars = $parser->expression_list();
+        $parser->pop_scope();
         $parser->advance("}");
         return $vars;
     }

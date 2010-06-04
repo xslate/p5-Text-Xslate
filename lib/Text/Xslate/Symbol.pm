@@ -56,6 +56,7 @@ has [
         'is_logical',   # logical operators
         'is_comma',     # comma like operators
         'is_value',     # symbols with values
+        'is_statement', # expr but a statement (e.g. assignment)
     ] => (
     is       => 'rw',
     isa      => 'Bool',
