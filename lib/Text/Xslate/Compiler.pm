@@ -696,19 +696,7 @@ sub _generate_binary {
         $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
         $self->lvar_release(1);
-
-        my @code;
-        if($self->optimize
-            and @lhs == 1 and $lhs[0][0] eq 'literal'
-            and @rhs == 1 and $rhs[0][0] eq 'literal'
-        ) {
-            @code = $self->_fold_constants($id, $lhs[0][1], $rhs[0][1]);
-            if(@code) {
-                return @code;
-            }
-        }
-
-        @code = (
+        my @code = (
             @lhs,
             [ save_to_lvar => $self->lvar_id ],
             @rhs,
@@ -724,6 +712,14 @@ sub _generate_binary {
                 [ load_lvar_to_sb => $self->lvar_id, undef, "$id on false" ],
                 # fall through
                 [ move_from_sb    => undef, undef, "$id on true" ],
+        }
+
+        if($self->optimize
+            and @lhs == 1 and $lhs[0][0] eq 'literal' and defined($lhs[0][1])
+            and @rhs == 1 and $rhs[0][0] eq 'literal' and defined($rhs[0][1])
+            ) {
+
+            @code = $self->_fold_constants(@code);
         }
         return @code;
     }
@@ -850,25 +846,15 @@ sub _variable_to_value {
 # optimizatin stuff
 
 sub _fold_constants {
-    my($self, $op, $lhs, $rhs) = @_;
+    my($self, @code) = @_;
 
-    return if !defined($lhs) or !defined($rhs);
-    my $result =
-          $op eq '==' ? $lhs eq $rhs
-        : $op eq '!=' ? $lhs ne $rhs
-        : $op eq '<'  ? $lhs <  $rhs
-        : $op eq '<=' ? $lhs <= $rhs
-        : $op eq '>'  ? $lhs >  $rhs
-        : $op eq '>=' ? $lhs >= $rhs
-        : $op eq '+'  ? $lhs +  $rhs
-        : $op eq '-'  ? $lhs -  $rhs
-        : $op eq '*'  ? $lhs *  $rhs
-        : $op eq '/'  ? $lhs /  $rhs
-        : $op eq '%'  ? $lhs %  $rhs
-        : $op eq '~'  ? $lhs .  $rhs
-        : $op eq '%'  ? $lhs %  $rhs
-        :               return;
-    return [ literal => $result, undef, "$lhs $op $rhs"];
+    return @code;
+
+    my $engine = $self->engine or return @code;
+
+    push @code, ['print_raw'];
+    $engine->_assemble(\@code, undef, undef, undef, undef);
+    return [ literal => $engine->render(undef), undef, "optimized by constant folding"];
 }
 
 my %goto_family;
