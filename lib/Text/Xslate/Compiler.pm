@@ -885,7 +885,8 @@ sub _fold_constants {
 
         my $engine = $self->engine or return @code;
 
-        push @code, ['print_raw'];
+        push @code, ['print_raw'], ['end'];
+        # evaluate the code in the engine
         $engine->_assemble(\@code, undef, undef, undef, undef);
         return [ literal => $engine->render(undef), undef, "optimized by constant folding"];
     }

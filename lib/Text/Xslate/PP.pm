@@ -19,10 +19,14 @@ our %EXPORT_TAGS = (
     backend => \@EXPORT_OK,
 );
 
-use constant _PP_BOOSTER => !scalar($DEBUG =~ /\b pp=opcode \b/xms);
+use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
+use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
 
-use if  _PP_BOOSTER, 'Text::Xslate::PP::Booster';
-use if !_PP_BOOSTER, 'Text::Xslate::PP::Opcode';
+use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
+                            : _PP_BOOSTER ? 'Booster'
+                            :               'Opcode'; # default
+
+require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
 our @OPCODE; # defined in PP::Const
 
