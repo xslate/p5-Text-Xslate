@@ -791,19 +791,11 @@ sub prefix {
     return $symbol;
 }
 
-sub nud_constant {
-    my($parser, $symbol) = @_;
-    my $c = $symbol->clone();
-    $parser->reserve($c);
-    return $c;
-}
-
 sub define_constant {
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
     $symbol->arity('literal');
-    $symbol->set_nud(\&nud_constant);
     $symbol->value($value);
     return;
 }
@@ -1434,7 +1426,7 @@ sub iterator_count {
     my($parser, $iterator) = @_;
 
     my $one = $parser->symbol('(literal)')->clone(
-        value => 1,
+        id => 1,
     );
 
     # $~iterator + 1

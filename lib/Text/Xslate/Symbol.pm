@@ -35,6 +35,11 @@ has value => (
 
     lazy    => 1,
     builder => 'id',
+    trigger => sub {
+        my($self) = @_;
+        $self->is_value(1);
+        return;
+    },
 #    default => sub{
 #        if(!defined $_[0]) { #XXX: Any::Moose::XS's bug
 #            my(undef, $file, $line) = caller;
