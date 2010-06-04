@@ -806,6 +806,12 @@ sub new_scope {
     return;
 }
 
+sub pop_scope {
+    my($parser) = @_;
+    pop @{ $parser->scope };
+    return;
+}
+
 sub undefined_name {
     my($parser, $name) = @_;
     if($name =~ /\A \$/xms) {
@@ -868,7 +874,6 @@ sub define { # define a name to the scope
     return $symbol;
 }
 
-
 sub nud_function{
     my($p, $s) = @_;
     my $f = $s->clone(arity => 'function');
@@ -896,13 +901,6 @@ sub define_macro {
     foreach my $name(@names) {
         $parser->symbol($name)->set_nud(\&nud_macro);
     }
-    return;
-}
-
-
-sub pop_scope {
-    my($parser) = @_;
-    pop @{ $parser->scope };
     return;
 }
 
