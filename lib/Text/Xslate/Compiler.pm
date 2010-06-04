@@ -75,12 +75,6 @@ has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
 
-    traits  => [qw(Counter)],
-    handles => {
-        lvar_use     => 'inc',
-        lvar_release => 'dec',
-    },
-
     default  => 0,
     init_arg => undef,
 );
@@ -153,6 +147,12 @@ has cascade => (
     is  => 'rw',
     isa => 'Object',
 );
+
+sub lvar_use {
+    my($self, $n) = @_;
+
+    return $self->lvar_id + $n;
+}
 
 sub compile {
     my($self, $str, %args) = @_;
@@ -472,6 +472,8 @@ sub _generate_for {
     if(@{$vars} != 1) {
         $self->_error("A for-loop requires single variable for each items", $node);
     }
+    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -483,9 +485,8 @@ sub _generate_for {
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(3);
+    local $self->{lvar_id} = $self->lvar_use(3);
     my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(3);
 
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
@@ -505,6 +506,8 @@ sub _generate_while {
     if(@{$vars} > 1) {
         $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
+    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -519,9 +522,8 @@ sub _generate_while {
         if @{$vars};
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(scalar @{$vars});
+    local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(scalar @{$vars});
 
     push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ]
         if @{$vars};
@@ -541,7 +543,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
     my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
-    local $self->{lvar} = { %{$self->lvar} };
+    local $self->{lvar} = { %{$self->lvar} }; # new scope
 
     my $arg_ix = 0;
     foreach my $arg(@args) {
@@ -615,11 +617,10 @@ sub _generate_given {
     local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
 
     # a for statement uses three local variables (container, iterator, and item)
-    $self->lvar_use(1);
-    my @block_code = $self->_compile_ast($block);
-    $self->lvar_release(1);
+    local $self->{lvar_id} = $self->lvar_use(1);
+    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ],
+        $self->_compile_ast($block);
 
-    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ], @block_code;
     return @code;
 }
 
@@ -694,9 +695,8 @@ sub _generate_binary {
     elsif(exists $binary{$id}) {
         my @lhs = $self->_expr($node->first);
 
-        $self->lvar_use(1);
+       local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
-        $self->lvar_release(1);
         my @code = (
             @lhs,
             [ save_to_lvar => $self->lvar_id ],
@@ -831,7 +831,8 @@ sub _generate_assign {
 
         my $lvar_name = $name->id;
         my $lvar_id   = $self->lvar_id;
-        $self->lvar_use(1);
+
+        $self->{lvar_id} = $self->lvar_use(1); # don't use local()
 
         $self->lvar->{$lvar_name}
             = [ fetch_lvar => $lvar_id, undef, $lvar_name ];

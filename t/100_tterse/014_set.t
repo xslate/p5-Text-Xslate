@@ -47,7 +47,7 @@ T
     Hello, Xslate world!
 X
 
-    [<<'T', <<'X', 'lexical scoped'],
+    [<<'T', <<'X', 'lexical scoped (macro)'],
 [% MACRO foo BLOCK -%]
 [%- SET lang = "TTerse" -%]
     Hello, [% lang %] world!
@@ -59,6 +59,17 @@ T
     Hello, Xslate world!
 X
 
+#    [<<'T', <<'X', 'lexical scoped (for)'],
+#[% FOR item IN [1] %]
+#[%- SET lang = "TTerse" -%]
+#    Hello, [% lang %] world!
+#[% END -%]
+#    Hello, [% lang %] world!
+#T
+#    Hello, TTerse world!
+#    Hello, Xslate world!
+#X
+
     [<<'T', <<'X', 'lower cased'],
 [% set lang = 'TTerse' -%]
 Hello, [% lang %] world!
@@ -68,7 +79,7 @@ X
 
 );
 
-my %vars = (lang => 'Xslate', foo => "<bar>", '$lang' => 'XXX');
+my %vars = (lang => 'Xslate', foo => '<bar>', '$lang' => 'XXX');
 my $orig = p(\%vars);
 
 foreach my $d(@data) {
