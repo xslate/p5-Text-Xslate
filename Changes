@@ -1,5 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+0.1027
+    [CHANGES]
+
+    [BUG FIXES]
+    - Ternary operators could break the code in PP::Booster, again (makamaka)
+
+    [NEW FEATURES]
+
+
 0.1026 Thu Jun  3 22:04:02 2010
     [CHANGES]
     - Metakolon's line code has been changed to %% like TT3 and TTerse
@@ -24,6 +33,7 @@ Revision history for Perl extension Text::Xslate
     - There ware several edge-case issues in string literals
     - The precedence of the ternary operator was wrong
     - Resolve issue #5: [% "foo' %] was silently accepted
+    - Ternary operators could break the code in PP::Booster (makamaka)
 
 0.1025 Mon May 31 20:29:50 2010
     - Support 5.8.1
