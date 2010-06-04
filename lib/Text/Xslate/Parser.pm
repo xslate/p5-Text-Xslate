@@ -380,16 +380,21 @@ sub _init_basic_symbols {
 
     $parser->symbol('(end)')->is_block_end(1); # EOF
 
-    $parser->symbol('(name)');
+    # prototypes of value symbols
+    my $s;
+    $s = $parser->symbol('(name)');
+    $s->arity('name');
+    $s->is_value(1);
 
-    my $s = $parser->symbol('(variable)');
+    $s = $parser->symbol('(variable)');
     $s->arity('variable');
-    $s->set_nud(\&nud_literal);
+    $s->is_value(1);
 
     $s = $parser->symbol('(literal)');
     $s->arity('literal');
-    $s->set_nud(\&nud_literal);
+    $s->is_value(1);
 
+    # common separators
     $parser->symbol(';');
     $parser->symbol('(');
     $parser->symbol(')');
@@ -623,9 +628,9 @@ sub expression_list {
 
     my @args;
 
-    if($parser->token->has_nud or $parser->token->is_comma) {
+    if($parser->token->is_value or $parser->token->is_comma) {
         while(1) {
-            if($parser->token->has_nud) {
+            if($parser->token->is_value) {
                 push @args, $parser->expression(0);
             }
 
@@ -788,10 +793,8 @@ sub prefix {
 
 sub nud_constant {
     my($parser, $symbol) = @_;
-
-    my $c = $symbol->clone(arity => 'literal');
+    my $c = $symbol->clone();
     $parser->reserve($c);
-
     return $c;
 }
 
@@ -799,6 +802,7 @@ sub define_constant {
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
+    $symbol->arity('literal');
     $symbol->set_nud(\&nud_constant);
     $symbol->value($value);
     return;
@@ -864,7 +868,7 @@ sub define { # define a name to the scope
     $top->{$symbol->id} = $symbol;
 
     $symbol->reserved(0);
-    $symbol->set_nud(\&nud_literal);
+    $symbol->remove_nud();
     $symbol->remove_led();
     $symbol->remove_std();
     $symbol->lbp(0);
@@ -965,11 +969,6 @@ sub block {
     $parser->advance("{");
     # std() returns a list of nodes
     return [$t->std($parser)];
-}
-
-sub nud_literal {
-    my($parser, $symbol) = @_;
-    return $symbol; # as is
 }
 
 sub nud_paren {

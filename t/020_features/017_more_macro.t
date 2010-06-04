@@ -4,6 +4,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use Text::Xslate::Compiler;
 
 my $tx = Text::Xslate->new();
 
