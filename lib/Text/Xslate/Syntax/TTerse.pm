@@ -65,6 +65,8 @@ sub init_symbols {
 
     $parser->symbol('SET')     ->set_std(\&std_set);
     $parser->symbol('set')     ->set_std(\&std_set);
+    $parser->symbol('CALL')    ->set_std(\&std_call);
+    $parser->symbol('call')    ->set_std(\&std_call);
 
     # macros
 
@@ -296,6 +298,11 @@ sub std_set {
         );
     }
     return @assigns;
+}
+
+sub std_call {
+    my($parser, $symbol) = @_;
+    return $parser->expression(0);
 }
 
 sub std_macro {
