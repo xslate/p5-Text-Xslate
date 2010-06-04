@@ -3,8 +3,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate::Syntax::TTerse;
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
+use Text::Xslate::Util qw(p);
 
 my $parser = Text::Xslate::Syntax::TTerse->new();
 
@@ -39,7 +38,7 @@ foreach my $d(@data) {
     my($str, @patterns) = @{$d};
 
     #note($str);
-    my $code = Dumper($parser->parse($str));
+    my $code = p($parser->parse($str));
     #note($code);
 
     foreach my $pat(@patterns) {

@@ -18,6 +18,7 @@ if(USE_TT) {
     require Template;
     $tt = Template->new(
         INCLUDE_PATH => path,
+        ANYCASE      => 1,
     );
 }
 else {

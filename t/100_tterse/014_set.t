@@ -94,8 +94,6 @@ my $orig = p(\%vars);
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
 
-    last if $ENV{USE_TT} && defined($msg) and $msg eq 'lower cased';
-
     is render_str($in, \%vars), $out, $msg
         or diag $in;
 

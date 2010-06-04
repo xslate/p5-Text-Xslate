@@ -194,8 +194,6 @@ T
 END
 X
 
-    # ---- TTerse specific features ----
-
     [<<'T', <<'X', 'lower cased'],
 [% lang %]
 [% foreach type in types -%]
@@ -224,7 +222,9 @@ Xslate
 END
 X
 
-    [<<'T', <<'X', 'is_first && is_last'],
+    # ---- TTerse specific features ----
+
+    [<<'T', <<'X', 'is_first && is_last', 1],
 [% FOR type IN types -%]
 [% IF loop.is_first -%]
 ---- first ----
@@ -269,9 +269,9 @@ X
 );
 
 foreach my $d(@data) {
-    my($in, $out, $msg) = @$d;
+    my($in, $out, $msg, $is_tterse_specific) = @$d;
 
-    last if $msg eq 'lower cased' && $ENV{USE_TT};
+    last if $is_tterse_specific && $ENV{USE_TT};
 
     my %vars = (
         lang => 'Xslate',
