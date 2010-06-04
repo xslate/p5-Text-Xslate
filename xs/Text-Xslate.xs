@@ -1055,7 +1055,7 @@ tx_sv_dup_inc(pTHX_ SV* const sv, CLONE_PARAMS* const param) {
 static int
 tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
 #ifdef USE_ITHREADS /* single threaded perl has no "xxx_dup()" APIs */
-    tx_state_t* const st              = (tx_state_t*)mg->mg_ptr;
+    tx_state_t*       st              = (tx_state_t*)mg->mg_ptr;
     const U16* const proto_lines      = st->lines;
     const tx_code_t* const proto_code = st->code;
     U32 const len                     = st->code_len;
