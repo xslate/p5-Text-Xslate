@@ -70,7 +70,73 @@ T
         BAZ
 X
 
-    [<<'T', { value => 10 }, <<'X', 'logical expr'],
+    [<<'T', { value => 10 }, <<'X', 'logical expr (==)'],
+: given $value -> $it {
+:    when $it == 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 11 }, <<'X', 'logical expr (!=)'],
+: given $value -> $it {
+:    when $it != 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 9 }, <<'X', 'logical expr (<)'],
+: given $value -> $it {
+:    when $it < 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (<=)'],
+: given $value -> $it {
+:    when $it <= 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 11 }, <<'X', 'logical expr (>)'],
+: given $value -> $it {
+:    when $it > 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (>=)'],
 : given $value -> $it {
 :    when $it >= 10  {
         FOO
@@ -83,9 +149,87 @@ T
         FOO
 X
 
-    [<<'T', { value => 10 }, <<'X', 'complex logical expr'],
+    [<<'T', { value => 10 }, <<'X', 'logical expr (||)'],
 : given $value -> $it {
-:    when $it >= 0 && $it <= 10   {
+:    when $it == 9 || $it == 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (or)'],
+: given $value -> $it {
+:    when $it == 9 or $it == 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (&&)'],
+: given $value -> $it {
+:    when $it == 10 && $it >= 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (and)'],
+: given $value -> $it {
+:    when $it == 10 and $it >= 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (!)'],
+: given $value -> $it {
+:    when !($it > 10)  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'logical expr (not)'],
+: given $value -> $it {
+:    when not $it > 10  {
+        FOO
+:    }
+:    default {
+        BAZ
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 10 }, <<'X', 'non-logical expr'],
+: given $value -> $it {
+:    when 1 + 9  {
         FOO
 :    }
 :    default {

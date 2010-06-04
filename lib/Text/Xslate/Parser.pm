@@ -471,8 +471,8 @@ sub init_basic_operators {
     $parser->assignment('//=', 100);
 
     $parser->prefix('not', 70)->is_logical(1);
-    $parser->infix('and',  60);
-    $parser->infix('or',   50);
+    $parser->infix('and',  60)->is_logical(1);
+    $parser->infix('or',   50)->is_logical(1);
 
     return;
 }
