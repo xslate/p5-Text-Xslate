@@ -160,6 +160,8 @@ sub compile {
     my %mtable;
     local $self->{macro_table} = \%mtable;
     local $self->{cascade};
+    local $self->{lvar_id} = 0;
+    local $self->{lvar}    = {};
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
@@ -820,12 +822,34 @@ sub _generate_iterator_body {
     return [ fetch_lvar => $lvar_code->[1]+2, $node->line, $node->id ];
 }
 
+sub _generate_assign {
+    my($self, $node) = @_;
+    my $vars = $node->first;
+    my @code;
+    for(my $i = 0; $i < @{$vars}; $i += 2) {
+        my $name  = $vars->[$i  ];
+        my $value = $vars->[$i+1];
+
+        my $lvar_name = $name->id;
+        my $lvar_id   = $self->lvar_id;
+        $self->lvar_use(1);
+
+        $self->lvar->{$lvar_name}
+            = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
+
+        push @code,
+            $self->_expr($value),
+            [ save_to_lvar => $lvar_id, undef, $lvar_name ];
+    }
+    return @code;
+}
+
 sub _localize_vars {
     my($self, $vars) = @_;
     my @localize;
     my @pairs = @{$vars};
     while(my($key, $expr) = splice @pairs, 0, 2) {
-        if($key->arity ne "literal") {
+        if(!any_in($key->arity, qw(literal variable))) {
             $self->_error("You must pass a simple name to localize variables");
         }
         push @localize,
@@ -1003,8 +1027,8 @@ sub as_assembly {
 sub _error {
     my($self, $message, $node) = @_;
 
-    my $line = ref($node) ? $node->line : $node;
-    Carp::croak(sprintf 'Xslate::Compiler(%s:%d): %s', $self->file, $line, $message);
+    my $line = (ref($node) ? $node->line : $node) || 'unknown';
+    Carp::croak(sprintf 'Xslate::Compiler(%s:%s): %s', $self->file, $line, $message);
 }
 
 no Any::Moose;

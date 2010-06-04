@@ -61,6 +61,9 @@ sub init_symbols {
     $parser->symbol('WITH');
     $parser->symbol('with');
 
+    $parser->symbol('SET')     ->set_std(\&std_set);
+    $parser->symbol('set')     ->set_std(\&std_set);
+
     # macros
 
     $parser->symbol('MACRO') ->set_std(\&std_macro);
@@ -216,7 +219,10 @@ sub localize_vars {
 
     if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
-        return $parser->set_list();
+        $parser->new_scope();
+        my $vars = $parser->set_list();
+        $parser->pop_scope();
+        return $vars;
     }
     return undef;
 }
@@ -227,7 +233,7 @@ sub set_list {
     while(1) {
         my $key = $parser->token;
 
-        if(!($key->arity eq "literal" || $key->arity eq "variable")) {
+        if($key->arity ne "variable") {
             last;
         }
         $parser->advance();
@@ -235,7 +241,7 @@ sub set_list {
 
         my $value = $parser->expression(0);
 
-        $key->arity("literal");
+        $parser->define($key);
         push @args, $key => $value;
 
         if($parser->token->id eq ",") { # , is optional
@@ -244,6 +250,14 @@ sub set_list {
     }
 
     return \@args;
+}
+
+sub std_set {
+    my($parser, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'assign',
+        first => $parser->set_list,
+    );
 }
 
 sub std_macro {

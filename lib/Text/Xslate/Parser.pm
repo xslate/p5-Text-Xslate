@@ -1367,7 +1367,9 @@ sub localize_vars {
     my($parser) = @_;
     if($parser->token->id eq "{") {
         $parser->advance();
+        $parser->new_scope();
         my $vars = $parser->expression_list();
+        $parser->pop_scope();
         $parser->advance("}");
         return $vars;
     }
