@@ -277,6 +277,8 @@ sub std_macro {
     $proc->first($name);
     $parser->advance();
 
+    $parser->new_scope();
+
     my $paren = ($parser->token->id eq "(");
 
     $parser->advance("(") if $paren;
@@ -303,6 +305,7 @@ sub std_macro {
     $parser->advance("BLOCK");
     $proc->third( $parser->statements() );
     $parser->advance("END");
+    $parser->pop_scope();
     return $proc;
 }
 

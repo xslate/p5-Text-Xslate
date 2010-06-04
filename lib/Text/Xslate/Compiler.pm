@@ -534,14 +534,15 @@ sub _generate_while {
     return @code;
 }
 
-sub _generate_proc { # macro, block, before, around, after
+sub _generate_proc { # definition of macro, block, before, around, after
     my($self, $node) = @_;
     my $type   = $node->id;
     my $name   = $node->first->id;
     my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
-    local @{ $self->lvar }{ @args };
+    local $self->{lvar} = { %{$self->lvar} };
+
     my $arg_ix = 0;
     foreach my $arg(@args) {
         # to fetch ST(ix)
@@ -549,7 +550,7 @@ sub _generate_proc { # macro, block, before, around, after
         $self->lvar->{$arg} = [ fetch_lvar => $arg_ix++, $node->line, $arg ];
     }
 
-    $self->lvar_use($arg_ix);
+    local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
     my %macro = (
         name   => $name,
@@ -572,8 +573,6 @@ sub _generate_proc { # macro, block, before, around, after
         $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } ||= [] }, \%macro;
     }
-
-    $self->lvar_release($arg_ix);
 
     return @code;
 }

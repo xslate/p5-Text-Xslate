@@ -37,7 +37,27 @@ b = 20
 c = 30
 X
 
+    [<<'T', <<'X', 'lexical scoped'],
+[% MACRO foo BLOCK %]
+    [% SET lang = "TTerse" -%]
+    Hello, [% lang %] world!
+[% END -%]
+    Hello, [% lang %] world!
+T
+    Hello, Xslate world!
+X
 
+    [<<'T', <<'X', 'lexical scoped'],
+[% MACRO foo BLOCK -%]
+[%- SET lang = "TTerse" -%]
+    Hello, [% lang %] world!
+[% END -%]
+    [%- foo() -%]
+    Hello, [% lang %] world!
+T
+    Hello, TTerse world!
+    Hello, Xslate world!
+X
 
     [<<'T', <<'X', 'lower cased'],
 [% set lang = 'TTerse' -%]
