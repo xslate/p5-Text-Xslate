@@ -594,7 +594,7 @@ sub _generate_if {
         @expr,
         [ and  => scalar(@then) + 2, undef, $node->id ],
         @then,
-        [ goto => scalar(@else) + 1 ],
+        [ goto => scalar(@else) + 1, undef, $node->id ],
         @else,
     );
 }
@@ -721,10 +721,11 @@ sub _generate_binary {
         return @code;
     }
     elsif(exists $logical_binary{$id}) {
+        my @left  = $self->_expr($node->first);
         my @right = $self->_expr($node->second);
         return
-            $self->_expr($node->first),
-            [ $logical_binary{$id} => scalar(@right) + 1 ],
+            @left,
+            [ $logical_binary{$id} => scalar(@right) + 1, undef, "logical $id" ],
             @right;
     }
 
