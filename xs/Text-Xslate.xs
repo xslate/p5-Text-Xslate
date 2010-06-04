@@ -1058,8 +1058,8 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     tx_state_t* const st              = (tx_state_t*)mg->mg_ptr;
     const U16* const proto_lines      = st->lines;
     const tx_code_t* const proto_code = st->code;
-    I32 const len                     = st->code_len;
-    I32 i;
+    U32 const len                     = st->code_len;
+    U32 i;
 
     Newx(st->code, len, tx_code_t);
 
@@ -1291,8 +1291,8 @@ CODE:
 {
     MAGIC* mg;
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
-    I32 const len = av_len(proto) + 1;
-    I32 i;
+    U32 const len = av_len(proto) + 1;
+    U32 i;
     U16 l = 0;
     tx_state_t st;
     AV* tmpl;
