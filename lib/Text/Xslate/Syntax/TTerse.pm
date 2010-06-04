@@ -83,8 +83,8 @@ after init_iterator_elements => sub {
 
     $tab->{first} = $tab->{is_first};
     $tab->{last}  = $tab->{is_last};
-    $tab->{next}  = $tab->{peep_next};
-    $tab->{prev}  = $tab->{peep_prev};
+    $tab->{next}  = $tab->{peek_next};
+    $tab->{prev}  = $tab->{peek_prev};
 
     return;
 };
@@ -483,15 +483,15 @@ Loop iterators are partially supported.
         * [% loop.body      # alias to arrayref %]
         * [% loop.size      # loop.body.size %]
         * [% loop.max       # loop.size - 1 %]
-        * [% loop.peep_next # loop.body[ loop.index - 1 ]
-        * [% loop.peep_prev # loop\body[ loop.index + 1 ]
+        * [% loop.peek_next # loop.body[ loop.index - 1 ]
+        * [% loop.peek_prev # loop.body[ loop.index + 1 ]
         [%- IF loop.is_last -%]
         <last>
         [%- END -%]
     [% END %]
 
 For compatibility with Template-Toolkit, C<first> for C<is_first>, C<last>
-for C<is_last>, C<next> for C<peep_next>, C<prev> for C<peep_prev> are
+for C<is_last>, C<next> for C<peek_next>, C<prev> for C<peek_prev> are
 supported, but the use of them is discouraged because they are hard
 to understand.
 

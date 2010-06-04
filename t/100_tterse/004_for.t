@@ -243,9 +243,9 @@ T
 END
 X
 
-    [<<'T', <<'X', 'peep_next'],
+    [<<'T', <<'X', 'peek_next'],
 [% FOR type IN types -%]
-* [% loop.peep_next or "(none)" %]
+* [% loop.peek_next or "(none)" %]
 [% END -%]
 END
 T
@@ -255,9 +255,9 @@ T
 END
 X
 
-    [<<'T', <<'X', 'peep_prev'],
+    [<<'T', <<'X', 'peek_prev'],
 [% FOR type IN types -%]
-* [% loop.peep_prev or "(none)" %]
+* [% loop.peek_prev or "(none)" %]
 [% END -%]
 END
 T

@@ -94,7 +94,7 @@ has token => (
     init_arg => undef,
 );
 
-has next_token => ( # to peep the next token
+has next_token => ( # to peek the next token
     is  => 'rw',
     isa => 'Maybe[ArrayRef]',
 
@@ -522,8 +522,8 @@ sub init_iterator_elements {
         body      => \&iterator_body,
         size      => \&iterator_size,
         max       => \&iterator_max,
-        peep_next => \&iterator_peep_next,
-        peep_prev => \&iterator_peep_prev,
+        peek_next => \&iterator_peek_next,
+        peek_prev => \&iterator_peek_prev,
     });
 
     return;
@@ -1511,7 +1511,7 @@ sub iterator_max {
     );
 }
 
-sub _iterator_peep {
+sub _iterator_peek {
     my($parser, $iterator, $pos) = @_;
 
     my $body  = $parser->iterator_body($iterator);
@@ -1534,14 +1534,14 @@ sub _iterator_peep {
     );
 }
 
-sub iterator_peep_next {
+sub iterator_peek_next {
     my($parser, $iterator) = @_;
-    return $parser->_iterator_peep($iterator, +1);
+    return $parser->_iterator_peek($iterator, +1);
 }
 
-sub iterator_peep_prev {
+sub iterator_peek_prev {
     my($parser, $iterator) = @_;
-    my $prev =  $parser->_iterator_peep($iterator, -1);
+    my $prev =  $parser->_iterator_peek($iterator, -1);
 
     my $is_first = $parser->iterator_is_first($iterator);
     my $nil      = $parser->symbol('nil')->clone(

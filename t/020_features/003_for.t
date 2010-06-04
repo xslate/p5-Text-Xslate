@@ -200,9 +200,9 @@ T
     Object
 X
 
-    [<<'T', <<'X', 'peep_next'],
+    [<<'T', <<'X', 'peek_next'],
 : for $types -> ($item) {
-    <: $~item.peep_next // "(none)" :>
+    <: $~item.peek_next // "(none)" :>
 : }
 T
     Int
@@ -210,9 +210,9 @@ T
     (none)
 X
 
-    [<<'T', <<'X', 'peep_prev'],
+    [<<'T', <<'X', 'peek_prev'],
 : for $types -> ($item) {
-    <: $~item.peep_prev // "(none)" :>
+    <: $~item.peek_prev // "(none)" :>
 : }
 T
     (none)
