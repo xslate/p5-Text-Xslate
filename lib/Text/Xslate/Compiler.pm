@@ -480,7 +480,7 @@ sub _generate_for {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
-    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id+0, undef, $lvar_name ];
+    local $self->lvar->{$lvar_name} = $lvar_id;
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
@@ -518,7 +518,7 @@ sub _generate_while {
         $lvar_name = $iter_var->id;
     }
 
-    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ]
+    local $self->lvar->{$lvar_name} = $lvar_id
         if @{$vars};
 
     # a for statement uses three local variables (container, iterator, and item)
@@ -549,7 +549,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
     foreach my $arg(@args) {
         # to fetch ST(ix)
         # Note that arg_ix must be start from 1
-        $self->lvar->{$arg} = [ fetch_lvar => $arg_ix++, $node->line, $arg ];
+        $self->lvar->{$arg} = $arg_ix++;
     }
 
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
@@ -614,7 +614,7 @@ sub _generate_given {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $lvar->id;
 
-    local $self->lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
+    local $self->lvar->{$lvar_name} = $lvar_id;
 
     # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(1);
@@ -627,15 +627,16 @@ sub _generate_given {
 sub _generate_variable {
     my($self, $node) = @_;
 
-    my @fetch;
-    if(defined(my $lvar_code = $self->lvar->{$node->id})) {
-        @fetch = @{$lvar_code};
+    my @op;
+    if(defined(my $lvar_id = $self->lvar->{$node->id})) {
+        @op = ( fetch_lvar => $lvar_id );
     }
     else {
-        @fetch = ( fetch_s => $self->_variable_to_value($node) );
+        @op = ( fetch_s => $self->_variable_to_value($node) );
     }
-    $fetch[2] = $node->line;
-    return \@fetch;
+    $op[2] = $node->line;
+    $op[3] = $node->id;
+    return \@op;
 }
 
 sub _generate_marker {
@@ -795,27 +796,27 @@ sub _generate_macro {
 sub _generate_iterator {
     my($self, $node) = @_;
 
-    my $item_var  = $node->first;
-    my $lvar_code = $self->lvar->{$item_var};
-    if(!defined($lvar_code)) {
+    my $item_var = $node->first;
+    my $lvar_id  = $self->lvar->{$item_var};
+    if(!defined($lvar_id)) {
         $self->_error("Refer to iterator $node, but $item_var is not defined",
             $node);
     }
 
-    return [ fetch_lvar => $lvar_code->[1]+1, $node->line, $node->id ];
+    return [ fetch_lvar => $lvar_id+1, $node->line, $node->id ];
 }
 
 sub _generate_iterator_body {
     my($self, $node) = @_;
 
-    my $item_var  = $node->first;
-    my $lvar_code = $self->lvar->{$item_var};
-    if(!defined($lvar_code)) {
+    my $item_var = $node->first;
+    my $lvar_id  = $self->lvar->{$item_var};
+    if(!defined($lvar_id)) {
         $self->_error("Refer to iterator $node.body, but $item_var is not defined",
             $node);
     }
 
-    return [ fetch_lvar => $lvar_code->[1]+2, $node->line, $node->id ];
+    return [ fetch_lvar => $lvar_id+2, $node->line, $node->id ];
 }
 
 sub _generate_assign {
@@ -825,25 +826,24 @@ sub _generate_assign {
 
     my $lvar_name = $name->id;
     my $lvar      = $self->lvar;
-    my $lvar_id;
 
     my $decl_lvar = ($node->id eq 'my');
 
     if($decl_lvar) {
-        $lvar_id            = $self->lvar_id;
+        $lvar->{$lvar_name} = $self->lvar_id;
         $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
-        $lvar->{$lvar_name} = [ fetch_lvar => $lvar_id, undef, $lvar_name ];
     }
     else {
         if(!exists $lvar->{$lvar_name}) {
             $self->_error("Cannot modify global template variables $name");
         }
-        $lvar_id = $lvar->{$lvar_name}[1];
     }
+
+    my $lvar_id = $lvar->{$lvar_name};
 
     return
         $self->_expr($expr),
-        [ save_to_lvar => $lvar_id, undef, $lvar_name ];
+        [ save_to_lvar => $lvar_id, $node->line, $lvar_name ];
 }
 
 sub _localize_vars {

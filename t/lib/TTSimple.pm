@@ -29,6 +29,7 @@ else {
             cache_dir =>  path,
             cache     =>  0,
             syntax    => 'TTerse',
+            warn_handler => \&Carp::confess,
     );
 }
 
