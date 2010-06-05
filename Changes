@@ -1,5 +1,20 @@
 Revision history for Perl extension Text::Xslate
 
+0.1028
+    [CHANGES]
+    - Make Kolon's while statement the same as Perl's
+
+    [BUG FIXES]
+    - Resolve various issues
+
+    [NEW FEATURES]
+    - Improve App::Xslate
+    - For TTerse
+        + CALL statement not to print expressions
+        + WHILE statement
+        + SET statement to define lexical variables
+          and the "=" operator to assign values
+
 0.1027 Fri Jun  4 15:09:47 2010
     [CHANGES]
     - s/peep/peek/, which is really what I want
