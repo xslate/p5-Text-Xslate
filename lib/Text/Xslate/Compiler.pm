@@ -66,9 +66,9 @@ my %unary = (
 
 has optimize => (
     is  => 'rw',
-    isa => 'Int',
+    isa => 'Bool',
 
-    default => defined(_OPTIMIZE) ? _OPTIMIZE : 3,
+    default => _OPTIMIZE,
 );
 
 has lvar_id => ( # local varialbe id
@@ -183,7 +183,9 @@ sub compile {
 
     push @code, $self->_flush_macro_table() if %mtable;
 
-    $self->_optimize_vmcode(\@code) for 1 .. $self->optimize;
+    if($self->optimize) {
+        $self->_optimize_vmcode(\@code) for 1 .. 3;
+    }
 
     print STDERR "// ", $self->file, "\n",
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
@@ -413,7 +415,7 @@ sub _generate_command {
         $proc = 'print_raw';
     }
 
-    my $do_optimize = ($self->optimize > 0);
+    my $do_optimize = $self->optimize;
 
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
