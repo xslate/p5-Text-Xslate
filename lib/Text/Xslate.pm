@@ -652,6 +652,18 @@ templates as the C<html> filter:
 
     <: $var | html :>
 
+=head2 Application
+
+C<xslate(1)> is provided as an interface to the Text::Xslate module, which
+is used to process directry trees or evaluate one liners. For example:
+
+    $ xslate -D name=value -o dest_path src_path
+
+    $ xslate -e 'Hello, <: $ARGV[0] :> wolrd!' Xslate
+    $ xslate -s TTerse -e 'Hello, [% ARGV.0 %] world!' TTerse
+
+See L<xslate> for details.
+
 =head1 TEMPLATE SYNTAX
 
 There are several syntaxes you can use:

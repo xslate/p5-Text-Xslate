@@ -9,7 +9,7 @@ use File::Path ();
 with any_moose 'X::Getopt';
 
 has cache_dir => (
-    documentation => 'Directry cache files will be saved in (core)',
+    documentation => 'Directry cache files will be saved in',
     cmd_aliases   => [qw(c)],
     is            => 'ro',
     isa           => 'Str',
@@ -18,7 +18,7 @@ has cache_dir => (
 );
 
 has cache => (
-    documentation => 'Cache level (core)',
+    documentation => 'Cache level',
     cmd_aliases   => [qw(a)],
     is            => 'ro',
     isa           => 'Int',
@@ -64,7 +64,7 @@ has syntax => (
 
 has escape => (
     documentation => 'Escaping mode ("html" or "none")',
-    cmd_aliases   => [qw(x)],
+    cmd_aliases   => [qw(p)],
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_escape',
@@ -98,7 +98,7 @@ has ignore => (
 # --suffix old=new
 has suffix => (
     documentation => 'Output suffix mapping (e.g. tx=html)',
-    cmd_aliases   => [qw(o)],
+    cmd_aliases   => [qw(x)],
     is            => 'ro',
     isa           => 'HashRef',
     traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
@@ -106,10 +106,19 @@ has suffix => (
 
 has dest => (
     documentation => 'Destination directry',
-    cmd_aliases   => [qw(d)],
+    cmd_aliases   => [qw(o)],
     is            => 'ro',
     isa           => 'Str',
     default       => Cwd::cwd(),
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+);
+
+has define => (
+    documentation => 'Define template variables (e.g. foo=bar)',
+    cmd_aliases   => [qw(D)],
+    is            => 'ro',
+    isa           => 'HashRef',
+    predicate     => 'has_define',
     traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
@@ -123,8 +132,8 @@ has eval => (
 );
 
 has debug => (
-    documentation => 'Debugging commands',
-    cmd_aliases   => 'D',
+    documentation => 'Debugging flags',
+    cmd_aliases   => 'd',
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_debug',
@@ -152,7 +161,12 @@ sub run {
     my $xslate = Text::Xslate->new(%args);
 
     if($self->has_eval) {
-        print $xslate->render_string($self->eval, { ARGV => $targets }), "\n";
+        my %vars;
+        if($self->has_define){
+            %vars = %{$self->define};
+        }
+        $vars{ARGV} = $targets;
+        print $xslate->render_string($self->eval, \%vars), "\n";
         return;
     }
 
@@ -226,7 +240,7 @@ sub process_file {
     }
 
     eval {
-        my $rendered = $xslate->render( $filearg );
+        my $rendered = $xslate->render( $filearg, $self->define );
         print $fh $rendered;
     };
     if ($@) {
@@ -268,12 +282,13 @@ xslate - Process Xslate Templates
         [ --dest=/path/to/destination ]
         [ --ignore=pattern ... ]
         [ --suffix old=new ... ]
+        [ --define name=value ... ]
 
         # Target to process
         target
 
     # testing mode
-    xslate --eval 'Hello, <: $ARGV[0] :> world!' Xslate
+    xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
 
 =head1 DESCRIPTION
 

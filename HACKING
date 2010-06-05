@@ -3,7 +3,7 @@ NOTES FOR HACKERS
 Easy evaluation:
     $ xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
 
-Debugging options ($ENV{XSLATE}; or -D for xslate(1)):
+Debugging options ($ENV{XSLATE}; or --debug for xslate(1)):
     dump=proto  Output preprocessed proto templates
     dump=token  Output token sequence
     dump=ast    Output abstract syntax tree
