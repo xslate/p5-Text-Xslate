@@ -54,8 +54,6 @@ my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
-our $in_given;
-
 has symbol_table => ( # the global symbol table
     is  => 'ro',
     isa => 'HashRef',
@@ -136,6 +134,12 @@ has shortcut_table => (
 );
 sub _build_shortcut_table { \%shortcut_table }
 
+has in_given => (
+    is       => 'rw',
+    isa      => 'Bool',
+    init_arg => undef,
+);
+
 # attributes for error messages
 
 has near_token => (
@@ -145,23 +149,21 @@ has near_token => (
 );
 
 has file => (
-    is  => 'rw',
-    isa => 'Str',
-
+    is       => 'rw',
+    isa      => 'Str',
     required => 0,
 );
 
 has line => (
-    is  => 'rw',
-    isa => 'Int',
-
-    traits  => [qw(Counter)],
-    handles => {
-        line_inc => 'inc',
-    },
-
+    is       => 'rw',
+    isa      => 'Int',
     required => 0,
 );
+
+sub line_inc {
+    my($parser) = @_;
+    return $parser->line( $parser->line + 1);
+}
 
 sub symbol_class() { 'Text::Xslate::Symbol' }
 
@@ -176,14 +178,14 @@ sub _trim {
 
 # split templates by tags before tokanizing
 sub split :method {
-    my $self  = shift;
+    my $parser  = shift;
     local($_) = @_;
 
     my @tokens;
 
-    my $line_start    = $self->line_start;
-    my $tag_start     = $self->tag_start;
-    my $tag_end       = $self->tag_end;
+    my $line_start    = $parser->line_start;
+    my $tag_start     = $parser->tag_start;
+    my $tag_end       = $parser->tag_end;
 
     my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
     my $lex_tag_start = qr/\A $tag_start ($CHOMP_FLAGS?)/xms;
@@ -206,8 +208,8 @@ sub split :method {
                 }
             }
             else {
-                $self->near_token((split /\n/, $_)[0]);
-                $self->_error("Malformed templates");
+                $parser->near_token((split /\n/, $_)[0]);
+                $parser->_error("Malformed templates");
             }
         }
         # not $in_tag
@@ -235,12 +237,12 @@ sub split :method {
 }
 
 sub preprocess {
-    my $self = shift;
+    my $parser = shift;
 
-    my $tokens_ref = $self->split(@_);
+    my $tokens_ref = $parser->split(@_);
     my $code = '';
 
-    my $shortcut_table = $self->shortcut_table;
+    my $shortcut_table = $parser->shortcut_table;
     my $shortcut       = join('|', map{ quotemeta } keys %shortcut_table);
     my $shortcut_rx    = qr/\A ($shortcut)/xms;
 
@@ -300,7 +302,7 @@ sub preprocess {
             # noop, just a marker
         }
         else {
-            $self->_error("Oops: Unknown token: $s ($type)");
+            $parser->_error("Oops: Unknown token: $s ($type)");
         }
     }
     print STDOUT $code, "\n" if _DUMP_PROTO;
@@ -308,11 +310,11 @@ sub preprocess {
 }
 
 sub lex {
-    my($self) = @_;
+    my($parser) = @_;
 
-    local *_ = \$self->{input};
+    local *_ = \$parser->{input};
 
-    s{\G (\s) }{ $1 eq "\n" and $self->line_inc(); ""}xmsge;
+    s{\G (\s) }{ $1 eq "\n" and $parser->line_inc(); ""}xmsge;
 
     if(s/\A ($ID)//xmso){
         return [ name => $1 ];
@@ -330,7 +332,7 @@ sub lex {
         return [ string => $1 ];
     }
     elsif(s/\A (\S+)//xms) {
-        $self->_error("Oops: Unexpected lex symbol '$1'");
+        $parser->_error("Oops: Unexpected lex symbol '$1'");
     }
     else { # empty
         return undef;
@@ -342,13 +344,13 @@ sub parse {
 
     $parser->file( $args{file} || '<input>' );
     $parser->line( $args{line} || 0 );
-    $parser->near_token('(start)');
-    $parser->token(undef);
     $parser->init_scope();
-
-    local $in_given = 0;
+    $parser->in_given(0);
 
     local $parser->{symbol_table} = { %{ $parser->symbol_table } };
+    local $parser->{near_token};
+    local $parser->{next_token};
+    local $parser->{token};
 
     $parser->input( $parser->preprocess($input) );
 
@@ -359,8 +361,6 @@ sub parse {
     if($parser->input ne '') {
         $parser->_error("Syntax error", $parser->token);
     }
-    $parser->near_token(undef);
-    $parser->next_token(undef);
 
     return $ast;
 }
@@ -1227,7 +1227,7 @@ sub std_given {
     my $proc = $symbol->clone(arity => 'given');
     $proc->first( $parser->expression(0) );
 
-    local $in_given = 1;
+    local $parser->{in_given} = 1;
     $parser->pointy($proc);
 
     if(!(defined $proc->second && @{$proc->second})) { # if no vars given
@@ -1293,7 +1293,7 @@ sub std_given {
 sub std_when {
     my($parser, $symbol) = @_;
 
-    if(!$in_given) {
+    if(!$parser->in_given) {
         $parser->_error("You cannot use $symbol blocks outside given blocks");
     }
     my $proc = $symbol->clone(arity => 'when');
@@ -1570,9 +1570,9 @@ sub _unexpected {
 }
 
 sub _error {
-    my($self, $message, $near) = @_;
+    my($parser, $message, $near) = @_;
 
-    $near ||= $self->near_token;
+    $near ||= $parser->near_token || ";";
     if($near ne ";") {
         $near = sprintf ' near %s (%s)', $near->id, $near->arity
             if ref($near);
@@ -1581,7 +1581,7 @@ sub _error {
         $near = '';
     }
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
-        $self->file, $self->line+1, $message, $near);
+        $parser->file, $parser->line+1, $message, $near);
 }
 
 no Any::Moose;
