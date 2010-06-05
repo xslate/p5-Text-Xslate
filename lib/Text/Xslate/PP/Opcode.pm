@@ -158,8 +158,13 @@ sub op_fetch_field_s {
 sub op_print {
     my $sv = $_[0]->{sa};
 
-    if ( Scalar::Util::blessed( $sv ) and $sv->isa('Text::Xslate::EscapedString') ) {
-        $_[0]->{ output } .= $sv;
+    if ( ref( $sv ) eq 'Text::Xslate::EscapedString' ) {
+        if(defined ${$sv}) {
+            $_[0]->{ output } .= ${$sv};
+        }
+        else {
+            tx_warn( $_[0], "Use of nil to print" );
+        }
     }
     elsif ( defined $sv ) {
         if ( $sv =~ /[&<>"']/ ) {

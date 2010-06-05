@@ -290,16 +290,15 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
 static SV*
 tx_escaped_string(pTHX_ SV* const str) {
     dMY_CXT;
-    SV* const sv = sv_newmortal();
-    sv_copypv(sv, str);
-    return sv_2mortal(sv_bless(newRV_inc(sv), MY_CXT.escaped_string_stash));
+    SV* const sv = newSVsv(str);
+    return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.escaped_string_stash));
 }
 
 static bool
 tx_str_is_escaped(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         dMY_CXT;
-        return SvOK(SvRV(sv))
+        return SvTYPE(SvRV(sv)) <= SVt_PVMG
             && SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
     }
     return FALSE;
@@ -438,7 +437,12 @@ TXC(print) {
     SV* const output      = TX_st->output;
 
     if(tx_str_is_escaped(aTHX_ sv)) {
-        sv_catsv_nomg(output, SvRV(sv));
+        if(SvOK(SvRV(sv))) {
+            sv_catsv_nomg(output, SvRV(sv));
+        }
+        else {
+            tx_warn(aTHX_ TX_st, "Use of nil to print");
+        }
     }
     else if(SvOK(sv)) {
         STRLEN len;
