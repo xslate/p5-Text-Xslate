@@ -698,8 +698,8 @@ sub _generate_binary {
     elsif(exists $binary{$id}) {
         my @lhs = $self->_expr($node->first);
 
-       local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
+        local $self->{lvar_id} = $self->lvar_use(1);
         my @code = (
             @lhs,
             [ save_to_lvar => $self->lvar_id ],
@@ -709,6 +709,7 @@ sub _generate_binary {
         );
 
         if(any_in($id, qw(min max))) {
+            local $self->{lvar_id} = $self->lvar_use(1);
             splice @code, -1, 0,
                 [save_to_lvar => $self->lvar_id ]; # save lhs
             push @code,
