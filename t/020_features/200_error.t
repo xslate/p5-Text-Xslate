@@ -27,6 +27,8 @@ foreach my $code(
     q{ $a[nil] },
     q{ nil | raw },
     q{ nil | html },
+    q{ 1 ? raw(nil)  : "UNLIKELY" },
+    q{ 1 ? html(nil) : "UNLIKELY" },
 ) {
     $warn = '';
 
@@ -67,6 +69,8 @@ foreach my $code(
     q{ $a[nil] },
     q{ nil | raw },
     q{ nil | html },
+    q{ 1 ? raw(nil)  : "UNLIKELY" },
+    q{ 1 ? html(nil) : "UNLIKELY" },
 ) {
     $warn = '';
     my $out = eval {
