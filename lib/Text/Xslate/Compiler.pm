@@ -698,8 +698,8 @@ sub _generate_binary {
     elsif(exists $binary{$id}) {
         my @lhs = $self->_expr($node->first);
 
-        my @rhs = $self->_expr($node->second);
         local $self->{lvar_id} = $self->lvar_use(1);
+        my @rhs = $self->_expr($node->second);
         my @code = (
             @lhs,
             [ save_to_lvar => $self->lvar_id ],
