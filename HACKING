@@ -1,0 +1,18 @@
+NOTES FOR HACKERS
+
+Easy evaluation:
+    $ xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
+
+Debugging options ($ENV{XSLATE}; or -D for xslate(1)):
+    dump=proto  Output preprocessed proto templates
+    dump=token  Output raw tokens
+    dump=ast    Output abstract syntax tree
+    dump=asm    Output xslate assembly
+    dump=pp     Output Perl code PP::Booster generates
+    optimize=0  Suppress optimization
+
+Parser's terminology:
+    nud    Null Denotation, processing values and prefix operators
+    led    Left Denotation, processing infix and postfix operators
+    std    Statement Denotation, processing statements
+
