@@ -422,6 +422,11 @@ Note that you cannot call macros before their definitions.
 
     <: $foo # this is ok :>
 
+Comments are closed by a new line or semicolon, so the following template
+outputs "Hello".
+
+    <: # this is a comment; "Hello" :>
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
