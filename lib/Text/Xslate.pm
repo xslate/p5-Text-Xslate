@@ -655,7 +655,7 @@ templates as the C<html> filter:
 =head2 Application
 
 C<xslate(1)> is provided as an interface to the Text::Xslate module, which
-is used to process directry trees or evaluate one liners. For example:
+is used to process directory trees or evaluate one liners. For example:
 
     $ xslate -D name=value -o dest_path src_path
 

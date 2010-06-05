@@ -9,7 +9,7 @@ use File::Path ();
 with any_moose 'X::Getopt';
 
 has cache_dir => (
-    documentation => 'Directry cache files will be saved in',
+    documentation => 'Directory the cache files will be saved in',
     cmd_aliases   => [qw(c)],
     is            => 'ro',
     isa           => 'Str',
