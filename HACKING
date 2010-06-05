@@ -5,14 +5,15 @@ Easy evaluation:
 
 Debugging options ($ENV{XSLATE}; or -D for xslate(1)):
     dump=proto  Output preprocessed proto templates
-    dump=token  Output raw tokens
+    dump=token  Output token sequence
     dump=ast    Output abstract syntax tree
     dump=asm    Output xslate assembly
     dump=pp     Output Perl code PP::Booster generates
     optimize=0  Suppress optimization
 
 Parser's terminology:
-    nud    Null Denotation, processing values and prefix operators
-    led    Left Denotation, processing infix and postfix operators
-    std    Statement Denotation, processing statements
-
+    arity  Symbol class; used while compiling
+    bp     Bond power; or operator precedence
+    nud    Null denotation; processing values and prefix operators
+    led    Left denotation; processing infix and postfix operators
+    std    Statement denotation; processing statements
