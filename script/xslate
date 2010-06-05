@@ -5,58 +5,81 @@ use Any::Moose '::Util::TypeConstraints';
 use Cwd ();
 use File::Basename ();
 use File::Path ();
-use Text::Xslate;
 
 with any_moose 'X::Getopt';
 
 has cache_dir => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_cache_dir',
+    documentation => 'Directry cache files will be saved in (core)',
+    cmd_aliases   => [qw(c)],
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_cache_dir',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has cache => (
-    is => 'ro',
-    isa => 'Int',
-    predicate => 'has_cache',
+    documentation => 'Cache level (core)',
+    cmd_aliases   => [qw(a)],
+    is            => 'ro',
+    isa           => 'Int',
+    predicate     => 'has_cache',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has module => (
-    is => 'ro',
-    isa => 'ArrayRef[Str]',
-    predicate => 'has_module',
+    documentation => 'Modules templates will use',
+    cmd_aliases   => [qw(M)],
+    is            => 'ro',
+    isa           => 'ArrayRef[Str]',
+    predicate     => 'has_module',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has input_layer => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_input_layer',
+    documentation => 'Input layer for reading',
+    cmd_aliases   => [qw(l)],
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_input_layer',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has path => (
-    is => 'ro',
-    isa => 'ArrayRef[Str]',
-    predicate => 'has_path',
+    documentation => 'Include paths',
+    cmd_aliases   => [qw(I)],
+    is            => 'ro',
+    isa           => 'ArrayRef[Str]',
+    predicate     => 'has_path',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has syntax => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_syntax',
+    documentation => 'Template syntax (e.g. "TTerse")',
+    cmd_aliases   => [qw(s)],
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_syntax',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has escape => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_escape',
+    documentation => 'Escaping mode ("html" or "none")',
+    cmd_aliases   => [qw(x)],
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_escape',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has verbose => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_verbose',
+    documentation => 'Warning level (default to 2)',
+    cmd_aliases   => [qw(w)],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 2,
+    predicate     => 'has_verbose',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
-
 
 # --ignore=pattern
 any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
@@ -64,27 +87,48 @@ any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
 );
 coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
 has ignore => (
-    is => 'ro',
-    isa => 'RegexpRef',
-    coerce => 1,
+    documentation => 'Regular expression the process will ignore',
+    cmd_aliases   => [qw(i)],
+    is            => 'ro',
+    isa           => 'RegexpRef',
+    coerce        => 1,
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 # --suffix old=new
 has suffix => (
-    is => 'ro',
-    isa => 'HashRef',
+    documentation => 'Output suffix mapping (e.g. tx=html)',
+    cmd_aliases   => [qw(o)],
+    is            => 'ro',
+    isa           => 'HashRef',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has dest => (
-    is => 'ro',
-    isa => 'Str',
-    default => Cwd::cwd()
+    documentation => 'Destination directry',
+    cmd_aliases   => [qw(d)],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => Cwd::cwd(),
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 has eval => (
-    is => 'ro',
-    isa => 'Str',
-    predicate => 'has_eval',
+    documentation => 'One line of templates',
+    cmd_aliases   => [qw(e)],
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_eval',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+);
+
+has debug => (
+    documentation => 'Debugging commands',
+    cmd_aliases   => 'D',
+    is            => 'ro',
+    isa           => 'Str',
+    predicate     => 'has_debug',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
 sub run {
@@ -101,6 +145,10 @@ sub run {
         $args{ $field } = $self->$field if $self->$method;
     }
 
+    local $ENV{XSLATE} = $self->debug
+        if $self->has_debug;
+
+    require Text::Xslate;
     my $xslate = Text::Xslate->new(%args);
 
     if($self->has_eval) {
