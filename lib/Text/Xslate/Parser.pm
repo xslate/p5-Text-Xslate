@@ -343,7 +343,7 @@ sub parse {
     my($parser, $input, %args) = @_;
 
     $parser->file( $args{file} || '<input>' );
-    $parser->line( $args{line} || 0 );
+    $parser->line( $args{line} || 1 );
     $parser->init_scope();
     $parser->in_given(0);
 
@@ -602,7 +602,11 @@ sub advance {
         Carp::confess("Panic: Unexpected token: $value ($arity)");
     }
 
-    return $parser->token( $proto->clone( id => $value, arity => $arity, line => $parser->line + 1 ) );
+    return $parser->token( $proto->clone(
+        id    => $value,
+        arity => $arity,
+        line  => $parser->line,
+     ) );
 }
 
 sub expression {
@@ -1581,7 +1585,7 @@ sub _error {
         $near = '';
     }
     Carp::croak(sprintf 'Xslate::Parser(%s:%d): %s%s while parsing templates',
-        $parser->file, $parser->line+1, $message, $near);
+        $parser->file, $parser->line, $message, $near);
 }
 
 no Any::Moose;
