@@ -270,11 +270,16 @@ $CODE_MANIP{ 'print' } = sub {
 
     $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
 
-    $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+    $self->write_lines( sprintf( <<'CODE', $sv, $err, $err ) );
 # print
 $sv = %s;
 if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
-    $output .= $sv;
+    if(defined ${$sv}) {
+        $output .= $sv;
+    }
+    else {
+        %s
+    }
 }
 elsif ( defined $sv ) {
     $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
