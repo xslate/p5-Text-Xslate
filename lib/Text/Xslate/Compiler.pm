@@ -404,7 +404,7 @@ sub _generate_name {
             return @{$code};
         }
         else {
-            return [ fetch_lvar => $lvar_id, $node->line, "constant $node->id" ];
+            return [ fetch_lvar => $lvar_id, $node->line, "constant $node" ];
         }
     }
 
