@@ -419,6 +419,7 @@ sub op_ge {
 
 
 sub op_macrocall {
+    my $lvars  = $_[0]->pc_arg;
     my $addr   = $_[0]->{sa}; # macro entry point
     my $cframe = tx_push_frame( $_[0] );
 
@@ -427,6 +428,15 @@ sub op_macrocall {
     $cframe->[ TXframe_OUTPUT ] = $_[0]->{ output };
 
     $_[0]->{ output } = '';
+
+    if($lvars > 0) {
+        # copies lexical variables from the old frame to the new one
+        my $oframe = $_[0]->frame->[ $_[0]->current_frame - 1 ];
+        for(my $i = 0; $i < $lvars; $i++) {
+            my $real_ix = $i + TXframe_START_LVAR;
+            $cframe->[$real_ix] = $oframe->[$real_ix];
+        }
+    }
 
     my $i   = 0;
 

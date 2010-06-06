@@ -570,6 +570,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
         $self->lvar->{$arg} = $arg_ix++;
     }
 
+    my $lvar_used = $self->lvar_id;
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
     my %macro = (
@@ -578,6 +579,8 @@ sub _generate_proc { # definition of macro, block, before, around, after
         body   => [ $self->_compile_ast($block) ],
         line   => $node->line,
         file   => $self->file,
+
+        lvar_used => $lvar_used,
     );
 
     my @code;
@@ -593,6 +596,8 @@ sub _generate_proc { # definition of macro, block, before, around, after
         $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } ||= [] }, \%macro;
     }
+
+    $macro{body} = [ $self->_compile_ast($block) ];
 
     return @code;
 }
@@ -822,11 +827,14 @@ sub _generate_call {
         $self->_expr($callable),
     );
 
-    my $op = $code[-1][0] eq 'macro'
-        ? 'macrocall'
-        : 'funcall';
-
-    push @code, [ $op => undef, $node->line ];
+    if($code[-1][0] eq 'macro') {
+        # lvar_used inidicates how many number of lvars copies
+        my $m = $self->macro_table->{$callable->id};
+        push @code, [ macrocall => $m->{lvar_used} || 0, $node->line ];
+    }
+    else {
+        push @code, [ funcall => undef, $node->line ];
+    }
     return @code;
 }
 

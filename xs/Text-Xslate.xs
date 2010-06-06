@@ -564,6 +564,7 @@ TXC_goto(for_iter) {
     SV* const avref = TX_lvar_get(id+2);
     AV* const av    = (AV*)SvRV(avref);
 
+    assert(SvROK(avref));
     assert(SvTYPE(av) == SVt_PVAV);
     assert(SvIOK(i));
 
@@ -761,12 +762,13 @@ TXC(ge) {
     TX_st->pc++;
 }
 
-TXC(macrocall) {
-    U32 const addr = (U32)SvUVX(TX_st_sa);
-    AV* cframe;
+TXC_w_int(macrocall) {
+    UV  const lvars = SvUVX(TX_op_arg); /* how many number of lvars copies */
+    U32 const addr  = (U32)SvUVX(TX_st_sa);
+    AV* cframe; /* new frame */
     dSP;
     dMARK;
-    I32 i;
+    UV i;
     SV* tmp;
 
     /* push a new frame */
@@ -779,6 +781,15 @@ TXC(macrocall) {
 
     /* macroname will be set by macro_begin */
     sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), TX_st->pc + 1);
+
+    if(lvars > 0) {
+        /* copies lexical variables from the old frame to the new one */
+        AV* const oframe = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1];
+        for(i = 0; i < lvars; i++) {
+            UV const real_ix = i + TXframe_START_LVAR;
+            av_store(cframe, real_ix , SvREFCNT_inc_NN(AvARRAY(oframe)[real_ix]));
+        }
+    }
 
     if(SP != MARK) { /* has arguments */
         dORIGMARK;

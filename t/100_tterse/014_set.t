@@ -63,8 +63,8 @@ X
     [<<'T', <<'X', 'issue #9'],
 [%- SET lang = "TTerse" -%]
 [%- MACRO foo BLOCK -%]
-[% lang %]
-[% END %]
+[%- lang -%]
+[%- END -%]
     Hello, [%- foo() -%] world!
 T
     Hello, TTerse world!
