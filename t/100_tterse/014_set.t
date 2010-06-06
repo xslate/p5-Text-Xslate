@@ -59,6 +59,17 @@ T
     Hello, Xslate world!
 X
 
+    # http://github.com/gfx/p5-Text-Xslate/issues#issue/9
+    [<<'T', <<'X', 'issue #9'],
+[%- SET lang = "TTerse" -%]
+[%- MACRO foo BLOCK -%]
+[% lang %]
+[% END %]
+    Hello, [%- foo() -%] world!
+T
+    Hello, TTerse world!
+X
+
 #    [<<'T', <<'X', 'lexical scoped (for)'],
 #[% FOR item IN [1] %]
 #[%- SET lang = "TTerse" -%]
