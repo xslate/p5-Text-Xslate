@@ -123,6 +123,19 @@ Operator precedence is the same as Perl's:
     and
     or
 
+=head2 Constants
+
+You can define lexical constants with C<constant>, which requires a bare name,
+and C<my>, which requires a variable name.
+
+    : constant FOO = 42;
+    : my      $foo = 42;
+
+These two statements are exactly the same semantics, so you cannot modify
+them.
+
+    : my $foo = 42; $foo = 3.14; # compile error!
+
 =head2 Loops
 
 There is C<for> loops that are like Perl's C<foreach>.

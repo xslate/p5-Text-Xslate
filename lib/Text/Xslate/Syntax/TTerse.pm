@@ -651,6 +651,18 @@ Unlike Template-Toolkit, calling macros requires parens (C<()>).
 
 Not supported.
 
+=head2 Misc.
+
+CALL evaluates expressions, but does not print it.
+
+    [% CALL expr %]
+
+SET and assignments are supported, although the use of them are strongly
+discouraged.
+
+    [% SET var1 = expr1, var2 = expr2 %]
+    [% var = expr %]
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
