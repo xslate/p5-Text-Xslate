@@ -15,6 +15,7 @@ use Text::Xslate::Util qw(
 use File::Spec   ();
 use Scalar::Util ();
 
+#use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
 use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
 use constant _OPTIMIZE => defined(scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]))
@@ -590,6 +591,17 @@ sub _generate_if {
     my @then  = $self->_compile_ast($second);
     my @else  = $self->_compile_ast($third);
 
+    if(_OPTIMIZE) {
+        if(@cond == 1 && $cond[0][0] eq 'literal') {
+            if($cond[0][1]) {
+                return @then;
+            }
+            else {
+                return @else;
+            }
+        }
+    }
+
     if(@then and @else) {
         return(
             @cond,
@@ -734,7 +746,14 @@ sub _generate_binary {
         }
 
         if(_OPTIMIZE) {
-            $self->_fold_constants(\@code);
+            my $code_size = scalar(@code);
+            if(scalar(@code) == 5
+                    and join(' ', map { $_->[0] } @code[0 .. scalar(@code) - 2])
+                        eq 'literal save_to_lvar literal load_lvar_to_sb'
+                    and defined($code[0][1])
+                    and defined($code[2][1]) ) {
+                $self->_fold_constants(\@code);
+            }
         }
         return @code;
     }
@@ -874,25 +893,23 @@ sub _variable_to_value {
 
 sub _fold_constants {
     my($self, $code) = @_;
-    # currently it will be called only by _generate_binary()
+    my $engine = $self->engine or return 0;
 
-    # constant <binop> constant
-    # but constants must not be undef(nil)
-    my $code_size = scalar(@{$code});
-    if($code_size == 5
-        and join(' ', map { $_->[0] } @{$code}[0 .. $code_size - 2])
-            eq 'literal save_to_lvar literal load_lvar_to_sb'
-        and defined($code->[0][1])
-        and defined($code->[2][1]) ) {
+    local $engine->{warn_handler} = \&Carp::croak;
+    local $engine->{die_handler}  = \&Carp::croak;
+    local $engine->{verbose}      = 1;
 
-        my $engine = $self->engine or return;
-
-        push @{$code}, ['print_raw'], ['end'];
-        # evaluate the code in the engine
-        $engine->_assemble($code, undef, undef, undef, undef);
-        @{$code} = [ literal => $engine->render(undef), undef, "optimized by constant folding"];
+    my $result = eval {
+        $engine->_assemble([@{$code}, ['print_raw'], ['end']], undef, undef, undef, undef);
+        $engine->render(undef);
+    };
+    if($@) {
+        Carp::carp("Oops: constant folding failed (ignored): $@");
+        return 0;
     }
-    return;
+
+    @{$code} = ([ literal => $result, undef, "optimized by constant folding"]);
+    return 1;
 }
 
 my %goto_family;
