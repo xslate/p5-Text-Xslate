@@ -127,8 +127,10 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
 
     my $op = $self->ops->[ $self->current_line + 1 ];
 
-    unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)/ ) { # ...
+    unless ( $op and $op->[0] =~ /^(?:print|and|or|dand|dor|push)$/ ) { # ...
         $self->write_lines( sprintf( '%s;', $v )  );
+        # this save_to_lvar has nothing to do with macro args.
+        $self->stash->{ exception_macro_args_num }->{ $self->framename }->{ $arg } = 1;
     }
 
 };
@@ -195,6 +197,9 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
     if ( $self->stash->{ in_macro } ) {
         my $macro = $self->stash->{ in_macro };
         unless ( exists $self->stash->{ macro_args_num }->{ $macro }->{ $arg } ) {
+
+            return if exists $self->stash->{ exception_macro_args_num }->{ $macro }->{ $arg };
+
             $self->write_lines(
                 sprintf(
                     '_error( $st, %s, %s, "Too few arguments for %s" );',
