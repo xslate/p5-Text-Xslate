@@ -736,14 +736,23 @@ sub _generate_unary {
 sub _generate_binary {
     my($self, $node) = @_;
 
+    my @lhs = $self->_expr($node->first);
+
     my $id = $node->id;
     if($id eq '.') {
         return
-            $self->_expr($node->first),
+            @lhs,
             [ fetch_field_s => $node->second->id ];
     }
     elsif(exists $binary{$id}) {
-        my @lhs = $self->_expr($node->first);
+        if($id eq "["
+                and $node->second->arity eq "literal"
+                and $node->second->id    ne "nil") {
+            # $foo[literal]
+            return
+                @lhs,
+                [ fetch_field_s => literal_to_value($node->second->value) ];
+        }
 
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
@@ -778,12 +787,11 @@ sub _generate_binary {
         return @code;
     }
     elsif(exists $logical_binary{$id}) {
-        my @left  = $self->_expr($node->first);
-        my @right = $self->_expr($node->second);
+        my @rhs = $self->_expr($node->second);
         return
-            @left,
-            [ $logical_binary{$id} => scalar(@right) + 1, undef, "logical $id" ],
-            @right;
+            @lhs,
+            [ $logical_binary{$id} => scalar(@rhs) + 1, undef, "logical $id" ],
+            @rhs;
     }
 
     $self->_error("Binary operator $id is not implemented", $node);
@@ -936,7 +944,7 @@ sub _localize_vars {
 sub _variable_to_value {
     my($self, $arg) = @_;
 
-    my $name = $arg->value;
+    my $name = $arg->id;
     $name =~ s/\$//;
     return $name;
 }
