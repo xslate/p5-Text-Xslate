@@ -583,16 +583,42 @@ sub _generate_proc { # definition of macro, block, before, around, after
 
 sub _generate_if {
     my($self, $node) = @_;
-    my @cond  = $self->_expr($node->first);
-    my @then  = $self->_compile_ast($node->second);
-    my @else  = $self->_compile_ast($node->third);
-    return(
-        @cond,
-        [ and  => scalar(@then) + 2, undef, $node->id ],
-        @then,
-        [ goto => scalar(@else) + 1, undef, $node->id ],
-        @else,
-    );
+    my $first  = $node->first;
+    my $second = $node->second;
+    my $third  = $node->third;
+
+    if(any_in($first->id, "!", "no")) {
+        $first            = $first->first;
+        ($second, $third) = ($third, $second);
+    }
+
+    my @cond  = $self->_expr($first);
+    my @then  = $self->_compile_ast($second);
+    my @else  = $self->_compile_ast($third);
+
+    if(@then and @else) {
+        return(
+            @cond,
+            [ and  => scalar(@then) + 2, undef, $node->id . ' (then)' ],
+            @then,
+            [ goto => scalar(@else) + 1, undef, $node->id . ' (else)' ],
+            @else,
+        );
+    }
+    elsif(!@else) { # no @else
+        return(
+            @cond,
+            [ and => scalar(@then) + 1, undef, $node->id . ' (then)' ],
+            @then,
+        );
+    }
+    else { # no @then
+        return(
+            @cond,
+            [ or => scalar(@else) + 1, undef, $node->id . ' (else)'],
+            @else,
+        );
+    }
 }
 
 sub _generate_given {
