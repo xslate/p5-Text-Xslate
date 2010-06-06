@@ -517,7 +517,8 @@ sub init_symbols {
     $parser->symbol('override') ->set_std(\&std_override);
 
     # lexical variable stuff
-    $parser->prefix(constant => 256, \&nud_constant);
+    $parser->symbol('constant')->set_nud(\&nud_constant);
+    $parser->symbol('my'      )->set_nud(\&nud_constant);
 
     return;
 }
@@ -1034,8 +1035,13 @@ sub nud_iterator {
 sub nud_constant {
     my($parser, $symbol) = @_;
     my $t = $parser->token;
-    if($t->arity ne "name") {
-        $parser->_unexpected("a name", $t);
+
+    my $expect =  $symbol->id eq 'constant' ? 'name'
+                : $symbol->id eq 'my'       ? 'variable'
+                :  die "Oops: $symbol";
+
+    if($t->arity ne $expect) {
+        $parser->_unexpected("a $expect", $t);
     }
     $parser->define($t)->arity("name");
 
