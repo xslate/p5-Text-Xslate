@@ -865,9 +865,26 @@ CODE
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
+        if ( $st_true->code ) { # Ah, if-style had gone...
+            $self->write_lines( sprintf( <<'CODE', $type, $expr, $st_true->code ) );
+cond_%s( %s, sub {
+%s
+} );
+CODE
+
+        }
+        elsif ( $st_true->sa ) {
+            $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
 cond_%s( %s, sub { %s } )
 CODE
+
+        }
+        else {
+        }
+
+#        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
+#cond_%s( %s, sub { %s } )
+#CODE
 
     }
 
