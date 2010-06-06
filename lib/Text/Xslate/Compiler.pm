@@ -17,7 +17,9 @@ use Scalar::Util ();
 
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
 use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
-use constant _OPTIMIZE => scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
+use constant _OPTIMIZE => defined(scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]))
+                            ?     scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0])
+                            : 1; # enable optimization by default
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
@@ -62,13 +64,6 @@ my %unary = (
     '-'   => 'minus',
 
     'size' => 'size', # for loop context vars
-);
-
-has optimize => (
-    is  => 'rw',
-    isa => 'Bool',
-
-    default => defined(_OPTIMIZE) ? 1 : 0,
 );
 
 has lvar_id => ( # local varialbe id
@@ -183,7 +178,7 @@ sub compile {
 
     push @code, $self->_flush_macro_table() if %mtable;
 
-    if($self->optimize) {
+    if(_OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
     }
 
@@ -397,6 +392,7 @@ sub _generate_name {
 sub _can_print_optimize {
     my($self, $name, $node) = @_;
 
+    return 0 if !_OPTIMIZE;
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
     return $node->arity eq 'call'
@@ -415,13 +411,11 @@ sub _generate_command {
         $proc = 'print_raw';
     }
 
-    my $do_optimize = $self->optimize;
-
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
             push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];
         }
-        elsif($do_optimize and $self->_can_print_optimize($proc, $arg)){
+        elsif($self->_can_print_optimize($proc, $arg)){
             # expr | html
             # expr | raw
             my $command = $arg->first->id eq 'html' ? 'print' : 'print_raw';
@@ -739,7 +733,7 @@ sub _generate_binary {
                 [ move_from_sb    => undef, undef, "$id on true" ],
         }
 
-        if($self->optimize) {
+        if(_OPTIMIZE) {
             $self->_fold_constants(\@code);
         }
         return @code;
