@@ -30,6 +30,7 @@ else {
             cache     =>  0,
             syntax    => 'TTerse',
             warn_handler => \&Carp::confess,
+            die_handler  => \&Carp::confess,
     );
 }
 

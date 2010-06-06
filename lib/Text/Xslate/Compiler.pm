@@ -824,29 +824,27 @@ sub _generate_iterator_body {
 
 sub _generate_assign {
     my($self, $node) = @_;
-    my $name = $node->first;
-    my $expr = $node->second;
+    my $lhs     = $node->first;
+    my $rhs     = $node->second;
+    my $is_decl = $node->third;
 
-    my $lvar_name = $name->id;
     my $lvar      = $self->lvar;
+    my $lvar_name = $lhs->id;
 
-    my $decl_lvar = ($node->id eq 'my');
+    my @expr = $self->_expr($rhs);
 
-    if($decl_lvar) {
+    if($is_decl) {
         $lvar->{$lvar_name} = $self->lvar_id;
         $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
     }
-    else {
-        if(!exists $lvar->{$lvar_name}) {
-            $self->_error("Cannot modify global template variables $name");
-        }
+
+    if(!exists $lvar->{$lvar_name}) {
+        $self->_error("Cannot modify $lhs, which is not a lexical variable");
     }
 
-    my $lvar_id = $lvar->{$lvar_name};
-
     return
-        $self->_expr($expr),
-        [ save_to_lvar => $lvar_id, $node->line, $lvar_name ];
+        @expr,
+        [ save_to_lvar => $lvar->{$lvar_name}, $node->line, $lvar_name ];
 }
 
 sub _localize_vars {

@@ -142,6 +142,13 @@ sub led_assignment {
     my $assign = $parser->led_infixr($symbol, $left);
     $assign->arity('assign');
     $assign->is_statement(1);
+
+    my $name = $assign->first;
+    if(not $parser->find($name->id)->is_defined) {
+        $parser->define($name);
+        $assign->third('declare');
+    }
+
     return $assign;
 }
 
@@ -273,7 +280,6 @@ sub set_list {
 
         my $value = $parser->expression(0);
 
-        $parser->define($key);
         push @args, $key => $value;
 
         if($parser->token->id eq ",") { # , is optional
@@ -290,12 +296,18 @@ sub std_set {
     my $set_list = $parser->set_list();
     my @assigns;
     for(my $i = 0; $i < @{$set_list}; $i += 2) {
-        push @assigns, $symbol->clone(
-            id     => 'my',
+        my($name, $value) = @{$set_list}[$i, $i+1];
+        my $assign = $symbol->clone(
             arity  => 'assign',
-            first  => $set_list->[$i  ],
-            second => $set_list->[$i+1],
+            first  => $name,
+            second => $value,
         );
+
+        if(not $parser->find($name->id)->is_defined) {
+            $parser->define($name);
+            $assign->third('declare');
+        }
+        push @assigns, $assign;
     }
     return @assigns;
 }

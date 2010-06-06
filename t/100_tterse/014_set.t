@@ -70,14 +70,36 @@ X
 #    Hello, Xslate world!
 #X
 
-    [<<'T', <<'X', 'assignment'],
+
+    [<<'T', <<'X', 'set x 2'],
 [% SET lang = 'TTerse' -%]
+[% SET lang = 'Perl' -%]
+Hello, [% lang %] world!
+T
+Hello, Perl world!
+X
+
+    [<<'T', <<'X', 'assignment'],
 [% lang = 'Perl' -%]
 Hello, [% lang %] world!
 T
 Hello, Perl world!
 X
 
+    [<<'T', <<'X', 'assignment x 2'],
+[% lang = 'TTerse' -%]
+[% lang = 'Perl' -%]
+Hello, [% lang %] world!
+T
+Hello, Perl world!
+X
+
+    [<<'T', <<'X', 'assignment x 2'],
+[% lang = "/" _ lang _ "/" -%]
+Hello, [% lang %] world!
+T
+Hello, /Xslate/ world!
+X
 
     [<<'T', <<'X', 'lower cased'],
 [% set lang = 'TTerse' -%]
@@ -86,13 +108,23 @@ T
 Hello, TTerse world!
 X
 
+    [<<'T', <<'X', 'chained assignment', 1],
+[% foo = bar = 'TTerse' -%]
+Hello, [% foo %] world!
+Hello, [% bar %] world!
+T
+Hello, TTerse world!
+Hello, TTerse world!
+X
 );
 
 my %vars = (lang => 'Xslate', foo => '<bar>', '$lang' => 'XXX');
 my $orig = p(\%vars);
 
 foreach my $d(@data) {
-    my($in, $out, $msg) = @$d;
+    my($in, $out, $msg, $is_tterse_specific) = @$d;
+
+    last if $is_tterse_specific && $ENV{USE_TT};
 
     is render_str($in, \%vars), $out, $msg
         or diag $in;

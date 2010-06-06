@@ -52,6 +52,8 @@ has value => (
 
 # flags
 has [
+        'is_reserved',  # set by reserve()
+        'is_defined',   # set by define()
         'is_block_end', # block ending markers
         'is_logical',   # logical operators
         'is_comma',     # comma like operators
@@ -136,13 +138,6 @@ has arity => (
 );
 
 has assignment => (
-    is  => 'rw',
-    isa => 'Bool',
-
-    required => 0,
-);
-
-has reserved => (
     is  => 'rw',
     isa => 'Bool',
 

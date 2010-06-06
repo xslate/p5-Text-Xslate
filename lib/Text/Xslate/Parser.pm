@@ -828,25 +828,27 @@ sub undefined_name {
 
 sub find { # find a name from all the scopes
     my($parser, $name) = @_;
+    my $s;
     foreach my $scope(reverse @{$parser->scope}){
-        my $o = $scope->{$name};
-        if(defined $o) {
-            return $o;
+        $s = $scope->{$name};
+        if(defined $s) {
+            return $s;
         }
     }
-    return $parser->symbol_table->{$name} || $parser->undefined_name($name);
+    $s = $parser->symbol_table->{$name};
+    return defined($s) ? $s : $parser->undefined_name($name);
 }
 
 sub reserve { # reserve a name to the scope
     my($parser, $symbol) = @_;
-    if($symbol->arity ne 'name' or $symbol->reserved) {
+    if($symbol->arity ne 'name' or $symbol->is_reserved) {
         return $symbol;
     }
 
     my $top = $parser->scope->[-1];
     my $t = $top->{$symbol->id};
     if($t) {
-        if($t->reserved) {
+        if($t->is_reserved) {
             return $symbol;
         }
         if($t->arity eq "name") {
@@ -854,7 +856,7 @@ sub reserve { # reserve a name to the scope
         }
     }
     $top->{$symbol->id} = $symbol;
-    $symbol->reserved(1);
+    $symbol->is_reserved(1);
     #$symbol->scope($top);
     return $symbol;
 }
@@ -865,12 +867,13 @@ sub define { # define a name to the scope
 
     my $t = $top->{$symbol->id};
     if(defined $t) {
-        $parser->_error($t->reserved ? "Already reserved: $t" : "Already defined: $t");
+        $parser->_error($t->is_reserved ? "Already is_reserved: $t" : "Already defined: $t");
     }
 
     $top->{$symbol->id} = $symbol;
 
-    $symbol->reserved(0);
+    $symbol->is_defined(1);
+    $symbol->is_reserved(0);
     $symbol->remove_nud();
     $symbol->remove_led();
     $symbol->remove_std();
