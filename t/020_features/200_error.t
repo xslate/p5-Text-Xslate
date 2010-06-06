@@ -104,5 +104,4 @@ like $warn, qr/requires exactly 0 argument/;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
-
 done_testing;

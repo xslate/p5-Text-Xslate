@@ -409,10 +409,10 @@ sub _init_basic_symbols {
     $parser->symbol('print')    ->set_std(\&std_command);
     $parser->symbol('print_raw')->set_std(\&std_command);
 
-    # common constants
-    $parser->define_constant(nil   => undef);
-    $parser->define_constant(true  => 1);
-    $parser->define_constant(false => 0);
+    # common literals
+    $parser->define_literal(nil   => undef);
+    $parser->define_literal(true  => 1);
+    $parser->define_literal(false => 0);
 
     return;
 }
@@ -515,6 +515,9 @@ sub init_symbols {
     $parser->symbol('block')    ->set_std(\&std_macro_block);
     $parser->symbol('super')    ->set_std(\&std_marker);
     $parser->symbol('override') ->set_std(\&std_override);
+
+    # lexical variable stuff
+    $parser->prefix(constant => 256, \&nud_constant);
 
     return;
 }
@@ -794,7 +797,7 @@ sub prefix {
     return $symbol;
 }
 
-sub define_constant {
+sub define_literal{
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
@@ -1026,6 +1029,25 @@ sub nud_iterator {
         return $generator->($parser, $iterator);
     }
     return $iterator;
+}
+
+sub nud_constant {
+    my($parser, $symbol) = @_;
+    my $t = $parser->token;
+    if($t->arity ne "name") {
+        $parser->_unexpected("a name", $t);
+    }
+    $parser->define($t)->arity("name");
+
+    $parser->advance();
+    $parser->advance("=");
+
+    return $symbol->clone(
+        arity        => 'constant',
+        first        => $t,
+        second       => $parser->expression(0),
+        is_statement => 1,
+    );
 }
 
 sub std_block {
@@ -1580,7 +1602,7 @@ sub _error {
 
     $near ||= $parser->near_token || ";";
     if($near ne ";") {
-        $near = sprintf ' near %s (%s)', $near->id, $near->arity
+        $near = sprintf ', near %s (%s)', $near->id, $near->arity
             if ref($near);
     }
     else {

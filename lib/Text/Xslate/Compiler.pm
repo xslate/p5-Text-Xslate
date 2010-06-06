@@ -79,7 +79,13 @@ has lvar => ( # local varialbe id table
     is  => 'rw',
     isa => 'HashRef[Int]',
 
-    default  => sub{ {} },
+    init_arg => undef,
+);
+
+has const => (
+    is  => 'rw',
+    isa => 'ArrayRef',
+
     init_arg => undef,
 );
 
@@ -158,6 +164,7 @@ sub compile {
     local $self->{cascade};
     local $self->{lvar_id} = 0;
     local $self->{lvar}    = {};
+    local $self->{const}   = [];
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
@@ -387,6 +394,20 @@ sub _flush_macro_table {
 
 sub _generate_name {
     my($self, $node) = @_;
+
+    if(defined(my $lvar_id = $self->lvar->{$node->id})) { # constants
+        my $code = $self->const->[$lvar_id];
+        if(defined $code) {
+            # because the constant value is very simple,
+            # its definition is optimized away.
+            # only its value remains.
+            return @{$code};
+        }
+        else {
+            return [ fetch_lvar => $lvar_id, $node->line, "constant $node->id" ];
+        }
+    }
+
     $self->_error("Undefined symbol '$node'", $node);
 }
 
@@ -746,7 +767,6 @@ sub _generate_binary {
         }
 
         if(_OPTIMIZE) {
-            my $code_size = scalar(@code);
             if(scalar(@code) == 5
                     and join(' ', map { $_->[0] } @code[0 .. scalar(@code) - 2])
                         eq 'literal save_to_lvar literal load_lvar_to_sb'
@@ -857,7 +877,7 @@ sub _generate_assign {
         $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
     }
 
-    if(!exists $lvar->{$lvar_name}) {
+    if(!exists $lvar->{$lvar_name} or $lhs->arity ne "variable") {
         $self->_error("Cannot modify $lhs, which is not a lexical variable");
     }
 
@@ -865,6 +885,34 @@ sub _generate_assign {
         @expr,
         [ save_to_lvar => $lvar->{$lvar_name}, $node->line, $lvar_name ];
 }
+
+sub _generate_constant {
+    my($self, $node) = @_;
+    my $lhs     = $node->first;
+    my $rhs     = $node->second;
+
+    my $lvar      = $self->lvar;
+    my $lvar_name = $lhs->id;
+
+    my @expr = $self->_expr($rhs);
+
+    my $lvar_id         = $self->lvar_id;
+    $lvar->{$lvar_name} = $lvar_id;
+    $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
+
+    if(_OPTIMIZE) {
+        if(@expr == 1 && $expr[0][0] eq 'literal') {
+            $expr[0][3] = "constant $lvar_name"; # comment
+            $self->const->[$lvar_id] = \@expr;
+            return; # no real definition
+        }
+    }
+
+    return
+        @expr,
+        [ save_to_lvar => $lvar_id, $node->line, "constant $lvar_name" ];
+}
+
 
 sub _localize_vars {
     my($self, $vars) = @_;
