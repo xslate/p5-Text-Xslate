@@ -429,7 +429,7 @@ sub init_basic_operators {
     $parser->infix('.', 256, \&led_dot);
     $parser->infix('[', 256, \&led_fetch);
 
-    $parser->prefix('(', 200, \&nud_paren);
+    $parser->prefix('(', 256, \&nud_paren);
 
     $parser->prefix('!', 200)->is_logical(1);
     $parser->prefix('+', 200);
