@@ -696,13 +696,13 @@ sub assignment {
 sub led_ternary {
     my($parser, $symbol, $left) = @_;
 
-    my $cond = $symbol->clone(arity => 'ternary');
+    my $if = $symbol->clone(arity => 'if');
 
-    $cond->first($left);
-    $cond->second($parser->expression( $cond->lbp - 1 ));
+    $if->first($left);
+    $if->second([$parser->expression( $symbol->lbp - 1 )]);
     $parser->advance(":");
-    $cond->third($parser->expression( $cond->lbp - 1 ));
-    return $cond;
+    $if->third([$parser->expression( $symbol->lbp - 1 )]);
+    return $if;
 }
 
 sub is_valid_field {
@@ -1554,10 +1554,10 @@ sub iterator_peek_prev {
 
     # $~iterator.is_first ? nil : <prev>
     return $parser->symbol('?')->clone(
-        arity  => 'ternary',
+        arity  => 'if',
         first  => $is_first,
-        second => $nil,
-        third  => $prev,
+        second => [$nil],
+        third  => [$prev],
     );
 }
 

@@ -583,15 +583,11 @@ sub _generate_proc { # definition of macro, block, before, around, after
 
 sub _generate_if {
     my($self, $node) = @_;
-
-    my @expr  = $self->_expr($node->first);
+    my @cond  = $self->_expr($node->first);
     my @then  = $self->_compile_ast($node->second);
-
-    my $other = $node->third;
-    my @else  = $self->_compile_ast($other);
-
+    my @else  = $self->_compile_ast($node->third);
     return(
-        @expr,
+        @cond,
         [ and  => scalar(@then) + 2, undef, $node->id ],
         @then,
         [ goto => scalar(@else) + 1, undef, $node->id ],
@@ -732,20 +728,6 @@ sub _generate_binary {
     }
 
     $self->_error("Binary operator $id is not implemented", $node);
-}
-
-sub _generate_ternary { # the conditional operator
-    my($self, $node) = @_;
-    my @expr = $self->_expr($node->first);
-    my @then = $self->_expr($node->second);
-    my @else = $self->_expr($node->third);
-    return(
-        @expr,
-        [ and  => scalar(@then) + 2, $node->line, 'ternary-then' ],
-        @then,
-        [ goto => scalar(@else) + 1, undef, 'ternary-else' ],
-        @else,
-    );
 }
 
 sub _generate_methodcall {
