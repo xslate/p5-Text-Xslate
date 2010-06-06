@@ -8,6 +8,7 @@ Debugging options ($ENV{XSLATE}; or --debug for xslate(1)):
     dump=token  Output token sequence
     dump=ast    Output abstract syntax tree
     dump=asm    Output xslate assembly
+    dump=asm:ix Output xslate assembly with indexes
     dump=pp     Output Perl code PP::Booster generates
     optimize=0  Suppress optimization
 

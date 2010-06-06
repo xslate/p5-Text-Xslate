@@ -191,7 +191,7 @@ sub compile {
     }
 
     print STDERR "// ", $self->file, "\n",
-        $self->as_assembly(\@code, scalar($DEBUG =~ /\b addix \b/xms))
+        $self->as_assembly(\@code, scalar($DEBUG =~ /\b ix \b/xms))
             if _DUMP_ASM;
 
     $parser->file($old_file || '<input>'); # reset

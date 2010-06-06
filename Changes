@@ -1,6 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
-0.1028
+0.1028 Sun Jun  6 17:21:18 2010
+    This release introduces variable definition and mutation, which might be
+    unstable. Please report any bugs you'd run into.
+
     [CHANGES]
     - Make Kolon's while statement the same as Perl's
 
