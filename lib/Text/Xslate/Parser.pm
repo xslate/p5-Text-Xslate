@@ -398,6 +398,10 @@ sub _init_basic_symbols {
     $parser->symbol(';');
     $parser->symbol('(');
     $parser->symbol(')');
+    $parser->symbol('{');
+    $parser->symbol('}');
+    $parser->symbol('[');
+    $parser->symbol(']');
     $parser->symbol(',')  ->is_comma(1);
     $parser->symbol('=>') ->is_comma(1);
 
@@ -481,7 +485,6 @@ sub init_symbols {
     my($parser) = @_;
 
     # syntax specific separators
-    $parser->symbol(']');
     $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
     $parser->symbol('else');
