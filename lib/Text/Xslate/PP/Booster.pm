@@ -865,11 +865,12 @@ CODE
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-        if ( $st_true->code ) { # Ah, if-style had gone...
-            $self->write_lines( sprintf( <<'CODE', $type, $expr, $st_true->code ) );
-cond_%s( %s, sub {
+        if ( $st_true->code ) { # Ah, if-style had gone..., but again write if-style!
+            my $if_style = $type eq 'and' ? 'if' : 'unless';
+            $self->write_lines( sprintf( <<'CODE', $if_style, $expr, $st_true->code ) );
+%s ( %s ) {
 %s
-} );
+}
 CODE
 
         }
