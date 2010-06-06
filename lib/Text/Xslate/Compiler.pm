@@ -588,9 +588,7 @@ sub _generate_if {
     my @then  = $self->_compile_ast($node->second);
 
     my $other = $node->third;
-    my @else = blessed($other)
-        ? $self->_generate_if($other)
-        : $self->_compile_ast($other);
+    my @else  = $self->_compile_ast($other);
 
     return(
         @expr,

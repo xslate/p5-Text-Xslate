@@ -184,12 +184,9 @@ sub std_if {
         my $elsif = $t->clone(arity => "if");
         $elsif->first(  $parser->expression(0) );
         $elsif->second( $parser->statements() );
-
         $if->third([$elsif]);
-
         $if = $elsif;
-
-        $t = $parser->token;
+        $t  = $parser->token;
     }
 
     if(uc($t->id) eq "ELSE") {
@@ -197,8 +194,8 @@ sub std_if {
         $t = $parser->advance(); # "ELSE"
 
         $if->third( uc($t->id) eq "IF"
-            ? $parser->statement()
-            : $parser->statements());
+            ? [$parser->statement()]
+            :  $parser->statements());
     }
 
 

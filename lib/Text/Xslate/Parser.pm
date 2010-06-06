@@ -1221,8 +1221,8 @@ sub std_if {
         $t = $parser->advance(); # "else"
 
         $if->third( $t->id eq "if"
-            ? $parser->statement()
-            : $parser->block());
+            ? [$parser->statement()]
+            :  $parser->block());
     }
     return $top_if;
 }
