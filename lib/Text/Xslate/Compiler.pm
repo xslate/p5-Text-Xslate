@@ -870,6 +870,10 @@ sub _generate_assign {
     my $lvar      = $self->lvar;
     my $lvar_name = $lhs->id;
 
+    if($node->id ne "=") {
+        $self->_error("Assignment ($node) is not supported", $node);
+    }
+
     my @expr = $self->_expr($rhs);
 
     if($is_decl) {
@@ -878,7 +882,7 @@ sub _generate_assign {
     }
 
     if(!exists $lvar->{$lvar_name} or $lhs->arity ne "variable") {
-        $self->_error("Cannot modify $lhs, which is not a lexical variable");
+        $self->_error("Cannot modify $lhs, which is not a lexical variable", $node);
     }
 
     return
@@ -920,7 +924,7 @@ sub _localize_vars {
     my @pairs = @{$vars};
     while(my($key, $expr) = splice @pairs, 0, 2) {
         if(!any_in($key->arity, qw(literal variable))) {
-            $self->_error("You must pass a simple name to localize variables");
+            $self->_error("You must pass a simple name to localize variables", $key);
         }
         push @localize,
             $self->_expr($expr),

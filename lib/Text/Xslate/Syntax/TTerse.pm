@@ -135,10 +135,6 @@ sub led_concat {
 sub led_assignment {
     my($parser, $symbol, $left) = @_;
 
-    if($symbol->id ne "=") {
-        $parser->_error("Assignment ($symbol) is forbidden");
-    }
-
     my $assign = $parser->led_infixr($symbol, $left);
     $assign->arity('assign');
     $assign->is_statement(1);
@@ -295,6 +291,7 @@ sub std_set {
     for(my $i = 0; $i < @{$set_list}; $i += 2) {
         my($name, $value) = @{$set_list}[$i, $i+1];
         my $assign = $symbol->clone(
+            id     => '=',
             arity  => 'assign',
             first  => $name,
             second => $value,
