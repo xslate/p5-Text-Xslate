@@ -51,23 +51,33 @@ M
 if($want_xs) {
     # repeat testing for pure Perl mode
     # see also ExtUtils::MM_Any::test_via_harness()
+
+    # test_pp
     my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
                .q{ "do 'tool/force-pp.pl'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
                .q{ $(TEST_FILES)} . "\n";
-
-    postamble qq{test_dynamic :: test_pp\n\n}
-            . qq{test_pp :: pure_all\n}
+    postamble qq{test_pp :: pure_all\n}
             . qq{\t} . $t_pp;
 
-    if($ENV{RELEASE_TESTING}) {
-        my $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
-                   .q{ "\$$ENV{XSLATE}='pp=opcode'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
-                   .q{ $(TEST_FILES)} . "\n";
+    # test_pp_opcode
+    $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
+               .q{ "\$$ENV{XSLATE}='pp=opcode'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+               .q{ $(TEST_FILES)} . "\n";
+    postamble qq{test_pp_opcode :: pure_all\n}
+            . qq{\t} . $t_pp;
 
-        postamble qq{test_dynamic :: test_pp_opcode\n\n}
-                . qq{test_pp_opcode :: pure_all\n}
-                . qq{\t} . $t_pp;
+    # test_pp_booster
+    $t_pp =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
+               .q{ "\$$ENV{XSLATE}='pp=booster'; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+               .q{ $(TEST_FILES)} . "\n";
+    postamble qq{test_pp_booster :: pure_all\n}
+            . qq{\t} . $t_pp;
 
+    if(!$ENV{RELEASE_TESTING}) {
+        postamble qq{test_dynamic :: test_pp\n\n};
+    }
+    else {
+        postamble qq{test_dynamic :: test_pp_opcode test_pp_booster\n\n}
     }
 }
 
