@@ -629,23 +629,19 @@ sub expression {
 
 sub expression_list {
     my($parser) = @_;
-
-    my @args;
-
-    if($parser->token->is_value or $parser->token->is_comma) {
-        while(1) {
-            if($parser->token->is_value) {
-                push @args, $parser->expression(0);
-            }
-
-            if(!$parser->token->is_comma) {
-                last;
-            }
-
-            $parser->advance(); # comma
+    my @list;
+    while(1) {
+        if($parser->token->is_value) {
+            push @list, $parser->expression(0);
         }
+
+        if(!$parser->token->is_comma) {
+            last;
+        }
+
+        $parser->advance(); # comma
     }
-    return \@args;
+    return \@list;
 }
 
 sub led_infix {
