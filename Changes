@@ -9,6 +9,9 @@ Revision history for Perl extension Text::Xslate
 
     [NEW FEATURES]
     - Improve App::Xslate
+    - Implement constant folding
+    - For Kolon
+        + constant statement (e.g. constant FOO = 42)
     - For TTerse
         + CALL statement not to print expressions
         + WHILE statement
