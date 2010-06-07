@@ -1041,15 +1041,13 @@ sub methodcall {
             }
             return $retval;
         }
-        # fallback
+        # fallback to builtin methods
     }
 
     if(!defined $invocant) {
         _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
     }
-    else {
-        my $bm = $builtin_method{$method} || return undef;
-
+    elsif(my $bm = $builtin_method{$method}){
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
             _error($st, $frame, $line,
@@ -1062,6 +1060,10 @@ sub methodcall {
          $retval = eval {
             $klass->new($invocant)->$method(@args);
          };
+    }
+    else {
+        _error($st, $frame, $line, "Undefined method %s called for %s",
+            $method, $invocant);
     }
 
     return $retval;

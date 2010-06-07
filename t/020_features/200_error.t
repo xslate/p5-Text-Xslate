@@ -117,6 +117,19 @@ like $warn, qr/requires exactly 0 argument/;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
+$warn = '';
+$out = eval {
+    $tx->render_string('<: [].foo() :>', { a => 'foo', b => 'bar' });
+};
+
+is $out, '', 'warn in render_string()';
+like $warn, qr/Undefined method/;
+like $warn, qr/\b foo \b/xms;
+like $warn, qr/\b ARRAY \b/xms;
+
+like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+is $@,  '';
+
 is $perl_warnings, '', "Perl doesn't produce warnings";
 
 done_testing;

@@ -314,7 +314,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             sv_setsv_nomg(retval, TX_pop());
             goto finish;
         }
-        /* fallback */
+        /* fallback to builtin methods */
     }
 
     (void)POPMARK;

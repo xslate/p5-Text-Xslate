@@ -39,15 +39,13 @@ sub tx_methodcall {
             }
             return $retval;
         }
-        # fallback
+        # fallback to builtin methods
     }
 
     if(!defined $invocant) {
         tx_warn($st, "Use of nil to invoke method %s", $method);
     }
-    else {
-        my $bm = $builtin_method{$method} || return undef;
-
+    elsif(my $bm = $builtin_method{$method}) {
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
             tx_error($st,
@@ -60,6 +58,10 @@ sub tx_methodcall {
          $retval = eval {
             $klass->new($invocant)->$method(@args);
         };
+    }
+    else {
+        tx_error($st, "Undefined method %s called for %s",
+            $method, $invocant);
     }
 
     return $retval;
