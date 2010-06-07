@@ -7,8 +7,8 @@
 
 #include "xslate.h"
 
-#define TXBM_DECL(name) SV* name \
-    (pTHX_ tx_state_t* const st PERL_UNUSED_DECL, SV* const method PERL_UNUSED_DECL, SV** MARK)
+#define TXBM_DECL(name) void name \
+    (pTHX_ tx_state_t* const st PERL_UNUSED_DECL, SV* const retval, SV* const method PERL_UNUSED_DECL, SV** MARK)
 
 #define TXBM(moniker) static TXBM_DECL(CAT2(tx_builtin_method_, moniker))
 
@@ -67,7 +67,9 @@ tx_kv(pTHX_ SV* const hvref) {
     assert(SvROK(hvref));
     assert(SvTYPE(hv) == SVt_PVHV);
 
-    av_extend(av, HvKEYS(hv) - 1); /* if possible */
+    if(HvKEYS(hv) > 0) {
+        av_extend(av, HvKEYS(hv) - 1);
+    }
 
     hv_iterinit(hv);
     while((he = hv_iternext(hv))) {
@@ -79,19 +81,41 @@ tx_kv(pTHX_ SV* const hvref) {
         SvREFCNT_inc_simple_void_NN(pair);
     }
     sortsv(AvARRAY(av), AvFILLp(av)+1, tx_pair_cmp);
+    return avref;
+}
 
+static SV*
+tx_keys(pTHX_ SV* const hvref) {
+    HV* const hv    = (HV*)SvRV(hvref);
+    AV* const av    = newAV();
+    SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
+    HE* he;
+
+    assert(SvROK(hvref));
+    assert(SvTYPE(hv) == SVt_PVHV);
+
+    if(HvKEYS(hv) > 0) {
+        av_extend(av, HvKEYS(hv) - 1);
+    }
+
+    hv_iterinit(hv);
+    while((he = hv_iternext(hv))) {
+        SV* const key = hv_iterkeysv(he);
+        av_push(av, key);
+        SvREFCNT_inc_simple_void_NN(key);
+    }
+    sortsv(AvARRAY(av), AvFILLp(av)+1, Perl_sv_cmp);
     return avref;
 }
 
 /* Enumerable containers */
 
 TXBM(size) {
-    return sv_2mortal( newSViv(av_len((AV*)SvRV(*MARK)) + 1) );
+    sv_setiv(retval, av_len((AV*)SvRV(*MARK)) + 1);
 }
 
 TXBM(join) {
     dSP;
-    SV* const result = sv_newmortal();
     AV* const av     = (AV*)SvRV(*MARK);
     I32 const len    = av_len(av) + 1;
     I32 i;
@@ -104,9 +128,8 @@ TXBM(join) {
     /* don't do PUTBACK */
 
     MARK++;
-    do_join(result, *MARK, MARK, SP);
-
-    return result;
+    sv_setpvs(retval, "");
+    do_join(retval, *MARK, MARK, SP);
 }
 
 TXBM(reverse) {
@@ -122,7 +145,7 @@ TXBM(reverse) {
         av_store(result, -(i+1), newSVsv(svp ? *svp : &PL_sv_undef));
     }
 
-    return resultref;
+    sv_setsv(retval, resultref);
 }
 
 TXBM(sort) {
@@ -139,48 +162,24 @@ TXBM(sort) {
     }
     sortsv(AvARRAY(result), len, Perl_sv_cmp);
 
-    return resultref;
+    sv_setsv(retval, resultref);
 }
 
 
 /* Key-Value containers */
 
 TXBM(keys) {
-    HV* hv;
-    HE* he;
-    AV* av;
-    SV* avref;
-
-    if(!(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVHV)) {
-        tx_warn(aTHX_ st, "keys() requires a key-value container, not %s",
-            tx_neat(aTHX_ *MARK));
-        return &PL_sv_undef;
-    }
-
-    hv    = (HV*)SvRV(*MARK);
-    av    = newAV();
-    avref = sv_2mortal(newRV_noinc((SV*)av));
-
-    av_extend(av, HvKEYS(hv) - 1); /* if possible */
-
-    hv_iterinit(hv);
-    while((he = hv_iternext(hv))) {
-        SV* const key = hv_iterkeysv(he);
-        AvARRAY(av)[++AvFILLp(av)] = key;
-        SvREFCNT_inc_simple_void_NN(key);
-    }
-    sortsv(AvARRAY(av), AvFILLp(av)+1, Perl_sv_cmp);
-
-    return avref;
+    sv_setsv(retval, tx_keys(aTHX_ *MARK));
 }
 
 TXBM(values) {
-    SV* const avref = tx_builtin_method_keys(aTHX_ st, method, MARK);
+    SV* const avref = tx_keys(aTHX_ *MARK);
     HV* const hv    = (HV*)SvRV(*MARK);
     AV* const av    = (AV*)SvRV(avref);
     I32 const len   = AvFILLp(av) + 1;
     I32 i;
 
+    /* replace keys with values */
     /* map { $hv->{$_} } @{$keys} */
     for(i = 0; i < len; i++) {
         SV* const key = AvARRAY(av)[i];
@@ -191,11 +190,11 @@ TXBM(values) {
         SvREFCNT_dec(key);
     }
 
-    return avref;
+    sv_setsv(retval, avref);
 }
 
 TXBM(kv) {
-    return tx_kv(aTHX_ *MARK);
+    sv_setsv(retval, tx_kv(aTHX_ *MARK));
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
@@ -355,7 +354,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             }
 
             retval = st->targ;
-            sv_setsv(retval, bm.body(aTHX_ st, method, MARK));
+            bm.body(aTHX_ st, retval, method, MARK);
             goto finish;
         }
     }
