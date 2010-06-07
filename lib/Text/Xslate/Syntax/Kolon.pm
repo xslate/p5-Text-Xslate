@@ -274,19 +274,21 @@ NOTE: C<raw> and C<html> might be optimized away by the compiler.
 
 =head2 Methods
 
-When I<$var> is an object instance, you can call its methods.
+When I<$var> is an object instance, you can call its methods with the C<()>
+operator.
 
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
     <: $var.method( foo => [ 1, 2, 3 ] ) :>
 
-For arrays and hashes, there are builtin methods (i.e. there
-is an autoboxing mechanism):
+There is an autoboxing mechanism that provides primitive types with builtin
+methods.
 
     <: $array.size() :>
     <: $array.join(",") :>
     <: $array.reverse() :>
 
+    <: $hash.size() :>
     <: $hash.keys().join(", ") :>
     <: $hash.values().join(", ") :>
     <: for $hash.kv() -> $pair { :>
@@ -294,7 +296,7 @@ is an autoboxing mechanism):
         <: $pair.key :> = <: $pair.value :>
     <: } :>
 
-Note that you must use C<()> in order to invoke methods.
+You can define methods with the C<function> option. See L<Text::Xslate>.
 
 =head2 Template inclusion
 

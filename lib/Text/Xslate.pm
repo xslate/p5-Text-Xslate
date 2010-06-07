@@ -103,6 +103,8 @@ sub new {
                 . " because it is embeded in the engine");
         }
     }
+
+    # the following functions are not overridable
     $funcs{raw}  = \&escaped_string;
     $funcs{html} = \&html_escape;
     $funcs{dump} = \&p;
@@ -548,6 +550,17 @@ You B<should> specify this option on productions.
 =item C<< function => \%functions >>
 
 Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
+
+You can also define methods with pseudo type names: C<scalar>, C<array>,
+and C<hash>. For example:
+
+    my $tx = Text::Xslate->new(
+        function => {
+            'scalar::some_method' => sub { my($scalar)    = @_; ... },
+            'array::some_method'  => sub { my($array_ref) = @_; ... },
+            'hash::some_method'   => sub { my($hash_ref)  = @_; ... },
+        },
+    );
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 

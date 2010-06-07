@@ -7,7 +7,7 @@ use Text::Xslate;
 use Text::Xslate::Compiler;
 use Text::Xslate::Util qw(p);
 use t::lib::Util;
-
+use utf8;
 {
     package MyArray;
     use Any::Moose;
@@ -103,7 +103,6 @@ a=1
 X
 
     ['<: $o.size() :>', { o => MyArray->new(size => 42) }, '42', 'object'],
-
 
     # register via function
     ['<: $v.foo() :>',  { v => { foo => 'bar'}}, 'hash foo' ],

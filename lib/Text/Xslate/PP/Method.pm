@@ -68,6 +68,7 @@ sub _hash_kv {
     ];
 }
 
+
 my %builtin_method = (
     'array::size'    => \&_array_size,
     'array::join'    => \&_array_join,
