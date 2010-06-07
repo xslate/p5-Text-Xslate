@@ -79,11 +79,11 @@ is $@,  '';
 
 $warn = '';
 $out = eval {
-    $tx->render_string('<: [].keys(1) :>', { a => 'foo', b => 'bar' });
+    $tx->render_string('<: [].size(1) :>', { a => 'foo', b => 'bar' });
 };
 
 is $out, '', 'warn in render_string()';
-like $warn, qr/requires exactly 0 argument/;
+like $warn, qr/Wrong number of arguments for size/, $warn;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 

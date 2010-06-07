@@ -169,36 +169,37 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     return newframe;
 }
 
-static SV*
+SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
     SV* retval = NULL;
     /* ENTER & SAVETMPS must be done */
 
     if(!(flags & G_METHOD)) { /* functions */
-        HV* dummy_stash;
-        GV* dummy_gv;
-        CV* cv;
+        if(SvTYPE(proc) != SVt_PVCV) {
+            HV* dummy_stash;
+            GV* dummy_gv;
+            CV* cv;
+            SvGETMAGIC(proc);
+            if(!SvOK(proc)) {
+                tx_code_t* const c = &(st->code[ st->pc - 1 ]);
+                (void)POPMARK;
+                tx_error(aTHX_ st, "Undefined function%s is called on %s",
+                    c->exec_code == TXCODE_fetch_s
+                        ? form(" %"SVf"()", c->arg)
+                        : "", name);
+                goto finish;
+            }
 
-        SvGETMAGIC(proc);
-        if(!SvOK(proc)) {
-            tx_code_t* const c = &(st->code[ st->pc - 1 ]);
-            (void)POPMARK;
-            tx_error(aTHX_ st, "Undefined function%s is called",
-                c->exec_code == TXCODE_fetch_s
-                    ? form(" %"SVf"()", c->arg)
-                    : "");
-            goto finish;
+            cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
+            if(!cv) {
+                (void)POPMARK;
+                tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
+                    tx_neat(aTHX_ proc));
+
+                goto finish;
+            }
+            proc = (SV*)cv;
         }
-
-        cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
-        if(!cv) {
-            (void)POPMARK;
-            tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
-                tx_neat(aTHX_ proc));
-
-            goto finish;
-        }
-        proc = (SV*)cv;
     }
     else { /* methods */
         SV* const invocant = PL_stack_base[TOPMARK+1];
@@ -1345,16 +1346,11 @@ CODE:
     );
 
     svp = hv_fetchs(self, "function", FALSE);
-    if(svp && SvOK(*svp)) {
-        if(SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV) {
-            /* XXX: because macros will be stored to .function,
-                    it must be copied. */
-            st.function = newHVhv((HV*)SvRV(*svp));
-        }
-    }
-    if(!st.function) {
+    if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
         croak("Function table must be a HASH reference");
     }
+    st.function = newHVhv((HV*)SvRV(*svp)); /* must be copied */
+    tx_register_builtin_methods(aTHX_ st.function);
 
     tmpl = newAV();
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));

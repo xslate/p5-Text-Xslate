@@ -10,16 +10,12 @@
 #define TXBM_DECL(name) void name \
     (pTHX_ tx_state_t* const st PERL_UNUSED_DECL, SV* const retval, SV* const method PERL_UNUSED_DECL, SV** MARK)
 
-#define TXBM(moniker) static TXBM_DECL(CAT2(tx_builtin_method_, moniker))
+/* tx_bm _ TYPE _ MONIKER */
+#define TXBM_NAME(t, n) CAT2( CAT2(tx_bm, _), CAT2(t, CAT2(_, n)))
+#define TXBM(t, moniker) static TXBM_DECL( TXBM_NAME(t, moniker))
 
-#define TXBM_SETUP(name, nargs, trait) \
-    { STRINGIFY(name), CAT2(tx_builtin_method_, name), nargs, trait }
-
-enum tx_trait_t {
-    TX_TRAIT_ANY,
-    TX_TRAIT_ENUMERABLE,
-    TX_TRAIT_KV,
-};
+#define TXBM_SETUP(t, name, nargs) \
+    { STRINGIFY(t) "::" STRINGIFY(name), TXBM_NAME(t, name), nargs }
 
 typedef struct {
     const char* const name;
@@ -27,7 +23,6 @@ typedef struct {
     TXBM_DECL( (*body) );
 
     I16 nargs;
-    U16 trait;
 } tx_builtin_method_t;
 
 static SV*
@@ -106,13 +101,13 @@ tx_keys(pTHX_ SV* const hvref) {
     return avref;
 }
 
-/* Enumerable containers */
+/* ARRAY */
 
-TXBM(size) {
+TXBM(array, size) {
     sv_setiv(retval, av_len((AV*)SvRV(*MARK)) + 1);
 }
 
-TXBM(join) {
+TXBM(array, join) {
     dSP;
     AV* const av     = (AV*)SvRV(*MARK);
     I32 const len    = av_len(av) + 1;
@@ -130,7 +125,7 @@ TXBM(join) {
     do_join(retval, *MARK, MARK, SP);
 }
 
-TXBM(reverse) {
+TXBM(array, reverse) {
     AV* const av        = (AV*)SvRV(*MARK);
     I32 const len       = av_len(av) + 1;
     AV* const result    = newAV();
@@ -146,7 +141,7 @@ TXBM(reverse) {
     sv_setsv(retval, resultref);
 }
 
-TXBM(sort) {
+TXBM(array, sort) {
     AV* const av        = (AV*)SvRV(*MARK);
     I32 const len       = av_len(av) + 1;
     AV* const result    = newAV();
@@ -164,13 +159,23 @@ TXBM(sort) {
 }
 
 
-/* Key-Value containers */
+/* HASH */
 
-TXBM(keys) {
+TXBM(hash, size) {
+    HV* const hv = (HV*)SvRV(*MARK);
+    IV i = 0;
+    hv_iterinit(hv);
+    while(hv_iternext(hv)) {
+        i++;
+    }
+    sv_setiv(retval, i);
+}
+
+TXBM(hash, keys) {
     sv_setsv(retval, tx_keys(aTHX_ *MARK));
 }
 
-TXBM(values) {
+TXBM(hash, values) {
     SV* const avref = tx_keys(aTHX_ *MARK);
     HV* const hv    = (HV*)SvRV(*MARK);
     AV* const av    = (AV*)SvRV(avref);
@@ -191,169 +196,104 @@ TXBM(values) {
     sv_setsv(retval, avref);
 }
 
-TXBM(kv) {
+TXBM(hash, kv) {
     sv_setsv(retval, tx_kv(aTHX_ *MARK));
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
-    TXBM_SETUP(size,    0, TX_TRAIT_ENUMERABLE),
-    TXBM_SETUP(join,    1, TX_TRAIT_ENUMERABLE),
-    TXBM_SETUP(reverse, 0, TX_TRAIT_ENUMERABLE),
-    TXBM_SETUP(sort,    0, TX_TRAIT_ENUMERABLE),
+    TXBM_SETUP(array, size,    0),
+    TXBM_SETUP(array, join,    1),
+    TXBM_SETUP(array, reverse, 0),
+    TXBM_SETUP(array, sort,    0),
 
-    TXBM_SETUP(keys,    0, TX_TRAIT_KV),
-    TXBM_SETUP(values,  0, TX_TRAIT_KV),
-    TXBM_SETUP(kv,      0, TX_TRAIT_KV),
-
+    TXBM_SETUP(hash, size,     0),
+    TXBM_SETUP(hash, keys,     0),
+    TXBM_SETUP(hash, values,   0),
+    TXBM_SETUP(hash, kv,       0),
 };
 
-static const size_t tx_num_buildin_method
+static const size_t tx_num_builtin_method
     = sizeof(tx_builtin_method) / sizeof(tx_builtin_method[0]);
-
-
-static I32
-tx_as_enumerable(pTHX_ tx_state_t* const st, SV** const svp) {
-    SV* const sv = *svp;
-
-    if(sv_isobject(sv)) {
-        dSP;
-        SV* retval;
-        PUSHMARK(SP);
-        XPUSHs(sv);
-        PUTBACK;
-
-        call_method("(@{}", G_SCALAR | G_EVAL);
-
-        if(sv_true(ERRSV)) {
-            tx_error(aTHX_ st, "Use of %s as %s objects",
-                tx_neat(aTHX_ sv), "enumerable");
-            return FALSE;
-        }
-
-        retval = TX_pop();
-
-        SvGETMAGIC(retval);
-        if(SvROK(retval) && SvTYPE(SvRV(retval)) == SVt_PVAV) {
-            *svp = retval;
-            return TRUE;
-        }
-    }
-    else if(SvROK(sv)){
-        if(SvTYPE(SvRV(sv)) == SVt_PVAV) {
-            return TRUE;
-        }
-        else if(SvTYPE(SvRV(sv)) == SVt_PVHV) {
-            *svp = tx_kv(aTHX_ sv);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-static I32
-tx_as_kv(pTHX_ tx_state_t* const st, SV** const svp) {
-    SV* const sv = *svp;
-
-    if(sv_isobject(sv)) {
-        dSP;
-        SV* retval;
-        PUSHMARK(SP);
-        XPUSHs(sv);
-        PUTBACK;
-
-        call_method("(%{}", G_SCALAR | G_EVAL);
-
-        if(sv_true(ERRSV)) {
-            tx_error(aTHX_ st, "Use of %s as %s objects",
-                tx_neat(aTHX_ sv), "kv");
-            return FALSE;
-        }
-
-        retval = TX_pop();
-
-        SvGETMAGIC(retval);
-        if(SvROK(retval) && SvTYPE(SvRV(retval)) == SVt_PVHV) {
-            *svp = retval;
-            return TRUE;
-        }
-    }
-    else if(SvROK(sv)){
-        if(SvTYPE(SvRV(sv)) == SVt_PVHV) {
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
 
 SV*
 tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     /* ENTER & LEAVE & PUSHMARK & PUSH must be done */
     dSP;
-    SV** MARK = PL_stack_base + TOPMARK;
+    dMARK;
     dORIGMARK;
     SV* const invocant = *(++MARK);
-    STRLEN methodlen;
-    const char* const methodpv = SvPV_const(method, methodlen);
-    U32 i;
+    const char* type_name;
+    SV* fq_name;
+    HE* he;
     SV* retval = NULL;
 
     if(sv_isobject(invocant)) {
+        STRLEN methodlen;
+        const char* const methodpv = SvPV_const(method, methodlen);
         HV* const stash = SvSTASH(SvRV(invocant));
         GV* const mgv   = gv_fetchmeth_autoload(stash, methodpv, methodlen, 0);
 
         if(mgv) {
-            call_sv((SV*)GvCV(mgv), G_SCALAR | G_EVAL);
-            if(sv_true(ERRSV)) {
-                tx_error(aTHX_ st, "%"SVf"\t...", ERRSV);
-            }
-            retval = st->targ;
-            sv_setsv_nomg(retval, TX_pop());
-            goto finish;
+            PUSHMARK(ORIGMARK); /* re-pushmark */
+            return tx_call(aTHX_ st, (SV*)GvCV(mgv), 0, "object method call"); /* tx_call() does FREETMPS & LEAVE */
         }
-        /* fallback to builtin methods */
-    }
 
-    (void)POPMARK;
+        goto not_found;
+    }
 
     if(!SvOK(invocant)) {
         tx_warn(aTHX_ st, "Use of nil to invoke method %"SVf, method);
         goto finish;
     }
 
-    /* linear search */
-    for(i = 0; i < tx_num_buildin_method; i++) {
-        tx_builtin_method_t const bm = tx_builtin_method[i];
-        if(strEQ(methodpv, bm.name)) {
-            dSP;
-            I32 const items = SP - MARK;
+    if(SvROK(invocant)) {
+        SV* const referent = SvRV(invocant);
+        if(SvTYPE(referent) == SVt_PVAV) {
+            type_name = "array";
+        }
+        else if(SvTYPE(referent) == SVt_PVHV) {
+            type_name = "hash";
+        }
+        else {
+            type_name = "scalar";
+        }
+    }
+    else {
+        type_name = "scalar";
+    }
 
-            if(bm.nargs != -1
-                && bm.nargs != items) {
-                tx_error(aTHX_ st,
-                    "Builtin method %"SVf" requires exactly %d argument(s), "
-                    "but supplied %d",
-                    method, (int)bm.nargs, (int)items);
+    fq_name = st->targ;
+    sv_setpv(fq_name, type_name);
+    sv_catpvs(fq_name, "::");
+    sv_catsv(fq_name, method);
+
+    he = hv_fetch_ent(st->function, fq_name, FALSE, 0U);
+    if(he) {
+        SV* const entity = HeVAL(he);
+
+        if(SvIOK(entity)) {
+            I32 const items = SP - MARK;
+            const tx_builtin_method_t* bm;
+
+            if(SvUVX(entity) >= tx_num_builtin_method) {
+                croak("Oops: Builtin method index of %"SVf" is out of range", fq_name);
+            }
+
+            bm = &tx_builtin_method[SvUVX(entity)];
+
+            if(bm->nargs != -1 && bm->nargs != items) {
+                tx_error(aTHX_ st, "Wrong number of arguments for %"SVf" (%d %c %d)",
+                    method, (int)items, items > bm->nargs ? '>' : '<', (int)bm->nargs);
                 goto finish;
             }
 
-            if(bm.trait == TX_TRAIT_ENUMERABLE) {
-                if(!tx_as_enumerable(aTHX_ st, MARK /* invocant ptr */)) {
-                    goto not_found;
-                }
-                assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVAV);
-            }
-            else if(bm.trait == TX_TRAIT_KV) {
-                if(!tx_as_kv(aTHX_ st, MARK /* invocant ptr */)) {
-                    goto not_found;
-                }
-                assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVHV);
-            }
-
             retval = st->targ;
-            bm.body(aTHX_ st, retval, method, MARK);
+            bm->body(aTHX_ st, retval, method, MARK);
             goto finish;
+        }
+        else { /* user defined methods */
+            PUSHMARK(ORIGMARK); /* re-pushmark */
+            return tx_call(aTHX_ st, entity, 0, "builtin method call"); /* tx_call() does FREETMPS & LEAVE */
         }
     }
     not_found:
@@ -366,6 +306,19 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     FREETMPS;
     LEAVE;
     return retval ? retval : &PL_sv_undef;
+}
+
+void
+tx_register_builtin_methods(pTHX_ HV* const hv) {
+    U32 i;
+    assert(hv);
+    for(i = 0; i < tx_num_builtin_method; i++) {
+        const tx_builtin_method_t* const bm = &tx_builtin_method[i];
+        SV* const sv                 = *hv_fetch(hv, bm->name, strlen(bm->name), TRUE);
+        if(!SvOK(sv)) { /* users can override it */
+            sv_setiv(sv, i);
+        }
+    }
 }
 
 MODULE = Text::Xslate::Methods    PACKAGE = Text::Xslate::Type::Pair
