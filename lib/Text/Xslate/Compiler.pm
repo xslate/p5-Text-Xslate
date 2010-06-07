@@ -64,7 +64,7 @@ my %unary = (
     '+'   => 'noop',
     '-'   => 'minus',
 
-    'size' => 'size', # for loop context vars
+    'max_index' => 'max_index', # for loop context vars
 );
 
 has lvar_id => ( # local varialbe id

@@ -421,9 +421,9 @@ $CODE_MANIP{ 'minus' } = sub {
     $self->sa( sprintf( '- %s', $self->sa ) );
 };
 
-$CODE_MANIP{ 'size' } = sub {
+$CODE_MANIP{ 'max_index' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'scalar(@{%s})', $self->sa ) );
+    $self->sa( sprintf( '(scalar(@{%s}) - 1)', $self->sa ) );
 };
 
 

@@ -1490,17 +1490,17 @@ sub iterator_body {
 
 sub iterator_size {
     my($parser, $iterator) = @_;
-    # __builtin_size($~iterator.body)
-    return $parser->symbol('size')->clone(
-        arity => 'unary',
-        first => $parser->iterator_body($iterator),
-    );
+    # $~iterator.max + 1
+    return $parser->binary('+', $parser->iterator_max($iterator), 1);
 }
 
 sub iterator_max {
     my($parser, $iterator) = @_;
-    # $~iterator.size - 1
-    return $parser->binary('-', $parser->iterator_size($iterator), 1);
+    # __builtin_max_index($~iterator.body)
+    return $parser->symbol('max_index')->clone(
+        arity => 'unary',
+        first => $parser->iterator_body($iterator),
+    );
 }
 
 sub _iterator_peek {

@@ -366,8 +366,8 @@ sub op_minus {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_size {
-    $_[0]->{sa} = scalar @{ $_[0]->{sa} };
+sub op_max_index {
+    $_[0]->{sa} = scalar(@{ $_[0]->{sa} }) - 1;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 

@@ -695,7 +695,7 @@ TXC(minus) { /* unary minus */
     TX_st->pc++;
 }
 
-TXC(size) {
+TXC(max_index) {
     SV* const avref = TX_st_sa;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
@@ -703,7 +703,7 @@ TXC(size) {
             tx_neat(aTHX_ avref));
     }
 
-    sv_setiv(TX_st->targ, av_len((AV*)SvRV(avref)) + 1);
+    sv_setiv(TX_st->targ, av_len((AV*)SvRV(avref)));
     TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
