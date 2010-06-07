@@ -1295,7 +1295,6 @@ sub std_given {
         else { # default
             my $true = $parser->symbol('(literal)')->clone(
                 id         => 1,
-                arity      => 'literal',
                 is_logical => 1,
             );
             $when->first($true);
