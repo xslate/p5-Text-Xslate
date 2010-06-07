@@ -79,6 +79,41 @@ T
     1 2 bar bar
 X
 
+    [<<'T', { data => [qw(foo bar)] }, <<'X'],
+: if (constant FOO = 42) != 42 {
+    UNLIKELY
+: }
+: else {
+    <: FOO :>
+: }
+T
+    42
+X
+
+    [<<'T', { data => [qw(foo bar)] }, <<'X'],
+: if (constant FOO = 42) != 42 {
+    UNLIKELY
+: }
+: else {
+    : constant FOO = 100
+    <: FOO :>
+: }
+T
+    100
+X
+
+    [<<'T', { data => [qw(foo bar)] }, <<'X'],
+: if (constant FOO = 42) != 42 {
+    UNLIKELY
+: }
+: else {
+    : constant FOO = 100
+    <: FOO :>
+: }
+T
+    100
+X
+
 );
 
 foreach my $d(@set) {

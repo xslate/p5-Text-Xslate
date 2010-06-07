@@ -490,7 +490,8 @@ sub _generate_for {
     if(@{$vars} != 1) {
         $self->_error("A for-loop requires single variable for each items", $node);
     }
-    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+    local $self->{lvar}  = { %{$self->lvar} }; # new scope
+    local $self->{const} = [];                 # new scope
 
     my @code = $self->_expr($expr);
 
@@ -524,7 +525,8 @@ sub _generate_while {
     if(@{$vars} > 1) {
         $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
-    #local $self->{lvar} = { %{$self->lvar} }; # new scope
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
 
     my @code = $self->_expr($expr);
 
@@ -561,7 +563,8 @@ sub _generate_proc { # definition of macro, block, before, around, after
     my @args   = map{ $_->id } @{$node->second};
     my $block  = $node->third;
 
-    local $self->{lvar} = { %{$self->lvar} }; # new scope
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
 
     my $arg_ix = 0;
     foreach my $arg(@args) {
@@ -612,9 +615,19 @@ sub _generate_if {
         $first            = $first->first;
         ($second, $third) = ($third, $second);
     }
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
 
     my @cond  = $self->_expr($first);
+
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
+
     my @then  = $self->_compile_ast($second);
+
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
+
     my @else  = $self->_compile_ast($third);
 
     if(_OPTIMIZE) {
@@ -662,6 +675,9 @@ sub _generate_given {
     if(@{$vars} > 1) {
         $self->_error("A given block requires one or zero variables", $node);
     }
+    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
+
     my @code = $self->_expr($expr);
 
     my($lvar) = @{$vars};
@@ -924,7 +940,7 @@ sub _generate_constant {
         if(@expr == 1 && any_in($expr[0][0], qw(literal fetch_lvar))) {
             $expr[0][3] = "constant $lvar_name"; # comment
             $self->const->[$lvar_id] = \@expr;
-            return; # no real definition
+            return @expr; # no real definition
         }
     }
 

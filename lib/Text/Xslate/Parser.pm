@@ -1319,7 +1319,7 @@ sub std_given {
             $if = $else; # only default
         }
     }
-    $proc->third([$if]);
+    $proc->third([defined($if) ? $if : ()]);
     return $proc;
 }
 
