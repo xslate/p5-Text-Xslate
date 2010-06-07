@@ -358,6 +358,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             goto finish;
         }
     }
+    tx_error(aTHX_ st, "Undefined method %"SVf" called for %s", method, tx_neat(aTHX_ invocant));
 
     finish:
     SP = ORIGMARK;
