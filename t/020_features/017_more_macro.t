@@ -133,6 +133,14 @@ T
     <em>bar</em>
 X
 
+    [ <<'T', { }, <<'X', "save macro" ],
+<: macro em ->($x) { :><em><: $x :></em><: } -:>
+: for [em] -> $m {
+    <: $m("foo") :>
+: }
+T
+    <em>foo</em>
+X
 
 );
 

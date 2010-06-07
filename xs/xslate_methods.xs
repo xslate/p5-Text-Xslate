@@ -21,8 +21,6 @@ enum tx_trait_t {
     TX_TRAIT_KV,
 };
 
-#define TX_PAIR_CLASS "Text::Xslate::Type::Pair"
-
 typedef struct {
     const char* const name;
 

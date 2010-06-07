@@ -97,7 +97,7 @@ sub _assemble {
         $mtime    = time();
     }
 
-    $st->function( $self->{ function } );
+    $st->function({ %{$self->{ function }} });
 
     my $tmpl = [];
 
@@ -111,8 +111,6 @@ sub _assemble {
 
     $st->tmpl( $tmpl );
     $st->self( $self ); # weak_ref!
-
-    $st->macro( {} );
 
     $st->{sa}   = undef;
     $st->{sb}   = undef;
@@ -131,6 +129,7 @@ sub _assemble {
     $st->code_len( $len );
 
     my $code = [];
+    my $macro;
 
     for ( my $i = 0; $i < $len; $i++ ) {
         my $pair = $proto->[ $i ];
@@ -194,7 +193,28 @@ sub _assemble {
 
         # special cases
         if( $opnum == $OPS{ macro_begin } ) {
-            $st->macro->{ $code->[ $i ]->{ arg } } = $i;
+            my $name = $code->[ $i ]->{ arg };
+            if(!exists $st->function->{$name}) {
+                require Text::Xslate::PP::Macro;
+                $macro = Text::Xslate::PP::Macro->new(
+                    name => $name,
+                    addr => $i,
+                );
+                $st->function->{ $name } = $macro;
+            }
+            else {
+                $macro = undef;
+            }
+        }
+        elsif( $opnum == $OPS{ macro_nargs } ) {
+            if($macro) {
+                $macro->nargs($code->[$i]->{arg});
+            }
+        }
+        elsif( $opnum == $OPS{ macro_outer } ) {
+            if($macro) {
+                $macro->outer($code->[$i]->{arg});
+            }
         }
         elsif( $opnum == $OPS{ depend } ) {
             push @{ $tmpl }, $code->[ $i ]->{ arg };

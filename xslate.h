@@ -23,7 +23,9 @@
 
 /* xslate stuff */
 
-#define TX_ESC_CLASS "Text::Xslate::EscapedString"
+#define TX_ESC_CLASS   "Text::Xslate::EscapedString"
+#define TX_MACRO_CLASS "Text::Xslate::Macro"
+#define TX_PAIR_CLASS  "Text::Xslate::Type::Pair"
 
 /* arbitrary initial buffer size */
 #define TX_HINT_SIZE 128
@@ -57,7 +59,7 @@
 #define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
 #define TX_current_frame()    TX_current_framex(TX_st)
 
-/* template representation, stored in $self->{template}{$file} */
+/* template object, stored in $self->{template}{$file} */
 enum txtmplo_ix {
     TXo_NAME,
     TXo_MTIME,
@@ -68,7 +70,7 @@ enum txtmplo_ix {
     TXo_least_size
 };
 
-/* vm execution frame */
+/* vm execution frame object */
 enum txframeo_ix {
     TXframe_NAME,
     TXframe_OUTPUT,
@@ -77,6 +79,16 @@ enum txframeo_ix {
     TXframe_START_LVAR, /* TXframe_START_LVAR must be the last one */
     /* local variables here */
     TXframe_least_size = TXframe_START_LVAR
+};
+
+/* macro object */
+enum txmacro_ix {
+    TXm_NAME,
+    TXm_ADDR,
+    TXm_NARGS,
+    TXm_OUTER,
+
+    TXm_size,
 };
 
 struct tx_state_s;
@@ -111,8 +123,7 @@ struct tx_state_s {
     I32 current_frame; /* current frame index */
     SV** pad;          /* AvARRAY(frame[current_frame]) + 3 */
 
-    HV* macro;    /* name -> $addr */
-    HV* function; /* name => \&body */
+    HV* function; /* name => \&body | [macro object] */
 
     U32 hint_size; /* suggested template size (bytes) */
 
@@ -133,6 +144,9 @@ struct tx_code_s {
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal
 #define TXCODE_depend      TXCODE_noop
+#define TXCODE_macro_begin TXCODE_noop
+#define TXCODE_macro_nargs TXCODE_noop
+#define TXCODE_macro_outer TXCODE_noop
 
 void
 tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)

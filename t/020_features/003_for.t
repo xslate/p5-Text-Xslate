@@ -91,7 +91,7 @@ world!'
 >>"],
 
     [<<'T', <<'X'],
-: macro foo ->($x, $y) {
+: macro foo -> $x {
 :   for $x -> ($item) {
         <: $item :>
 :   }

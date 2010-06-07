@@ -5,9 +5,8 @@ use Test::More;
 
 use Text::Xslate;
 
-my $warn = '';
 my $tx = Text::Xslate->new(
-    warn_handler => sub { $warn .= "@_" },
+    verbose      => 2,
 );
 
 my @set = (
@@ -97,17 +96,32 @@ foreach my $d(@set) {
         for 1 .. 2;
 }
 
-
+my $warn = '';
+$tx = Text::Xslate->new(
+    warn_handler => sub{ $warn .= "@_" },
+);
 my $out = eval {
     $tx->render_string(<<'T', {});
     : macro foo -> $arg {
-        Hello <:= $arg :>!
+        Hello <:= $arg :>, world!
     : }
     : foo()
 T
 };
-is $out, "        Hello !\n";
-like $warn, qr/Too few arguments/, 'prototype mismatch';
+is $out, '';
+like $warn, qr/Wrong number of arguments for foo/, 'too few arguments';
+is $@, '';
+
+$out = eval {
+    $tx->render_string(<<'T', {});
+    : macro foo -> $arg {
+        Hello <:= $arg :>, world!
+    : }
+    : foo(1, 2)
+T
+};
+is $out, '';
+like $warn, qr/Wrong number of arguments for foo/, 'too many arguments';
 is $@, '';
 
 done_testing;

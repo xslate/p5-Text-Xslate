@@ -35,10 +35,6 @@ has code_len => (
     is => 'rw',
 );
 
-has macro => (
-    is => 'rw',
-);
-
 has function => (
     is => 'rw',
 );

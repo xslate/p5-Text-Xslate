@@ -383,9 +383,16 @@ sub _flush_macro_table {
     my @code;
     foreach my $macros(values %{$mtable}) {
         foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
-            push @code, [ 'macro_begin', $macro->{name}, $macro->{line} ];
-            push @code, @{ $macro->{body} };
-            push @code, [ 'macro_end' ];
+            push @code,
+                [ macro_begin => $macro->{name}, $macro->{line} ];
+
+            push @code, [ macro_nargs => $macro->{nargs} ]
+                if $macro->{nargs};
+
+            push @code, [ macro_outer => $macro->{lvar_used} ]
+                if $macro->{lvar_used};
+
+            push @code, @{ $macro->{body} }, ['macro_end'];
         }
     }
     %{$mtable} = ();
@@ -572,13 +579,12 @@ sub _generate_proc { # definition of macro, block, before, around, after
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
     my %macro = (
-        name   => $name,
-        nargs  => $arg_ix,
-        body   => [ $self->_compile_ast($block) ],
-        line   => $node->line,
-        file   => $self->file,
-
-        lvar_used => $lvar_used,
+        name      => $name,
+        nargs     => $arg_ix,
+        body      => [ $self->_compile_ast($block) ],
+        line      => $node->line,
+        file      => $self->file,
+        lvar_used => $lvar_used, # outer lexical variables
     );
 
     my @code;
@@ -831,21 +837,13 @@ sub _generate_call {
     my $callable = $node->first; # function or macro
     my $args     = $node->second;
 
-    my @code = (
+    return(
         [ pushmark => undef, undef, $callable->id ],
         (map { $self->_expr($_), [ 'push' ] } @{$args}),
         $self->_expr($callable),
+        # lvar_used inidicates how many number of lexical variables refers
+        [ funcall => undef, $node->line ],
     );
-
-    if($code[-1][0] eq 'macro') {
-        # lvar_used inidicates how many number of lvars copies
-        my $m = $self->macro_table->{$callable->id};
-        push @code, [ macrocall => $m->{lvar_used} || 0, $node->line ];
-    }
-    else {
-        push @code, [ funcall => undef, $node->line ];
-    }
-    return @code;
 }
 
 sub _generate_function {
@@ -857,7 +855,7 @@ sub _generate_function {
 sub _generate_macro {
     my($self, $node) = @_;
 
-    return [ macro => $node->id ];
+    return [ function => $node->id ];
 }
 
 # $~iterator

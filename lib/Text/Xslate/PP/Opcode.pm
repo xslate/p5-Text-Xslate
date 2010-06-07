@@ -10,6 +10,7 @@ use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
+use Text::Xslate::Util qw(p);
 
 use constant TXframe_NAME       => Text::Xslate::PP::TXframe_NAME;
 use constant TXframe_OUTPUT     => Text::Xslate::PP::TXframe_OUTPUT;
@@ -417,45 +418,62 @@ sub op_ge {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_function {
+    my $name = $_[0]->pc_arg;
 
-sub op_macrocall {
-    my $lvars  = $_[0]->pc_arg;
-    my $addr   = $_[0]->{sa}; # macro entry point
-    my $cframe = tx_push_frame( $_[0] );
+    if ( my $func = $_[0]->function->{ $name } ) {
+        $_[0]->{sa} = $func;
+    }
+    else {
+        Carp::croak( sprintf( "Oops: Undefined function %s", $name ) );
+    }
 
-    $cframe->[ TXframe_RETADDR ] = $_[0]->{ pc } + 1;
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
-    $cframe->[ TXframe_OUTPUT ] = $_[0]->{ output };
+sub _do_macrocall {
+    my($st, $macro) = @_;
+    my $name   = $macro->name;
+    my $addr   = $macro->addr;
+    my $nargs  = $macro->nargs;
+    my $outer  = $macro->outer;
+    my $args   = pop @{ $st->{SP} };
+
+    if(@{$args} != $nargs) {
+        tx_error($st, "Wrong number of arguments for %s (%d %s %d)",
+            $name, scalar(@{$args}), scalar(@{$args}) > $nargs ? '>' : '<', $nargs);
+        $st->{ sa } = undef;
+        $st->{ pc }++;
+        return;
+    }
+
+    my $cframe = tx_push_frame( $st );
+
+    $cframe->[ TXframe_RETADDR ] = $st->{ pc } + 1;
+    $cframe->[ TXframe_OUTPUT ]  = $st->{ output };
+    $cframe->[ TXframe_NAME ]    = $name;
 
     $_[0]->{ output } = '';
 
-    if($lvars > 0) {
+    if($outer > 0) {
         # copies lexical variables from the old frame to the new one
         my $oframe = $_[0]->frame->[ $_[0]->current_frame - 1 ];
-        for(my $i = 0; $i < $lvars; $i++) {
+        for(my $i = 0; $i < $outer; $i++) {
             my $real_ix = $i + TXframe_START_LVAR;
             $cframe->[$real_ix] = $oframe->[$real_ix];
         }
     }
 
-    my $i   = 0;
-
     $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
 
-    for my $val ( @{ pop @{ $_[0]->{ SP } } } ) {
+    my $i  = 0;
+    for my $val (@{$args}) {
         tx_access_lvar( $_[0], $i++, $val );
     }
 
     $_[0]->{ pc } = $addr;
-    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
+    return;
 }
-
-
-sub op_macro_begin {
-    $_[0]->frame->[ $_[0]->current_frame ]->[ TXframe_NAME ] = $_[0]->pc_arg;
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
 
 sub op_macro_end {
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
@@ -472,43 +490,18 @@ sub op_macro_end {
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
-
-sub op_macro {
-    my $name = $_[0]->pc_arg;
-
-    $_[0]->{sa} = $_[0]->macro->{ $name };
-
-    unless ( defined $_[0]->{sa} ) {
-        croak("Macro %s is not defined", tx_neat(aTHX_ name));
-    }
-
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
-sub op_function {
-    my $name = $_[0]->pc_arg;
-
-    if ( my $func = $_[0]->function->{ $name } ) {
-        $_[0]->{sa} = $func;
-    }
-    else {
-        Carp::croak( sprintf( "Function %s is not registered", $name ) );
-    }
-
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
 sub op_funcall {
     my $func = $_[0]->{sa};
-    my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
-    my $ret = tx_call( $_[0], 0, $func, @args );
-    $_[0]->{targ} = $ret;
-    $_[0]->{sa} = $ret;
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    if(ref $func eq 'Text::Xslate::PP::Macro') {
+        _do_macrocall($_[0], $func);
+        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
+    }
+    else {
+        my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
+        $_[0]->{sa} = tx_call( $_[0], 0, $func, @args );
+        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    }
 }
-
 
 sub op_methodcall_s {
     require Text::Xslate::PP::Method;
@@ -546,18 +539,16 @@ sub op_goto {
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
-
-sub op_depend {
-    # = noop
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
 sub op_end {
     $_[0]->{ pc } = $_[0]->code_len;
     return;
 }
 
+sub op_depend; *op_depend = \&op_noop;
+
+sub op_macro_begin; *op_macro_begin = \&op_noop;
+sub op_macro_nargs; *op_macro_nargs = \&op_noop;
+sub op_macro_outer; *op_macro_outer = \&op_noop;
 
 #
 # INTERNAL COMMON FUNCTIONS
