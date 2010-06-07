@@ -812,7 +812,7 @@ sub _generate_methodcall {
         $self->_expr($node->first),
         [ 'push' ],
         (map { $self->_expr($_), [ 'push' ] } @{$args}),
-        [ methodcall_s => $method ],
+        [ methodcall_s => $method, $node->line ],
     );
 }
 
