@@ -66,6 +66,19 @@ T
     <em>bar</em>
 X
 
+    [<<'T', { data => [qw(foo bar)] }, <<'X'],
+: for $data -> $i {
+    : constant ITEM  = $i
+    : constant INDEX = $~i.index
+    : constant COUNT = $~i.count
+    : constant BODY  = $~i.body
+    <: INDEX :> <: COUNT :> <: BODY[$~i] :> <: ITEM :>
+: }
+T
+    0 1 foo foo
+    1 2 bar bar
+X
+
 );
 
 foreach my $d(@set) {

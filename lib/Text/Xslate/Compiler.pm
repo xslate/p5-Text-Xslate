@@ -921,7 +921,7 @@ sub _generate_constant {
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 
     if(_OPTIMIZE) {
-        if(@expr == 1 && $expr[0][0] eq 'literal') {
+        if(@expr == 1 && any_in($expr[0][0], qw(literal fetch_lvar))) {
             $expr[0][3] = "constant $lvar_name"; # comment
             $self->const->[$lvar_id] = \@expr;
             return; # no real definition
