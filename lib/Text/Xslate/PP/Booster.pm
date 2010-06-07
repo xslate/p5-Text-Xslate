@@ -202,8 +202,8 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
             $self->write_lines(
                 sprintf(
-                    '_error( $st, %s, %s, "Too few arguments for %s" );',
-                    $self->frame_and_line, $self->stash->{ in_macro }
+                    '_error( $st, %s, %s, "Too few arguments for %s" ) unless defined $pad->[ -1 ]->[ %s ];',
+                    $self->frame_and_line, $self->stash->{ in_macro }, $arg
                 )
             );
         }
@@ -482,7 +482,8 @@ $CODE_MANIP{ 'macrocall' } = sub {
 
     $self->sa( sprintf( '$macro{ %s }->( $st, %s )',
         value_to_literal($self->sa()),
-        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
+#        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
+        sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, join( ', ', @{ pop @{ $self->SP } } )  )
     ) );
 };
 
@@ -1194,6 +1195,20 @@ sub cond_ne {
 sub push_pad {
     push @{ $_[0] }, $_[1];
     $_[0];
+}
+
+
+sub push_pad_for_macro {
+    my ( $lvars, $pad, $arrayref ) = @_;
+
+    push @{ $pad }, $arrayref;
+
+    # copies lexical variables from the old frame to the new one
+    if($lvars > 0) {
+        push @{ $pad->[ -1 ] }, @{ $pad->[ -2 ] };
+    }
+
+    return $pad;
 }
 
 
