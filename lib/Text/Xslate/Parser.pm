@@ -653,11 +653,7 @@ sub expression_list {
 
 sub led_infix {
     my($parser, $symbol, $left) = @_;
-    my $bin = $symbol->clone(arity => 'binary');
-
-    $bin->first($left);
-    $bin->second($parser->expression($bin->lbp));
-    return $bin;
+    return $parser->binary( $symbol, $left, $parser->expression($symbol->lbp) );
 }
 
 sub infix {
@@ -670,10 +666,7 @@ sub infix {
 
 sub led_infixr {
     my($parser, $symbol, $left) = @_;
-    my $bin = $symbol->clone(arity => 'binary');
-    $bin->first($left);
-    $bin->second($parser->expression($bin->lbp - 1));
-    return $bin;
+    return $parser->binary( $symbol, $left, $parser->expression($symbol->lbp - 1) );
 }
 
 sub infixr {
@@ -729,11 +722,7 @@ sub led_dot {
         $parser->_unexpected("a field name", $t);
     }
 
-    my $dot = $symbol->clone(
-        arity  => 'binary',
-        first  => $left,
-        second => $t->clone(arity => 'literal'),
-    );
+    my $dot = $parser->binary($symbol, $left, $t->clone(arity => 'literal'));
 
     $t = $parser->advance();
     if($t->id eq "(") {
@@ -749,11 +738,7 @@ sub led_dot {
 sub led_fetch {
     my($parser, $symbol, $left) = @_;
 
-    my $fetch = $symbol->clone(arity => 'binary');
-
-    $fetch->first($left);
-    $fetch->second($parser->expression(0));
-
+    my $fetch = $parser->binary($symbol, $left, $parser->expression(0));
     $parser->advance("]");
     return $fetch;
 }
@@ -804,7 +789,7 @@ sub define_literal{
     my $symbol = $parser->symbol($id);
     $symbol->arity('literal');
     $symbol->value($value);
-    return;
+    return $symbol;
 }
 
 sub new_scope {
@@ -883,6 +868,31 @@ sub define { # define a name to the scope
     $symbol->lbp(0);
     #$symbol->scope($top);
     return $symbol;
+}
+
+sub binary {
+    my($parser, $symbol, $lhs, $rhs) = @_;
+    if(!ref $symbol) {
+        # operator
+        $symbol = $parser->symbol($symbol);
+    }
+    if(!ref $lhs) {
+        # literal
+        $lhs = $parser->symbol('(literal)')->clone(
+            id => $lhs,
+        );
+    }
+    if(!ref $rhs) {
+        # literal
+        $rhs = $parser->symbol('(literal)')->clone(
+            id => $rhs,
+        );
+    }
+    return $symbol->clone(
+        arity  => 'binary',
+        first  => $lhs,
+        second => $rhs,
+    );
 }
 
 sub nud_function{
@@ -1281,23 +1291,14 @@ sub std_given {
         }
         $when->arity("if");
 
-        if(defined $when->first) { # when
-            if(!$when->first->is_logical) {
+        if(defined(my $test = $when->first)) { # when
+            if(!$test->is_logical) {
                 # XXX: should implement smart match?
-                my $match = $parser->symbol('==')->clone(
-                    arity  => 'binary',
-                    first  => $topic,
-                    second => $when->first,
-                );
-                $when->first($match);
+                $when->first( $parser->binary('==', $topic, $test) );
             }
         }
         else { # default
-            my $true = $parser->symbol('(literal)')->clone(
-                id         => 1,
-                is_logical => 1,
-            );
-            $when->first($true);
+            $when->first( $parser->symbol('true') );
             $else = $when;
             next;
         }
@@ -1457,57 +1458,31 @@ sub std_marker {
 
 sub iterator_index {
     my($parser, $iterator) = @_;
-
-    # $~iterator itself
+    # $~iterator
     return $iterator;
 }
 
 sub iterator_count {
     my($parser, $iterator) = @_;
-
-    my $one = $parser->symbol('(literal)')->clone(
-        id => 1,
-    );
-
     # $~iterator + 1
-    return $parser->symbol('+')->clone(
-        arity  => 'binary',
-        first  => $iterator,
-        second => $one,
-    );
+    return $parser->binary('+', $iterator, 1);
 }
 
 sub iterator_is_first {
     my($parser, $iterator) = @_;
-
-    my $zero = $parser->symbol('(literal)')->clone(
-        id => 0,
-    );
-
     # $~iterator == 0
-    return $parser->symbol('==')->clone(
-        arity  => 'binary',
-        first  => $iterator,
-        second => $zero,
-    );
+    return $parser->binary('==', $iterator, 0);
 }
 
 sub iterator_is_last {
     my($parser, $iterator) = @_;
-
-    my $max = $parser->iterator_max($iterator);
-
     # $~iterator == $~iterator.max
-    return $parser->symbol('==')->clone(
-        arity  => 'binary',
-        first  => $iterator,
-        second => $max,
-    );
+    return $parser->binary('==', $iterator, $parser->iterator_max($iterator));
 }
 
 sub iterator_body {
     my($parser, $iterator) = @_;
-
+    # $~iterator.body
     return $iterator->clone(
         arity => 'iterator_body',
     );
@@ -1515,53 +1490,25 @@ sub iterator_body {
 
 sub iterator_size {
     my($parser, $iterator) = @_;
-
-    my $body = $parser->iterator_body($iterator);
-
     # __builtin_size($~iterator.body)
     return $parser->symbol('size')->clone(
         arity => 'unary',
-        first => $body,
+        first => $parser->iterator_body($iterator),
     );
 }
 
 sub iterator_max {
     my($parser, $iterator) = @_;
-
-    my $size = $parser->iterator_size($iterator);
-
-    my $one = $parser->symbol('(literal)')->clone(
-        id => 1,
-    );
-
     # $~iterator.size - 1
-    return $parser->symbol('-')->clone(
-        arity  => 'binary',
-        first  => $size,
-        second => $one,
-    );
+    return $parser->binary('-', $parser->iterator_size($iterator), 1);
 }
 
 sub _iterator_peek {
     my($parser, $iterator, $pos) = @_;
-
-    my $body  = $parser->iterator_body($iterator);
-    my $index = $parser->iterator_index($iterator);
-    my $value = $parser->symbol('(literal)')->clone(
-        id => $pos,
-    );
-
-    my $next_index = $parser->symbol('+')->clone(
-        arity  => 'binary',
-        first  => $index,
-        second => $value,
-    );
-
-    # $~iterator.body[ $~iterator.index + $value ]
-    return $parser->symbol('[')->clone(
-        arity  => 'binary',
-        first  => $body,
-        second => $next_index,
+    # $~iterator.body[ $~iterator.index + $pos ]
+    return $parser->binary('[',
+        $parser->iterator_body($iterator),
+        $parser->binary('+', $parser->iterator_index($iterator), $pos),
     );
 }
 
@@ -1572,20 +1519,12 @@ sub iterator_peek_next {
 
 sub iterator_peek_prev {
     my($parser, $iterator) = @_;
-    my $prev =  $parser->_iterator_peek($iterator, -1);
-
-    my $is_first = $parser->iterator_is_first($iterator);
-    my $nil      = $parser->symbol('nil')->clone(
-        arity => 'literal',
-        value => undef,
-    );
-
     # $~iterator.is_first ? nil : <prev>
     return $parser->symbol('?')->clone(
         arity  => 'if',
-        first  => $is_first,
-        second => [$nil],
-        third  => [$prev],
+        first  => $parser->iterator_is_first($iterator),
+        second => [$parser->symbol('nil')],
+        third  => [$parser->_iterator_peek($iterator, -1)],
     );
 }
 
