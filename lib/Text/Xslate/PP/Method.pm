@@ -14,6 +14,8 @@ use Text::Xslate::PP::Type::Hash;
 use constant TX_ENUMERABLE => 'Text::Xslate::PP::Type::Array';
 use constant TX_KV         => 'Text::Xslate::PP::Type::Hash';
 
+our @CARP_NOT = qw(Text::Xslate::PP::Opcode);
+
 my %builtin_method = (
     size    => [0, TX_ENUMERABLE],
     join    => [1, TX_ENUMERABLE],
@@ -30,10 +32,9 @@ sub tx_methodcall {
 
     my($invocant, @args) = @{ pop @{ $st->{ SP } } };
 
-    my $retval;
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
-            $retval = eval { $invocant->$method(@args) };
+            my $retval = eval { $invocant->$method(@args) };
             if($@) {
                 tx_error($st, "%s" . "\t...", $@);
             }
@@ -44,6 +45,7 @@ sub tx_methodcall {
 
     if(!defined $invocant) {
         tx_warn($st, "Use of nil to invoke method %s", $method);
+        return undef;
     }
     elsif(my $bm = $builtin_method{$method}) {
         my($nargs, $klass) = @{$bm};
@@ -55,16 +57,23 @@ sub tx_methodcall {
             return undef;
          }
 
-         $retval = eval {
+        my $retval = eval {
             $klass->new($invocant)->$method(@args);
         };
+        if($@) {
+            if($@ =~ /Can't locate/) {
+                last;
+            }
+            else {
+                tx_error($st, "%s..", $@);
+            }
+        }
+        return $retval;
     }
-    else {
-        tx_error($st, "Undefined method %s called for %s",
-            $method, $invocant);
-    }
+    tx_error($st, "Undefined method %s called for %s",
+        $method, $invocant);
 
-    return $retval;
+    return undef;
 }
 
 1;

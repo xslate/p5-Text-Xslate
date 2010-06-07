@@ -66,36 +66,6 @@ like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
 
-note 'verbose => 2';
-
-$tx = Text::Xslate->new(
-    verbose      => 2,
-    warn_handler => \&my_warn,
-);
-
-foreach my $code(
-    q{ nil },
-    q{ nil.foo },
-    q{ nil.foo() },
-    q{ for nil -> ($item) { print "foobar"; } },
-    q{ $h[nil] },
-    q{ $a[nil] },
-    q{ nil | raw },
-    q{ nil | html },
-    q{ 1 ? raw(nil)  : "UNLIKELY" },
-    q{ 1 ? html(nil) : "UNLIKELY" },
-) {
-    $warn = '';
-    my $out = eval {
-        $tx->render_string("<: $code :>", { h => {'' => 'foo'}, a => [42] });
-    };
-
-    is $out,  '', $code;
-    like $warn, qr/Use of nil/, $warn;
-    like $warn, qr/at $FILE line \d+/;
-    is $@,  '';
-}
-
 $warn = '';
 $out = eval {
     $tx->render_string('<: $a + $b :>', { a => 'foo', b => 'bar' });
@@ -126,9 +96,50 @@ is $out, '', 'warn in render_string()';
 like $warn, qr/Undefined method/;
 like $warn, qr/\b foo \b/xms;
 like $warn, qr/\b ARRAY \b/xms;
-
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
+
+$warn = '';
+$out = eval {
+    $tx->render_string('<: $o.foo() :>', { o => bless {}, 'MyObject' });
+};
+
+is $out, '', 'warn in render_string()';
+like $warn, qr/Undefined method/;
+like $warn, qr/\b foo \b/xms;
+like $warn, qr/\b MyObject \b/xms;
+like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+is $@,  '';
+
+note 'verbose => 2';
+
+$tx = Text::Xslate->new(
+    verbose      => 2,
+    warn_handler => \&my_warn,
+);
+
+foreach my $code(
+    q{ nil },
+    q{ nil.foo },
+    q{ nil.foo() },
+    q{ for nil -> ($item) { print "foobar"; } },
+    q{ $h[nil] },
+    q{ $a[nil] },
+    q{ nil | raw },
+    q{ nil | html },
+    q{ 1 ? raw(nil)  : "UNLIKELY" },
+    q{ 1 ? html(nil) : "UNLIKELY" },
+) {
+    $warn = '';
+    my $out = eval {
+        $tx->render_string("<: $code :>", { h => {'' => 'foo'}, a => [42] });
+    };
+
+    is $out,  '', $code;
+    like $warn, qr/Use of nil/, $warn;
+    like $warn, qr/at $FILE line \d+/;
+    is $@,  '';
+}
 
 is $perl_warnings, '', "Perl doesn't produce warnings";
 

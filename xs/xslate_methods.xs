@@ -340,13 +340,13 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
             if(bm.trait == TX_TRAIT_ENUMERABLE) {
                 if(!tx_as_enumerable(aTHX_ st, MARK /* invocant ptr */)) {
-                    goto finish;
+                    goto not_found;
                 }
                 assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVAV);
             }
             else if(bm.trait == TX_TRAIT_KV) {
                 if(!tx_as_kv(aTHX_ st, MARK /* invocant ptr */)) {
-                    goto finish;
+                    goto not_found;
                 }
                 assert(SvROK(*MARK) && SvTYPE(SvRV(*MARK)) == SVt_PVHV);
             }
@@ -356,6 +356,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             goto finish;
         }
     }
+    not_found:
     tx_error(aTHX_ st, "Undefined method %"SVf" called for %s", method, tx_neat(aTHX_ invocant));
 
     finish:
