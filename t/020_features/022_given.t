@@ -240,6 +240,32 @@ T
         FOO
 X
 
+    [<<'T', { value => undef }, <<'X', 'nil'],
+: given $value -> $it {
+:    when nil {
+        FOO
+:    }
+:    default {
+        UNLIKELY
+:    }
+: }
+T
+        FOO
+X
+
+    [<<'T', { value => 0 }, <<'X', 'nil'],
+: given $value -> $it {
+:    when nil {
+        UNLIKELY
+:    }
+:    default {
+        FOO
+:    }
+: }
+T
+        FOO
+X
+
 );
 
 foreach my $d(@set) {
