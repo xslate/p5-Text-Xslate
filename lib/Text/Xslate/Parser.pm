@@ -1281,14 +1281,15 @@ sub std_given {
         }
         $when->arity("if");
 
-        if(defined $when->first) { # given
+        if(defined $when->first) { # when
             if(!$when->first->is_logical) {
-                my $eq = $parser->symbol('==')->clone(
+                # XXX: should implement smart match?
+                my $match = $parser->symbol('==')->clone(
                     arity  => 'binary',
                     first  => $topic,
                     second => $when->first,
                 );
-                $when->first($eq);
+                $when->first($match);
             }
         }
         else { # default
@@ -1311,7 +1312,7 @@ sub std_given {
             $elsif = $when;
         }
     }
-    if(defined $else) {
+    if(defined $else) { # default
         if(defined $elsif) {
             $elsif->third([$else]);
         }
@@ -1319,7 +1320,7 @@ sub std_given {
             $if = $else; # only default
         }
     }
-    $proc->third([defined($if) ? $if : ()]);
+    $proc->third(defined $if ? [$if] : undef);
     return $proc;
 }
 

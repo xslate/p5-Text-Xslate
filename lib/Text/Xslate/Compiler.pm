@@ -207,7 +207,7 @@ sub _finish_main {
 
 sub _compile_ast {
     my($self, $ast) = @_;
-    return unless defined $ast;
+    return if not defined $ast;
 
     Carp::confess("Oops: Not an ARRAY reference: " . p($ast)) if ref($ast) ne 'ARRAY';
 
@@ -499,7 +499,7 @@ sub _generate_for {
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $iter_var->id;
 
-    local $self->lvar->{$lvar_name} = $lvar_id;
+    $self->lvar->{$lvar_name} = $lvar_id;
 
     push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
 
@@ -534,19 +534,14 @@ sub _generate_while {
     my($lvar_id, $lvar_name);
 
     if(@{$vars}) {
-        $lvar_id   = $self->lvar_id;
-        $lvar_name = $iter_var->id;
+        $lvar_id                  = $self->lvar_id;
+        $lvar_name                = $iter_var->id;
+        $self->lvar->{$lvar_name} = $lvar_id;
+        push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ];
     }
 
-    local $self->lvar->{$lvar_name} = $lvar_id
-        if @{$vars};
-
-    # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_ast($block);
-
-    push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ]
-        if @{$vars};
 
     push @code,
         [ and  => scalar(@block_code) + 2, undef, "while" ],
@@ -680,14 +675,13 @@ sub _generate_given {
 
     my @code = $self->_expr($expr);
 
-    my($lvar) = @{$vars};
+    my($lvar)     = @{$vars};
     my $lvar_id   = $self->lvar_id;
     my $lvar_name = $lvar->id;
 
-    local $self->lvar->{$lvar_name} = $lvar_id;
+    $self->lvar->{$lvar_name} = $lvar_id;
 
-    # a for statement uses three local variables (container, iterator, and item)
-    local $self->{lvar_id} = $self->lvar_use(1);
+    local $self->{lvar_id} = $self->lvar_use(1); # topic variable
     push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ],
         $self->_compile_ast($block);
 
