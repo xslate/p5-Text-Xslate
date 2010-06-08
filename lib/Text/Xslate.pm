@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1028';
+our $VERSION = '0.1029';
 
 use Text::Xslate::Util qw($DEBUG html_escape escaped_string);
 
@@ -365,7 +365,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1028.
+This document describes Text::Xslate version 0.1029.
 
 =head1 SYNOPSIS
 

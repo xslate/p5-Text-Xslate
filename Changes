@@ -1,5 +1,19 @@
 Revision history for Perl extension Text::Xslate
 
+0.1029
+    Macros and autoboxing have been refactored.
+
+    [CHANGES]
+    - A few undecoumented features have been removed
+
+    [BUG FIXES]
+    - Tied array/hash could cause segv by builtin methods
+
+    [NEW FEATURES]
+    - User-defined autoboxing methods; see Text::Xslate::Bridge::TT2 on CPAN
+    - Macros become first objects;
+      i.e. <: macro foo -> { ... }; my $foo = [foo]; $foo[0]() :> works.
+
 0.1028 Sun Jun  6 17:21:18 2010
     This release introduces variable definition and mutation, which might be
     unstable. Please report any bugs you'd run into.
