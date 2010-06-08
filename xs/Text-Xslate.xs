@@ -311,7 +311,7 @@ tx_escaped_string(pTHX_ SV* const str) {
     }
 }
 
-static void /* doesn't care about escaped-ness */
+inline static void /* doesn't care about escaped-ness */
 tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
