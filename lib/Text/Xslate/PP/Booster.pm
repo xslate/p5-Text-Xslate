@@ -1044,6 +1044,9 @@ sub call {
 
 
 use Text::Xslate::PP::Type::Pair;
+
+=pod
+
 use Text::Xslate::PP::Type::Array;
 use Text::Xslate::PP::Type::Hash;
 
@@ -1060,6 +1063,8 @@ my %builtin_method = (
     values  => [0, TX_KV],
     kv      => [0, TX_KV],
 );
+
+=cut
 
 sub methodcall {
     my ( $st, $frame, $line, $method, $invocant, @args ) = @_;
@@ -1079,6 +1084,9 @@ sub methodcall {
     if(!defined $invocant) {
         _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
     }
+
+=pod
+
     elsif(my $bm = $builtin_method{$method}){
         my($nargs, $klass) = @{$bm};
         if(@args != $nargs) {
@@ -1093,6 +1101,9 @@ sub methodcall {
             $klass->new($invocant)->$method(@args);
          };
     }
+
+=cut
+
     else {
         _error($st, $frame, $line, "Undefined method %s called for %s",
             $method, $invocant);
