@@ -323,7 +323,7 @@ sub std_macro {
         $parser->_error("a name", $name);
     }
 
-    $parser->define_macro($name->id);
+    $parser->define_function($name->id);
 
     $proc->first($name);
     $parser->advance();
@@ -391,7 +391,7 @@ sub std_wrapper {
     );
 
     my $internal_name = $symbol->clone(
-        arity => 'macro',
+        arity => 'function',
         id    => 'content@wrapper',
     );
 

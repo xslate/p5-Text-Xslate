@@ -910,21 +910,6 @@ sub define_function {
     return;
 }
 
-sub nud_macro{
-    my($parser, $s) = @_;
-    return $s->clone(arity => 'macro');
-}
-
-sub define_macro {
-    my($parser, @names) = @_;
-
-    foreach my $name(@names) {
-        my $s = $parser->symbol($name);
-        $s->set_nud(\&nud_macro);
-    }
-    return;
-}
-
 sub finish_statement {
     my($parser) = @_;
 
@@ -1193,8 +1178,8 @@ sub std_proc {
         $parser->_unexpected("a name", $name);
     }
 
-    $parser->define_macro($name->id);
-    $macro->first( $parser->nud_macro($name) );
+    $parser->define_function($name->id);
+    $macro->first( $parser->nud_function($name) );
     $parser->advance();
     $parser->pointy($macro);
     return $macro;

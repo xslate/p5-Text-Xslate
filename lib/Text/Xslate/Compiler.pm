@@ -860,12 +860,6 @@ sub _generate_function {
     return [ function => $node->id, $node->line, 'function' ];
 }
 
-sub _generate_macro {
-    my($self, $node) = @_;
-
-    return [ function => $node->id, $node->line, 'macro' ];
-}
-
 # $~iterator
 sub _generate_iterator {
     my($self, $node) = @_;
