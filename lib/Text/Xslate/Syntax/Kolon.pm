@@ -77,6 +77,12 @@ Hash:
 
     : foo({ foo => "bar" })
 
+C<{ ... }> is always parsed as hash literals, so you need not to use prefix C<+>
+as Perl sometimes requires:
+
+    :  {}.kv(); # ok
+    : +{}.kv(); # also ok
+
 =head2 Expressions
 
 Conditional operator (C<< ?: >>):
