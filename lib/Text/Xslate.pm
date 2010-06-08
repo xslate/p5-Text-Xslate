@@ -706,9 +706,9 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 =back
 
-=head2 Automatic semicolon insersion
+=head2 Automatic semicolon insertion
 
-The Xslate tokanizer automatically inserts semicolons at the end of the line
+The Xslate tokenizer automatically inserts semicolons at the end of the line
 codes. Currently this mechanism is not so smart, which could cause problems:
 
 For example, the following Kolon template causes syntax errors.
