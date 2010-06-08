@@ -15,6 +15,7 @@ my $tx = Text::Xslate->new(
             return sub { Text::Xslate::EscapedString->new(sprintf $fmt, @_) }
         },
     },
+    verbose => 2,
 );
 
 my @set = (
@@ -157,7 +158,7 @@ foreach my $d(@set) {
     }
     $in =~ /\$/ or die "Oops: $in";
 
-    note $in;
+    #note $in;
     is $tx->render_string($in, $vars), $out,
         or diag($in);
 }

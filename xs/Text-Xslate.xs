@@ -33,12 +33,12 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     assert(SvTYPE(cframe) == SVt_PVAV);
 
     if(AvFILLp(cframe) < real_ix) {
-        croak("panic: local variable storage is too small (%d < %d)",
-            (int)(AvFILLp(cframe) - TXframe_START_LVAR), (int)lvar_ix); 
+        croak("Oops: Refers to unallocated local variable %d (> %d)",
+            (int)lvar_ix, (int)(AvFILLp(cframe) - TXframe_START_LVAR)); 
     }
 
     if(!st->pad) {
-        croak("panic: access local variable (%d) before initialization",
+        croak("panic: Refers to local variable %d before initialization",
             (int)lvar_ix);
     }
     return st->pad[lvar_ix];
@@ -53,7 +53,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 #define TX_lvarx_get(st, ix) ((st)->pad[ix])
 #endif /* DEBUGGING */
 
-#define TX_lvarx(st, ix) tx_fetch_lvar(aTHX_ st, ix)
+#define TX_lvarx(st, ix) tx_load_lvar(aTHX_ st, ix)
 
 #define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
 #define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
@@ -135,8 +135,8 @@ tx_error(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
     }
 }
 
-static SV*
-tx_fetch_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX_lvar() */
+static SV* /* allocate and load a lexcal variable */
+tx_load_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX_lvar() */
     AV* const cframe  = TX_current_framex(st);
     I32 const real_ix = lvar_ix + TXframe_START_LVAR;
 
@@ -405,6 +405,11 @@ TXC_w_var(save_to_lvar) {
     TX_st->pc++;
 }
 
+TXC_w_var(load_lvar) {
+    TX_st_sa = TX_lvar_get(SvIVX(TX_op_arg));
+    TX_st->pc++;
+}
+
 TXC_w_var(load_lvar_to_sb) {
     TX_st_sb = TX_lvar_get(SvIVX(TX_op_arg));
     TX_st->pc++;
@@ -412,7 +417,7 @@ TXC_w_var(load_lvar_to_sb) {
 
 /* local $vars->{$key} = $val */
 /* see pp_helem() in pp_hot.c */
-TXC_w_key(local_s) {
+TXC_w_key(localize_s) {
     HV* const vars   = TX_st->vars;
     SV* const key    = TX_op_arg;
     bool const preeminent
@@ -443,7 +448,6 @@ TXC(push) {
     TX_st->pc++;
 }
 
-/* pushmark does ENTER & SAVETMPS */
 TXC(pushmark) {
     dSP;
     PUSHMARK(SP);
@@ -472,21 +476,6 @@ TXC_w_key(fetch_s) { /* fetch a field from the top */
 
     TX_st_sa = LIKELY(he != NULL) ? hv_iterval(vars, he) : &PL_sv_undef;
 
-    TX_st->pc++;
-}
-
-TXC_w_var(fetch_lvar) {
-    IV const id      = SvIVX(TX_op_arg);
-    AV* const cframe = TX_current_frame();
-
-    /* XXX: is there a better way? */
-    if(AvFILLp(cframe) < (id + TXframe_START_LVAR)) {
-        tx_error(aTHX_ TX_st, "Too few arguments for %"SVf, AvARRAY(cframe)[TXframe_NAME]);
-        TX_st_sa = &PL_sv_undef;
-    }
-    else {
-        TX_st_sa = TX_lvar_get(id);
-    }
     TX_st->pc++;
 }
 
@@ -883,7 +872,7 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
 
 TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
-    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame];
+    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame]; /* pop frame */
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
     SV* tmp;
 
@@ -1010,6 +999,7 @@ TXC_goto(goto) {
 }
 
 TXC(end) {
+    assert(TX_st->current_frame == 0);
     TX_st->pc = TX_st->code_len;
 }
 

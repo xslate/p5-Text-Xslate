@@ -124,7 +124,7 @@ has parser => (
     is  => 'rw',
     isa => 'Object', # Text::Xslate::Parser
 
-    handles => [qw(file line define_constant define_function)],
+    handles => [qw(file line define_function)],
 
     lazy    => 1,
     default => sub {
@@ -411,7 +411,7 @@ sub _generate_name {
             return @{$code};
         }
         else {
-            return [ fetch_lvar => $lvar_id, $node->line, "constant $node" ];
+            return [ load_lvar => $lvar_id, $node->line, "constant $node" ];
         }
     }
 
@@ -703,7 +703,7 @@ sub _generate_variable {
 
     my @op;
     if(defined(my $lvar_id = $self->lvar->{$node->id})) {
-        @op = ( fetch_lvar => $lvar_id );
+        @op = ( load_lvar => $lvar_id );
     }
     else {
         @op = ( fetch_s => $self->_variable_to_value($node) );
@@ -849,7 +849,7 @@ sub _generate_call {
     }
 
     return(
-        [ pushmark => undef, undef, $callable->id ],
+        [ pushmark => undef, undef, "funcall " . $callable->id ],
         (map { $self->_expr($_), [ 'push' ] } @{$args}),
         $self->_expr($callable),
         # lvar_used inidicates how many number of lexical variables refers
@@ -860,13 +860,13 @@ sub _generate_call {
 sub _generate_function {
     my($self, $node) = @_;
 
-    return [ function => $node->id ];
+    return [ function => $node->id, $node->line, 'function' ];
 }
 
 sub _generate_macro {
     my($self, $node) = @_;
 
-    return [ function => $node->id ];
+    return [ function => $node->id, $node->line, 'macro' ];
 }
 
 # $~iterator
@@ -880,7 +880,7 @@ sub _generate_iterator {
             $node);
     }
 
-    return [ fetch_lvar => $lvar_id+1, $node->line, $node->id ];
+    return [ load_lvar => $lvar_id+1, $node->line, $node->id ];
 }
 
 sub _generate_iterator_body {
@@ -893,7 +893,7 @@ sub _generate_iterator_body {
             $node);
     }
 
-    return [ fetch_lvar => $lvar_id+2, $node->line, $node->id ];
+    return [ load_lvar => $lvar_id+2, $node->line, $node->id ];
 }
 
 sub _generate_assign {
@@ -940,7 +940,7 @@ sub _generate_constant {
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 
     if(_OPTIMIZE) {
-        if(@expr == 1 && any_in($expr[0][0], qw(literal fetch_lvar))) {
+        if(@expr == 1 && any_in($expr[0][0], qw(literal load_lvar))) {
             $expr[0][3] = "constant $lvar_name"; # comment
             $self->const->[$lvar_id] = \@expr;
             return @expr; # no real definition
@@ -963,7 +963,7 @@ sub _localize_vars {
         }
         push @localize,
             $self->_expr($expr),
-            [ local_s => literal_to_value($key->value) ];
+            [ localize_s => literal_to_value($key->value) ];
     }
     return @localize;
 }

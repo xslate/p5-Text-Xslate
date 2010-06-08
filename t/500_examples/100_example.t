@@ -29,18 +29,23 @@ sub perl {
     return($out, $err);
 }
 
+unlink <example/*.txc>;
 
-while(<example/*.pl>) {
-    my($out, $err) = perl($_);
+while(defined(my $example = <example/*.pl>)) {
+    my $expect = do {
+        my $gold = $example;
+        $gold =~ s/\.pl$/.gold/;
+        open my $g, '<', $gold or die "Cannot open '$gold' for reading: $!";
+        local $/;
+        <$g>;
+    };
 
-    my $gold = $_;
-    $gold =~ s/\.pl$/.gold/;
+    foreach(1 .. 2) {
+        my($out, $err) = perl($example);
 
-    open my $o, '<', $gold or die "$gold: $!";
-    local $/;
-
-    is $out, scalar(<$o>), $_;
-    is $err, '', 'no errors';
+        is $out, $expect, $example . " ($_)";
+        is $err, '', 'no errors';
+    }
 }
 
 done_testing;

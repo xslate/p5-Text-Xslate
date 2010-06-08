@@ -51,23 +51,23 @@ sub op_move_to_sb {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-
 sub op_move_from_sb {
     $_[0]->{sa} = $_[0]->{sb};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-
 sub op_save_to_lvar {
-    $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-    tx_access_lvar( $_[0], $_[0]->pc_arg, $_[0]->{sa} );
+    tx_access_lvar( $_[0], $_[0]->op_arg, $_[0]->{sa} );
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_load_lvar {
+    $_[0]->{sa} = tx_access_lvar( $_[0], $_[0]->op_arg );
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
 sub op_load_lvar_to_sb {
-    $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-    $_[0]->{sb} = tx_access_lvar( $_[0], $_[0]->pc_arg );
+    $_[0]->{sb} = tx_access_lvar( $_[0], $_[0]->op_arg );
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -78,10 +78,10 @@ sub op_load_lvar_to_sb {
     sub DESTROY { $_[0]->() }
 }
 
-sub op_local_s {
+sub op_localize_s {
     my($st) = @_;
     my $vars   = $st->{vars};
-    my $key    = $st->pc_arg;
+    my $key    = $st->op_arg;
     my $preeminent
                = exists $vars->{$key};
     my $oldval = delete $vars->{$key};
@@ -117,38 +117,21 @@ sub op_nil {
 
 
 sub op_literal {
-    $_[0]->{sa} = $_[0]->pc_arg;
+    $_[0]->{sa} = $_[0]->op_arg;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_literal_i {
-    $_[0]->{sa} = $_[0]->pc_arg;
+    $_[0]->{sa} = $_[0]->op_arg;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_fetch_s {
-    $_[0]->{sa} = $_[0]->{vars}->{ $_[0]->pc_arg };
+    $_[0]->{sa} = $_[0]->{vars}->{ $_[0]->op_arg };
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
-
-
-sub op_fetch_lvar {
-    my $id     = $_[0]->pc_arg;
-    my $cframe = $_[0]->frame->[ $_[0]->current_frame ];
-
-    if ( scalar @{ $cframe } < $id + TXframe_START_LVAR + 1 ) {
-        tx_error( $_[0], "Too few arguments for %s", $cframe->[ TXframe_NAME ] );
-        $_[0]->{sa} = undef;
-    }
-    else {
-        $_[0]->{sa} = tx_access_lvar( $_[0], $id );
-    }
-
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
 
 sub op_fetch_field {
     my $var = $_[0]->{sb};
@@ -160,7 +143,7 @@ sub op_fetch_field {
 
 sub op_fetch_field_s {
     my $var = $_[0]->{sa};
-    my $key = $_[0]->pc_arg;
+    my $key = $_[0]->op_arg;
     $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
@@ -201,7 +184,7 @@ sub op_print_raw {
 
 
 sub op_print_raw_s {
-    $_[0]->{ output } .= $_[0]->pc_arg;
+    $_[0]->{ output } .= $_[0]->op_arg;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -217,7 +200,7 @@ sub op_include {
 
 sub op_for_start {
     my $ar = $_[0]->{sa};
-    my $id = $_[0]->pc_arg;
+    my $id = $_[0]->op_arg;
 
     unless ( $ar and ref $ar eq 'ARRAY' ) {
         if ( defined $ar ) {
@@ -228,8 +211,6 @@ sub op_for_start {
         }
         $ar = [];
     }
-
-    $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
 
     #tx_access_lvar( $_[0], $id + _FOR_ITEM, undef );
     tx_access_lvar( $_[0], $id + _FOR_ITER, -1 );
@@ -259,7 +240,7 @@ sub op_for_iter {
     }
 
     # finish
-    $_[0]->{ pc } = $_[0]->pc_arg;
+    $_[0]->{ pc } = $_[0]->op_arg;
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -300,7 +281,7 @@ sub op_mod {
 
 
 sub op_concat {
-    my $sv = $_[0]->pc_arg;
+    my $sv = $_[0]->op_arg;
     $sv .= $_[0]->{sb} . $_[0]->{sa};
     $_[0]->{sa} = $sv;
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -311,7 +292,7 @@ sub op_and {
         goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
-        $_[0]->{ pc } = $_[0]->pc_arg;
+        $_[0]->{ pc } = $_[0]->op_arg;
         goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
@@ -322,7 +303,7 @@ sub op_dand {
         goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
-        $_[0]->{ pc } = $_[0]->pc_arg;
+        $_[0]->{ pc } = $_[0]->op_arg;
         goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
@@ -333,7 +314,7 @@ sub op_or {
         goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
     }
     else {
-        $_[0]->{ pc } = $_[0]->pc_arg;
+        $_[0]->{ pc } = $_[0]->op_arg;
         goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
 }
@@ -342,7 +323,7 @@ sub op_or {
 sub op_dor {
     my $sv = $_[0]->{sa};
     if ( defined $sv ) {
-        $_[0]->{ pc } = $_[0]->pc_arg;
+        $_[0]->{ pc } = $_[0]->op_arg;
         goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
     else {
@@ -433,7 +414,7 @@ sub op_ge {
 }
 
 sub op_function {
-    my $name = $_[0]->pc_arg;
+    my $name = $_[0]->op_arg;
 
     if ( my $func = $_[0]->function->{ $name } ) {
         $_[0]->{sa} = $func;
@@ -478,8 +459,6 @@ sub _do_macrocall {
         }
     }
 
-    $_[0]->pad( $_[0]->frame->[ $_[0]->current_frame ] );
-
     my $i  = 0;
     for my $val (@{$args}) {
         tx_access_lvar( $_[0], $i++, $val );
@@ -490,23 +469,24 @@ sub _do_macrocall {
 }
 
 sub op_macro_end {
-    my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
-    my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
+    my($st) = @_;
+    my $frames   = $st->frame;
+    my $oldframe = $frames->[ $st->current_frame ];
+    my $cframe   = $frames->[ $st->current_frame( $st->current_frame - 1 ) ]; # pop frame
 
-    if($_[0]->pc_arg) { # immediate macros
-        $_[0]->{targ} = $_[0]->{ output };
+    if($st->op_arg) { # immediate macros
+        $st->{targ} = $st->{ output };
     }
     else {
-        $_[0]->{targ} = escaped_string( $_[0]->{ output } );
+        $st->{targ} = escaped_string( $st->{ output } );
     }
 
-    $_[0]->{sa} = $_[0]->{targ};
+    $st->{sa} = $st->{targ};
 
-    $_[0]->{ output } = $oldframe->[ TXframe_OUTPUT ];
+    $st->{ output } = $oldframe->[ TXframe_OUTPUT ];
+    $st->{ pc }     = $oldframe->[ TXframe_RETADDR ];
 
-    $_[0]->{ pc } = $oldframe->[ TXframe_RETADDR ];
-
-    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ $st->{ pc } ]->{ exec_code };
 }
 
 sub op_funcall {
@@ -524,7 +504,7 @@ sub op_funcall {
 
 sub op_methodcall_s {
     require Text::Xslate::PP::Method;
-    $_[0]->{sa} = Text::Xslate::PP::Method::tx_methodcall($_[0], $_[0]->pc_arg);
+    $_[0]->{sa} = Text::Xslate::PP::Method::tx_methodcall($_[0], $_[0]->op_arg);
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -554,12 +534,16 @@ sub op_leave {
 }
 
 sub op_goto {
-    $_[0]->{ pc } = $_[0]->pc_arg;
+    $_[0]->{ pc } = $_[0]->op_arg;
     goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_end {
     $_[0]->{ pc } = $_[0]->code_len;
+
+    if($_[0]->current_frame != 0) {
+        Carp::croak("Oops: broken stack frame:" .  p($_[0]->frame));
+    }
     return;
 }
 
@@ -586,13 +570,7 @@ sub tx_push_frame {
         Carp::croak("Macro call is too deep (> 100)");
     }
 
-    $st->current_frame( $st->current_frame + 1 );
-
-    $st->frame->[ $st->current_frame ] ||= [];
-
-    $st->pad( $st->frame->[ $st->current_frame ] );
-
-    $st->frame->[ $st->current_frame ];
+    return $st->frame->[ $st->current_frame( $st->current_frame + 1 ) ] ||= [];
 }
 
 sub tx_call {

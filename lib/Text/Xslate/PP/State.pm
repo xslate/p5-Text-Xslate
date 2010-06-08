@@ -43,8 +43,12 @@ has local_stack => (
     is => 'rw',
 );
 
+sub pad {
+    my($st) = @_;
+    return $st->frame->[ $st->current_frame ];
+}
 
-sub pc_arg {
+sub op_arg {
     $_[0]->{ code }->[ $_[0]->{ pc } ]->{ arg };
 }
 
