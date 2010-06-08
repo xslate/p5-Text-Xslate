@@ -635,7 +635,7 @@ sub _generate_if {
     my @else  = $self->_compile_ast($third);
 
     if(_OPTIMIZE) {
-        if(@cond == 1 && $cond[0][0] eq 'literal') {
+        if($self->_code_is_literal(\@cond)) {
             if($cond[0][1]) {
                 return @then;
             }
@@ -748,9 +748,11 @@ sub _generate_unary {
 
     my $id = $node->id;
     if(exists $unary{$id}) {
-        return
-            $self->_expr($node->first),
-            [ $unary{$id} => () ];
+        my @code = ($self->_expr($node->first), [ $unary{$id} ]);
+        if( _OPTIMIZE and $self->_code_is_literal(\@code) ) {
+            $self->_fold_constants(\@code);
+        }
+        return @code;
     }
     else {
         $self->_error("Unary operator $id is not implemented", $node);
@@ -800,11 +802,7 @@ sub _generate_binary {
         }
 
         if(_OPTIMIZE) {
-            if(scalar(@code) == 5
-                    and join(' ', map { $_->[0] } @code[0 .. scalar(@code) - 2])
-                        eq 'literal save_to_lvar literal load_lvar_to_sb'
-                    and defined($code[0][1])
-                    and defined($code[2][1]) ) {
+            if( $self->_code_is_literal(\@lhs) and $self->_code_is_literal(\@rhs) ){
                 $self->_fold_constants(\@code);
             }
         }
@@ -976,6 +974,11 @@ sub _variable_to_value {
 }
 
 # optimizatin stuff
+
+sub _code_is_literal {
+    my($self, $code) = @_;
+    return @{$code} == 1 && $code->[0][0] eq 'literal';
+}
 
 sub _fold_constants {
     my($self, $code) = @_;
