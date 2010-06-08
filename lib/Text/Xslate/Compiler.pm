@@ -639,7 +639,7 @@ sub _generate_if {
     };
 
     if(_OPTIMIZE) {
-        if($self->_code_is_literal(\@cond)) {
+        if($self->_code_is_literal(@cond)) {
             if($cond[0][1]) {
                 return @then;
             }
@@ -753,7 +753,7 @@ sub _generate_unary {
     my $id = $node->id;
     if(exists $unary{$id}) {
         my @code = ($self->_expr($node->first), [ $unary{$id} ]);
-        if( _OPTIMIZE and $self->_code_is_literal(\@code) ) {
+        if( _OPTIMIZE and $self->_code_is_literal($code[0]) ) {
             $self->_fold_constants(\@code);
         }
         return @code;
@@ -806,7 +806,7 @@ sub _generate_binary {
         }
 
         if(_OPTIMIZE) {
-            if( $self->_code_is_literal(\@lhs) and $self->_code_is_literal(\@rhs) ){
+            if( $self->_code_is_literal(@lhs) and $self->_code_is_literal(@rhs) ){
                 $self->_fold_constants(\@code);
             }
         }
@@ -974,8 +974,8 @@ sub _variable_to_value {
 # optimizatin stuff
 
 sub _code_is_literal {
-    my($self, $code) = @_;
-    return @{$code} == 1 && $code->[0][0] eq 'literal';
+    my($self, @code) = @_;
+    return @code == 1 && $code[0][0] eq 'literal';
 }
 
 sub _fold_constants {
