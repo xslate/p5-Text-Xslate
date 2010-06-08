@@ -615,24 +615,28 @@ sub _generate_if {
     my $second = $node->second;
     my $third  = $node->third;
 
-    if(any_in($first->id, "!", "no")) {
-        $first            = $first->first;
-        ($second, $third) = ($third, $second);
+    if(_OPTIMIZE) {
+        while(any_in($first->id, "!", "no")) {
+            $first            = $first->first;
+            ($second, $third) = ($third, $second);
+        }
     }
+
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-
     my @cond  = $self->_expr($first);
 
-    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
-    local $self->{const} = [ @{$self->const} ]; # new scope
+    my @then = do {
+        local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+        local $self->{const} = [ @{$self->const} ]; # new scope
+        $self->_compile_ast($second);
+    };
 
-    my @then  = $self->_compile_ast($second);
-
-    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
-    local $self->{const} = [ @{$self->const} ]; # new scope
-
-    my @else  = $self->_compile_ast($third);
+    my @else = do {
+        local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+        local $self->{const} = [ @{$self->const} ]; # new scope
+        $self->_compile_ast($third);
+    };
 
     if(_OPTIMIZE) {
         if($self->_code_is_literal(\@cond)) {
@@ -657,14 +661,14 @@ sub _generate_if {
     elsif(!@else) { # no @else
         return(
             @cond,
-            [ and => scalar(@then) + 1, undef, $node->id . ' (then)' ],
+            [ and => scalar(@then) + 1, undef, $node->id . ' (then/no-else)' ],
             @then,
         );
     }
     else { # no @then
         return(
             @cond,
-            [ or => scalar(@else) + 1, undef, $node->id . ' (else)'],
+            [ or => scalar(@else) + 1, undef, $node->id . ' (else/no-then)'],
             @else,
         );
     }
