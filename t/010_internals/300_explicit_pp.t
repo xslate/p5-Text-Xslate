@@ -1,4 +1,4 @@
-#!perl -w
+#!perl
 # Explicit use of PP version
 
 use strict;

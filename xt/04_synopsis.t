@@ -1,4 +1,4 @@
-#!perl -w
+#!perl
 use strict;
 use Test::More;
 eval q{use Test::Synopsis};
