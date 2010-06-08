@@ -392,7 +392,7 @@ sub _flush_macro_table {
             push @code, [ macro_outer => $macro->{lvar_used} ]
                 if $macro->{lvar_used};
 
-            push @code, @{ $macro->{body} }, ['macro_end'];
+            push @code, @{ $macro->{body} }, [ macro_end => $macro->{immediate} ];
         }
     }
     %{$mtable} = ();
@@ -585,6 +585,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
         line      => $node->line,
         file      => $self->file,
         lvar_used => $lvar_used, # outer lexical variables
+        immediate => 0,
     );
 
     my @code;
@@ -592,6 +593,9 @@ sub _generate_proc { # definition of macro, block, before, around, after
     if(any_in($type, qw(macro block))) {
         if(exists $self->macro_table->{$name}) {
             $self->_error("Redefinition of $type $name is forbidden", $node);
+        }
+        if($type eq 'block') {
+            $macro{immediate} = 1;
         }
         $self->macro_table->{$name} = \%macro;
     }
@@ -836,6 +840,13 @@ sub _generate_call {
     my($self, $node) = @_;
     my $callable = $node->first; # function or macro
     my $args     = $node->second;
+
+    if(any_in($callable->id, qw(raw html))) {
+        if(@{$args} != 1) {
+            $self->_error("Wrong number of arguments for $callable", $node);
+        }
+        return $self->_expr($args->[0]), [ 'builtin_' . $callable->id => undef, $node->line ];
+    }
 
     return(
         [ pushmark => undef, undef, $callable->id ],

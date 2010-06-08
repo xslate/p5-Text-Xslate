@@ -31,6 +31,18 @@ T
     B
 X
 
+    [<<'T', {lang => 'Xslate'}, <<'X'],
+    A
+    : block foo -> {
+        <em>Hello, <: $lang :> world!</em>
+    : }
+    B
+T
+    A
+        <em>Hello, Xslate world!</em>
+    B
+X
+
     [<<'T', {}, <<'X', 'template with bocks'],
     A
     : block foo -> {
@@ -56,6 +68,15 @@ X
 : foo()
 T
     FOO
+X
+
+    [<<'T', {}, <<'X'],
+: macro foo -> {
+    <em>FOO</em>
+: }
+: foo()
+T
+    <em>FOO</em>
 X
 
     [<<'T', {x => "foo"}, <<'X', 'with an arg'],
@@ -92,7 +113,7 @@ X
 
 foreach my $d(@set) {
     my($in, $vars, $out, $msg) = @$d;
-    is $tx->render_string($in, $vars), $out, $msg || $in
+    is $tx->render_string($in, $vars), $out, $msg
         for 1 .. 2;
 }
 

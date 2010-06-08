@@ -10,7 +10,7 @@ use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-use Text::Xslate::Util qw(p);
+use Text::Xslate::Util qw(p escaped_string html_escape);
 
 use constant TXframe_NAME       => Text::Xslate::PP::TXframe_NAME;
 use constant TXframe_OUTPUT     => Text::Xslate::PP::TXframe_OUTPUT;
@@ -26,6 +26,16 @@ use constant _FOR_ARRAY => 2;
 no warnings 'recursion';
 
 our @CARP_NOT = qw(Text::Xslate);
+
+
+my %html_escape = (
+    '&' => '&amp;',
+    '<' => '&lt;',
+    '>' => '&gt;',
+    '"' => '&quot;',
+    "'" => '&apos;',
+);
+my $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
 #
 #
@@ -168,13 +178,7 @@ sub op_print {
         }
     }
     elsif ( defined $sv ) {
-        if ( $sv =~ /[&<>"']/ ) {
-            $sv =~ s/&/&amp;/g;
-            $sv =~ s/</&lt;/g;
-            $sv =~ s/>/&gt;/g;
-            $sv =~ s/"/&quot;/g;
-            $sv =~ s/'/&apos;/g; # ' for poor editors
-        }
+        $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
         $_[0]->{ output } .= $sv;
     }
     else {
@@ -372,6 +376,16 @@ sub op_max_index {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_builtin_raw {
+    $_[0]->{sa} = escaped_string($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_builtin_html {
+    $_[0]->{sa} = html_escape($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
 sub _sv_eq {
     my($x, $y) = @_;
     if ( defined $x and defined $y ) {
@@ -479,7 +493,12 @@ sub op_macro_end {
     my $oldframe = $_[0]->frame->[ $_[0]->current_frame ];
     my $cframe   = $_[0]->frame->[ $_[0]->current_frame( $_[0]->current_frame - 1 ) ];
 
-    $_[0]->{targ} = Text::Xslate::PP::escaped_string( $_[0]->{ output } );
+    if($_[0]->pc_arg) { # immediate macros
+        $_[0]->{targ} = $_[0]->{ output };
+    }
+    else {
+        $_[0]->{targ} = escaped_string( $_[0]->{ output } );
+    }
 
     $_[0]->{sa} = $_[0]->{targ};
 

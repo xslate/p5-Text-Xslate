@@ -5,19 +5,16 @@ use strict;
 
 our $VERSION = '0.1028';
 
+BEGIN{
+    $ENV{XSLATE} = ($ENV{XSLATE} || '') . '[pp]';
+}
+
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
 use Text::Xslate::Util qw($DEBUG p);
 
 use Carp ();
-
-use parent qw(Exporter);
-
-our @EXPORT_OK = qw(escaped_string); # export to Text::Xslate
-our %EXPORT_TAGS = (
-    backend => \@EXPORT_OK,
-);
 
 use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
 use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
@@ -30,19 +27,16 @@ require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
 our @OPCODE; # defined in PP::Const
 
-require Text::Xslate;
-
 {
     package
         Text::Xslate;
-    our %OPS;
-    if(!%OPS) {
+    if(!our %OPS) {
         # the compiler use %Text::Xslate::OPS in order to optimize the code
         *OPS = \%Text::Xslate::PP::OPS;
     }
+    unshift our @ISA, 'Text::Xslate::PP';
 }
 
-unshift @Text::Xslate::ISA, __PACKAGE__;
 
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
@@ -229,12 +223,30 @@ sub _assemble {
     return;
 }
 
+{
+    package
+        Text::Xslate::Util;
 
-sub escaped_string {
-    my $str = $_[0];
-    bless \$str, 'Text::Xslate::EscapedString';
+    sub escaped_string {
+        my $str = $_[0];
+        bless \$str, 'Text::Xslate::EscapedString';
+    }
+
+    sub html_escape {
+        my($s) = @_;
+        return $s if
+            ref($s) eq 'Text::Xslate::EscapedString'
+            or !defined($s);
+
+        $s =~ s/&/&amp;/g;
+        $s =~ s/</&lt;/g;
+        $s =~ s/>/&gt;/g;
+        $s =~ s/"/&quot;/g; # " for poor editors
+        $s =~ s/'/&apos;/g; # ' for poor editors
+
+        return escaped_string($s);
+    }
 }
-
 
 #
 # INTERNAL

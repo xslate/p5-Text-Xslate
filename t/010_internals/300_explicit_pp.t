@@ -2,13 +2,13 @@
 # Explicit use of PP version
 
 use strict;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 BEGIN {
     use_ok 'Text::Xslate::PP';
+    use_ok 'Text::Xslate', qw(escaped_string);
 }
 
-use Text::Xslate qw(escaped_string);
 
 use B;
 

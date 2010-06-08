@@ -5,6 +5,7 @@
 
 #define NEED_newSVpvn_flags_GLOBAL
 #define NEED_newSVpvn_share
+#define NEED_newSV_type
 #include "ppport.h"
 
 #include "xslate.h"
@@ -287,13 +288,6 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     return sv ? sv : &PL_sv_undef;
 }
 
-static SV*
-tx_escaped_string(pTHX_ SV* const str) {
-    dMY_CXT;
-    SV* const sv = newSVsv(str);
-    return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.escaped_string_stash));
-}
-
 static bool
 tx_str_is_escaped(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
@@ -302,6 +296,86 @@ tx_str_is_escaped(pTHX_ SV* const sv) {
             && SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
     }
     return FALSE;
+}
+
+static SV*
+tx_escaped_string(pTHX_ SV* const str) {
+    if(tx_str_is_escaped(aTHX_ str)) {
+        return str;
+    }
+    else {
+        dMY_CXT;
+        SV* const sv = newSV_type(SVt_PVMG);
+        sv_setsv(sv, str);
+        return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.escaped_string_stash));
+    }
+}
+
+static void /* doesn't care about escaped-ness */
+tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
+    STRLEN len;
+    const char*       cur = SvPV_const(src, len);
+    const char* const end = cur + len;
+
+    (void)SvGROW(dest, SvCUR(dest) + len);
+
+    while(cur != end) {
+        const char* parts;
+        STRLEN      parts_len;
+
+        switch(*cur) {
+        case '<':
+            parts     =        "&lt;";
+            parts_len = sizeof("&lt;") - 1;
+            break;
+        case '>':
+            parts     =        "&gt;";
+            parts_len = sizeof("&gt;") - 1;
+            break;
+        case '&':
+            parts     =        "&amp;";
+            parts_len = sizeof("&amp;") - 1;
+            break;
+        case '"':
+            parts     =        "&quot;";
+            parts_len = sizeof("&quot;") - 1;
+            break;
+        case '\'':
+            parts     =        "&apos;";
+            parts_len = sizeof("&apos;") - 1;
+            break;
+        default:
+            parts     = cur;
+            parts_len = 1;
+            break;
+        }
+
+        len = SvCUR(dest) + parts_len + 1;
+        (void)SvGROW(dest, len);
+
+        if(LIKELY(parts_len == 1)) {
+            *SvEND(dest) = *parts;
+        }
+        else {
+            Copy(parts, SvEND(dest), parts_len, char);
+        }
+        SvCUR_set(dest, SvCUR(dest) + parts_len);
+
+        cur++;
+    }
+    *SvEND(dest) = '\0';
+}
+
+static SV*
+tx_html_escape(pTHX_ SV* const str) {
+    if(!( tx_str_is_escaped(aTHX_ str) || !SvOK(str) )) {
+        SV* const dest = newSVpvs_flags("", SVs_TEMP);
+        tx_force_html_escape(aTHX_ str, dest);
+        return tx_escaped_string(aTHX_ dest);
+    }
+    else {
+        return str;
+    }
 }
 
 /*********************
@@ -445,57 +519,7 @@ TXC(print) {
         }
     }
     else if(SvOK(sv)) {
-        STRLEN len;
-        const char*       cur = SvPV_const(sv, len);
-        const char* const end = cur + len;
-
-        (void)SvGROW(output, SvCUR(output) + len);
-
-        while(cur != end) {
-            const char* parts;
-            STRLEN      parts_len;
-
-            switch(*cur) {
-            case '<':
-                parts     =        "&lt;";
-                parts_len = sizeof("&lt;") - 1;
-                break;
-            case '>':
-                parts     =        "&gt;";
-                parts_len = sizeof("&gt;") - 1;
-                break;
-            case '&':
-                parts     =        "&amp;";
-                parts_len = sizeof("&amp;") - 1;
-                break;
-            case '"':
-                parts     =        "&quot;";
-                parts_len = sizeof("&quot;") - 1;
-                break;
-            case '\'':
-                parts     =        "&apos;";
-                parts_len = sizeof("&apos;") - 1;
-                break;
-            default:
-                parts     = cur;
-                parts_len = 1;
-                break;
-            }
-
-            len = SvCUR(output) + parts_len + 1;
-            (void)SvGROW(output, len);
-
-            if(LIKELY(parts_len == 1)) {
-                *SvEND(output) = *parts;
-            }
-            else {
-                Copy(parts, SvEND(output), parts_len, char);
-            }
-            SvCUR_set(output, SvCUR(output) + parts_len);
-
-            cur++;
-        }
-        *SvEND(output) = '\0';
+        tx_force_html_escape(aTHX_ sv, output);
     }
     else {
         tx_warn(aTHX_ TX_st, "Use of nil to print");
@@ -708,6 +732,16 @@ TXC(max_index) {
     TX_st->pc++;
 }
 
+TXC(builtin_raw) {
+    TX_st_sa = tx_escaped_string(aTHX_ TX_st_sa);
+    TX_st->pc++;
+}
+
+TXC(builtin_html) {
+    TX_st_sa = tx_html_escape(aTHX_ TX_st_sa);
+    TX_st->pc++;
+}
+
 static I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
@@ -847,7 +881,7 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
     TX_st->pc = addr;
 }
 
-TXC(macro_end) {
+TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame];
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
@@ -855,8 +889,13 @@ TXC(macro_end) {
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    sv_setsv(TX_st->targ, tx_escaped_string(aTHX_ TX_st->output)); 
-    TX_st_sa = TX_st->targ; /* retval */
+    if(sv_true(TX_op_arg)) { /* immediate macros; skip to mark as escaped */
+        sv_setsv(TX_st->targ, TX_st->output);
+    }
+    else { /* normal macros */
+        sv_setsv(TX_st->targ, tx_escaped_string(aTHX_ TX_st->output));
+    }
+    TX_st_sa = TX_st->targ;
 
     tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];
     AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
@@ -1664,13 +1703,21 @@ CODE:
     LEAVE;
 }
 
-MODULE = Text::Xslate    PACKAGE = Text::Xslate
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Util
 
 void
 escaped_string(SV* str)
 CODE:
 {
     ST(0) = tx_escaped_string(aTHX_ str);
+    XSRETURN(1);
+}
+
+void
+html_escape(SV* str)
+CODE:
+{
+    ST(0) = tx_html_escape(aTHX_ str);
     XSRETURN(1);
 }
 
@@ -1697,7 +1744,7 @@ as_string(SV* self, ...)
 OVERLOAD: \"\"
 CODE:
 {
-    if(!( SvROK(self) && SvOK(SvRV(self))) ) {
+    if(! tx_str_is_escaped(aTHX_ self) ) {
         croak("You cannot call %s->as_string() as a class method", TX_ESC_CLASS);
     }
     ST(0) = SvRV(self);

@@ -5,6 +5,7 @@ use warnings;
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
+    html_escape escaped_string
     literal_to_value value_to_literal
     import_from
     is_int any_in
@@ -32,6 +33,11 @@ our $NUMBER  = qr/ [+-]? (?:
 
 our $DEBUG;
 defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
+
+require Text::Xslate; # load XS stuff
+
+sub html_escape;    # XS
+sub escaped_string; # XS
 
 sub is_int {
     my($s) = @_;

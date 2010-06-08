@@ -6,7 +6,7 @@ use warnings;
 
 our $VERSION = '0.1028';
 
-use Text::Xslate::Util qw($DEBUG);
+use Text::Xslate::Util qw($DEBUG html_escape escaped_string);
 
 use Carp       ();
 use File::Spec ();
@@ -15,11 +15,6 @@ use Exporter   ();
 our @ISA = qw(Text::Xslate::Engine Exporter);
 
 our @EXPORT_OK = qw(escaped_string html_escape);
-
-{
-    no warnings 'once';
-    *html_escape    = \&Text::Xslate::Engine::html_escape;
-}
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
     if($DEBUG !~ /\b pp \b/xms) {
@@ -37,13 +32,10 @@ if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been 
 
 package Text::Xslate::Engine;
 
-Text::Xslate->import('escaped_string');
-
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
     import_from
-    p
 );
 
 BEGIN {
@@ -105,9 +97,9 @@ sub new {
     }
 
     # the following functions are not overridable
-    $funcs{raw}  = \&escaped_string;
-    $funcs{html} = \&html_escape;
-    $funcs{dump} = \&p;
+    $funcs{raw}  = \&Text::Xslate::Util::escaped_string;
+    $funcs{html} = \&Text::Xslate::Util::html_escape;
+    $funcs{dump} = \&Text::Xslate::Util::p;
 
     $args{function} = \%funcs;
 
@@ -357,25 +349,6 @@ sub _error {
     shift;
     unshift @_, 'Xslate: ';
     goto &Carp::croak;
-}
-
-# utility functions
-sub escaped_string;
-
-# TODO: make it into XS
-sub html_escape {
-    my($s) = @_;
-    return $s if
-        ref($s) eq 'Text::Xslate::EscapedString'
-        or !defined($s);
-
-    $s =~ s/&/&amp;/g;
-    $s =~ s/</&lt;/g;
-    $s =~ s/>/&gt;/g;
-    $s =~ s/"/&quot;/g; # " for poor editors
-    $s =~ s/'/&apos;/g; # ' for poor editors
-
-    return escaped_string($s);
 }
 
 sub dump :method {

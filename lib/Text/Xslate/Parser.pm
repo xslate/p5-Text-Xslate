@@ -1217,7 +1217,10 @@ sub std_macro_block {
         first  => $macro->first, # name
         second => [],            # args
     );
-    my $print = $parser->symbol('print')->clone(
+
+    # The "block" keyword defines raw macros.
+    # see _generate_proc()
+    my $print = $parser->symbol('print_raw')->clone(
         arity => 'command',
         first => [$call],
     );
