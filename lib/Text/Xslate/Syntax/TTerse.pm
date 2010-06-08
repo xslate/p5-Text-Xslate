@@ -647,9 +647,33 @@ Call:
 
 Unlike Template-Toolkit, calling macros requires parens (C<()>).
 
-=head2 Template cascading
+=head2 Virtual methods
 
-Not supported.
+A few methods are supported in the Xslate core.
+
+    %% a.size();
+    %% a.join(", ");
+    %% a.reverse();
+
+    %% h.size();
+    %% h.keys();
+    %% h.values();
+    %% h.kv();
+
+However, there is a bridge mechanism that allows you to use more methods.
+For example, Text::Xslate::Bridge::TT2 provides the TT2 virtual
+methods for Xslate, which uses Template::VMethods directly.
+
+    use Text::Xslate::Bridge::TT2;
+
+    my $tx = Text::Xslate->new(
+        function => { Text::Xslate:*Bridge::TT2->methods },
+    );
+
+   print $tx->render_strig('[% "foo".length() %]'); # => 3
+
+See L<Text::Xslate::Bridge>, L<Text::Xslate::Bridge::TT2>, and
+L<Text::Xslate::Bridge::Alloy> for details.
 
 =head2 Misc.
 
