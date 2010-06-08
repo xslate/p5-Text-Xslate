@@ -62,6 +62,25 @@ ok
 !'
         => "ok\n!"],
 
+    [': if $void { } else {
+ok
+: }
+!'
+        => "ok\n!"],
+
+    [': if !$void {
+Hello, <: $lang :> world!
+: }
+'
+        => "Hello, Xslate world!\n"],
+
+    [': if $void { } else {
+Hello, <: $lang :> world!
+: }
+'
+        => "Hello, Xslate world!\n"],
+
+
     [': if $lang {
 a
 : }

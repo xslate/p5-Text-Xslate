@@ -19,7 +19,7 @@ my $tx = Text::Xslate->new(
 
 my @set = (
     [<<'T', { lang => 'Xslate' }, <<'X', 'literal'],
-: constant FOO = 42
+: constant FOO = 42;
 <: FOO :>
 T
 42
@@ -33,7 +33,7 @@ bar
 X
 
     [<<'T', { lang => 'Xslate' }, <<'X', 'expression'],
-: constant FOO = 40 + 2
+: constant FOO = 40 + 2;
 <: FOO :>
 T
 42
@@ -41,7 +41,7 @@ X
 
 
     [<<'T', { lang => 'Xslate' }, <<'X', 'var'],
-: constant FOO = $lang
+: constant FOO = $lang;
 <: FOO :>
 T
 Xslate
@@ -58,7 +58,7 @@ bar
 X
 
     [<<'T', { lang => 'Xslate' }, <<'X'],
-: constant make_em = format('<em>%s</em>')
+: constant make_em = format('<em>%s</em>');
     <: "foo" | make_em :>
     <: "bar" | make_em :>
 T
@@ -68,10 +68,10 @@ X
 
     [<<'T', { data => [qw(foo bar)] }, <<'X'],
 : for $data -> $i {
-    : constant ITEM  = $i
-    : constant INDEX = $~i.index
-    : constant COUNT = $~i.count
-    : constant BODY  = $~i.body
+    : constant ITEM  = $i;
+    : constant INDEX = $~i.index;
+    : constant COUNT = $~i.count;
+    : constant BODY  = $~i.body;
     <: INDEX :> <: COUNT :> <: BODY[$~i] :> <: ITEM :>
 : }
 T
@@ -95,7 +95,7 @@ X
     UNLIKELY
 : }
 : else {
-    : constant FOO = 100
+    : constant FOO = 100;
     <: FOO :>
 : }
 T
@@ -107,13 +107,42 @@ X
     UNLIKELY
 : }
 : else {
-    : constant FOO = 100
+    : constant FOO = 100;
     <: FOO :>
 : }
 T
     100
 X
 
+    [<<'T', { }, <<'X'],
+<: macro make_em -> $x { :><em><: $x :></em><: } -:>
+: constant EM = make_em;
+<: EM("foo") :>
+T
+<em>foo</em>
+X
+
+    [<<'T', { }, <<'X'],
+<: macro make_em -> $x { :><em><: $x :></em><: } -:>
+: constant EM = [make_em];
+<: EM[0]("foo") :>
+T
+<em>foo</em>
+X
+
+    [<<'T', { a => 'foo', b => 'bar' }, <<'X'],
+<: macro foo -> { "foo" }
+   macro bar -> { "bar" }
+   constant DISPATCHER = {
+       foo => foo,
+       bar => bar,
+   }; -:>
+    <: DISPATCHER[$a]() :>
+    <: DISPATCHER[$b]() :>
+T
+    foo
+    bar
+X
 );
 
 foreach my $d(@set) {

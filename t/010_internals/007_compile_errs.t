@@ -106,8 +106,8 @@ like $@, qr/Parser/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
-: constant FOO = 42
-: constant FOO = 42
+: constant FOO = 42;
+: constant FOO = 42;
 T
 };
 like $@, qr/Already defined/;
@@ -116,7 +116,7 @@ like $@, qr/Parser/;
 
 eval {
     Text::Xslate::Compiler->new->compile(<<'T');
-: constant FOO = 42
+: constant FOO = 42;
 : FOO = 42
 T
 };

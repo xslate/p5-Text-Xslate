@@ -128,7 +128,7 @@ Operator precedence is the same as Perl's:
 You can define lexical constants with C<constant>, which requires a bare name,
 and C<my>, which requires a variable name.
 
-    : constant FOO = 42;
+    : constant FOO = 42; # semicolon is required
     : my      $foo = 42;
 
 These two statements are exactly the same semantics, so you cannot modify
@@ -302,8 +302,8 @@ You can define methods with the C<function> option. See L<Text::Xslate>.
 
 Template inclusion is a traditional way to extend templates.
 
-    : include "foo.tx"
-    : include "foo.tx" { var1 => value1, var2 => value2, ... }
+    : include "foo.tx";
+    : include "foo.tx" { var1 => value1, var2 => value2, ... };
 
 Xslate templates may be recursively included, but the including depth is
 limited to 100.
@@ -415,6 +415,16 @@ return a string marked as escaped.
     : }
     : factorial(1)  # as a function
     : 1 | factorial # as a filter
+
+Macros are first class objects.
+
+    <: macro foo -> { "foo" }
+       macro bar -> { "bar" }
+       my $dispatcher = {
+           foo => foo,
+           bar => bar,
+       }; -:>
+    : $dispatcher{$key}()
 
 Macros returns what their body renders. That is, macros themselves output nothing.
 
