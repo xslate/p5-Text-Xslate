@@ -487,6 +487,23 @@ sub _generate_cascade {
     return ();
 }
 
+sub _compile_block {
+    my($self, $block) = @_;
+    my @block_code = $self->_compile_ast($block);
+
+    foreach my $op(@block_code) {
+        if($op->[0] eq 'pushmark') {
+            # pushmark ... funcall (or something) may create mortal SVs
+            # so surround the block with ENTER and LEAVE
+            unshift @block_code, ['enter'];
+            push    @block_code, ['leave'];
+            last;
+        }
+    }
+
+    return @block_code;
+}
+
 sub _generate_for {
     my($self, $node) = @_;
     my $expr  = $node->first;
@@ -511,8 +528,8 @@ sub _generate_for {
 
     # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(3);
-    my @block_code = $self->_compile_ast($block);
 
+    my @block_code = $self->_compile_block($block);
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
         [ for_iter  => scalar(@block_code) + 2 ],
@@ -547,9 +564,8 @@ sub _generate_while {
     }
 
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
-    my @block_code = $self->_compile_ast($block);
-
-    push @code,
+    my @block_code = $self->_compile_block($block);
+    return @code,
         [ and  => scalar(@block_code) + 2, undef, "while" ],
         @block_code,
         [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];

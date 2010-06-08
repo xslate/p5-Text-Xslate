@@ -174,8 +174,6 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 SV*
 tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
     SV* retval = NULL;
-    /* ENTER & SAVETMPS must be done */
-
     if(!(flags & G_METHOD)) { /* functions */
         if(SvTYPE(proc) != SVt_PVCV) {
             HV* dummy_stash;
@@ -226,9 +224,6 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
     finish:
     sv_setsv_nomg(st->targ, retval);
 
-    FREETMPS;
-    LEAVE;
-
     return st->targ;
 }
 
@@ -238,9 +233,6 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     PERL_UNUSED_ARG(st);
     if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
         dSP;
-        ENTER;
-        SAVETMPS;
-
         PUSHMARK(SP);
         XPUSHs(var);
         PUTBACK;
@@ -825,9 +817,6 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
             name, (int)items, items > nargs ? '>' : '<', (int)nargs);
         TX_st->sa = &PL_sv_undef;
         TX_st->pc++;
-
-        FREETMPS;
-        LEAVE;
         return;
     }
 
@@ -892,17 +881,12 @@ TXC_w_int(macro_end) {
     TX_st->output                     = tmp;
 
     TX_st->pc = SvUVX(retaddr);
-    /* ENTER & SAVETMPS will be done by TXC(funcall) */
-    FREETMPS;
-    LEAVE;
 }
 
 TXC(funcall) { /* call a function or a macro */
+    /* PUSHMARK must be done */
     dMY_CXT;
     SV* const func = TX_st_sa;
-    /* PUSHMARK & PUSH must be done */
-    ENTER;
-    SAVETMPS;
 
     if(sv_isobject(func) && SvSTASH(SvRV(func)) == MY_CXT.macro_stash) {
         AV* const macro = (AV*)SvRV(func);
@@ -918,15 +902,13 @@ TXC(funcall) { /* call a function or a macro */
 }
 
 TXC_w_key(methodcall_s) {
-    ENTER;
-    SAVETMPS;
-
     TX_st_sa = tx_methodcall(aTHX_ TX_st, TX_op_arg);
 
     TX_st->pc++;
 }
 
 TXC(make_array) {
+    /* PUSHMARK must be done */
     dSP;
     dMARK;
     dORIGMARK;
@@ -952,6 +934,7 @@ TXC(make_array) {
 }
 
 TXC(make_hash) {
+    /* PUSHMARK must be done */
     dSP;
     dMARK;
     dORIGMARK;
