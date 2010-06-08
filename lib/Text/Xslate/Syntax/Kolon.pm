@@ -134,11 +134,10 @@ Operator precedence is the same as Perl's:
 You can define lexical constants with C<constant>, which requires a bare name,
 and C<my>, which requires a variable name.
 
-    : constant FOO = 42; # semicolon is required
+    : constant FOO = 42;
     : my      $foo = 42;
 
-These two statements are exactly the same semantics, so you cannot modify
-them.
+These two statements has the same semantics, so you cannot modify C<$foo>.
 
     : my $foo = 42; $foo = 3.14; # compile error!
 
@@ -422,7 +421,7 @@ return a string marked as escaped.
     : factorial(1)  # as a function
     : 1 | factorial # as a filter
 
-Macros are first class objects.
+Macros are first objects.
 
     <: macro foo -> { "foo" }
        macro bar -> { "bar" }

@@ -79,9 +79,11 @@ Text::Xslate::Bridge - The adaptor base class to use other templates' methods
 
     use parent qw(Text::Xslate::Bridge);
 
-    __PACKAGE__->bride(scalar => \%SomeTemplate::scalar_methods);
-    __PACKAGE__->bride(array  => \%SomeTemplate::array_methods);
-    __PACKAGE__->bride(hash   => \%SomeTemplate::hash_methods);
+    __PACKAGE__->bride(
+        scalar => \%SomeTemplate::scalar_methods,
+        array  => \%SomeTemplate::array_methods,
+        hash   => \%SomeTemplate::hash_methods,
+    );
 
     # in your script
 
@@ -100,5 +102,10 @@ This module is the base class for adaptor classes.
 =head1 SEE ALSO
 
 L<Text::Xslate>
+
+L<Text::Xslate::Bridge::TT2>
+
+L<Text::Xslate::Bridge::Alloy>
+
 
 =cut
