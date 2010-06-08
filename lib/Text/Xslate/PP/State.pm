@@ -23,10 +23,6 @@ has current_frame => (
     is => 'rw',
 );
 
-has pad => (
-    is => 'rw',
-);
-
 has lines => (
     is => 'rw',
 );
