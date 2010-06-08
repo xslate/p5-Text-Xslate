@@ -37,6 +37,7 @@ runtime
 autoboxing
 backend
 TT
+adaptor
 
 # name
 lestrrat
