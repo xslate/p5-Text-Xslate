@@ -62,6 +62,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 typedef struct {
     U32 depth;
     HV* escaped_string_stash;
+    HV* macro_stash;
 
     tx_state_t* current_st; /* set while tx_execute(), othewise NULL */
 
@@ -897,12 +898,13 @@ TXC_w_int(macro_end) {
 }
 
 TXC(funcall) { /* call a function or a macro */
+    dMY_CXT;
     SV* const func = TX_st_sa;
     /* PUSHMARK & PUSH must be done */
     ENTER;
     SAVETMPS;
 
-    if(sv_isobject(func) && SvSTASH(SvRV(func)) == gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI)) {
+    if(sv_isobject(func) && SvSTASH(SvRV(func)) == MY_CXT.macro_stash) {
         AV* const macro = (AV*)SvRV(func);
         if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
             croak("Broken macro object");
@@ -1306,6 +1308,7 @@ static void
 tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.depth = 0;
     MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
+    MY_CXT.macro_stash          = gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI);
     MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADDMULTI));
     MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
 }
@@ -1345,6 +1348,7 @@ void
 _assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
+    dMY_CXT;
     MAGIC* mg;
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     U32 const len = av_len(proto) + 1;
@@ -1486,7 +1490,7 @@ CODE:
                     SV* mref;
                     macro = newAV();
                     mref  = sv_2mortal(newRV_noinc((SV*)macro));
-                    sv_bless(mref, gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI));
+                    sv_bless(mref, MY_CXT.macro_stash);
                     sv_setsv(ent, mref);
 
                     (void)av_store(macro, TXm_OUTER, newSViv(0));
