@@ -146,6 +146,14 @@ $CODE_MANIP{ 'local_s' } = sub {
 };
 
 
+
+
+$CODE_MANIP{ 'load_lvar' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '$pad->[ -1 ]->[ %s ]', $arg ) );
+};
+
+
 $CODE_MANIP{ 'load_lvar_to_sb' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sb( $self->lvar->[ $arg ] );
