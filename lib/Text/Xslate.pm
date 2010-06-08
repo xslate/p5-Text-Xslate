@@ -255,7 +255,8 @@ sub load_file {
                 File::Path::mkpath($cachedir);
             }
 
-            if(open my($out), '>:raw:utf8', $cachepath) {
+            # use input_layer for caches
+            if(open my($out), '>' . $self->{input_layer}, $cachepath) {
                 print $out $self->serialize($asm, $fullpath);
 
                 if(!close $out) {
