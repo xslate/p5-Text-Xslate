@@ -109,7 +109,7 @@ X
     ['<: $v.foo() :>',  { v => [42]           }, 'array foo' ],
     ['<: $v.foo() :>',  { v => 'str'          }, 'scalar foo' ],
 
-    ['<: +{}.foo() :>', { v => { foo => 'bar'}}, 'hash foo' ],
+    ['<: {}.foo() :>', { v => { foo => 'bar'}}, 'hash foo' ],
     ['<: [].foo() :>',  { v => [42]           }, 'array foo' ],
     ['<: "".foo() :>',  { v => 'str'          }, 'scalar foo' ],
 );

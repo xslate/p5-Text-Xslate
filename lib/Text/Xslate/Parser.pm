@@ -485,6 +485,7 @@ sub init_symbols {
     my($parser) = @_;
 
     # syntax specific separators
+    $parser->symbol('{');
     $parser->symbol('}')->is_block_end(1); # block end
     $parser->symbol('->');
     $parser->symbol('else');
@@ -495,7 +496,6 @@ sub init_symbols {
     $parser->init_basic_operators();
 
     # statements
-    $parser->symbol('{')        ->set_std(\&std_block);
     $parser->symbol('if')       ->set_std(\&std_if);
     $parser->symbol('for')      ->set_std(\&std_for);
     $parser->symbol('while' )   ->set_std(\&std_while);
@@ -981,10 +981,12 @@ sub statements { # process statements
 
 sub block {
     my($parser) = @_;
-    my $t = $parser->token;
+    $parser->new_scope();
     $parser->advance("{");
-    # std() returns a list of nodes
-    return [$t->std($parser)];
+    my $a = $parser->statements();
+    $parser->advance('}');
+    $parser->pop_scope();
+    return $a;
 }
 
 sub nud_paren {
@@ -1064,15 +1066,6 @@ sub nud_constant {
         second       => $parser->expression(0),
         is_statement => 1,
     );
-}
-
-sub std_block {
-    my($parser, $symbol) = @_;
-    $parser->new_scope();
-    my $a = $parser->statements();
-    $parser->advance('}');
-    $parser->pop_scope();
-    return @{$a};
 }
 
 #sub std_var {
