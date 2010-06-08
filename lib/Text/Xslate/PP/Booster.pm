@@ -202,8 +202,8 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
             $self->write_lines(
                 sprintf(
-                    '_error( $st, %s, %s, "Too few arguments for %s" );',
-                    $self->frame_and_line, $self->stash->{ in_macro }
+                    '_error( $st, %s, %s, "Too few arguments for %s" ) unless defined $pad->[ -1 ]->[ %s ];',
+                    $self->frame_and_line, $self->stash->{ in_macro }, $arg
                 )
             );
         }
@@ -270,11 +270,16 @@ $CODE_MANIP{ 'print' } = sub {
 
     $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
 
-    $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
+    $self->write_lines( sprintf( <<'CODE', $sv, $err, $err ) );
 # print
 $sv = %s;
 if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
-    $output .= $sv;
+    if(defined ${$sv}) {
+        $output .= $sv;
+    }
+    else {
+        %s
+    }
 }
 elsif ( defined $sv ) {
     $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
@@ -477,7 +482,8 @@ $CODE_MANIP{ 'macrocall' } = sub {
 
     $self->sa( sprintf( '$macro{ %s }->( $st, %s )',
         value_to_literal($self->sa()),
-        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
+#        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
+        sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, join( ', ', @{ pop @{ $self->SP } } )  )
     ) );
 };
 
@@ -860,9 +866,27 @@ CODE
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
-        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
+        if ( $st_true->code ) { # Ah, if-style had gone..., but again write if-style!
+            my $if_style = $type eq 'and' ? 'if' : 'unless';
+            $self->write_lines( sprintf( <<'CODE', $if_style, $expr, $st_true->code ) );
+%s ( %s ) {
+%s
+}
+CODE
+
+        }
+        elsif ( $st_true->sa ) {
+            $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
 cond_%s( %s, sub { %s } )
 CODE
+
+        }
+        else {
+        }
+
+#        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
+#cond_%s( %s, sub { %s } )
+#CODE
 
     }
 
@@ -1173,6 +1197,20 @@ sub cond_ne {
 sub push_pad {
     push @{ $_[0] }, $_[1];
     $_[0];
+}
+
+
+sub push_pad_for_macro {
+    my ( $lvars, $pad, $arrayref ) = @_;
+
+    push @{ $pad }, $arrayref;
+
+    # copies lexical variables from the old frame to the new one
+    if($lvars > 0) {
+        push @{ $pad->[ -1 ] }, @{ $pad->[ -2 ] };
+    }
+
+    return $pad;
 }
 
 
