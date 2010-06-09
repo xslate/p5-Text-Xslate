@@ -529,16 +529,12 @@ if ( @{$pad->[-1]} != $mobj->nargs ) {
 }
 CODE
 
-
-
-
     $self->write_lines(
         sprintf( q{Carp::croak('Macro call is too deep (> 100) on %s') if ++$depth > 100;}, $name )
     );
     $self->write_code( "\n" );
 };
 
-#=cut
 
 $CODE_MANIP{ 'macro_end' } = sub {
     my ( $self, $arg, $line ) = @_;
@@ -1081,73 +1077,57 @@ sub call {
 }
 
 
-use Text::Xslate::PP::Type::Pair;
-
-=pod
-
-use Text::Xslate::PP::Type::Array;
-use Text::Xslate::PP::Type::Hash;
-
-use constant TX_ENUMERABLE => 'Text::Xslate::PP::Type::Array';
-use constant TX_KV         => 'Text::Xslate::PP::Type::Hash';
+use Text::Xslate::PP::Method;;
 
 my %builtin_method = (
-    size    => [0, TX_ENUMERABLE],
-    join    => [1, TX_ENUMERABLE],
-    reverse => [0, TX_ENUMERABLE],
-    sort    => [0, TX_ENUMERABLE],
+    'array::size'    => \&Text::Xslate::PP::Method::_array_size,
+    'array::join'    => \&Text::Xslate::PP::Method::_array_join,
+    'array::reverse' => \&Text::Xslate::PP::Method::_array_reverse,
+    'array::sort'    => \&Text::Xslate::PP::Method::_array_sort,
 
-    keys    => [0, TX_KV],
-    values  => [0, TX_KV],
-    kv      => [0, TX_KV],
+    'hash::size'     => \&Text::Xslate::PP::Method::_hash_size,
+    'hash::keys'     => \&Text::Xslate::PP::Method::_hash_keys,
+    'hash::values'   => \&Text::Xslate::PP::Method::_hash_values,
+    'hash::kv'       => \&Text::Xslate::PP::Method::_hash_kv,
 );
 
-=cut
 
 sub methodcall {
     my ( $st, $frame, $line, $method, $invocant, @args ) = @_;
 
-    my $retval;
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
-            $retval = eval { $invocant->$method(@args) };
+            my $retval = eval { $invocant->$method(@args) };
             if($@) {
                 _error( $st, $frame, $line, "%s" . "\t...", $@ );
             }
             return $retval;
         }
-        # fallback to builtin methods
-    }
-
-    if(!defined $invocant) {
-        _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
-    }
-
-=pod
-
-    elsif(my $bm = $builtin_method{$method}){
-        my($nargs, $klass) = @{$bm};
-        if(@args != $nargs) {
-            _error($st, $frame, $line,
-                "Builtin method %s requires exactly %d argument(s), "
-                . "but supplied %d",
-                $method, $nargs, scalar @args);
-            return undef;
-         }
-
-         $retval = eval {
-            $klass->new($invocant)->$method(@args);
-         };
-    }
-
-=cut
-
-    else {
         _error($st, $frame, $line, "Undefined method %s called for %s",
             $method, $invocant);
     }
 
-    return $retval;
+    if(!defined $invocant) {
+        _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
+        return undef;
+    }
+
+    my $type = ref($invocant) eq 'ARRAY' ? 'array'
+             : ref($invocant) eq 'HASH'  ? 'hash'
+             :                             'scalar';
+    my $fq_name = $type . "::" . $method;
+
+    if( my $body = $st->function->{ $fq_name } || $builtin_method{ $fq_name } ){
+        my $retval = eval { $body->($invocant, @args) };
+        if($@) {
+            _error( $st, $frame, $line, "%s", $@ );
+        }
+        return $retval;
+    }
+
+    _error($st, $frame, $line, "Undefined method %s called for %s", $method, $invocant);
+
+    return undef;
 }
 
 
