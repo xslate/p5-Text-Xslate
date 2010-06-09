@@ -540,41 +540,37 @@ You B<should> specify this option on productions.
 
 Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
 
-[MAYCHANGE]
-You can also define methods with pseudo type names: C<scalar>, C<array>,
-and C<hash>. For example:
-
-    my $tx = Text::Xslate->new(
-        function => {
-            'scalar::some_method' => sub { my($scalar)    = @_; ... },
-            'array::some_method'  => sub { my($array_ref) = @_; ... },
-            'hash::some_method'   => sub { my($hash_ref)  = @_; ... },
-        },
-    );
-[/MAYCHANGE]
-
-See also L<Text::Xslate::Bridge>.
-
 Note that builtin methods are overridable, while builtin filters,
-namely C<raw>, C<html>, C<dump>, are not.
+namely C<raw>, C<html> and C<dump>, are not.
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 
-Imports functions from I<$module>. I<@import_args> is optional.
+Imports functions from I<$module>, which may be a function-based or bridge module.
+I<@import_args> is optional.
 
 For example:
 
+    # for function-based modules
     my $tx = Text::Xslate->new(
         module => ['Time::Piece'],
     );
     print $tx->render_string(
         '<: localtime($x).strftime() :>',
         { x => time() },
-    );
-    # => Wed, 09 Jun 2010 10:22:06 JST
+    ); # => Wed, 09 Jun 2010 10:22:06 JST
 
-You can use function based modules with the C<module> option, and also can invoke
-object methods in templates. Thus, Xslate doesn't require the namespaces for plugins.
+    # for bridge modules
+    my $tx = Text::Xslate->new(
+        module => ['SomeModule::Bridge::Xslate'],
+    );
+    print $tx->render_string(
+        '<: $x.some_method() :>',
+        { x => time() },
+    );
+
+You can use function-based modules with the C<module> option, and also can
+invoke any object methods in templates. Thus, Xslate doesn't require the
+specific namespaces for plugins.
 
 =item C<< input_layer => $perliolayers // ':utf8' >>
 

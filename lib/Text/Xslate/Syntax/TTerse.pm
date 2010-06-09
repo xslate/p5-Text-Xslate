@@ -661,13 +661,13 @@ A few methods are supported in the Xslate core.
     %% h.kv();
 
 However, there is a bridge mechanism that allows you to use more methods.
-For example, Text::Xslate::Bridge::TT2 provides the TT2 virtual
-methods for Xslate, which uses Template::VMethods directly.
+For example, Text::Xslate::Bridge::TT2 provides the TT2 pseudo
+methods (a.k.a vmethods) for Xslate, which uses Template::VMethods implementation.
 
     use Text::Xslate::Bridge::TT2;
 
     my $tx = Text::Xslate->new(
-        function => { Text::Xslate:*Bridge::TT2->methods },
+        module => [qw(Text::Xslate:*Bridge::TT2)],
     );
 
    print $tx->render_strig('[% "foo".length() %]'); # => 3

@@ -647,7 +647,7 @@ sub tx_error {
 
 sub tx_warn {
     my ( $st, $fmt, @args ) = @_;
-    if( $st->self->verbose > TX_VERBOSE_DEFAULT ) {
+    if( $st->self->{verbose} > TX_VERBOSE_DEFAULT ) {
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }

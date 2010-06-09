@@ -14,6 +14,12 @@ sub bridge {
     return;
 }
 
+sub export_into_xslate {
+    my($class, $funcs_ref, @args) = @_;
+    @{$funcs_ref} = $class->methods(@args);
+    return;
+}
+
 sub methods {
     my($class, %args) = @_;
 
@@ -71,11 +77,11 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Bridge - The adaptor base class to use other templates' methods
+Text::Xslate::Bridge - The interface base class to import methods
 
 =head1 SYNOPSIS
 
-    package Your::Bridge::SomeTemplate;
+    package SomeTemplate::Bridge::Xslate;
 
     use parent qw(Text::Xslate::Bridge);
 
@@ -90,9 +96,10 @@ Text::Xslate::Bridge - The adaptor base class to use other templates' methods
     use Text::Xslate;
 
     my $tx = Text::Xslate->new(
-        function => {
-            Your::Bridge::SomeTemplate->methods(-exclude => [qw(hash::keys hash::values)]),
-        },
+        module => [
+            'SomeTemplate::Bridge::Xslate'
+                => [-exclude => [qw(hash::keys hash::values)]],
+        ],
     );
 
 =head1 DESCRIPTION
