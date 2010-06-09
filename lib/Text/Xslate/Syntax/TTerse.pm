@@ -655,6 +655,8 @@ Unlike Template-Toolkit, calling macros requires parens (C<()>).
 
 A few methods are supported in the Xslate core.
 
+    %% any.defined()
+
     %% a.size();
     %% a.join(", ");
     %% a.reverse();
