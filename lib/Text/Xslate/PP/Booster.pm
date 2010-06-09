@@ -536,6 +536,13 @@ if ( @{$pad->[-1]} != $mobj->nargs ) {
 }
 CODE
 
+    $self->write_lines( sprintf( <<'CODE', $error ) );
+if ( $mobj->outer ) {
+    push @{$pad->[-1]}, @{$pad->[-2]};
+}
+CODE
+
+
     $self->write_lines(
         sprintf( q{Carp::croak('Macro call is too deep (> 100) on %s') if ++$depth > 100;}, $name )
     );
@@ -688,6 +695,7 @@ $CODE_MANIP{ 'end' } = sub {
 
 
 $CODE_MANIP{ 'macro_nargs' } = $CODE_MANIP{'noop'};
+$CODE_MANIP{ 'macro_outer' } = $CODE_MANIP{'noop'};
 
 
 #
