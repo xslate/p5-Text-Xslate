@@ -17,9 +17,11 @@ use Scalar::Util ();
 #use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
 use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
-use constant _OPTIMIZE => defined(scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]))
-                            ?     scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0])
-                            : 1; # enable optimization by default
+
+our $OPTIMIZE = scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
+if(not defined $OPTIMIZE) {
+    $OPTIMIZE = 1; # enable optimization by default
+}
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
@@ -185,7 +187,7 @@ sub compile {
 
     push @code, $self->_flush_macro_table() if %mtable;
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
     }
 
@@ -420,7 +422,7 @@ sub _generate_name {
 sub _can_print_optimize {
     my($self, $name, $node) = @_;
 
-    return 0 if !_OPTIMIZE;
+    return 0 if !$OPTIMIZE;
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
     return $node->arity eq 'call'
@@ -631,7 +633,7 @@ sub _generate_if {
     my $second = $node->second;
     my $third  = $node->third;
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         while(any_in($first->id, "!", "no")) {
             $first            = $first->first;
             ($second, $third) = ($third, $second);
@@ -654,7 +656,7 @@ sub _generate_if {
         $self->_compile_ast($third);
     };
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         if($self->_code_is_literal(@cond)) {
             if($cond[0][1]) {
                 return @then;
@@ -769,7 +771,7 @@ sub _generate_unary {
     my $id = $node->id;
     if(exists $unary{$id}) {
         my @code = ($self->_expr($node->first), [ $unary{$id} ]);
-        if( _OPTIMIZE and $self->_code_is_literal($code[0]) ) {
+        if( $OPTIMIZE and $self->_code_is_literal($code[0]) ) {
             $self->_fold_constants(\@code);
         }
         return @code;
@@ -821,7 +823,7 @@ sub _generate_binary {
                 [ move_from_sb    => undef, undef, "$id on true" ],
         }
 
-        if(_OPTIMIZE) {
+        if($OPTIMIZE) {
             if( $self->_code_is_literal(@lhs) and $self->_code_is_literal(@rhs) ){
                 $self->_fold_constants(\@code);
             }
@@ -950,7 +952,7 @@ sub _generate_constant {
     $lvar->{$lvar_name} = $lvar_id;
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         if(@expr == 1 && any_in($expr[0][0], qw(literal load_lvar))) {
             $expr[0][3] = "constant $lvar_name"; # comment
             $self->const->[$lvar_id] = \@expr;
