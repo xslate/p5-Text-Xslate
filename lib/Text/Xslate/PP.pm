@@ -21,7 +21,7 @@ use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
 
 use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
-                            :               'Opcode'; # default
+                            :               'Booster'; # default
 
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
@@ -456,9 +456,10 @@ If you want to use Text::Xslate::PP, however, you can use it.
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
 From 0.1024 on, two pure Perl engines are implemented.
-C<Text::Xslate::PP::Booster>, which is the default, generates optimized
-Perl code from intermediate code.
-C<Text::Xlsate::PP::Opcode> emulates the virtual machine in pure Perl,
+C<Text::Xslate::PP::Booster>, which is the default pure Perl engine,
+generates optimized Perl code from intermediate code.
+C<Text::Xlsate::PP::Opcode>, which is slower than PP::Booster but might be more
+stable, emulates the virtual machine in pure Perl,
 available with C<< $ENV{XSLATE} = 'pp=opcode' >>.
 
 =head1 SEE ALSO
