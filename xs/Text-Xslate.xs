@@ -1130,8 +1130,8 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
     st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
 #else
-    PERL_UNUSED_VAR(mg);
-    PERL_UNUSED_VAR(param);
+    PERL_UNUSED_ARG(mg);
+    PERL_UNUSED_ARG(param);
 #endif
     return 0;
 }
