@@ -141,7 +141,7 @@ sub load_string { # for <input>
         $self->_error("LoadError: Template string is not given");
     }
     $self->{string} = $string;
-    my $asm = $self->_compiler->compile($string);
+    my $asm = $self->compile($string);
     $self->_assemble($asm, undef, undef, undef, undef);
     return $asm;
 }
@@ -257,7 +257,7 @@ sub load_file {
         }
     }
     else {
-        $asm = $self->_compiler->compile($string,
+        $asm = $self->compile($string,
             file     => $file,
             fullpath => $fullpath,
         );
@@ -332,6 +332,11 @@ sub _compiler {
     }
 
     return $compiler;
+}
+
+sub compile {
+    my $self = shift;
+    return $self->_compiler->compile(@_);
 }
 
 sub deserialize {

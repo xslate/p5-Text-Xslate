@@ -667,7 +667,7 @@ sub _generate_if {
         }
     }
 
-    if(@then and @else) {
+    if( (@then and @else) or !$OPTIMIZE) {
         return(
             @cond,
             [ and  => scalar(@then) + 2, undef, $node->id . ' (then)' ],
