@@ -17,6 +17,12 @@ sub _bad_arg {
     return undef;
 }
 
+sub _any_defined {
+    my($any) = @_;
+    return _bad_arg('defined') if @_ != 1;
+    return defined($any);
+}
+
 sub _array_size {
     my($array_ref) = @_;
     return _bad_arg('size') if @_ != 1;
@@ -70,11 +76,17 @@ sub _hash_kv {
 
 
 my %builtin_method = (
+    'nil::defined'    => \&_any_defined,
+
+    'scalar::defined' => \&_any_defined,
+
+    'array::defined' => \&_any_defined,
     'array::size'    => \&_array_size,
     'array::join'    => \&_array_join,
     'array::reverse' => \&_array_reverse,
     'array::sort'    => \&_array_sort,
 
+    'hash::defined'  => \&_any_defined,
     'hash::size'     => \&_hash_size,
     'hash::keys'     => \&_hash_keys,
     'hash::values'   => \&_hash_values,
@@ -97,14 +109,10 @@ sub tx_methodcall {
             $method, $invocant);
     }
 
-    if(!defined $invocant) {
-        tx_warn($st, "Use of nil to invoke method %s", $method);
-        return undef;
-    }
-
     my $type = ref($invocant) eq 'ARRAY' ? 'array'
              : ref($invocant) eq 'HASH'  ? 'hash'
-             :                             'scalar';
+             : defined($invocant)        ? 'scalar'
+             :                             'nil';
     my $fq_name = $type . "::" . $method;
 
     if(my $body = $st->function->{$fq_name} || $builtin_method{$fq_name}){
@@ -114,6 +122,11 @@ sub tx_methodcall {
         }
         return $retval;
     }
+    if(!defined $invocant) {
+        tx_warn($st, "Use of nil to invoke method %s", $method);
+        return undef;
+    }
+
     tx_error($st, "Undefined method %s called for %s",
         $method, $invocant);
 

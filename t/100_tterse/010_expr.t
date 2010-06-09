@@ -9,6 +9,9 @@ my @data = (
     ['Hello, [% empty or "Perl" %] world!' => 'Hello, Perl world!'],
 
     ['Hello, [% "foo" _ "bar" %] world!' => 'Hello, foobar world!'],
+
+    ['[% lang.defined()        ? "d" : "!d" %]' => 'd'],
+    ['[% no_such_var.defined() ? "d" : "!d" %]' => '!d'],
 );
 
 foreach my $pair(@data) {
