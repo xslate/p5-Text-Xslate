@@ -171,6 +171,12 @@ TXBM(hash, size) {
     sv_setiv(retval, i);
 }
 
+TXBM(hash, exists) {
+    HV* const hv  = (HV*)SvRV(*MARK);
+    SV* const key = *(++MARK);
+    sv_setsv(retval, hv_exists_ent(hv, key, 0U) ? &PL_sv_yes : &PL_sv_no);
+}
+
 TXBM(hash, keys) {
     sv_setsv(retval, tx_keys(aTHX_ *MARK));
 }
@@ -207,6 +213,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array, sort,    0),
 
     TXBM_SETUP(hash, size,     0),
+    TXBM_SETUP(hash, exists,   1),
     TXBM_SETUP(hash, keys,     0),
     TXBM_SETUP(hash, values,   0),
     TXBM_SETUP(hash, kv,       0),
