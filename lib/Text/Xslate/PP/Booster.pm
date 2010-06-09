@@ -136,17 +136,14 @@ $CODE_MANIP{ 'save_to_lvar' } = sub {
 };
 
 
-$CODE_MANIP{ 'local_s' } = sub {
+$CODE_MANIP{ 'localize_s' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $key    = $arg;
     my $newval = $self->sa;
 
-    $self->write_lines( sprintf( 'local_s( $st, "%s", %s );', $key, $newval ) );
+    $self->write_lines( sprintf( 'localize_s( $st, "%s", %s );', $key, $newval ) );
     $self->write_code( "\n" );
 };
-
-
-$CODE_MANIP{ 'macro_nargs' } = sub { };
 
 
 $CODE_MANIP{ 'load_lvar' } = sub {
@@ -676,6 +673,9 @@ $CODE_MANIP{ 'end' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( "# process end" );
 };
+
+
+$CODE_MANIP{ 'macro_nargs' } = $CODE_MANIP{'noop'};
 
 
 #
@@ -1270,7 +1270,7 @@ sub push_pad_for_macro {
 }
 
 
-sub local_s {
+sub localize_s {
     my( $st, $key, $newval ) = @_;
     my $vars       = $st->{vars};
     my $preeminent = exists $vars->{$key};
