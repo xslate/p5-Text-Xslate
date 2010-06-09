@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1031 Wed Jun  9 21:55:57 2010
+    [BUG FIXES]
+    - Issues on older perls
+
+    [NEW FEATURES]
+    - New defined() named operator/builtin method:
+      expr.defined() and defined(expr) is the same.
+
 0.1030 Wed Jun  9 15:33:43 2010
     [CHANGES]
     - Unknown options to new() will produce warnings
