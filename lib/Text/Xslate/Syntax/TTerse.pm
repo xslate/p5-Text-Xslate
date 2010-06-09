@@ -662,7 +662,8 @@ A few methods are supported in the Xslate core.
 
 However, there is a bridge mechanism that allows you to use more methods.
 For example, Text::Xslate::Bridge::TT2 provides the TT2 pseudo
-methods (a.k.a vmethods) for Xslate, which uses Template::VMethods implementation.
+methods (a.k.a virtual methods) for Xslate, which uses Template::VMethods
+implementation.
 
     use Text::Xslate::Bridge::TT2;
 

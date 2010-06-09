@@ -703,7 +703,7 @@ There are common notes in Xslate.
 
 =head2 Nil/undef handling
 
-Note that nil (ie.e C<undef> in Perl) handling is different from Perl's.
+Note that nil (i.e. C<undef> in Perl) handling is different from Perl's.
 Basically it does nothing, but C<< verbose => 2 >> will produce warnings for it.
 
 =over
