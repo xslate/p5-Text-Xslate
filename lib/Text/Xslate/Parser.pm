@@ -28,7 +28,7 @@ my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     && || //
     -> =>
     ::
-
+    ++ --
 
     < >
     =
@@ -407,13 +407,15 @@ sub init_basic_operators {
     $parser->prefix('+', 200);
     $parser->prefix('-', 200);
 
-    $parser->infix('*', 180);
-    $parser->infix('/', 180);
-    $parser->infix('%', 180);
+    $parser->infix('*', 190);
+    $parser->infix('/', 190);
+    $parser->infix('%', 190);
 
-    $parser->infix('+', 170);
-    $parser->infix('-', 170);
-    $parser->infix('~', 170); # connect
+    $parser->infix('+', 180);
+    $parser->infix('-', 180);
+    $parser->infix('~', 180); # connect
+
+    $parser->prefix('defined', 170, \&nud_defined); # named unary operator
 
     $parser->infix('<',  160)->is_logical(1);
     $parser->infix('<=', 160)->is_logical(1);
@@ -776,13 +778,6 @@ sub led_bar { # filter
     return $call;
 }
 
-sub nud_prefix {
-    my($parser, $symbol) = @_;
-    my $un = $symbol->clone(arity => 'unary');
-    $parser->reserve($un);
-    $un->first($parser->expression($symbol->ubp));
-    return $un;
-}
 
 sub prefix {
     my($parser, $id, $bp, $nud) = @_;
@@ -791,6 +786,24 @@ sub prefix {
     $symbol->ubp($bp);
     $symbol->set_nud($nud || \&nud_prefix);
     return $symbol;
+}
+
+sub nud_prefix {
+    my($parser, $symbol) = @_;
+    my $un = $symbol->clone(arity => 'unary');
+    $parser->reserve($un);
+    $un->first($parser->expression($symbol->ubp));
+    return $un;
+}
+
+sub nud_defined {
+    my($parser, $symbol) = @_;
+    $parser->reserve( $symbol->clone() );
+    return $parser->binary(
+        '!=',
+        $parser->expression($symbol->ubp),
+        $parser->symbol('nil'),
+   );
 }
 
 sub define_literal{

@@ -101,6 +101,22 @@ tx_keys(pTHX_ SV* const hvref) {
     return avref;
 }
 
+/* ANY */
+TXBM(any, defined) {
+    sv_setsv(retval, SvOK(*MARK) ? &PL_sv_yes : &PL_sv_no);
+}
+
+#define tx_bm_nil_defined    tx_bm_any_defined
+#define tx_bm_scalar_defined tx_bm_any_defined
+#define tx_bm_array_defined  tx_bm_any_defined
+#define tx_bm_hash_defined   tx_bm_any_defined
+
+/* NIL */
+
+
+/* SCALAR */
+
+
 /* ARRAY */
 
 TXBM(array, size) {
@@ -201,11 +217,17 @@ TXBM(hash, kv) {
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
+    TXBM_SETUP(nil,    defined, 0),
+
+    TXBM_SETUP(scalar, defined, 0),
+
+    TXBM_SETUP(array, defined, 0),
     TXBM_SETUP(array, size,    0),
     TXBM_SETUP(array, join,    1),
     TXBM_SETUP(array, reverse, 0),
     TXBM_SETUP(array, sort,    0),
 
+    TXBM_SETUP(hash, defined,  0),
     TXBM_SETUP(hash, size,     0),
     TXBM_SETUP(hash, keys,     0),
     TXBM_SETUP(hash, values,   0),
@@ -241,11 +263,6 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         goto not_found;
     }
 
-    if(!SvOK(invocant)) {
-        tx_warn(aTHX_ st, "Use of nil to invoke method %"SVf, method);
-        goto finish;
-    }
-
     if(SvROK(invocant)) {
         SV* const referent = SvRV(invocant);
         if(SvTYPE(referent) == SVt_PVAV) {
@@ -259,7 +276,12 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         }
     }
     else {
-        type_name = "scalar";
+        if(SvOK(invocant)) {
+            type_name = "scalar";
+        }
+        else {
+            type_name = "nil";
+        }
     }
 
     fq_name = st->targ;
@@ -295,6 +317,10 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             PUSHMARK(ORIGMARK); /* re-pushmark */
             return tx_call(aTHX_ st, entity, 0, "builtin method call");
         }
+    }
+    if(!SvOK(invocant)) {
+        tx_warn(aTHX_ st, "Use of nil to invoke method %"SVf, method);
+        goto finish;
     }
     not_found:
     tx_error(aTHX_ st, "Undefined method %"SVf" called for %s", method, tx_neat(aTHX_ invocant));

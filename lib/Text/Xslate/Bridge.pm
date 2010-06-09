@@ -86,6 +86,7 @@ Text::Xslate::Bridge - The interface base class to import methods
     use parent qw(Text::Xslate::Bridge);
 
     __PACKAGE__->bride(
+        nil    => \%SomeTemplate::nil_methods,
         scalar => \%SomeTemplate::scalar_methods,
         array  => \%SomeTemplate::array_methods,
         hash   => \%SomeTemplate::hash_methods,

@@ -17,6 +17,7 @@ if(Text::Xslate->isa('Text::Xslate::PP')) {
 else {
     diag "Backend: XS";
 }
+diag '$ENV{XSLATE}=', defined $ENV{XSLATE} ? $ENV{XSLATE} : '';
 
 diag "Any::Moose Backend: ", any_moose(), "/", any_moose()->VERSION;
 

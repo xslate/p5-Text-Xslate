@@ -141,6 +141,16 @@ foreach my $code(
     is $@,  '';
 }
 
+$warn = '';
+my $out = eval {
+    $tx->render_string("<: nil.defined() ? 1 : 0 :>", {});
+};
+
+is $out,  '0';
+is $warn, '';
+is $@,    '';
+
+
 is $perl_warnings, '', "Perl doesn't produce warnings";
 
 done_testing;

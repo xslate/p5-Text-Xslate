@@ -159,6 +159,16 @@ T
 like $@, qr/Undefined symbol/;
 like $@, qr/\b FOO \b/xms;
 
+foreach my $op(qw(++ --)) {
+    # reserved, but dosn't work
+    eval {
+        Text::Xslate::Compiler->new->compile(<<"T");
+        Hello, <: $op\$foo :> world!
+T
+    };
+    like $@, qr/\Q$op\E/, "operator $op";
+}
+
 foreach my $assign(qw(= += -= *= /= %= ~= &&= ||= //=)) {
     eval {
         Text::Xslate::Compiler->new->compile(<<"T");

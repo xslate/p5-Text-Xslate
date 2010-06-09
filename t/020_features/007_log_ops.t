@@ -95,6 +95,18 @@ my @data = (
     : foo( { foo => $value20 == 10 ? 100 : $value20 == 20 ? 200 : 300 } )',
     '200'],
 
+    [': defined($value0)      ? 1 : 0', 1],
+    [': defined($no_such_var) ? 1 : 0', 0],
+    [': defined $value0       ? 1 : 0', 1],
+    [': defined $no_such_var  ? 1 : 0', 0],
+
+    [': defined($value0)      ? 1 : 0', 1],
+    [': defined($no_such_var) ? 1 : 0', 0],
+    [': defined $value0       ? 1 : 0', 1],
+    [': defined $no_such_var  ? 1 : 0', 0],
+
+    [': defined $value10 + 10', defined 10 + 10],
+
 );
 
 foreach my $pair(@data) {

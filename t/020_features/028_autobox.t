@@ -34,12 +34,16 @@ my $tx = Text::Xslate->new(
 );
 
 my @set = (
-    # enumerable
+    # any
+    ['<: nil.defined() ? 1 : 0 :>', {}, 0],
+    ['<: 0.defined()   ? 1 : 0 :>', {}, 1],
+    ['<: "".defined()  ? 1 : 0 :>', {}, 1],
+    ['<: [].defined()  ? 1 : 0 :>', {}, 1],
+    ['<: {}.defined()  ? 1 : 0 :>', {}, 1],
+
+    # array
     ['<: $a.size() :>', { a => [] },        '0', 'for array'],
     ['<: $a.size() :>', { a => [0 .. 9] }, '10'],
-
-    ['<: $h.size() :>', { h => {} },        '0', 'for hash'],
-    ['<: $h.size() :>', { h => {a => 1, b => 2, c => 3} }, '3'],
 
     ['<: nil.size() :>', { }, '', 'nil.size() returns an empty string'],
 
@@ -59,7 +63,10 @@ my @set = (
     ['<: $a.sort().join(",") :>', { a => ['b', 'c', 'a'] }, 'a,b,c'],
     ['<: $a.sort().join(",") :>', { a => ['a', 'b', 'c'] }, 'a,b,c'],
 
-    # kv
+    # hash
+    ['<: $h.size() :>', { h => {} },        '0', 'for hash'],
+    ['<: $h.size() :>', { h => {a => 1, b => 2, c => 3} }, '3'],
+
     ['<: $h.keys().join(",") :>', { h => {} }, '', 'keys'],
     ['<: $h.keys().join(",") :>', { h => {a => 1, b => 2, c => 3} }, 'a,b,c'],
 

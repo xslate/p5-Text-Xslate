@@ -249,6 +249,10 @@ sub std_include {
 sub localize_vars {
     my($parser, $symbol) = @_;
 
+# should make 'WITH' optional?
+#    my $t = $parser->token;
+#    if(uc($t->id) eq "WITH" or $t->arity eq "variable") {
+#        $parser->advance() if uc($t->id) eq "WITH";
     if(uc($parser->token->id) eq "WITH") {
         $parser->advance();
         $parser->new_scope();
@@ -650,6 +654,8 @@ Unlike Template-Toolkit, calling macros requires parens (C<()>).
 =head2 Virtual methods
 
 A few methods are supported in the Xslate core.
+
+    %% any.defined()
 
     %% a.size();
     %% a.join(", ");
