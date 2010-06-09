@@ -142,7 +142,7 @@ foreach my $code(
 }
 
 $warn = '';
-my $out = eval {
+$out = eval {
     $tx->render_string("<: nil.defined() ? 1 : 0 :>", {});
 };
 
