@@ -1,10 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-0.1030
+0.1030 Wed Jun  9 15:33:43 2010
     [CHANGES]
     - Unknown options to new() will produce warnings
 
     [BUG FIXES]
+    - Resolve issue #10: utf8 flags break macros (reported by nihen)
     - The auto semicolon insertion was broken
     - Loops could waste memory
 
