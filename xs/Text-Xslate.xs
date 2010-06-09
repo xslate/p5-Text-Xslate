@@ -105,9 +105,9 @@ tx_neat(pTHX_ SV* const sv) {
 
 static IV
 tx_verbose(pTHX_ tx_state_t* const st) {
-    HV* const hv   = (HV*)SvRV(st->self);
-    SV** const svp = hv_fetchs(hv, "verbose", FALSE);
-    return svp && SvOK(*svp) ? SvIV(*svp) : TX_VERBOSE_DEFAULT;
+    HV* const hv = (HV*)SvRV(st->self);
+    SV* const sv = *hv_fetchs(hv, "verbose", TRUE);
+    return SvIV(sv);
 }
 
 /* for trivial errors, ignored by default */

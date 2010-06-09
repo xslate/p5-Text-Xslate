@@ -43,6 +43,11 @@ BEGIN {
     *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+
+    my $cache_dir = File::Spec->catfile(
+        $ENV{HOME} || File::Spec->tmpdir,
+        '.xslate_cache');
+    *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
@@ -52,51 +57,68 @@ my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
 
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
+sub options { # overridable
+    my($class) = @_;
+    return {
+        # name => default
+        suffix      => '.tx',
+        path        => ['.'],
+        compiler    => $class->compiler_class,
+        input_layer => ':utf8',
+        syntax      => 'Kolon',
+        escape      => 'html',
+        cache       => 1,
+        cache_dir   => _DEFAULT_CACHE_DIR,
+        module      => undef,
+        function    => undef,
+
+        verbose      => 1,
+        warn_handler => undef,
+        die_handler  => undef,
+    };
+}
+
 sub new {
     my $class = shift;
     my %args  = (@_ == 1 ? %{$_[0]} : @_);
 
-    # options
+    my $options = $class->options;
+    my $used    = 0;
+    my $nargs   = scalar keys %args;
+    while(my $key = each %{$options}) {
+        if(exists $args{$key}) {
+            $used++;
+        }
+        if(!defined($args{$key}) && defined($options->{$key})) {
+            $args{$key} = $options->{$key};
+        }
+    }
 
-    defined($args{suffix})      or $args{suffix}      = '.tx';
-    defined($args{path})        or $args{path}        = [ '.' ];
-    defined($args{input_layer}) or $args{input_layer} = ':utf8';
-    defined($args{compiler})    or $args{compiler}    = $class->compiler_class;
-    defined($args{syntax})      or $args{syntax}      = 'Kolon';
-    defined($args{escape})      or $args{escape}      = 'html'; # or 'none'
-    defined($args{cache})       or $args{cache}       = 1; # 0, 1, 2
-    defined($args{cache_dir})   or $args{cache_dir}   = File::Spec->catfile(
-        $ENV{HOME} || File::Spec->tmpdir, '.xslate_cache',
-    );
+    if($used != $nargs) {
+        my @unknowns = grep { !exists $options->{$_} } keys %args;
+        warnings::warnif(misc => "$class: Unknown option(s): " . join ' ', @unknowns);
+    }
 
     my %funcs;
-
-    if(defined $args{import}) {
-        Carp::carp("'import' option has been renamed to 'module'"
-            . " because of the confliction with Perl's import() method."
-            . " Use 'module' instead");
-        %funcs = import_from(@{$args{import}});
-    }
     if(defined $args{module}) {
         %funcs = import_from(@{$args{module}});
     }
 
     # function => { ... } overrides imported functions
-    if(my $funcs_ref = $args{function}) {
+    if(defined(my $funcs_ref = $args{function})) {
         while(my($name, $body) = each %{$funcs_ref}) {
             $funcs{$name} = $body;
         }
     }
 
+    # the following functions are not overridable
     foreach my $builtin(qw(raw html dump)) {
         if(exists $funcs{$builtin}) {
             warnings::warnif(redefine =>
-                "You cannot redefine builtin function '$builtin',"
+                "$class: You cannot redefine builtin function '$builtin',"
                 . " because it is embeded in the engine");
         }
     }
-
-    # the following functions are not overridable
     $funcs{raw}  = \&Text::Xslate::Util::escaped_string;
     $funcs{html} = \&Text::Xslate::Util::html_escape;
     $funcs{dump} = \&Text::Xslate::Util::p;
@@ -110,14 +132,7 @@ sub new {
     # internal data
     $args{template} = {};
 
-    my $self = bless \%args, $class;
-
-    if(defined $args{string}) {
-        Carp::carp('"string" option has been deprecated. Use render_string($string, \%vars) instead');
-        $self->load_string($args{string});
-    }
-
-    return $self;
+    return bless \%args, $class;
 }
 
 sub load_string { # for <input>

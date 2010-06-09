@@ -3,11 +3,26 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
+use warnings FATAL => 'all';
 
 eval {
     Text::Xslate->render(undef, {});
 };
 like $@, qr/Invalid xslate instance/;
+
+eval {
+    Text::Xslate->new(foobar => 1);
+};
+like $@, qr/Unknown option/, 'unknown options';
+like $@, qr/\b foobar \b/xms;
+
+for my $builtin qw(raw html dump) {
+    eval {
+        Text::Xslate->new(function => { $builtin => sub {} });
+    };
+    like $@, qr/cannot redefine/, "cannot redefined $builtin";
+    like $@, qr/\b $builtin \b/xms;
+}
 
 my $tx = Text::Xslate->new();
 
@@ -30,6 +45,9 @@ eval {
     $tx->new();
 };
 ok $@, '$txinstance->new()';
+
+
+# EscapedString
 
 eval {
     Text::Xslate::EscapedString->new();
