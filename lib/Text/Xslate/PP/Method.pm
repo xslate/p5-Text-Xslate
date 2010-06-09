@@ -47,12 +47,6 @@ sub _hash_size {
     return scalar keys %{$hash_ref};
 }
 
-sub _hash_exists {
-    my($hash_ref, $key) = @_;
-    return _bad_arg('size') if @_ != 2;
-    return exists $hash_ref->{$key};
-}
-
 sub _hash_keys {
     my($hash_ref) = @_;
     return _bad_arg('keys') if @_ != 1;
@@ -82,7 +76,6 @@ my %builtin_method = (
     'array::sort'    => \&_array_sort,
 
     'hash::size'     => \&_hash_size,
-    'hash::exists'   => \&_hash_exists,
     'hash::keys'     => \&_hash_keys,
     'hash::values'   => \&_hash_values,
     'hash::kv'       => \&_hash_kv,
