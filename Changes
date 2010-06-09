@@ -2,13 +2,15 @@ Revision history for Perl extension Text::Xslate
 
 0.1030
     [CHANGES]
-    - The interface of bridge mecahnism has been improved.
-      Now you can do module => ['Text::Xslate::Bridge::TT2']
     - Unknown options to new() will produce warnings
 
     [BUG FIXES]
+    - The auto semicolon insertion was broken
+    - Loops could waste memory
 
     [NEW FEATURES]
+    - The interface of bridge mecahnism has been improved;
+      now you can do "module => ['Text::Xslate::Bridge::TT2']"
 
 0.1029 Tue Jun  8 16:30:46 2010
     Macros and autoboxing have been refactored.
