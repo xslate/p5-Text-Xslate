@@ -1399,8 +1399,8 @@ Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
     my $booster = Text::Xslate::PP::Booster->new();
 
     my $optext  = q{<: $value :>};
-    my $code    = $booster->opcode_to_perlcode_string( $tx->_compiler->compile( $optext ) );
-    my $coderef = $booster->opcode_to_perlcode( $tx->_compiler->compile( $optext ) );
+    my $code    = $booster->opcode_to_perlcode_string( $tx->compile( $optext ) );
+    my $coderef = $booster->opcode_to_perlcode( $tx->compile( $optext ) );
     # $coderef takes a Text::Xslate::PP::State object
 
 =head1 DESCRIPTION
