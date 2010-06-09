@@ -1122,11 +1122,17 @@ sub call {
 use Text::Xslate::PP::Method;
 
 my %builtin_method = (
+    'nil::defined'    => \&Text::Xslate::PP::Method::_any_defined,
+
+    'scalar::defined' => \&Text::Xslate::PP::Method::_any_defined,
+
+    'array::defined' => \&Text::Xslate::PP::Method::_any_defined,
     'array::size'    => \&Text::Xslate::PP::Method::_array_size,
     'array::join'    => \&Text::Xslate::PP::Method::_array_join,
     'array::reverse' => \&Text::Xslate::PP::Method::_array_reverse,
     'array::sort'    => \&Text::Xslate::PP::Method::_array_sort,
 
+    'hash::defined'  => \&Text::Xslate::PP::Method::_any_defined,
     'hash::size'     => \&Text::Xslate::PP::Method::_hash_size,
     'hash::keys'     => \&Text::Xslate::PP::Method::_hash_keys,
     'hash::values'   => \&Text::Xslate::PP::Method::_hash_values,
@@ -1162,14 +1168,10 @@ sub methodcall {
             $method, $invocant);
     }
 
-    if(!defined $invocant) {
-        _warn( $st, $frame, $line, "Use of nil to invoke method %s", $method );
-        return undef;
-    }
-
     my $type = ref($invocant) eq 'ARRAY' ? 'array'
              : ref($invocant) eq 'HASH'  ? 'hash'
-             :                             'scalar';
+             : defined($invocant)        ? 'scalar'
+             :                             'nil';
     my $fq_name = $type . "::" . $method;
 
     local $_f_l_for_methodcall = [ $st, $frame, $line ];
@@ -1180,6 +1182,11 @@ sub methodcall {
             _error( $st, $frame, $line, "%s", $@ );
         }
         return $retval;
+    }
+
+    if ( not defined $invocant ) {
+        _warn($st, $frame, $line, "Use of nil to invoke method %", $method);
+        return undef;
     }
 
     _error($st, $frame, $line, "Undefined method %s called for %s", $method, $invocant);
