@@ -566,7 +566,16 @@ $CODE_MANIP{ 'function' } = sub {
     my ( $self, $arg, $line ) = @_;
 
     # macro
-    return $self->sa( $arg ) if ( exists $self->stash->{ macro_names }->{ $arg } );
+    if ( exists $self->stash->{ macro_names }->{ $arg } ) {
+        my $next_op = $self->ops->[ $self->current_line + 1 ]; 
+        if ( $next_op->[0] eq 'funcall' ) {
+            $self->sa( $arg );
+        }
+        else {
+            $self->sa( sprintf( 'bless( [ %s ], "Text::Xslate::PP::Booster::Macro" )', value_to_literal($arg) ) );
+        }
+        return;
+    }
 
     $self->sa(
         sprintf('$st->function->{ %s }', value_to_literal($arg) )
@@ -577,8 +586,9 @@ $CODE_MANIP{ 'function' } = sub {
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $args_str = join( ', ', @{ pop @{ $self->SP } } );
+use Data::Dumper;
 
-    if ( exists $self->stash->{ macro_names }->{ $self->sa } ) {
+    if ( exists $self->stash->{ macro_names }->{ $self->sa } ) { # this is optimization!
         $self->optimize_to_print( 'macro' );
         $self->sa( sprintf( '$macro{ %s }->( $st, %s, [ %s ] )',
             value_to_literal( $self->sa() ),
@@ -676,7 +686,8 @@ $CODE_MANIP{ 'end' } = sub {
 
 sub _spawn_child {
     my ( $self, $opts ) = @_;
-    $opts ||= {};
+    $opts ||= { stash => { macro_names => $self->stash->{ macro_names } } };
+
     ( ref $self )->new($opts);
 }
 
@@ -687,21 +698,26 @@ sub _convert_opcode {
     my $ops  = [ map { [ @$_ ] } @$ops_orig ]; # this method is destructive to $ops. so need to copy.
     my $len  = scalar( @$ops );
 
+    # check macro
+    if ( not exists $self->stash->{ macro_names } ) {
+        $self->stash->{ macro_names }
+             = { map { ( $_->[1] => 1 ) } grep { $_->[0] eq 'macro_begin' } @$ops_orig };
+    }
+
     # reset
     if ( $self->is_completed ) {
+        my $macro_names = $self->stash->{ macro_names };
         $self->sa( undef );
         $self->sb( undef );
         $self->lvar( [] );
         $self->lines( [] );
         $self->SP( [] );
         $self->stash( {} );
+        $self->stash->{ macro_names } = $macro_names; # inherit macro names
         $self->is_completed( 0 );
     }
 
     $self->ops( $ops );
-
-    # check macro
-    $self->stash->{ macro_names } = { map { ( $_->[1] => 1 ) } grep { $_->[0] eq 'macro_begin' } @$ops };
 
     # create code
     my $i = 0;
@@ -1066,6 +1082,11 @@ sub call {
                     $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
                 );
             }
+        }
+        elsif ( ref( $proc ) eq 'Text::Xslate::PP::Booster::Macro' ) {
+            return bless \do {
+                $st->{ booster_macro }->{ $proc->[0] }->( $st, [ [ @args ] ], [ $frame, $line ] )
+            }, 'Text::Xslate::EscapedString';
         }
         else {
             $ret = eval { $proc->( @args ) };
