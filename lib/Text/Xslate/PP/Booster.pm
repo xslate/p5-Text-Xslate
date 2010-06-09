@@ -438,6 +438,18 @@ $CODE_MANIP{ 'max_index' } = sub {
 };
 
 
+$CODE_MANIP{ 'builtin_raw' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->optimize_to_print( 'raw' );
+};
+
+
+$CODE_MANIP{ 'builtin_html' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'Text::Xslate::html_escape( %s )', $self->sa ) );
+};
+
+
 $CODE_MANIP{ 'eq' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( 'cond_eq( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
@@ -666,7 +678,7 @@ $CODE_MANIP{ 'goto' } = sub {
 };
 
 
-$CODE_MANIP{ 'depend' } = sub {};
+$CODE_MANIP{ 'depend' } = $CODE_MANIP{'noop'};
 
 
 $CODE_MANIP{ 'end' } = sub {
@@ -1026,7 +1038,10 @@ sub optimize_to_print {
     return unless $ops;
     return unless ( $ops->[0] eq 'print' );
 
-    if ( $type eq 'num' ) { # currently num only
+    if ( $type eq 'num' ) {
+        $ops->[0] = 'print_raw';
+    }
+    elsif ( $type eq 'raw' ) {
         $ops->[0] = 'print_raw';
     }
     elsif ( $type eq 'macro' ) { # extent op code for booster
