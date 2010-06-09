@@ -883,16 +883,27 @@ TXC_w_int(macro_end) {
     TX_st->pc = SvUVX(retaddr);
 }
 
+static bool
+tx_sv_is_macro(pTHX_ SV* const sv) {
+    if(sv_isobject(sv)) {
+        AV* const macro = (AV*)SvRV(sv);
+        dMY_CXT;
+        if(SvSTASH(macro) == MY_CXT.macro_stash) {
+            if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
+                croak("Oops: Invalid macro object");
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 TXC(funcall) { /* call a function or a macro */
     /* PUSHMARK must be done */
-    dMY_CXT;
     SV* const func = TX_st_sa;
 
-    if(sv_isobject(func) && SvSTASH(SvRV(func)) == MY_CXT.macro_stash) {
+    if(tx_sv_is_macro(aTHX_ func)) {
         AV* const macro = (AV*)SvRV(func);
-        if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
-            croak("Broken macro object");
-        }
         tx_do_macrocall(aTHX_ TX_st, macro);
     }
     else {
