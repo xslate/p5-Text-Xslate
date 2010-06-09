@@ -111,18 +111,38 @@ sub value_to_literal {
 }
 
 sub import_from {
-    my $code = '';
-
-    local $Text::Xslate::Util::{'_import::'};
+    my $code = "# Text::Xslate::Util::import_from()\n"
+             . "package " . "Text::Xslate::Util::_import;\n"
+             . "use warnings FATAL => 'all';\n"
+             . 'my @args;' . "\n";
 
     for(my $i = 0; $i < @_; $i++) {
-        $code .= "use $_[$i]";
-        if(ref $_[$i+1]){
-            $code .= sprintf ' qw(%s)', join ' ', @{$_[++$i]};
+        my $module = $_[$i];
+
+        if($module =~ /[^a-zA-Z0-9_:]/) {
+            Carp::croak("Invalid module name: $module");
         }
-        $code .= ";\n";
+
+        my $commands;
+        if(ref $_[$i+1]){
+            $commands = p($_[++$i]);
+        }
+
+        $code .= "use $module ();\n" if !$module->can('export_into_xslate');
+
+        if(!defined($commands) or $commands ne '') {
+            $code .= sprintf <<'END_IMPORT', $module, $commands || '()';
+    @args = %2$s;
+    %1$s->can('export_into_xslate')
+        ? %1$s->export_into_xslate(\@funcs, @args) # bridge modules
+        : %1$s->import(@args);                     # function-based modules
+END_IMPORT
+        }
     }
 
+    local $Text::Xslate::Util::{'_import::'};
+    #print STDERR $code;
+    my @funcs;
     my $e = do {
         local $@;
         eval  qq{package}
@@ -131,8 +151,7 @@ sub import_from {
         $@;
     };
     Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;
-
-    my @funcs = map {
+    push @funcs, map {
             my $glob_ref = \$Text::Xslate::Util::_import::{$_};
             my $c = ref($glob_ref) eq 'GLOB' ? *{$glob_ref}{CODE} : undef;
             defined($c) ? ($_ => $c) : ();
@@ -142,9 +161,8 @@ sub import_from {
 }
 
 sub p { # for debugging
-    my($self) = @_;
     require 'Data/Dumper.pm'; # we don't want to create its namespace
-    my $dd = Data::Dumper->new([$self]);
+    my $dd = Data::Dumper->new([@_ == 1 ? @_ : \@_], ['*data']);
     $dd->Indent(1);
     $dd->Sortkeys(1);
     $dd->Quotekeys(0);

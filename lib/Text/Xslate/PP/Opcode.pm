@@ -637,16 +637,9 @@ sub tx_fetch {
     return $ret;
 }
 
-
-sub tx_verbose {
-    my $v = $_[0]->self->{ verbose };
-    defined $v ? $v : TX_VERBOSE_DEFAULT;
-}
-
-
 sub tx_error {
     my ( $st, $fmt, @args ) = @_;
-    if( tx_verbose( $st ) >= TX_VERBOSE_DEFAULT ) {
+    if( $st->self->{verbose} >= TX_VERBOSE_DEFAULT ) {
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }
@@ -654,7 +647,7 @@ sub tx_error {
 
 sub tx_warn {
     my ( $st, $fmt, @args ) = @_;
-    if( tx_verbose( $st ) > TX_VERBOSE_DEFAULT ) {
+    if( $st->self->{verbose} > TX_VERBOSE_DEFAULT ) {
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }

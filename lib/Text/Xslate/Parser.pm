@@ -99,6 +99,13 @@ has next_token => ( # to peek the next token
     init_arg => undef,
 );
 
+has [qw(following_newline statement_is_finished)] => (
+    is  => 'rw',
+    isa => 'Bool',
+
+    init_arg => undef,
+);
+
 has input => (
     is  => 'rw',
     isa => 'Str',
@@ -159,11 +166,6 @@ has line => (
     isa      => 'Int',
     required => 0,
 );
-
-sub line_inc {
-    my($parser) = @_;
-    return $parser->line( $parser->line + 1);
-}
 
 sub symbol_class() { 'Text::Xslate::Symbol' }
 
@@ -289,10 +291,10 @@ sub preprocess {
                 $code .= $s;
             }
             elsif(chomp $s) {
-                $code .= qq{$s;\n};
+                $code .= qq{$s\n};
             }
             else {
-                $code .= qq{$s;};
+                $code .= qq{$s;}; # auto semicolon insertion
             }
         }
         elsif($type eq 'prechomp') {
@@ -307,36 +309,6 @@ sub preprocess {
     }
     print STDOUT $code, "\n" if _DUMP_PROTO;
     return $code;
-}
-
-sub lex {
-    my($parser) = @_;
-
-    local *_ = \$parser->{input};
-
-    s{\G (\s) }{ $1 eq "\n" and $parser->line_inc(); ""}xmsge;
-
-    if(s/\A ($ID)//xmso){
-        return [ name => $1 ];
-    }
-    elsif(s/\A ($OPERATOR_TOKEN)//xmso){
-        return [ operator => $1 ];
-    }
-    elsif(s/\A $COMMENT //xmso) {
-        goto &lex; # tail call
-    }
-    elsif(s/\A ($NUMBER)//xmso){
-        return [ number => $1 ];
-    }
-    elsif(s/\A ($STRING)//xmso){
-        return [ string => $1 ];
-    }
-    elsif(s/\A (\S+)//xms) {
-        $parser->_error("Oops: Unexpected lex symbol '$1'");
-    }
-    else { # empty
-        return undef;
-    }
 }
 
 sub parse {
@@ -354,7 +326,7 @@ sub parse {
 
     $parser->input( $parser->preprocess($input) );
 
-    $parser->next_token( $parser->lex() );
+    $parser->next_token( $parser->look_ahead() );
     $parser->advance();
     my $ast = $parser->statements();
 
@@ -560,6 +532,43 @@ sub symbol {
     return $s;
 }
 
+sub look_ahead {
+    my($parser) = @_;
+
+    local *_ = \$parser->{input};
+
+    my $i = 0;
+    s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
+    if($i) {
+        $parser->following_newline(1);
+        $parser->line( $parser->line + $i );
+    }
+    else {
+        $parser->following_newline(0);
+    }
+
+    if(s/\A ($ID)//xmso){
+        return [ name => $1 ];
+    }
+    elsif(s/\A ($OPERATOR_TOKEN)//xmso){
+        return [ operator => $1 ];
+    }
+    elsif(s/\A $COMMENT //xmso) {
+        goto &look_ahead; # tail recursion
+    }
+    elsif(s/\A ($NUMBER)//xmso){
+        return [ number => $1 ];
+    }
+    elsif(s/\A ($STRING)//xmso){
+        return [ string => $1 ];
+    }
+    elsif(s/\A (\S+)//xms) {
+        $parser->_error("Oops: Unexpected lex symbol '$1'");
+    }
+    else { # empty
+        return [ special => '(end)' ];
+    }
+}
 
 sub advance {
     my($parser, $id) = @_;
@@ -573,13 +582,14 @@ sub advance {
 
     my $symtab = $parser->symbol_table;
 
-    $t = $parser->next_token();
+    $t = $parser->next_token;
 
-    if(not defined $t) {
-        return $parser->token( $symtab->{"(end)"} );
+    if($t->[0] eq 'special') {
+        return $parser->token( $symtab->{ $t->[1] } );
     }
+    $parser->statement_is_finished( $parser->following_newline );
 
-    $parser->next_token( $parser->lex() );
+    $parser->next_token( $parser->look_ahead() );
 
     my($arity, $value) = @{$t};
     my $proto;
@@ -910,36 +920,26 @@ sub define_function {
     return;
 }
 
-sub nud_macro{
-    my($parser, $s) = @_;
-    return $s->clone(arity => 'macro');
-}
-
-sub define_macro {
-    my($parser, @names) = @_;
-
-    foreach my $name(@names) {
-        my $s = $parser->symbol($name);
-        $s->set_nud(\&nud_macro);
-    }
-    return;
-}
-
 sub finish_statement {
     my($parser) = @_;
 
     my $t = $parser->token;
-    if(!($t->is_block_end or $t->id eq ";")) {
+    if($t->is_block_end or $parser->statement_is_finished) {
+        # noop
+    }
+    elsif($t->id eq ";") {
+        $parser->advance();
+    }
+    else {
         $parser->_unexpected("a semicolon or block end", $t);
     }
-
-    return;
+   return;
 }
 
 sub statement { # process one or more statements
     my($parser) = @_;
     my $t = $parser->token;
-    if($t->id eq ";"){
+    while($t->id eq ";"){
         $parser->advance(); # ";"
         return;
     }
@@ -1193,8 +1193,8 @@ sub std_proc {
         $parser->_unexpected("a name", $name);
     }
 
-    $parser->define_macro($name->id);
-    $macro->first( $parser->nud_macro($name) );
+    $parser->define_function($name->id);
+    $macro->first( $parser->nud_function($name) );
     $parser->advance();
     $parser->pointy($macro);
     return $macro;
@@ -1446,7 +1446,7 @@ sub std_cascade {
 # markers for the compiler
 sub std_marker {
     my($parser, $symbol) = @_;
-    $parser->advance(';');
+    $parser->finish_statement();
     return $symbol->clone(arity => 'marker');
 }
 
@@ -1531,7 +1531,7 @@ sub _unexpected {
     if(defined($got) && $got ne ";") {
         $got = sprintf '%s (%s)', $got->id, $got->arity
             if ref $got;
-        $parser->_error("Expected $expected but got $got");
+        $parser->_error("Expected $expected, but got $got");
      }
      else {
         $parser->_error("Expected $expected");

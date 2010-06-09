@@ -323,7 +323,7 @@ sub std_macro {
         $parser->_error("a name", $name);
     }
 
-    $parser->define_macro($name->id);
+    $parser->define_function($name->id);
 
     $proc->first($name);
     $parser->advance();
@@ -391,7 +391,7 @@ sub std_wrapper {
     );
 
     my $internal_name = $symbol->clone(
-        arity => 'macro',
+        arity => 'function',
         id    => 'content@wrapper',
     );
 
@@ -647,9 +647,34 @@ Call:
 
 Unlike Template-Toolkit, calling macros requires parens (C<()>).
 
-=head2 Template cascading
+=head2 Virtual methods
 
-Not supported.
+A few methods are supported in the Xslate core.
+
+    %% a.size();
+    %% a.join(", ");
+    %% a.reverse();
+
+    %% h.size();
+    %% h.keys();
+    %% h.values();
+    %% h.kv();
+
+However, there is a bridge mechanism that allows you to use more methods.
+For example, Text::Xslate::Bridge::TT2 provides the TT2 pseudo
+methods (a.k.a virtual methods) for Xslate, which uses Template::VMethods
+implementation.
+
+    use Text::Xslate::Bridge::TT2;
+
+    my $tx = Text::Xslate->new(
+        module => [qw(Text::Xslate:*Bridge::TT2)],
+    );
+
+   print $tx->render_strig('[% "foo".length() %]'); # => 3
+
+See L<Text::Xslate::Bridge>, L<Text::Xslate::Bridge::TT2>, and
+L<Text::Xslate::Bridge::Alloy> for details.
 
 =head2 Misc.
 

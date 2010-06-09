@@ -17,9 +17,11 @@ use Scalar::Util ();
 #use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
 use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
-use constant _OPTIMIZE => defined(scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]))
-                            ?     scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0])
-                            : 1; # enable optimization by default
+
+our $OPTIMIZE = scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
+if(not defined $OPTIMIZE) {
+    $OPTIMIZE = 1; # enable optimization by default
+}
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
@@ -185,7 +187,7 @@ sub compile {
 
     push @code, $self->_flush_macro_table() if %mtable;
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
     }
 
@@ -420,7 +422,7 @@ sub _generate_name {
 sub _can_print_optimize {
     my($self, $name, $node) = @_;
 
-    return 0 if !_OPTIMIZE;
+    return 0 if !$OPTIMIZE;
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
     return $node->arity eq 'call'
@@ -487,6 +489,23 @@ sub _generate_cascade {
     return ();
 }
 
+sub _compile_block {
+    my($self, $block) = @_;
+    my @block_code = $self->_compile_ast($block);
+
+    foreach my $op(@block_code) {
+        if($op->[0] eq 'pushmark') {
+            # pushmark ... funcall (or something) may create mortal SVs
+            # so surround the block with ENTER and LEAVE
+            unshift @block_code, ['enter'];
+            push    @block_code, ['leave'];
+            last;
+        }
+    }
+
+    return @block_code;
+}
+
 sub _generate_for {
     my($self, $node) = @_;
     my $expr  = $node->first;
@@ -511,8 +530,8 @@ sub _generate_for {
 
     # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(3);
-    my @block_code = $self->_compile_ast($block);
 
+    my @block_code = $self->_compile_block($block);
     push @code,
         [ literal_i => $lvar_id, $expr->line, $lvar_name ],
         [ for_iter  => scalar(@block_code) + 2 ],
@@ -547,9 +566,8 @@ sub _generate_while {
     }
 
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
-    my @block_code = $self->_compile_ast($block);
-
-    push @code,
+    my @block_code = $self->_compile_block($block);
+    return @code,
         [ and  => scalar(@block_code) + 2, undef, "while" ],
         @block_code,
         [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
@@ -615,27 +633,31 @@ sub _generate_if {
     my $second = $node->second;
     my $third  = $node->third;
 
-    if(any_in($first->id, "!", "no")) {
-        $first            = $first->first;
-        ($second, $third) = ($third, $second);
+    if($OPTIMIZE) {
+        while(any_in($first->id, "!", "no")) {
+            $first            = $first->first;
+            ($second, $third) = ($third, $second);
+        }
     }
+
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-
     my @cond  = $self->_expr($first);
 
-    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
-    local $self->{const} = [ @{$self->const} ]; # new scope
+    my @then = do {
+        local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+        local $self->{const} = [ @{$self->const} ]; # new scope
+        $self->_compile_ast($second);
+    };
 
-    my @then  = $self->_compile_ast($second);
+    my @else = do {
+        local $self->{lvar}  = { %{$self->lvar}  }; # new scope
+        local $self->{const} = [ @{$self->const} ]; # new scope
+        $self->_compile_ast($third);
+    };
 
-    local $self->{lvar}  = { %{$self->lvar}  }; # new scope
-    local $self->{const} = [ @{$self->const} ]; # new scope
-
-    my @else  = $self->_compile_ast($third);
-
-    if(_OPTIMIZE) {
-        if(@cond == 1 && $cond[0][0] eq 'literal') {
+    if($OPTIMIZE) {
+        if($self->_code_is_literal(@cond)) {
             if($cond[0][1]) {
                 return @then;
             }
@@ -645,7 +667,7 @@ sub _generate_if {
         }
     }
 
-    if(@then and @else) {
+    if( (@then and @else) or !$OPTIMIZE) {
         return(
             @cond,
             [ and  => scalar(@then) + 2, undef, $node->id . ' (then)' ],
@@ -657,14 +679,14 @@ sub _generate_if {
     elsif(!@else) { # no @else
         return(
             @cond,
-            [ and => scalar(@then) + 1, undef, $node->id . ' (then)' ],
+            [ and => scalar(@then) + 1, undef, $node->id . ' (then/no-else)' ],
             @then,
         );
     }
     else { # no @then
         return(
             @cond,
-            [ or => scalar(@else) + 1, undef, $node->id . ' (else)'],
+            [ or => scalar(@else) + 1, undef, $node->id . ' (else/no-then)'],
             @else,
         );
     }
@@ -748,9 +770,11 @@ sub _generate_unary {
 
     my $id = $node->id;
     if(exists $unary{$id}) {
-        return
-            $self->_expr($node->first),
-            [ $unary{$id} => () ];
+        my @code = ($self->_expr($node->first), [ $unary{$id} ]);
+        if( $OPTIMIZE and $self->_code_is_literal($code[0]) ) {
+            $self->_fold_constants(\@code);
+        }
+        return @code;
     }
     else {
         $self->_error("Unary operator $id is not implemented", $node);
@@ -799,12 +823,8 @@ sub _generate_binary {
                 [ move_from_sb    => undef, undef, "$id on true" ],
         }
 
-        if(_OPTIMIZE) {
-            if(scalar(@code) == 5
-                    and join(' ', map { $_->[0] } @code[0 .. scalar(@code) - 2])
-                        eq 'literal save_to_lvar literal load_lvar_to_sb'
-                    and defined($code[0][1])
-                    and defined($code[2][1]) ) {
+        if($OPTIMIZE) {
+            if( $self->_code_is_literal(@lhs) and $self->_code_is_literal(@rhs) ){
                 $self->_fold_constants(\@code);
             }
         }
@@ -860,12 +880,6 @@ sub _generate_function {
     my($self, $node) = @_;
 
     return [ function => $node->id, $node->line, 'function' ];
-}
-
-sub _generate_macro {
-    my($self, $node) = @_;
-
-    return [ function => $node->id, $node->line, 'macro' ];
 }
 
 # $~iterator
@@ -938,7 +952,7 @@ sub _generate_constant {
     $lvar->{$lvar_name} = $lvar_id;
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 
-    if(_OPTIMIZE) {
+    if($OPTIMIZE) {
         if(@expr == 1 && any_in($expr[0][0], qw(literal load_lvar))) {
             $expr[0][3] = "constant $lvar_name"; # comment
             $self->const->[$lvar_id] = \@expr;
@@ -976,6 +990,11 @@ sub _variable_to_value {
 }
 
 # optimizatin stuff
+
+sub _code_is_literal {
+    my($self, @code) = @_;
+    return @code == 1 && $code[0][0] eq 'literal';
+}
 
 sub _fold_constants {
     my($self, $code) = @_;

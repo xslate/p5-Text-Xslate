@@ -217,7 +217,7 @@ static const size_t tx_num_builtin_method
 
 SV*
 tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
-    /* ENTER & LEAVE & PUSHMARK & PUSH must be done */
+    /* PUSHMARK must be done */
     dSP;
     dMARK;
     dORIGMARK;
@@ -235,7 +235,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
         if(mgv) {
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, (SV*)GvCV(mgv), 0, "object method call"); /* tx_call() does FREETMPS & LEAVE */
+            return tx_call(aTHX_ st, (SV*)GvCV(mgv), 0, "object method call");
         }
 
         goto not_found;
@@ -293,7 +293,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         }
         else { /* user defined methods */
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, entity, 0, "builtin method call"); /* tx_call() does FREETMPS & LEAVE */
+            return tx_call(aTHX_ st, entity, 0, "builtin method call");
         }
     }
     not_found:
@@ -302,9 +302,6 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     finish:
     SP = ORIGMARK;
     PUTBACK;
-
-    FREETMPS;
-    LEAVE;
     return retval ? retval : &PL_sv_undef;
 }
 
