@@ -834,6 +834,7 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
     AvARRAY(cframe)[TXframe_OUTPUT] = TX_st->output;
     TX_st->output                   = tmp;
     sv_setpvs(tmp, "");
+    SvUTF8_on(tmp); /* sv_utf8_upgrade(tmp); */
 
     if(outer > 0) { /* refers outer lexical variales */
         /* copies lexical variables from the old frame to the new one */
