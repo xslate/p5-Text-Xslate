@@ -16,7 +16,7 @@ use constant _FOR_ARRAY => 2;
 
 my %CODE_MANIP = ();
 
-our @CARP_NOT = qw(Text::Xslate);
+our @CARP_NOT = qw(Text::Xslate Text::Xslate::PP::Method);
 
 has indent_depth => ( is => 'rw', default => 1 );
 
@@ -1119,7 +1119,7 @@ sub call {
 }
 
 
-use Text::Xslate::PP::Method;;
+use Text::Xslate::PP::Method;
 
 my %builtin_method = (
     'array::size'    => \&Text::Xslate::PP::Method::_array_size,
@@ -1132,6 +1132,19 @@ my %builtin_method = (
     'hash::values'   => \&Text::Xslate::PP::Method::_hash_values,
     'hash::kv'       => \&Text::Xslate::PP::Method::_hash_kv,
 );
+
+our $_f_l_for_methodcall;
+
+{
+    no warnings;
+
+    sub Text::Xslate::PP::Method::_bad_arg {
+        my ( $st, $frame, $line ) = @$_f_l_for_methodcall;
+        _error( $st, $frame, $line, "Wrong number of arguments for %s", $_[0] );
+        return undef;
+    }
+
+}
 
 
 sub methodcall {
@@ -1158,6 +1171,8 @@ sub methodcall {
              : ref($invocant) eq 'HASH'  ? 'hash'
              :                             'scalar';
     my $fq_name = $type . "::" . $method;
+
+    local $_f_l_for_methodcall = [ $st, $frame, $line ];
 
     if( my $body = $st->function->{ $fq_name } || $builtin_method{ $fq_name } ){
         my $retval = eval { $body->($invocant, @args) };
