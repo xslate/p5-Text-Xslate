@@ -683,12 +683,12 @@ which is explained in L<Text::Xslate::Syntax::TTerse>.
 
 =head1 NOTES
 
-There are common notes in the Xslate virtual machine.
+There are common notes in Xslate.
 
-=head2 Nil handling
+=head2 Nil/undef handling
 
-Note that nil handling is different from Perl's. Basically it does nothing,
-but C<< verbose => 2 >> will produce warnings for it.
+Note that nil (ie.e C<undef> in Perl) handling is different from Perl's.
+Basically it does nothing, but C<< verbose => 2 >> will produce warnings for it.
 
 =over
 
