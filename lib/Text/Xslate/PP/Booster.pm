@@ -146,6 +146,7 @@ $CODE_MANIP{ 'local_s' } = sub {
 };
 
 
+$CODE_MANIP{ 'macro_nargs' } = sub { };
 
 
 $CODE_MANIP{ 'load_lvar' } = sub {
@@ -508,10 +509,28 @@ $CODE_MANIP{ 'macro_begin' } = sub {
         $name, $name ) );
     $self->indent_depth( $self->indent_depth + 1 );
 
-    $self->write_lines( 'my ( $st, $pad ) = @_;' );
+    $self->write_lines( 'my ( $st, $pad, $f_l ) = @_;' );
     $self->write_lines( 'my $vars = $st->{ vars };' );
+    $self->write_lines( sprintf( 'my $mobj = $st->{ function }->{ "%s" };', $arg ) );
     $self->write_lines( sprintf( 'my $output = q{};' ) );
     $self->write_code( "\n" );
+
+    my $macro_obj = sprintf( '$st->{ function }->{ %s }', $arg );
+
+    my $error = sprintf(
+        '_error($st, @$f_l, _macro_args_error( $mobj, $pad ) )',
+        $self->stash->{ in_macro }
+    );
+
+    $self->write_lines( sprintf( <<'CODE', $error ) );
+if ( @{$pad->[-1]} != $mobj->nargs ) {
+    %s;
+    return '';
+}
+CODE
+
+
+
 
     $self->write_lines(
         sprintf( q{Carp::croak('Macro call is too deep (> 100) on %s') if ++$depth > 100;}, $name )
@@ -519,6 +538,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
     $self->write_code( "\n" );
 };
 
+#=cut
 
 $CODE_MANIP{ 'macro_end' } = sub {
     my ( $self, $arg, $line ) = @_;
@@ -548,6 +568,10 @@ $CODE_MANIP{ 'macro' } = sub {
 
 $CODE_MANIP{ 'function' } = sub {
     my ( $self, $arg, $line ) = @_;
+
+    # macro
+    return $self->sa( $arg ) if ( exists $self->stash->{ macro_names }->{ $arg } );
+
     $self->sa(
         sprintf('$st->function->{ %s }', value_to_literal($arg) )
     );
@@ -557,6 +581,17 @@ $CODE_MANIP{ 'function' } = sub {
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $args_str = join( ', ', @{ pop @{ $self->SP } } );
+
+    if ( exists $self->stash->{ macro_names }->{ $self->sa } ) {
+        $self->optimize_to_print( 'macro' );
+        $self->sa( sprintf( '$macro{ %s }->( $st, %s, [ %s ] )',
+            value_to_literal( $self->sa() ),
+            sprintf( 'push_pad( $pad, [ %s ] )', $args_str  ),
+            join( ', ', $self->frame_and_line )
+#            sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, $args_str )
+        ) );
+        return;
+    }
 
     $args_str = ', ' . $args_str if length $args_str;
 
@@ -668,6 +703,9 @@ sub _convert_opcode {
     }
 
     $self->ops( $ops );
+
+    # check macro
+    $self->stash->{ macro_names } = { map { ( $_->[1] => 1 ) } grep { $_->[0] eq 'macro_begin' } @$ops };
 
     # create code
     my $i = 0;
@@ -1277,6 +1315,16 @@ sub _error {
         }
         Carp::carp( sprintf( $fmt, @args ) );
     }
+}
+
+
+sub _macro_args_error {
+    my ( $macro, $pad ) = @_;
+    my $nargs = $macro->nargs;
+    my $args  = scalar( @{ $pad->[ -1 ] } );
+    sprintf(
+        'Wrong number of arguments for %s (%d %s %d)', $macro->name, $args,  $args > $nargs ? '>' : '<', $nargs
+    );
 }
 
 
