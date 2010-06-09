@@ -511,11 +511,9 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 
     $self->write_lines( 'my ( $st, $pad, $f_l ) = @_;' );
     $self->write_lines( 'my $vars = $st->{ vars };' );
-    $self->write_lines( sprintf( 'my $mobj = $st->{ function }->{ "%s" };', $arg ) );
+    $self->write_lines( sprintf( 'my $mobj = $st->{ function }->{ %s };', $name ) );
     $self->write_lines( sprintf( 'my $output = q{};' ) );
     $self->write_code( "\n" );
-
-    my $macro_obj = sprintf( '$st->{ function }->{ %s }', $arg );
 
     my $error = sprintf(
         '_error($st, @$f_l, _macro_args_error( $mobj, $pad ) )',
