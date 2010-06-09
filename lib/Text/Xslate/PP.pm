@@ -140,7 +140,7 @@ sub _assemble {
         }
 
         $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ]
-            if !_PP_BOOSTER;
+            if _PP_BACKEND eq 'Opcode';
         $code->[ $i ]->{ opname }    = $opname; # for test
 
         my $oparg = $OPARGS[ $opnum ];
@@ -217,7 +217,7 @@ sub _assemble {
     }
 
     $st->{ booster_code } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto )
-        if _PP_BOOSTER;
+        if _PP_BACKEND eq 'Booster';
 
     $st->{ code } = $code;
     return;

@@ -12,7 +12,7 @@ BEGIN { use_ok 'Any::Moose' }
 
 diag "Testing Text::Xslate/$Text::Xslate::VERSION";
 if(Text::Xslate->isa('Text::Xslate::PP')) {
-    diag "Backend: PP", Text::Xslate::PP::_PP_BOOSTER() ? "::Booster" : "::Opcode";
+    diag "Backend: PP::", Text::Xslate::PP::_PP_BACKEND();
 }
 else {
     diag "Backend: XS";

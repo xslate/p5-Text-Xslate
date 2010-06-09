@@ -1139,13 +1139,13 @@ my %builtin_method = (
     'hash::kv'       => \&Text::Xslate::PP::Method::_hash_kv,
 );
 
-our $_f_l_for_methodcall;
+our @_f_l_for_methodcall;
 
 {
     no warnings;
 
     sub Text::Xslate::PP::Method::_bad_arg {
-        my ( $st, $frame, $line ) = @$_f_l_for_methodcall;
+        my ( $st, $frame, $line ) = @_f_l_for_methodcall;
         _error( $st, $frame, $line, "Wrong number of arguments for %s", $_[0] );
         return undef;
     }
@@ -1174,7 +1174,7 @@ sub methodcall {
              :                             'nil';
     my $fq_name = $type . "::" . $method;
 
-    local $_f_l_for_methodcall = [ $st, $frame, $line ];
+    local @_f_l_for_methodcall = ( $st, $frame, $line );
 
     if( my $body = $st->function->{ $fq_name } || $builtin_method{ $fq_name } ){
         my $retval = eval { $body->($invocant, @args) };
