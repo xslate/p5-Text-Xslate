@@ -1308,6 +1308,16 @@ tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
 }
 
+/* Because overloading stuff of old xsubpp didn't work,
+   we need to copy them. */
+XS(XS_Text__Xslate__EscapedString_fallback); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Text__Xslate__EscapedString_fallback)
+{
+   dXSARGS;
+   PERL_UNUSED_VAR(items);
+   XSRETURN_EMPTY;
+}
+
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Engine
 
 PROTOTYPES: DISABLE
@@ -1712,7 +1722,24 @@ CODE:
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString
 
-FALLBACK: TRUE
+BOOT:
+{
+    SV* as_string;
+    /* overload stuff */
+    PL_amagic_generation++;
+    sv_setsv(
+        get_sv( "Text::Xslate::EscapedString::()", TRUE ),
+        &PL_sv_yes
+    );
+    (void)newXS("Text::Xslate::EscapedString::()",
+        XS_Text__Xslate__EscapedString_fallback, file);
+
+    /* *{'(""'} = \&as_string */
+    as_string = sv_2mortal(newRV_inc((SV*)get_cv("Text::Xslate::EscapedString::as_string", GV_ADD)));
+    sv_setsv_mg(
+        (SV*)gv_fetchpvs("Text::Xslate::EscapedString::(\"\"", GV_ADDMULTI, SVt_PVCV),
+        as_string);
+}
 
 void
 new(SV* klass, SV* str)
@@ -1730,7 +1757,6 @@ CODE:
 
 void
 as_string(SV* self, ...)
-OVERLOAD: \"\"
 CODE:
 {
     if(! tx_str_is_escaped(aTHX_ self) ) {
