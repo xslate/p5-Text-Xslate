@@ -28,7 +28,7 @@ my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     && || //
     -> =>
     ::
-
+    ++ --
 
     < >
     =
