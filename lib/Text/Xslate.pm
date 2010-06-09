@@ -181,7 +181,10 @@ sub find_file {
         $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
+    print STDOUT "    find_file($file) -> $fullpath ($is_compiled)\n" if _DUMP_LOAD_FILE;
+
     return {
+        file        => $file,
         fullpath    => $fullpath,
         cachepath   => $cachepath,
 
@@ -192,7 +195,6 @@ sub find_file {
     };
 }
 
-
 sub load_file {
     my($self, $file, $mtime) = @_;
 
@@ -202,104 +204,144 @@ sub load_file {
         return $self->load_string($self->{string});
     }
 
-    my $f = $self->find_file($file, $mtime);
+    my $fi = $self->find_file($file, $mtime);
 
-    my $fullpath    = $f->{fullpath};
-    my $cachepath   = $f->{cachepath};
-    my $is_compiled = $f->{is_compiled};
+    my $asm = $self->_load_compiled($fi, $mtime) || $self->_load_source($fi, $mtime);
 
-    if($self->{cache} == 0) {
-        $is_compiled = 0;
-    }
-
-    print STDOUT "---> $fullpath ($is_compiled)\n" if _DUMP_LOAD_FILE;
-
-    my $string;
-    {
-        my $to_read = $is_compiled ? $cachepath : $fullpath;
-        open my($in), '<' . $self->{input_layer}, $to_read
-            or $self->_error("LoadError: Cannot open $to_read for reading: $!");
-
-        if($is_compiled && scalar(<$in>) ne $self->_magic($fullpath)) {
-            # magic token is not matched
-            close $in;
-            unlink $cachepath
-                or $self->_error("LoadError: Cannot unlink $cachepath: $!");
-            goto &load_file; # retry
-        }
-
-        local $/;
-        $string = <$in>;
-    }
-
-    my $asm;
-    if($is_compiled) {
-        $asm = $self->deserialize($string);
-
-        # checks the mtime of dependencies
-        foreach my $code(@{$asm}) {
-            if($code->[0] eq 'depend') {
-                my $dep_mtime = (stat $code->[1])[_ST_MTIME];
-                if(!defined $dep_mtime) {
-                    $dep_mtime = '+inf'; # force reload
-                    Carp::carp("Xslate: failed to stat $code->[1] (ignored): $!");
-                }
-                if($dep_mtime > ($mtime || $f->{cache_mtime})){
-                    unlink $cachepath
-                        or $self->_error("LoadError: Cannot unlink $cachepath: $!");
-                    printf "---> %s(%s) is newer than %s(%s)\n",
-                        $code->[1], scalar localtime($dep_mtime),
-                        $cachepath, scalar localtime($mtime || $f->{cache_mtime})
-                            if _DUMP_LOAD_FILE;
-                    goto &load_file; # retry
-                }
-            }
-        }
-    }
-    else {
-        $asm = $self->compile($string,
-            file     => $file,
-            fullpath => $fullpath,
-        );
-
-        if($self->{cache}) {
-            my($volume, $dir) = File::Spec->splitpath($cachepath);
-            my $cachedir      = File::Spec->catpath($volume, $dir, '');
-            if(not -e $cachedir) {
-                require File::Path;
-                File::Path::mkpath($cachedir);
-            }
-
-            # use input_layer for caches
-            if(open my($out), '>' . $self->{input_layer}, $cachepath) {
-                print $out $self->serialize($asm, $fullpath);
-
-                if(!close $out) {
-                     Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                     unlink $cachepath;
-                }
-                else {
-                    $is_compiled = 1;
-                }
-            }
-            else {
-                Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
-            }
-        }
-    }
     # if $mtime is undef, the runtime does not check freshness of caches.
     my $cache_mtime;
     if($self->{cache} < 2) {
-        if($is_compiled) {
-            $cache_mtime = $f->{cache_mtime} || ( stat $cachepath )[_ST_MTIME];
+        if($fi->{is_compiled}) {
+            $cache_mtime = $fi->{cache_mtime};
         }
         else {
             $cache_mtime = 0; # no compiled cache, always need to reload
         }
     }
 
-    $self->_assemble($asm, $file, $fullpath, $cachepath, $cache_mtime);
+    $self->_assemble($asm, $file, $fi->{fullpath}, $fi->{cachepath}, $cache_mtime);
     return $asm;
+}
+
+sub _load_compiled {
+    my($self, $fi, $mtime) = @_;
+
+    $fi->{is_compiled} = 0 if $self->{cache} == 0;
+
+    return undef if !$fi->{is_compiled};
+
+    my $cachepath = $fi->{cachepath};
+
+    my $assembly;
+    {
+        open my($in), '<' . $self->{input_layer}, $cachepath
+            or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
+
+        if(scalar(<$in>) ne $self->_magic($fi->{fullpath})) {
+            # magic token is not matched
+            close $in;
+            unlink $cachepath
+                or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+            return undef;
+        }
+
+        local $/;
+        $assembly = <$in>;
+    }
+
+    # deserialize
+    my @asm;
+    while($assembly =~ m{
+            ^[ \t]*
+                ($IDENT)                        # an opname
+                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand
+                (?:\#($NUMBER))?                # line number
+                [^\n]*                          # any comments
+            \n}xmsog) {
+
+        my $name  = $1;
+        my $value = $2;
+        my $line  = $3;
+
+        $value = literal_to_value($value);
+
+        # checks the modified of dependencies
+        if($name eq 'depend') {
+            my $dep_mtime = (stat $value)[_ST_MTIME];
+            if(!defined $dep_mtime) {
+                $dep_mtime = '+inf'; # force reload
+                Carp::carp("Xslate: failed to stat $value (ignored): $!");
+            }
+            if($dep_mtime > ($mtime || $fi->{cache_mtime})){
+                unlink $cachepath
+                    or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+
+                printf "---> %s(%s) is newer than %s(%s)\n",
+                    $value,     scalar localtime($dep_mtime),
+                    $cachepath, scalar localtime($mtime || $fi->{cache_mtime})
+                        if _DUMP_LOAD_FILE;
+
+                return undef;
+            }
+        }
+
+        push @asm, [ $name, $value, $line ];
+    }
+
+    return \@asm;
+}
+
+sub _load_source {
+    my($self, $fi, $mtime) = @_;
+    my $fullpath  = $fi->{fullpath};
+    my $cachepath = $fi->{cachepath};
+
+    my $source;
+    {
+        open my($in), '<' . $self->{input_layer}, $fullpath
+            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+        local $/;
+        $source = <$in>;
+    }
+
+    my $asm = $self->compile($source,
+        file     => $fi->{file},
+        fullpath => $fullpath,
+    );
+
+    if($self->{cache} >= 1) {
+        my($volume, $dir) = File::Spec->splitpath($fi->{cachepath});
+        my $cachedir      = File::Spec->catpath($volume, $dir, '');
+        if(not -e $cachedir) {
+            require File::Path;
+            File::Path::mkpath($cachedir);
+        }
+
+        # use input_layer for caches
+        if(open my($out), '>' . $self->{input_layer}, $cachepath) {
+            $self->_save_compiled($out, $asm, $fullpath);
+
+            if(!close $out) {
+                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
+                 unlink $cachepath;
+            }
+            else {
+                $self->{is_compiled} = 1;
+                $self->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
+            }
+        }
+        else {
+            Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
+        }
+    }
+
+    return $asm;
+}
+
+sub _save_compiled {
+    my($self, $out, $asm, $fullpath) = @_;
+    print $out $self->_magic($fullpath), $self->_compiler->as_assembly($asm);
+    return;
 }
 
 sub _magic {
@@ -337,33 +379,6 @@ sub _compiler {
 sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_);
-}
-
-sub deserialize {
-    my($self, $assembly) = @_;
-
-    my @asm;
-    while($assembly =~ m{
-            ^[ \t]*
-                ($IDENT)                        # an opname
-                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand
-                (?:\#($NUMBER))?                # line number
-                [^\n]*                          # any comments
-            \n}xmsog) {
-
-        my $name  = $1;
-        my $value = $2;
-        my $line  = $3;
-
-        push @asm, [ $name, literal_to_value($value), $line ];
-    }
-
-    return \@asm;
-}
-
-sub serialize {
-    my($self, $asm, $fullpath) = @_;
-    return $self->_magic($fullpath) . $self->_compiler->as_assembly($asm);
 }
 
 sub _error {
