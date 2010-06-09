@@ -525,6 +525,7 @@ You B<should> specify this option on productions.
 
 Specifies functions, which may be called as C<f($arg)> or C<$arg | f>.
 
+[MAYCHANGE]
 You can also define methods with pseudo type names: C<scalar>, C<array>,
 and C<hash>. For example:
 
@@ -535,6 +536,12 @@ and C<hash>. For example:
             'hash::some_method'   => sub { my($hash_ref)  = @_; ... },
         },
     );
+[/MAYCHANGE]
+
+See also L<Text::Xslate::Bridge>.
+
+Note that builtin methods are overridable, while builtin filters,
+namely C<raw>, C<html>, C<dump>, are not.
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 
@@ -543,13 +550,13 @@ Imports functions from I<$module>. I<@import_args> is optional.
 For example:
 
     my $tx = Text::Xslate->new(
-        module => ['Data::Dumper'], # use Data::Dumper
+        module => ['Time::Piece'],
     );
     print $tx->render_string(
-        '<: Dumper($x) :>',
-        { x => [42] },
+        '<: localtime($x).strftime() :>',
+        { x => time() },
     );
-    # => $VAR = [42]
+    # => Wed, 09 Jun 2010 10:22:06 JST
 
 You can use function based modules with the C<module> option, and also can invoke
 object methods in templates. Thus, Xslate doesn't require the namespaces for plugins.

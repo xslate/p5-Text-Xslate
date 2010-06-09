@@ -289,19 +289,23 @@ operator.
 There is an autoboxing mechanism that provides primitive types with builtin
 methods.
 
+For arrays:
+
     <: $array.size() :>
     <: $array.join(",") :>
     <: $array.reverse() :>
 
+For hashes:
+
     <: $hash.size() :>
-    <: $hash.keys().join(", ") :>
-    <: $hash.values().join(", ") :>
-    <: for $hash.kv() -> $pair { :>
+    <: $hash.keys().join(", ")   # sorted by keys :>
+    <: $hash.values().join(", ") # sorted by keys :>
+    <: for $hash.kv() -> $pair { # sorted by keys :>
         <: # $pair is a pair type with key and value fields -:>
         <: $pair.key :> = <: $pair.value :>
     <: } :>
 
-You can define methods with the C<function> option. See L<Text::Xslate>.
+You can define more methods with the C<function> option. See L<Text::Xslate>.
 
 =head2 Template inclusion
 
