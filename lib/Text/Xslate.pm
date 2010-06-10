@@ -153,25 +153,24 @@ sub find_file {
     my $cachepath;
     my $orig_mtime;
     my $cache_mtime;
-    my $is_compiled;
 
     foreach my $p(@{$self->{path}}) {
         $fullpath = File::Spec->catfile($p, $file);
         defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
-            or next; # does not exist
+            or next;
+
+        # $file is found
 
         $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
 
         if(-f $cachepath) {
-            $cache_mtime = (stat(_))[_ST_MTIME]; # compiled
+            my $cmt = (stat(_))[_ST_MTIME]; # compiled
 
             # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
-            $is_compiled = (($mtime || $cache_mtime) >= $orig_mtime);
-            last;
-        }
-        else {
-            $is_compiled = 0;
+            if(($mtime || $cmt) >= $orig_mtime) {
+                $cache_mtime = $cmt;
+            }
         }
 
         last;
@@ -181,7 +180,7 @@ sub find_file {
         $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
-    print STDOUT "    find_file($file) -> $fullpath ($is_compiled)\n" if _DUMP_LOAD_FILE;
+    print STDOUT "    find_file($file) -> $fullpath\n" if _DUMP_LOAD_FILE;
 
     return {
         file        => $file,
@@ -190,8 +189,6 @@ sub find_file {
 
         orig_mtime  => $orig_mtime,
         cache_mtime => $cache_mtime,
-
-        is_compiled => $is_compiled,
     };
 }
 
@@ -208,15 +205,12 @@ sub load_file {
 
     my $asm = $self->_load_compiled($fi, $mtime) || $self->_load_source($fi, $mtime);
 
-    # if $mtime is undef, the runtime does not check freshness of caches.
+    # $cache_mtime is undef : uses caches without any checks
+    # $cache_mtime > 0      : uses caches with mtime checks
+    # $cache_mtime == 0     : doesn't use caches
     my $cache_mtime;
     if($self->{cache} < 2) {
-        if($fi->{is_compiled}) {
-            $cache_mtime = $fi->{cache_mtime};
-        }
-        else {
-            $cache_mtime = 0; # no compiled cache, always need to reload
-        }
+        $cache_mtime = $fi->{cache_time} || 0;
     }
 
     $self->_assemble($asm, $file, $fi->{fullpath}, $fi->{cachepath}, $cache_mtime);
@@ -226,9 +220,9 @@ sub load_file {
 sub _load_compiled {
     my($self, $fi, $mtime) = @_;
 
-    $fi->{is_compiled} = 0 if $self->{cache} == 0;
+    $fi->{cache_mtime} = undef if $self->{cache} == 0;
 
-    return undef if !$fi->{is_compiled};
+    return undef if !$fi->{cache_mtime};
 
     my $cachepath = $fi->{cachepath};
 
@@ -248,6 +242,8 @@ sub _load_compiled {
         local $/;
         $assembly = <$in>;
     }
+
+    $mtime ||= $fi->{cache_mtime};
 
     # deserialize
     my @asm;
@@ -272,13 +268,13 @@ sub _load_compiled {
                 $dep_mtime = '+inf'; # force reload
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
-            if($dep_mtime > ($mtime || $fi->{cache_mtime})){
+            if($dep_mtime > $mtime){
                 unlink $cachepath
                     or $self->_error("LoadError: Cannot unlink $cachepath: $!");
 
                 printf "---> %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
-                    $cachepath, scalar localtime($mtime || $fi->{cache_mtime})
+                    $cachepath, scalar localtime($mtime)
                         if _DUMP_LOAD_FILE;
 
                 return undef;
@@ -292,7 +288,7 @@ sub _load_compiled {
 }
 
 sub _load_source {
-    my($self, $fi, $mtime) = @_;
+    my($self, $fi) = @_;
     my $fullpath  = $fi->{fullpath};
     my $cachepath = $fi->{cachepath};
 
@@ -326,7 +322,6 @@ sub _load_source {
                  unlink $cachepath;
             }
             else {
-                $self->{is_compiled} = 1;
                 $self->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
             }
         }

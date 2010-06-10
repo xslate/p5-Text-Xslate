@@ -32,3 +32,5 @@ for(1 .. 10) {
 
     $tx->render('child.tx', { blog_entries => \@blog_entries });
 }
+
+print $INC{'Text/Xslate/Compiler.pm'} ? "compiled.\n" : "cached.\n";
