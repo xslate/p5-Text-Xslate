@@ -1,11 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
-0.1032
+0.1032 Thu Jun 10 18:00:25 2010
     [CHANGES]
     - Rename the term "escaped string" to "raw string":
       escaped_string() -> mark_raw()
       Text::Xslate::EscapedString -> Text::Xslate::Type::Raw
       (old names remain for compatibility)
+
+    [BUG FIXES]
+    - App::Xslate created result files even if render() dies
 
     [NEW FEATURES]
     - New builtin filters:
