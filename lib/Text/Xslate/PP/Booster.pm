@@ -517,7 +517,7 @@ $CODE_MANIP{ 'macrocall' } = sub {
 
     $self->sa( sprintf( '$macro{ %s }->( $st, %s )',
         value_to_literal($self->sa()),
-        sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, join( ', ', @{ pop @{ $self->SP } } )  )
+        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  ),
     ) );
 };
 
@@ -616,7 +616,6 @@ $CODE_MANIP{ 'symbol' } = sub {
 $CODE_MANIP{ 'funcall' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $args_str = join( ', ', @{ pop @{ $self->SP } } );
-use Data::Dumper;
 
     if ( exists $self->stash->{ macro_names }->{ $self->sa } ) { # this is optimization!
         $self->optimize_to_print( 'macro' );
@@ -624,7 +623,6 @@ use Data::Dumper;
             value_to_literal( $self->sa() ),
             sprintf( 'push_pad( $pad, [ %s ] )', $args_str  ),
             join( ', ', $self->frame_and_line )
-#            sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, $args_str )
         ) );
         return;
     }
@@ -976,10 +974,6 @@ CODE
         else {
         }
 
-#        $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
-#cond_%s( %s, sub { %s } )
-#CODE
-
     }
 
     $self->write_lines("# end $type [$i]");
@@ -1314,20 +1308,6 @@ sub cond_ne {
 sub push_pad {
     push @{ $_[0] }, $_[1];
     $_[0];
-}
-
-
-sub push_pad_for_macro {
-    my ( $lvars, $pad, $arrayref ) = @_;
-
-    push @{ $pad }, $arrayref;
-
-    # copies lexical variables from the old frame to the new one
-    if($lvars > 0) {
-        push @{ $pad->[ -1 ] }, @{ $pad->[ -2 ] };
-    }
-
-    return $pad;
 }
 
 
