@@ -56,7 +56,7 @@ X
 : cascade with common
 : foo()
 T
-    This is foo!
+    This is <foo>!
 X
 
     [<<'T', { lang => 'Xslate' }, <<'X'],
@@ -66,7 +66,7 @@ X
 : }
 : bar()
 T
-    before bar!
+    before <bar>!
     This is bar!
 X
 
@@ -77,8 +77,22 @@ X
 : bar()
 : cascade with common
 T
-    before bar!
+    before <bar>!
     This is bar!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X'],
+: baz()
+: cascade with common
+T
+    This is &lt;baz&gt;!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X'],
+: baz() | raw
+: cascade with common
+T
+    This is <baz>!
 X
 
 );
