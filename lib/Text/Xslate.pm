@@ -131,9 +131,11 @@ sub new {
                 . " because it is embeded in the engine");
         }
     }
-    $funcs{raw}  = \&Text::Xslate::Util::escaped_string;
-    $funcs{html} = \&Text::Xslate::Util::html_escape;
-    $funcs{dump} = \&Text::Xslate::Util::p;
+    $funcs{raw}         = \&Text::Xslate::Util::mark_raw;
+    $funcs{html}        = \&Text::Xslate::Util::html_escape;
+    $funcs{mark_raw}    = \&Text::Xslate::Util::mark_raw;
+    $funcs{unmark_raw}  = \&Text::Xslate::Util::unmark_raw;
+    $funcs{dump}        = \&Text::Xslate::Util::p;
 
     $args{function} = \%funcs;
 

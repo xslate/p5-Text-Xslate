@@ -49,6 +49,12 @@ my @set = (
     ['<: html :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'html itself'],
 
+    ['<: mark_raw :>',
+        { value => '<Xslate>' }, qr/\b CODE \b/xms, 'mark_raw itself'],
+    ['<: unmark_raw :>',
+        { value => '<Xslate>' }, qr/\b CODE \b/xms, 'unmark_raw itself'],
+
+
     [<<'T', {}, <<'X'],
 : macro foo -> {
     <br>
