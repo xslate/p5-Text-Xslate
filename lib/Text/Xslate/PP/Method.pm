@@ -115,7 +115,7 @@ sub tx_methodcall {
              :                             'nil';
     my $fq_name = $type . "::" . $method;
 
-    if(my $body = $st->function->{$fq_name} || $builtin_method{$fq_name}){
+    if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
         my $retval = eval { $body->($invocant, @args) };
         if($@) {
             tx_error($st, "%s", $@);

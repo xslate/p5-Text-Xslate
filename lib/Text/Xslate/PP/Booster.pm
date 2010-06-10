@@ -576,7 +576,7 @@ $CODE_MANIP{ 'macro' } = sub {
 };
 
 
-$CODE_MANIP{ 'function' } = sub {
+$CODE_MANIP{ 'symbol' } = sub {
     my ( $self, $arg, $line ) = @_;
 
     # macro
@@ -592,7 +592,7 @@ $CODE_MANIP{ 'function' } = sub {
     }
 
     $self->sa(
-        sprintf('$st->function->{ %s }', value_to_literal($arg) )
+        sprintf('$st->symbol->{ %s }', value_to_literal($arg) )
     );
 };
 
@@ -1176,7 +1176,7 @@ sub methodcall {
 
     local @_f_l_for_methodcall = ( $st, $frame, $line );
 
-    if( my $body = $st->function->{ $fq_name } || $builtin_method{ $fq_name } ){
+    if( my $body = $st->symbol->{ $fq_name } || $builtin_method{ $fq_name } ){
         my $retval = eval { $body->($invocant, @args) };
         if($@) {
             _error( $st, $frame, $line, "%s", $@ );

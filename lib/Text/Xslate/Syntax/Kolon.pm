@@ -405,7 +405,7 @@ Output:
         --------------
 
 In fact, you can omit the base template, and components
-can include amy macros.
+can include any macros.
 
 Given a file F<common.tx>
 
@@ -436,7 +436,7 @@ Output:
     Hello, Xslate world!
 
 There is a limitation that you cannot pass variables to the C<cascade> keyword,
-because template cascading is statially processed.
+because template cascading is statically processed.
 
 =head2 Macro blocks
 

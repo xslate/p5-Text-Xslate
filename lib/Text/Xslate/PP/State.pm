@@ -31,7 +31,7 @@ has code_len => (
     is => 'rw',
 );
 
-has function => (
+has symbol => (
     is => 'rw',
 );
 

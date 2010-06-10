@@ -95,7 +95,7 @@ sub _assemble {
         $mtime    = time();
     }
 
-    $st->function({ %{$self->{ function }} });
+    $st->symbol({ %{$self->{ function }} });
 
     my $tmpl = [];
 
@@ -192,13 +192,13 @@ sub _assemble {
         # special cases
         if( $opnum == $OPS{ macro_begin } ) {
             my $name = $code->[ $i ]->{ arg };
-            if(!exists $st->function->{$name}) {
+            if(!exists $st->symbol->{$name}) {
                 require Text::Xslate::PP::Macro;
                 $macro = Text::Xslate::PP::Macro->new(
                     name => $name,
                     addr => $i,
                 );
-                $st->function->{ $name } = $macro;
+                $st->symbol->{ $name } = $macro;
             }
             else {
                 $macro = undef;

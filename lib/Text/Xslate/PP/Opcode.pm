@@ -418,14 +418,14 @@ sub op_ge {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_function {
+sub op_symbol {
     my $name = $_[0]->op_arg;
 
-    if ( my $func = $_[0]->function->{ $name } ) {
+    if ( my $func = $_[0]->symbol->{ $name } ) {
         $_[0]->{sa} = $func;
     }
     else {
-        Carp::croak( sprintf( "Oops: Undefined function %s", $name ) );
+        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
     }
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
@@ -483,7 +483,7 @@ sub op_macro_end {
         $st->{targ} = $st->{ output };
     }
     else {
-        $st->{targ} = escaped_string( $st->{ output } );
+        $st->{targ} = mark_raw( $st->{ output } );
     }
 
     $st->{sa} = $st->{targ};
