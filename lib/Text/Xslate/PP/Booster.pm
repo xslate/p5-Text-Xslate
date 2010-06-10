@@ -7,7 +7,6 @@ use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw($DEBUG p value_to_literal p mark_raw unmark_raw html_escape);
-#use Text::Xslate::Util qw(p mark_raw unmark_raw html_escape);
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
@@ -518,7 +517,6 @@ $CODE_MANIP{ 'macrocall' } = sub {
 
     $self->sa( sprintf( '$macro{ %s }->( $st, %s )',
         value_to_literal($self->sa()),
-#        sprintf( 'push_pad( $pad, [ %s ] )', join( ', ', @{ pop @{ $self->SP } } )  )
         sprintf( 'push_pad_for_macro( %s, $pad, [ %s ] )', $arg, join( ', ', @{ pop @{ $self->SP } } )  )
     ) );
 };
@@ -610,21 +608,9 @@ $CODE_MANIP{ 'symbol' } = sub {
     }
 
     $self->sa(
-#        sprintf('$st->symbol->{ %s }', value_to_literal($arg) )
         sprintf('symbol( $st, %s, %s, %s )', value_to_literal($arg), $self->frame_and_line )
     );
 };
-
-sub symbol {
-    my ( $st, $name, $frame, $line ) = @_;
-
-    if ( !defined $st->symbol->{ $name } ) {
-#        _error( $st, $frame, $line, "Undefined symbol %s", $name ),
-        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
-    }
-
-    return $st->symbol->{ $name };
-}
 
 
 $CODE_MANIP{ 'funcall' } = sub {
@@ -1359,6 +1345,19 @@ sub localize_s {
     push @{ $st->{local_stack} ||= [] }, bless( $cleanup, 'Text::Xslate::PP::Booster::Guard' );
 
     $vars->{$key} = $newval;
+}
+
+
+sub symbol {
+    my ( $st, $name, $frame, $line ) = @_;
+
+    if ( !defined $st->symbol->{ $name } ) {
+        $st->{ pc } = $line;
+        $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
+        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
+    }
+
+    return $st->symbol->{ $name };
 }
 
 
