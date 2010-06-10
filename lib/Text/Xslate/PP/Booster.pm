@@ -441,15 +441,25 @@ $CODE_MANIP{ 'max_index' } = sub {
 
 $CODE_MANIP{ 'builtin_mark_raw' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'Text::Xslate::PP::Booster::mark_raw( %s )', $self->sa ) );
+    $self->sa( sprintf( '_mark_raw( %s )', $self->sa ) );
     $self->optimize_to_print( 'raw' );
 };
 
 
 $CODE_MANIP{ 'builtin_unmark_raw' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'Text::Xslate::PP::Booster::unmark_raw( %s )', $self->sa ) );
+    $self->sa( sprintf( '_unmark_raw( %s )', $self->sa ) );
 };
+
+
+sub _mark_raw {
+    defined $_[0] ? mark_raw( $_[0] ) : undef;
+}
+
+
+sub _unmark_raw {
+    defined $_[0] ? unmark_raw( $_[0] ) : undef;
+}
 
 
 $CODE_MANIP{ 'builtin_html_escape' } = sub  {
