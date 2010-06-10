@@ -451,16 +451,6 @@ $CODE_MANIP{ 'builtin_unmark_raw' } = sub  {
 };
 
 
-sub _mark_raw {
-    defined $_[0] ? mark_raw( $_[0] ) : undef;
-}
-
-
-sub _unmark_raw {
-    defined $_[0] ? unmark_raw( $_[0] ) : undef;
-}
-
-
 $CODE_MANIP{ 'builtin_html_escape' } = sub  {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( 'Text::Xslate::html_escape( %s )', $self->sa ) );
@@ -572,7 +562,8 @@ $CODE_MANIP{ 'macro_end' } = sub {
     $self->write_lines( sprintf( '$depth--;' ) );
     $self->write_lines( sprintf( 'pop( @$pad );' ) );
     $self->write_code( "\n" );
-    $self->write_lines( sprintf( '$output;' ) );
+    # immediate macros?
+    $self->write_lines( $arg ? sprintf( '$output;' ) : sprintf( '_mark_raw($output);' ) );
 
     $self->indent_depth( $self->indent_depth - 1 );
 
@@ -618,7 +609,6 @@ $CODE_MANIP{ 'funcall' } = sub {
     my $args_str = join( ', ', @{ pop @{ $self->SP } } );
 
     if ( exists $self->stash->{ macro_names }->{ $self->sa } ) { # this is optimization!
-        $self->optimize_to_print( 'macro' );
         $self->sa( sprintf( '$macro{ %s }->( $st, %s, [ %s ] )',
             value_to_literal( $self->sa() ),
             sprintf( 'push_pad( $pad, [ %s ] )', $args_str  ),
@@ -1338,6 +1328,16 @@ sub symbol {
     }
 
     return $st->symbol->{ $name };
+}
+
+
+sub _mark_raw {
+    defined $_[0] ? mark_raw( $_[0] ) : undef;
+}
+
+
+sub _unmark_raw {
+    defined $_[0] ? unmark_raw( $_[0] ) : undef;
 }
 
 
