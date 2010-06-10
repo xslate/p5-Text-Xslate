@@ -1387,7 +1387,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Booster - Text::Xslate code generator to build Perl code
+Text::Xslate::PP::Booster - Text::Xslate code generator for pure Perl
 
 =head1 SYNOPSIS
 
@@ -1443,7 +1443,7 @@ But now Text::Xslate::PP::Booster is available, and is as fast as Text::MicroTem
 
 Text::Xslate::PP becomes much faster than the default pure Perl engine!
 
-The engine is enabled by default, and disabled by C<< $ENV{ENV}='pp=opcode' >>.
+The engine is enabled with C<< $ENV{ENV}='pp=booster' >>.
 
 =head1 APIs
 

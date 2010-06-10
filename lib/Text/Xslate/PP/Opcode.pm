@@ -674,11 +674,13 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Opcode - Text::Xslate opcodes in pure Perl
+Text::Xslate::PP::Opcode - Text::Xslate opcode implementation in pure Perl
 
 =head1 DESCRIPTION
 
-This module is used by Text::Xslate::PP internally.
+This module is a pure Perl implementation of the Xslate opcodes.
+
+The is enabled with C<< $ENV{ENV}='pp=opcode' >>.
 
 =head1 SEE ALSO
 

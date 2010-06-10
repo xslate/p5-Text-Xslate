@@ -13,6 +13,7 @@ use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::EscapedString;
 use Text::Xslate::Util qw($DEBUG p);
+use Text::Xslate;
 
 use Carp ();
 
@@ -450,11 +451,11 @@ This document describes Text::Xslate::PP version 0.1031.
 
 =head1 DESCRIPTION
 
-This module implements L<Text::Xslate> runtime in pure Perl.
-Normally it will be loaded in Text::Xslate if needed. So you don't need
-to use this module in your applications.
+This module implements Text::Xslate runtime engine in pure Perl.
+Normally it will be loaded if it fails to load XS. So you don't need
+to use this module explicitly.
 
-    # Text::Xslate calls PP when it fails to load XS.
+    # Text::Xslate loads PP if needed
     use Text::Xslate;
     my $tx = Text::Xslate->new();
 
@@ -465,20 +466,23 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
-From 0.1024 on, two pure Perl engines are implemented.
-C<Text::Xslate::PP::Booster>, which is the default pure Perl engine,
+From 0.1024 on, there are two pure Perl engines.
+C<Text::Xslate::PP::Booster>, used with C<< $ENV{XSLATE} = 'pp=booster' >>,
 generates optimized Perl code from intermediate code.
-C<Text::Xlsate::PP::Opcode>, which is slower than PP::Booster but might be more
-stable, emulates the virtual machine in pure Perl,
-available with C<< $ENV{XSLATE} = 'pp=opcode' >>.
+C<Text::Xlsate::PP::Opcode>, used with C<< $ENV{XSLATE = 'pp=opcode' >>,
+execute intermediate code directly, emulating the virtual machine in pure Perl.
+
+PP::Booster is much faster than PP::Opcode, but it is less stable,
+so the default pure Perl engine is B<PP::Opcode>, but PP::Booster will be
+the default in a future if it is stable enough.
 
 =head1 SEE ALSO
+
+L<Text::Xslate>
 
 L<Text::Xslate::PP::Opcode>
 
 L<Text::Xslate::PP::Booster>
-
-L<Text::Xslate>
 
 =head1 AUTHOR
 
