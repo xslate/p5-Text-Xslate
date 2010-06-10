@@ -918,9 +918,9 @@ sub binary {
     );
 }
 
-sub nud_function{
+sub nud_name {
     my($parser, $s) = @_;
-    return $s->clone(arity => 'function');
+    return $s->clone(arity => 'name');
 }
 
 sub define_function {
@@ -928,7 +928,7 @@ sub define_function {
 
     foreach my $name(@names) {
         my $s = $parser->symbol($name);
-        $s->set_nud(\&nud_function);
+        $s->set_nud(\&nud_name);
     }
     return;
 }
@@ -1207,7 +1207,7 @@ sub std_proc {
     }
 
     $parser->define_function($name->id);
-    $macro->first( $parser->nud_function($name) );
+    $macro->first( $parser->symbol($name->id)->nud($parser) );
     $parser->advance();
     $parser->pointy($macro);
     return $macro;
@@ -1542,8 +1542,6 @@ sub iterator_peek_prev {
 sub _unexpected {
     my($parser, $expected, $got) = @_;
     if(defined($got) && $got ne ";") {
-        $got = sprintf '%s (%s)', $got->id, $got->arity
-            if ref $got;
         $parser->_error("Expected $expected, but got $got");
      }
      else {
@@ -1556,7 +1554,7 @@ sub _error {
 
     $near ||= $parser->near_token || ";";
     if($near ne ";") {
-        $near = sprintf ', near %s (%s)', $near->id, $near->arity
+        $near = sprintf ', near %s', $near->id, $near->arity
             if ref($near);
     }
     else {

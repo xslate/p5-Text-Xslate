@@ -52,6 +52,35 @@ T
 ----
 X
 
+    [<<'T', { lang => 'Xslate' }, <<'X', 'cascade-with as a library'],
+: cascade with common
+: foo()
+T
+    This is foo!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X'],
+: cascade with common
+: macro bar -> {
+    This is bar!
+: }
+: bar()
+T
+    before bar!
+    This is bar!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X'],
+: macro bar -> {
+    This is bar!
+: }
+: bar()
+: cascade with common
+T
+    before bar!
+    This is bar!
+X
+
 );
 
 foreach my $d(@set) {

@@ -129,7 +129,7 @@ struct tx_state_s {
     I32 current_frame; /* current frame index */
     SV** pad;          /* AvARRAY(frame[current_frame]) + 3 */
 
-    HV* function; /* name => \&body | [macro object] */
+    HV* symbol; /* symbol table (e.g. name => \&body | [macro object]) */
 
     U32 hint_size; /* suggested template size (bytes) */
 

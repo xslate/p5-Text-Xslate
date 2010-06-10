@@ -289,7 +289,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     sv_catpvs(fq_name, "::");
     sv_catsv(fq_name, method);
 
-    he = hv_fetch_ent(st->function, fq_name, FALSE, 0U);
+    he = hv_fetch_ent(st->symbol, fq_name, FALSE, 0U);
     if(he) {
         SV* const entity = HeVAL(he);
 

@@ -395,7 +395,7 @@ sub std_wrapper {
     );
 
     my $internal_name = $symbol->clone(
-        arity => 'function',
+        arity => 'name',
         id    => 'content@wrapper',
     );
 

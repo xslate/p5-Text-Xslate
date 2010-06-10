@@ -283,23 +283,27 @@ sub _process_cascade {
     }
 
     foreach my $cfile(@components) {
-        my $body;
         my $code     = $engine->load_file($cfile);
         my $fullpath = $engine->find_file($cfile)->{fullpath};
 
         my $mtable   = $self->macro_table;
+        my $macro;
         foreach my $c(@{$code}) {
             if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
                 if($c->[0] eq 'macro_begin') {
-                    $body = [];
-                    push @{ $mtable->{$c->[1]} ||= [] }, {
+                    $macro = [];
+                    $macro = {
                         name  => $c->[1],
                         line  => $c->[2],
-                        body  => $body,
+                        body  => [],
                     };
+                    push @{ $mtable->{$c->[1]} ||= [] }, $macro;
                 }
-                elsif($c->[0] ne 'macro_end') {
-                    push @{$body}, $c;
+                elsif($c->[0] eq 'macro_end') {
+                    $macro->{immediate} = $c->[1];
+                }
+                else {
+                    push @{$macro->{body}}, $c;
                 }
             }
         }
@@ -434,7 +438,7 @@ sub _generate_name {
         }
     }
 
-    $self->_error("Undefined symbol '$node'", $node);
+    return [ symbol => $node->id, $node->line ];
 }
 
 sub _can_print_optimize {
@@ -893,12 +897,6 @@ sub _generate_call {
         # lvar_used inidicates how many number of lexical variables refers
         [ funcall => undef, $node->line ],
     );
-}
-
-sub _generate_function {
-    my($self, $node) = @_;
-
-    return [ function => $node->id, $node->line, 'function' ];
 }
 
 # $~iterator

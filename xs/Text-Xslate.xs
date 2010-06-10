@@ -793,15 +793,15 @@ TXC(ge) {
     TX_st->pc++;
 }
 
-TXC_w_key(function) { /* find a function or macro */
+TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
     SV* const name = TX_op_arg;
     HE* he;
 
-    if((he = hv_fetch_ent(TX_st->function, name, FALSE, 0U))) {
-        TX_st_sa = hv_iterval(TX_st->function, he);
+    if((he = hv_fetch_ent(TX_st->symbol, name, FALSE, 0U))) {
+        TX_st_sa = HeVAL(he);
     }
     else {
-        croak("Oops: Undefined function %s", tx_neat(aTHX_ name));
+        croak("Undefined symbol %s", tx_neat(aTHX_ name));
     }
 
     TX_st->pc++;
@@ -1102,7 +1102,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     Safefree(code);
     Safefree(st->lines);
 
-    SvREFCNT_dec(st->function);
+    SvREFCNT_dec(st->symbol);
     SvREFCNT_dec(st->frame);
     SvREFCNT_dec(st->targ);
     SvREFCNT_dec(st->self);
@@ -1140,7 +1140,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     Newx(st->lines, len, U16);
     Copy(proto_lines, st->lines, len, U16);
 
-    st->function = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->function, param);
+    st->symbol   = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->symbol, param);
     st->frame    = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->frame,    param);
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
     st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
@@ -1402,8 +1402,8 @@ CODE:
     if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
         croak("Function table must be a HASH reference");
     }
-    st.function = newHVhv((HV*)SvRV(*svp)); /* must be copied */
-    tx_register_builtin_methods(aTHX_ st.function);
+    st.symbol = newHVhv((HV*)SvRV(*svp)); /* must be copied */
+    tx_register_builtin_methods(aTHX_ st.symbol);
 
     tmpl = newAV();
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
@@ -1503,8 +1503,8 @@ CODE:
             /* special cases */
             if(opnum == TXOP_macro_begin) {
                 SV* const name = st.code[i].arg;
-                SV* const ent  = hv_iterval(st.function,
-                    hv_fetch_ent(st.function, name, TRUE, 0U));
+                SV* const ent  = hv_iterval(st.symbol,
+                    hv_fetch_ent(st.symbol, name, TRUE, 0U));
 
                 if(!sv_true(ent)) {
                     SV* mref;
