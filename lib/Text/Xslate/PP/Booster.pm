@@ -279,7 +279,7 @@ $CODE_MANIP{ 'print' } = sub {
     $self->write_lines( sprintf( <<'CODE', $sv, $err, $err ) );
 # print
 $sv = %s;
-if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
+if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
     if(defined ${$sv}) {
         $output .= $sv;
     }
@@ -1119,7 +1119,7 @@ sub call {
         elsif ( ref( $proc ) eq 'Text::Xslate::PP::Booster::Macro' ) {
             return bless \do {
                 $st->{ booster_macro }->{ $proc->[0] }->( $st, [ [ @args ] ], [ $frame, $line ] )
-            }, 'Text::Xslate::EscapedString';
+            }, 'Text::Xslate::Type::Raw';
         }
         else {
             $ret = eval { $proc->( @args ) };
