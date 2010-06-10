@@ -6,7 +6,8 @@ use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-use Text::Xslate::Util qw($DEBUG p value_to_literal);
+use Text::Xslate::Util qw($DEBUG p value_to_literal p mark_raw unmark_raw html_escape);
+#use Text::Xslate::Util qw(p mark_raw unmark_raw html_escape);
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
@@ -438,13 +439,20 @@ $CODE_MANIP{ 'max_index' } = sub {
 };
 
 
-$CODE_MANIP{ 'builtin_raw' } = sub  {
+$CODE_MANIP{ 'builtin_mark_raw' } = sub  {
     my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'Text::Xslate::PP::Booster::mark_raw( %s )', $self->sa ) );
     $self->optimize_to_print( 'raw' );
 };
 
 
-$CODE_MANIP{ 'builtin_html' } = sub  {
+$CODE_MANIP{ 'builtin_unmark_raw' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'Text::Xslate::PP::Booster::unmark_raw( %s )', $self->sa ) );
+};
+
+
+$CODE_MANIP{ 'builtin_html_escape' } = sub  {
     my ( $self, $arg, $line ) = @_;
     $self->sa( sprintf( 'Text::Xslate::html_escape( %s )', $self->sa ) );
 };
