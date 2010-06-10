@@ -269,40 +269,36 @@ sub _load_compiled {
 
     return undef if !$fi->{cache_mtime};
 
-    my $cachepath = $fi->{cachepath};
-
-    my $assembly;
-    {
-        open my($in), '<' . $self->{input_layer}, $cachepath
-            or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
-
-        if(scalar(<$in>) ne $self->_magic($fi->{fullpath})) {
-            # magic token is not matched
-            close $in;
-            unlink $cachepath
-                or $self->_error("LoadError: Cannot unlink $cachepath: $!");
-            return undef;
-        }
-
-        local $/;
-        $assembly = <$in>;
-    }
-
     $threshold_mtime ||= $fi->{cache_mtime};
 
-    # deserialize
-    my @asm;
-    while($assembly =~ m{
-            ^[ \t]*
-                ($IDENT)                        # an opname
-                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand
-                (?:\#($NUMBER))?                # line number
-                [^\n]*                          # any comments
-            \n}xmsog) {
+    my $cachepath = $fi->{cachepath};
 
-        my $name  = $1;
-        my $value = $2;
-        my $line  = $3;
+    open my($in), '<' . $self->{input_layer}, $cachepath
+        or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
+
+    if(scalar(<$in>) ne $self->_magic($fi->{fullpath})) {
+        # magic token is not matched
+        close $in;
+        unlink $cachepath
+            or $self->_error("LoadError: Cannot unlink $cachepath: $!");
+        return undef;
+    }
+
+    # parse assembly
+    my @asm;
+    while(defined(my $line = <$in>)) {
+        next if $line =~ m{\A [ \t]* (?: \# | // )}xms; # comments
+        chomp $line;
+
+        my($name, $value, $line) = $line =~ m{
+            \A
+                [ \t]*
+                ($IDENT)                        # an opname
+                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand   (optional)
+                (?:\#($NUMBER))?                # line number  (optional)
+                [^\n]*                          # any comments (optional)
+            \z
+        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $line");
 
         $value = literal_to_value($value);
 
