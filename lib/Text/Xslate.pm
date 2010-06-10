@@ -185,7 +185,7 @@ sub find_file {
         $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
-    print STDOUT "    find_file($file) -> $fullpath\n" if _DUMP_LOAD_FILE;
+    print STDOUT "  find_file: $fullpath\n" if _DUMP_LOAD_FILE;
 
     return {
         file        => $file,
@@ -265,6 +265,12 @@ sub _load_source {
         }
     }
 
+    if(_DUMP_LOAD_FILE) {
+        print STDERR "  _load_source: cache(",
+            defined($self->{cache_mtime}) ? $self->{cache_mtime} : 'undef',
+            ")\n";
+    }
+
     return $asm;
 }
 
@@ -319,7 +325,7 @@ sub _load_compiled {
                 unlink $cachepath
                     or $self->_error("LoadError: Cannot unlink $cachepath: $!");
 
-                printf "---> %s(%s) is newer than %s(%s)\n",
+                printf "  _load_cache_compiled: %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold_mtime)
                         if _DUMP_LOAD_FILE;
@@ -329,6 +335,10 @@ sub _load_compiled {
         }
 
         push @asm, [ $name, $value, $line ];
+    }
+
+    if(_DUMP_LOAD_FILE) {
+        print STDERR "  _load_cache_compiled: cache(", $self->{cache_mtime}, ")\n";
     }
 
     return \@asm;

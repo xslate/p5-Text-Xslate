@@ -1279,7 +1279,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
 
-    if(!SvIOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
+    if(!SvOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
         return (tx_state_t*)mg->mg_ptr;
     }
 

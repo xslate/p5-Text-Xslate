@@ -23,6 +23,9 @@ use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
                             :               'Booster'; # default
 
+use constant _DUMP_LOAD_TEMPLATE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
+
+
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
 our @OPCODE; # defined in PP::Const
@@ -302,9 +305,11 @@ sub tx_load_template {
 
     my $tmpl = $ttobj->{ $name };
 
-    my $cache_mtime = $tmpl->[ Text::Xslate::PP::TXo_MTIME ];
+    my $cache_mtime = $tmpl->[ TXo_MTIME ];
 
-    return $self->{ tmpl_st }->{ $name } unless $cache_mtime;
+    if(not defined $cache_mtime) { # cache => 2 (release mode)
+        return $self->{ tmpl_st }->{ $name };
+    }
 
     if( $retried > 0 or tx_all_deps_are_fresh( $tmpl, $cache_mtime ) ) {
         return $self->{ tmpl_st }->{ $name };
@@ -323,17 +328,22 @@ sub tx_all_deps_are_fresh {
     my ( $tmpl, $cache_mtime ) = @_;
     my $len = scalar @{$tmpl};
 
-    for ( my $i = Text::Xslate::PP::TXo_FULLPATH; $i < $len; $i++ ) {
+    for ( my $i = TXo_FULLPATH; $i < $len; $i++ ) {
         my $deppath = $tmpl->[ $i ];
 
         next unless defined $deppath;
 
-        if ( ( stat( $deppath ) )[9] > $cache_mtime ) {
-            my $main_cache = $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ];
-            if ( $i != Text::Xslate::PP::TXo_FULLPATH and $main_cache ) {
+        my $mtime = ( stat( $deppath ) )[9];
+        if ( $mtime > $cache_mtime ) {
+            my $main_cache = $tmpl->[ TXo_CACHEPATH ];
+            if ( $i != TXo_FULLPATH and $main_cache ) {
                 unlink $main_cache or warn $!;
             }
-            return;
+            if(_DUMP_LOAD_TEMPLATE) {
+                printf STDERR "  tx_all_depth_are_fresh: %s is too old (%d > %d)\n",
+                    $deppath, $mtime, $cache_mtime;
+            }
+            return 0;
         }
 
     }
