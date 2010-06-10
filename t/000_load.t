@@ -7,7 +7,7 @@ use B;
 BEGIN { use_ok 'Text::Xslate' }
 BEGIN { use_ok 'Text::Xslate::Compiler' }
 BEGIN { use_ok 'Text::Xslate::Parser' }
-BEGIN { use_ok 'Text::Xslate::EscapedString' }
+BEGIN { use_ok 'Text::Xslate::Type::Raw' }
 BEGIN { use_ok 'Any::Moose' }
 
 diag "Testing Text::Xslate/$Text::Xslate::VERSION";

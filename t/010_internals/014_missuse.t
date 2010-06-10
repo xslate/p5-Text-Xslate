@@ -47,29 +47,29 @@ eval {
 ok $@, '$txinstance->new()';
 
 
-# EscapedString
+# Type::Raw
 
 eval {
-    Text::Xslate::EscapedString->new();
+    Text::Xslate::Type::Raw->new();
 };
 ok $@, $@;
 
 eval {
-    Text::Xslate::EscapedString->new("")->new("");
+    Text::Xslate::Type::Raw->new("")->new("");
 };
 like $@, qr/You cannot call/;
 
 eval {
-    Text::Xslate::EscapedString->as_string();
+    Text::Xslate::Type::Raw->as_string();
 };
 like $@, qr/You cannot call/;
 
 eval {
-    package MyEscapedString;
-    our @ISA = qw(Text::Xslate::EscapedString);
+    package MyType::Raw;
+    our @ISA = qw(Text::Xslate::Type::Raw);
 
     __PACKAGE__->new("foo");
 };
-ok $@, qr/cannot extend Text::Xslate::EscapedString/;
+ok $@, qr/cannot extend Text::Xslate::Type::Raw/;
 
 done_testing;

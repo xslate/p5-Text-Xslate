@@ -4,7 +4,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-use Text::Xslate::Util qw(p);
+use Text::Xslate::Util qw(p mark_raw);
 use t::lib::Util;
 
 my $tx = Text::Xslate->new(
@@ -12,7 +12,7 @@ my $tx = Text::Xslate->new(
     function => {
         format => sub{
             my($fmt) = @_;
-            return sub { Text::Xslate::EscapedString->new(sprintf $fmt, @_) }
+            return sub { mark_raw(sprintf $fmt, @_) }
         },
     },
     verbose => 2,
