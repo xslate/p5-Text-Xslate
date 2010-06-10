@@ -404,6 +404,40 @@ Output:
         Hello, world!
         --------------
 
+In fact, you can omit the base template, and components
+can include amy macros.
+
+Given a file F<common.tx>
+
+    : macro hello -> $lang {
+        Hello, <: $lang :> world!
+    : }
+
+    : around title -> {
+        --------------
+        : super
+        --------------
+    : }
+
+The main template:
+
+    : cascade with common
+
+    : block title -> {
+        Hello, world!
+    : }
+    : hello("Xslate")
+
+Output:
+
+        --------------
+        Hello, world!
+        --------------
+    Hello, Xslate world!
+
+There is a limitation that you cannot pass variables to the C<cascade> keyword,
+because template cascading is statially processed.
+
 =head2 Macro blocks
 
 Macros are supported, which are called in the same way as functions and
