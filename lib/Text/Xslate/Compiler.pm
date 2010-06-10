@@ -448,9 +448,9 @@ sub _can_print_optimize {
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
     return $node->arity eq 'call'
-        && $node->first->arity eq 'function'
+        && $node->first->arity eq 'name'
         && @{$node->second} == 1 # args of the filter
-        && exists $builtin{ $node->first->id }
+        && any_in($node->first->id, qw(raw mark_raw html));
 }
 
 sub _generate_command {
@@ -471,7 +471,7 @@ sub _generate_command {
             my $filter_name = $arg->first->id;
             my $command = $builtin{ $filter_name } eq 'builtin_mark_raw'
                 ? 'print_raw'  # mark_raw, raw
-                : 'print';     # unmark_raw, html, html_escape
+                : 'print';     # html
             push @code,
                 $self->_expr($arg->second->[0]),
                 [ $command => undef, $node->line, "$filter_name (builtin filter)" ];
