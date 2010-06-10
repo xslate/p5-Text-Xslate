@@ -10,7 +10,7 @@ use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-use Text::Xslate::Util qw(p escaped_string html_escape);
+use Text::Xslate::Util qw(p mark_raw unmark_raw html_escape);
 
 use constant TXframe_NAME       => Text::Xslate::PP::TXframe_NAME;
 use constant TXframe_OUTPUT     => Text::Xslate::PP::TXframe_OUTPUT;
@@ -152,7 +152,7 @@ sub op_fetch_field_s {
 sub op_print {
     my $sv = $_[0]->{sa};
 
-    if ( ref( $sv ) eq 'Text::Xslate::EscapedString' ) {
+    if ( ref( $sv ) eq 'Text::Xslate::Type::Raw' ) {
         if(defined ${$sv}) {
             $_[0]->{ output } .= ${$sv};
         }
@@ -357,12 +357,17 @@ sub op_max_index {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_builtin_raw {
-    $_[0]->{sa} = escaped_string($_[0]->{sa});
+sub op_builtin_mark_raw {
+    $_[0]->{sa} = mark_raw($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_builtin_html {
+sub op_builtin_unmark_raw {
+    $_[0]->{sa} = unmark_raw($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_builtin_html_escape{
     $_[0]->{sa} = html_escape($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }

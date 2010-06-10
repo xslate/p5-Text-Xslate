@@ -2,12 +2,14 @@
 use strict;
 use Test::More;
 
-use Text::Xslate;
+use Text::Xslate qw(mark_raw);
 
 my %funcs = (
     uc      => sub{ uc $_[0] },
     sprintf => sub{ sprintf shift, @_ },
     pi      => sub{ 3.14 },
+    foo     => sub{ "<foo>" },
+    em      => sub{ mark_raw("<em>@_</em>") },
 );
 my $tx = Text::Xslate->new(
     function => \%funcs,
@@ -58,6 +60,18 @@ my @set = (
         q{Hello, <:= pi() :> world!},
         { value => 'Xslate' },
         "Hello, 3.14 world!",
+    ],
+
+    [
+        q{Hello, <:= foo() :> world!},
+        { value => 'Xslate' },
+        "Hello, &lt;foo&gt; world!",
+    ],
+
+    [
+        q{Hello, <:= em($value) :> world!},
+        { value => 'Xslate' },
+        "Hello, <em>Xslate</em> world!",
     ],
 );
 

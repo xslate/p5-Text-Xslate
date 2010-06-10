@@ -6,7 +6,10 @@ use warnings;
 
 our $VERSION = '0.1031';
 
-use Text::Xslate::Util qw($DEBUG html_escape escaped_string);
+use Text::Xslate::Util qw($DEBUG
+    mark_raw unmark_raw
+    html_escape escaped_string
+);
 
 use Carp       ();
 use File::Spec ();
@@ -14,7 +17,10 @@ use Exporter   ();
 
 our @ISA = qw(Text::Xslate::Engine Exporter);
 
-our @EXPORT_OK = qw(escaped_string html_escape);
+our @EXPORT_OK = qw(
+    mark_raw unmark_raw
+    escaped_string html_escape
+);
 
 if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
     if($DEBUG !~ /\b pp \b/xms) {

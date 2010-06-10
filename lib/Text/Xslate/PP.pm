@@ -11,7 +11,7 @@ BEGIN{
 
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
-use Text::Xslate::PP::EscapedString;
+use Text::Xslate::PP::Type::Raw;
 use Text::Xslate::Util qw($DEBUG p);
 use Text::Xslate;
 
@@ -231,15 +231,25 @@ sub _assemble {
     package
         Text::Xslate::Util;
 
-    sub escaped_string {
-        my $str = $_[0];
-        bless \$str, 'Text::Xslate::EscapedString';
+    my $esc_class = 'Text::Xslate::Type::Raw';
+    sub escaped_string; *escaped_string = \&mark_raw;
+    sub mark_raw {
+        my($str) = @_;
+        return ref($str) eq $esc_class
+            ? $str
+            : bless \$str, $esc_class;
+    }
+    sub unmark_raw {
+        my($str) = @_;
+        return ref($str) eq $esc_class
+            ? ${$str}
+            : $str;
     }
 
     sub html_escape {
         my($s) = @_;
         return $s if
-            ref($s) eq 'Text::Xslate::EscapedString'
+            ref($s) eq $esc_class
             or !defined($s);
 
         $s =~ s/&/&amp;/g;
@@ -248,7 +258,7 @@ sub _assemble {
         $s =~ s/"/&quot;/g; # " for poor editors
         $s =~ s/'/&apos;/g; # ' for poor editors
 
-        return escaped_string($s);
+        return bless \$s, $esc_class;
     }
 }
 

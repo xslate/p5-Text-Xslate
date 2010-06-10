@@ -2,7 +2,12 @@
 use strict;
 use Test::More;
 
-use Text::Xslate qw(escaped_string html_escape);
+use Text::Xslate qw(
+    mark_raw
+    unmark_raw
+    escaped_string
+    html_escape
+);
 
 my $tx = Text::Xslate->new();
 
@@ -13,13 +18,13 @@ T
     Hello, &lt;Xslate&gt;, world!
 X
 
-    [<<'T', {lang => Text::Xslate::EscapedString->new('&lt;Xslate&gt;')}, <<'X'],
+    [<<'T', {lang => Text::Xslate::Type::Raw->new('&lt;Xslate&gt;')}, <<'X', 'T::X::T::R->new()'],
     Hello, <: $lang :>, world!
 T
     Hello, &lt;Xslate&gt;, world!
 X
 
-    [<<'T', {lang => escaped_string('&lt;Xslate&gt;')}, <<'X'],
+    [<<'T', {lang => escaped_string('&lt;Xslate&gt;')}, <<'X', 'escaped_string()'],
     Hello, <: $lang :>, world!
 T
     Hello, &lt;Xslate&gt;, world!
@@ -30,6 +35,37 @@ X
 T
     Hello, &lt;Xslate&gt;, world!
 X
+
+    [<<'T', {lang => mark_raw('&lt;Xslate&gt;')}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+
+    [<<'T', {lang => mark_raw(mark_raw('&lt;Xslate&gt;'))}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+
+    [<<'T', {lang => unmark_raw('<Xslate>')}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+
+    [<<'T', {lang => unmark_raw(mark_raw('<Xslate>'))}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+
+    [<<'T', {lang => html_escape('<Xslate>')}, <<'X'],
+    Hello, <: $lang :>, world!
+T
+    Hello, &lt;Xslate&gt;, world!
+X
+
 );
 
 foreach my $d(@set) {
@@ -39,6 +75,9 @@ foreach my $d(@set) {
 
 is     escaped_string('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "escaped strings can be stringified";
 cmp_ok escaped_string('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "escaped strings are comparable";
+
+is     mark_raw('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "escaped strings can be stringified";
+cmp_ok mark_raw('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "escaped strings are comparable";
 
 is html_escape(q{ & ' " < > }),  qq{ &amp; &apos; &quot; &lt; &gt; }, 'html_escape()';
 is html_escape('<Xslate>'), '&lt;Xslate&gt;', 'html_escape()';

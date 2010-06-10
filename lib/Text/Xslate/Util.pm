@@ -5,6 +5,7 @@ use warnings;
 
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
+    mark_raw unmark_raw
     html_escape escaped_string
     literal_to_value value_to_literal
     import_from
@@ -36,8 +37,18 @@ defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
 
 require Text::Xslate; # load XS stuff
 
+sub mark_raw;   # XS
+sub unmark_raw; # XS
 sub html_escape;    # XS
-sub escaped_string; # XS
+sub escaped_string; *escaped_string = \&mark_raw;
+
+sub Text::Xslate::EscapedString::new {
+    my($class, $str) = @_;
+    warnings::warnif(deprecated
+        => 'Text::Xslate::EscapedString->new has been deprecated. '
+         . 'Use Text::Xslate::Type::Raw->new instead.');
+    return Text::Xslate::Type::Raw->new($str);
+}
 
 sub is_int {
     my($s) = @_;
@@ -187,13 +198,17 @@ This module provides utilities for Xslate.
 
 =head2 Exportable functions
 
-=head3 C<escaped_string($str)>
+=head3 C<mark_raw($str)>
 
-This is the entity of the C<raw> filter.
+This is the entity of the C<mark_raw> filter.
+
+=head3 C<unmark_raw($str)>
+
+This is the entity of the C<unmark_raw> filter.
 
 =head3 C<html_escape($str)>
 
-This is the entity of the C<html> filter.
+This is the entity of the C<html_escape> filter.
 
 =head3 C<p($any)>
 

@@ -68,6 +68,14 @@ my %unary = (
     'max_index' => 'max_index', # for loop context vars
 );
 
+my %builtin = (
+    'raw'        => 'builtin_mark_raw',
+    'html'       => 'builtin_html_escape',
+
+    'mark_raw'   => 'builtin_mark_raw',
+    'unmark_raw' => 'builtin_unmark_raw',
+);
+
 has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
@@ -437,8 +445,8 @@ sub _can_print_optimize {
 
     return $node->arity eq 'call'
         && $node->first->arity eq 'function'
-        && any_in($node->first->id, qw(raw html))
-        && @{$node->second} == 1;
+        && @{$node->second} == 1 # args of the filter
+        && exists $builtin{ $node->first->id }
 }
 
 sub _generate_command {
@@ -456,12 +464,13 @@ sub _generate_command {
             push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];
         }
         elsif($self->_can_print_optimize($proc, $arg)){
-            # expr | html
-            # expr | raw
-            my $command = $arg->first->id eq 'html' ? 'print' : 'print_raw';
+            my $filter_name = $arg->first->id;
+            my $command = $builtin{ $filter_name } eq 'builtin_mark_raw'
+                ? 'print_raw'  # mark_raw, raw
+                : 'print';     # unmark_raw, html, html_escape
             push @code,
                 $self->_expr($arg->second->[0]),
-                [ $command => undef, $node->line, "builtin filter" ];
+                [ $command => undef, $node->line, "$filter_name (builtin filter)" ];
         }
         else {
             push @code,
@@ -870,11 +879,11 @@ sub _generate_call {
     my $callable = $node->first; # function or macro
     my $args     = $node->second;
 
-    if(any_in($callable->id, qw(raw html))) {
+    if(my $intern = $builtin{$callable->id}) {
         if(@{$args} != 1) {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
-        return $self->_expr($args->[0]), [ 'builtin_' . $callable->id => undef, $node->line ];
+        return $self->_expr($args->[0]), [ $intern => undef, $node->line ];
     }
 
     return(

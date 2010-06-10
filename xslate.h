@@ -29,9 +29,9 @@
 
 /* xslate stuff */
 
-#define TX_ESC_CLASS   "Text::Xslate::EscapedString"
-#define TX_MACRO_CLASS "Text::Xslate::Macro"
+#define TX_RAW_CLASS   "Text::Xslate::Type::Raw"
 #define TX_PAIR_CLASS  "Text::Xslate::Type::Pair"
+#define TX_MACRO_CLASS "Text::Xslate::Macro"
 
 /* arbitrary initial buffer size */
 #define TX_HINT_SIZE 128

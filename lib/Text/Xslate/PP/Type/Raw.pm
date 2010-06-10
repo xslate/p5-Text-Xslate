@@ -1,4 +1,4 @@
-package Text::Xslate::PP::EscapedString;
+package Text::Xslate::PP::Type::Raw;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use overload (
     fallback => 1,
 );
 
-my $the_class = 'Text::Xslate::EscapedString';
+my $the_class = 'Text::Xslate::Type::Raw';
 
 sub new {
     my ( $class, $str ) = @_;
@@ -23,7 +23,7 @@ sub new {
     elsif ( $class ne $the_class ) {
         Carp::croak("You cannot extend $the_class");
     }
-    return bless \$str, $class;
+    return bless \$str, $the_class;
 }
 
 sub as_string {
@@ -33,15 +33,17 @@ sub as_string {
     return ${ $_[0] };
 }
 
+sub defined { 1 }
+
 package
-    Text::Xslate::EscapedString;
-our @ISA = qw(Text::Xslate::PP::EscapedString);
+    Text::Xslate::Type::Raw;
+our @ISA = qw(Text::Xslate::PP::Type::Raw);
 1;
 __END__
 
 =head1 NAME
 
-Text::Xslate::PP::EscapedString - Text::Xslate EscapedString in pure Perl
+Text::Xslate::PP::Type::Raw - Text::Xslate raw string type in pure Perl
 
 =head1 DESCRIPTION
 

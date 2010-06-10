@@ -28,6 +28,9 @@ my @set = (
     ['<: raw($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'false'],
 
+    ['<: $value | unmark_raw :>',       { value => '<Xslate>' }, "&lt;Xslate&gt;", 'unmark_raw' ],
+    ['<: $value | raw | unmark_raw :>', { value => '<Xslate>' }, "&lt;Xslate&gt;", 'unmark_raw' ],
+
     ['<: 1 ? raw($value) : html($value) :>',
         { value => '<Xslate>' }, '<Xslate>'],
     ['<: 1 ? html($value) : raw($value) :>',
@@ -38,10 +41,41 @@ my @set = (
     ['<: 0 ? html($value) : raw($value) :>',
         { value => '<Xslate>' }, '<Xslate>'],
 
+    ['<: for [raw($value)]  -> $i { :><: $i :><: } :>', { value => "<Xslate>" }, "<Xslate>" ],
+    ['<: for [html($value)] -> $i { :><: $i :><: } :>', { value => "<Xslate>" }, "&lt;Xslate&gt;" ],
+
     ['<: raw :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'raw itself'],
     ['<: html :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'html itself'],
+
+    [<<'T', {}, <<'X'],
+: macro foo -> {
+    <br>
+: }
+: foo()
+T
+    <br>
+X
+
+    [<<'T', {}, <<'X'],
+: macro foo -> {
+    <br>
+: }
+: foo() | mark_raw
+T
+    <br>
+X
+
+    [<<'T', {}, <<'X'],
+: macro foo -> {
+    <br>
+: }
+: foo() | unmark_raw
+T
+    &lt;br&gt;
+X
+
 );
 
 foreach my $d(@set) {

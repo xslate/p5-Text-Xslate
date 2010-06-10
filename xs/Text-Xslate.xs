@@ -61,7 +61,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
     U32 depth;
-    HV* escaped_string_stash;
+    HV* raw_stash;
     HV* macro_stash;
 
     tx_state_t* current_st; /* set while tx_execute(), othewise NULL */
@@ -282,29 +282,39 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
 }
 
 static bool
-tx_str_is_escaped(pTHX_ SV* const sv) {
+tx_str_is_marked_raw(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         dMY_CXT;
         return SvTYPE(SvRV(sv)) <= SVt_PVMG
-            && SvSTASH(SvRV(sv)) == MY_CXT.escaped_string_stash;
+            && SvSTASH(SvRV(sv)) == MY_CXT.raw_stash;
     }
     return FALSE;
 }
 
 static SV*
-tx_escaped_string(pTHX_ SV* const str) {
-    if(tx_str_is_escaped(aTHX_ str)) {
+tx_mark_raw(pTHX_ SV* const str) {
+    if(tx_str_is_marked_raw(aTHX_ str)) {
         return str;
     }
     else {
         dMY_CXT;
         SV* const sv = newSV_type(SVt_PVMG);
         sv_setsv(sv, str);
-        return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.escaped_string_stash));
+        return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.raw_stash));
     }
 }
 
-inline static void /* doesn't care about escaped-ness */
+static SV*
+tx_unmark_raw(pTHX_ SV* const str) {
+    if(tx_str_is_marked_raw(aTHX_ str)) {
+        return SvRV(str);
+    }
+    else {
+        return str;
+    }
+}
+
+inline static void /* doesn't care about raw-ness */
 tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
@@ -361,10 +371,10 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
 
 static SV*
 tx_html_escape(pTHX_ SV* const str) {
-    if(!( tx_str_is_escaped(aTHX_ str) || !SvOK(str) )) {
+    if(!( tx_str_is_marked_raw(aTHX_ str) || !SvOK(str) )) {
         SV* const dest = newSVpvs_flags("", SVs_TEMP);
         tx_force_html_escape(aTHX_ str, dest);
-        return tx_escaped_string(aTHX_ dest);
+        return tx_mark_raw(aTHX_ dest);
     }
     else {
         return str;
@@ -492,7 +502,7 @@ TXC(print) {
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
 
-    if(tx_str_is_escaped(aTHX_ sv)) {
+    if(tx_str_is_marked_raw(aTHX_ sv)) {
         if(SvOK(SvRV(sv))) {
             sv_catsv_nomg(output, SvRV(sv));
         }
@@ -714,12 +724,17 @@ TXC(max_index) {
     TX_st->pc++;
 }
 
-TXC(builtin_raw) {
-    TX_st_sa = tx_escaped_string(aTHX_ TX_st_sa);
+TXC(builtin_mark_raw) {
+    TX_st_sa = tx_mark_raw(aTHX_ TX_st_sa);
     TX_st->pc++;
 }
 
-TXC(builtin_html) {
+TXC(builtin_unmark_raw) {
+    TX_st_sa = tx_unmark_raw(aTHX_ TX_st_sa);
+    TX_st->pc++;
+}
+
+TXC(builtin_html_escape) {
     TX_st_sa = tx_html_escape(aTHX_ TX_st_sa);
     TX_st->pc++;
 }
@@ -869,11 +884,11 @@ TXC_w_int(macro_end) {
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    if(sv_true(TX_op_arg)) { /* immediate macros; skip to mark as escaped */
+    if(sv_true(TX_op_arg)) { /* immediate macros; skip to mark as raw */
         sv_setsv(TX_st->targ, TX_st->output);
     }
     else { /* normal macros */
-        sv_setsv(TX_st->targ, tx_escaped_string(aTHX_ TX_st->output));
+        sv_setsv(TX_st->targ, tx_mark_raw(aTHX_ TX_st->output));
     }
     TX_st_sa = TX_st->targ;
 
@@ -1302,16 +1317,16 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 static void
 tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.depth = 0;
-    MY_CXT.escaped_string_stash = gv_stashpvs(TX_ESC_CLASS, GV_ADDMULTI);
-    MY_CXT.macro_stash          = gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler         = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler          = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
+    MY_CXT.raw_stash     = gv_stashpvs(TX_RAW_CLASS, GV_ADDMULTI);
+    MY_CXT.macro_stash   = gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI);
+    MY_CXT.warn_handler  = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADDMULTI));
+    MY_CXT.die_handler   = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
 }
 
 /* Because overloading stuff of old xsubpp didn't work,
    we need to copy them. */
-XS(XS_Text__Xslate__EscapedString_fallback); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Text__Xslate__EscapedString_fallback)
+XS(XS_Text__Xslate__Type__Raw_fallback); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Text__Xslate__Type__Raw_fallback)
 {
    dXSARGS;
    PERL_UNUSED_VAR(items);
@@ -1705,12 +1720,21 @@ CODE:
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Util
 
 void
-escaped_string(SV* str)
+mark_raw(SV* str)
 CODE:
 {
-    ST(0) = tx_escaped_string(aTHX_ str);
+    ST(0) = tx_mark_raw(aTHX_ str);
     XSRETURN(1);
 }
+
+void
+unmark_raw(SV* str)
+CODE:
+{
+    ST(0) = tx_unmark_raw(aTHX_ str);
+    XSRETURN(1);
+}
+
 
 void
 html_escape(SV* str)
@@ -1720,7 +1744,7 @@ CODE:
     XSRETURN(1);
 }
 
-MODULE = Text::Xslate    PACKAGE = Text::Xslate::EscapedString
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
 
 BOOT:
 {
@@ -1728,16 +1752,16 @@ BOOT:
     /* overload stuff */
     PL_amagic_generation++;
     sv_setsv(
-        get_sv( "Text::Xslate::EscapedString::()", TRUE ),
+        get_sv( TX_RAW_CLASS "::()", TRUE ),
         &PL_sv_yes
     );
-    (void)newXS("Text::Xslate::EscapedString::()",
-        XS_Text__Xslate__EscapedString_fallback, file);
+    (void)newXS( TX_RAW_CLASS "::()",
+        XS_Text__Xslate__Type__Raw_fallback, file);
 
     /* *{'(""'} = \&as_string */
-    as_string = sv_2mortal(newRV_inc((SV*)get_cv("Text::Xslate::EscapedString::as_string", GV_ADD)));
+    as_string = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
     sv_setsv_mg(
-        (SV*)gv_fetchpvs("Text::Xslate::EscapedString::(\"\"", GV_ADDMULTI, SVt_PVCV),
+        (SV*)gv_fetchpvs( TX_RAW_CLASS "::(\"\"", GV_ADDMULTI, SVt_PVCV),
         as_string);
 }
 
@@ -1746,12 +1770,12 @@ new(SV* klass, SV* str)
 CODE:
 {
     if(SvROK(klass)) {
-        croak("You cannot call %s->new() as an instance method", TX_ESC_CLASS);
+        croak("You cannot call %s->new() as an instance method", TX_RAW_CLASS);
     }
-    if(strNE(SvPV_nolen_const(klass), TX_ESC_CLASS)) {
-        croak("You cannot extend %s", TX_ESC_CLASS);
+    if(strNE(SvPV_nolen_const(klass), TX_RAW_CLASS)) {
+        croak("You cannot extend %s", TX_RAW_CLASS);
     }
-    ST(0) = tx_escaped_string(aTHX_ str);
+    ST(0) = tx_mark_raw(aTHX_ str);
     XSRETURN(1);
 }
 
@@ -1759,10 +1783,17 @@ void
 as_string(SV* self, ...)
 CODE:
 {
-    if(! tx_str_is_escaped(aTHX_ self) ) {
-        croak("You cannot call %s->as_string() as a class method", TX_ESC_CLASS);
+    if(! tx_str_is_marked_raw(aTHX_ self) ) {
+        croak("You cannot call %s->as_string() as a class method", TX_RAW_CLASS);
     }
     ST(0) = SvRV(self);
     XSRETURN(1);
 }
 
+void
+defined(self)
+CODE:
+{
+    ST(0) = &PL_sv_yes;
+    XSRETURN(1);
+}
