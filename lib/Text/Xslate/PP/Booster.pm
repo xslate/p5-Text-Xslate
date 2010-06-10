@@ -520,7 +520,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
 
     $self->write_lines( 'my ( $st, $pad, $f_l ) = @_;' );
     $self->write_lines( 'my $vars = $st->{ vars };' );
-    $self->write_lines( sprintf( 'my $mobj = $st->{ function }->{ %s };', $name ) );
+    $self->write_lines( sprintf( 'my $mobj = $st->symbol->{ %s };', $name ) );
     $self->write_lines( sprintf( 'my $output = q{};' ) );
     $self->write_code( "\n" );
 
