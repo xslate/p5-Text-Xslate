@@ -750,7 +750,11 @@ sub _generate_variable {
         @op = ( load_lvar => $lvar_id );
     }
     else {
-        @op = ( fetch_s => $self->_variable_to_value($node) );
+        my $name = $self->_variable_to_value($node);
+        if($name =~ /~/) {
+            $self->_error("Undefined iterator variable $node", $node);
+        }
+        @op = ( fetch_s => $name );
     }
     $op[2] = $node->line;
     $op[3] = $node->id;
