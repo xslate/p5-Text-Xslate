@@ -216,6 +216,52 @@ sub load_file {
     return $asm;
 }
 
+sub _load_source {
+    my($self, $fi) = @_;
+    my $fullpath  = $fi->{fullpath};
+    my $cachepath = $fi->{cachepath};
+
+    my $source;
+    {
+        open my($in), '<' . $self->{input_layer}, $fullpath
+            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+        local $/;
+        $source = <$in>;
+    }
+
+    my $asm = $self->compile($source,
+        file     => $fi->{file},
+        fullpath => $fullpath,
+    );
+
+    if($self->{cache} >= 1) {
+        my($volume, $dir) = File::Spec->splitpath($fi->{cachepath});
+        my $cachedir      = File::Spec->catpath($volume, $dir, '');
+        if(not -e $cachedir) {
+            require File::Path;
+            File::Path::mkpath($cachedir);
+        }
+
+        # use input_layer for caches
+        if(open my($out), '>' . $self->{input_layer}, $cachepath) {
+            $self->_save_compiled($out, $asm, $fullpath);
+
+            if(!close $out) {
+                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
+                 unlink $cachepath;
+            }
+            else {
+                $self->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
+            }
+        }
+        else {
+            Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
+        }
+    }
+
+    return $asm;
+}
+
 sub _load_compiled {
     my($self, $fi, $threshold_mtime) = @_;
 
@@ -284,52 +330,6 @@ sub _load_compiled {
     }
 
     return \@asm;
-}
-
-sub _load_source {
-    my($self, $fi) = @_;
-    my $fullpath  = $fi->{fullpath};
-    my $cachepath = $fi->{cachepath};
-
-    my $source;
-    {
-        open my($in), '<' . $self->{input_layer}, $fullpath
-            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
-        local $/;
-        $source = <$in>;
-    }
-
-    my $asm = $self->compile($source,
-        file     => $fi->{file},
-        fullpath => $fullpath,
-    );
-
-    if($self->{cache} >= 1) {
-        my($volume, $dir) = File::Spec->splitpath($fi->{cachepath});
-        my $cachedir      = File::Spec->catpath($volume, $dir, '');
-        if(not -e $cachedir) {
-            require File::Path;
-            File::Path::mkpath($cachedir);
-        }
-
-        # use input_layer for caches
-        if(open my($out), '>' . $self->{input_layer}, $cachepath) {
-            $self->_save_compiled($out, $asm, $fullpath);
-
-            if(!close $out) {
-                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                 unlink $cachepath;
-            }
-            else {
-                $self->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
-            }
-        }
-        else {
-            Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
-        }
-    }
-
-    return $asm;
 }
 
 sub _save_compiled {
