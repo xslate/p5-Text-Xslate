@@ -17,8 +17,8 @@
 #define TX_op_arg *tx_sv_safe(aTHX_ &(TX_op->arg), "TX_st->arg", __FILE__, __LINE__)
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
-    if(UNLIKELY(*svp == NULL)) {
-        croak("panic: %s is NULL at %s line %d.\n", name, f, l);
+    if(*svp == NULL) {
+        croak("Oops: %s is NULL at %s line %d.\n", name, f, l);
     }
     return svp;
 }
@@ -38,7 +38,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     }
 
     if(!st->pad) {
-        croak("panic: Refers to local variable %d before initialization",
+        croak("Oops: Refers to local variable %d before initialization",
             (int)lvar_ix);
     }
     return st->pad[lvar_ix];
@@ -180,7 +180,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
             GV* dummy_gv;
             CV* cv;
             SvGETMAGIC(proc);
-            if(!SvOK(proc)) {
+            if(UNLIKELY(!SvOK(proc))) {
                 tx_code_t* const c = &(st->code[ st->pc - 1 ]);
                 (void)POPMARK;
                 tx_error(aTHX_ st, "Undefined function%s is called on %s",
@@ -191,7 +191,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
             }
 
             cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
-            if(!cv) {
+            if(UNLIKELY(!cv)) {
                 (void)POPMARK;
                 tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
                     tx_neat(aTHX_ proc));
@@ -214,7 +214,7 @@ tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const
 
     call_sv(proc, G_SCALAR | G_EVAL | flags);
 
-    if(UNLIKELY(sv_true(ERRSV))) {
+    if(UNLIKELY(!!sv_true(ERRSV))) {
         tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
@@ -356,7 +356,7 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
         len = SvCUR(dest) + parts_len + 1;
         (void)SvGROW(dest, len);
 
-        if(LIKELY(parts_len == 1)) {
+        if(parts_len == 1) {
             *SvEND(dest) = *parts;
         }
         else {
@@ -477,7 +477,7 @@ TXC_w_key(fetch_s) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
-    TX_st_sa = LIKELY(he != NULL) ? hv_iterval(vars, he) : &PL_sv_undef;
+    TX_st_sa = he ? hv_iterval(vars, he) : &PL_sv_undef;
 
     TX_st->pc++;
 }
@@ -595,7 +595,7 @@ TXC_goto(for_iter) {
         }
     }
     else { /* magical variables */
-        if(LIKELY(++SvIVX(i) <= av_len(av))) {
+        if(++SvIVX(i) <= av_len(av)) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
             sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
             TX_st->pc++;
@@ -1058,7 +1058,7 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
         CALL_FPTR(st.code[st.pc].exec_code)(aTHX_ &st);
 #ifdef DEBUGGING
         if(UNLIKELY(old_pc == st.pc)) {
-            croak("panic: pogram counter has not been changed on [%d]", (int)st.pc);
+            croak("Oops: pogram counter has not been changed on [%d]", (int)st.pc);
         }
 #endif
     }
