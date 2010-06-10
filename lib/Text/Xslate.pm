@@ -466,14 +466,13 @@ This document describes Text::Xslate version 0.1031.
     print $tx->render_string($template, \%vars);
 
     # you can tell the engine that some strings are already escaped.
-    use Text::Xslate qw(escaped_string);
+    use Text::Xslate qw(mark_raw);
 
-    $vars{email} = escaped_string('gfx &lt;gfuji at cpan.org&gt;');
-    # or
-    $vars{email} = Text::Xslate::EscapedString->new(
+    $vars{email} = mark_raw('gfx &lt;gfuji at cpan.org&gt;');
+    # or if you don't want to pollute your namespace:
+    $vars{email} = Text::Xslate::Type::Raw->new(
         'gfx &lt;gfuji at cpan.org&gt;',
-    ); # if you don't want to pollute your namespace.
-
+    );
 
     # if you want Template-Toolkit syntx:
     $tx = Text::Xslate->new(syntax => 'TTerse');
