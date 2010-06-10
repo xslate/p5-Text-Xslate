@@ -106,19 +106,27 @@ has engine => (
     required => 0,
 );
 
-has syntax => (
-    is  => 'rw',
-    isa => 'Str|Object',
-
-    default  => 'Kolon',
-    required => 0,
-);
-
 has escape_mode => (
     is  => 'rw',
     isa => enum([qw(html none)]),
 
     default => 'html',
+
+    init_arg => 'escape',
+);
+
+has syntax => (
+    is       => 'rw',
+
+    default  => 'Kolon',
+    required => 0,
+);
+
+has parser_option => (
+    is       => 'rw',
+    isa      => 'HashRef',
+
+    default  => sub { {} },
 );
 
 has parser => (
@@ -131,7 +139,7 @@ has parser => (
     default => sub {
         my($self) = @_;
         my $syntax = $self->syntax;
-        if(ref $syntax) {
+        if(blessed($syntax)) {
             return $syntax;
         }
         else {
@@ -139,7 +147,7 @@ has parser => (
                 "Text::Xslate::Syntax::" . $syntax,
                 $syntax,
             );
-            return $parser_class->new();
+            return $parser_class->new($self->parser_option);
         }
     },
 
@@ -149,6 +157,8 @@ has parser => (
 has cascade => (
     is  => 'rw',
     isa => 'Object',
+
+    init_arg => undef,
 );
 
 sub lvar_use {

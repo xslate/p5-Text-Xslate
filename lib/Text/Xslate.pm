@@ -52,8 +52,13 @@ BEGIN {
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-# version syntax compiler escape path
-my $XSLATE_MAGIC = qq{.xslate "%s - %s - %s - %s - %s"\n};
+# version-path-{compiler options}
+my $XSLATE_MAGIC    = qq{.xslate "%s-%s-{%s}"\n};
+
+my %compiler_option = (
+    syntax      => undef,
+    escape      => undef,
+);
 
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
@@ -63,18 +68,19 @@ sub options { # overridable
         # name => default
         suffix      => '.tx',
         path        => ['.'],
-        compiler    => $class->compiler_class,
         input_layer => ':utf8',
-        syntax      => 'Kolon',
-        escape      => 'html',
         cache       => 1,
         cache_dir   => _DEFAULT_CACHE_DIR,
         module      => undef,
         function    => undef,
+        compiler    => $class->compiler_class,
 
         verbose      => 1,
         warn_handler => undef,
         die_handler  => undef,
+
+        # compiler options
+        %compiler_option,
     };
 }
 
@@ -336,13 +342,25 @@ sub _save_compiled {
 
 sub _magic {
     my($self, $fullpath) = @_;
-    return sprintf $XSLATE_MAGIC,
-        $VERSION,
-        $self->{syntax},
+
+    my $compiler_options = join(',',
         ref($self->{compiler}) || $self->{compiler},
-        $self->{escape},
-        $fullpath,
-    ;
+        $self->_compiler_options,
+    );
+
+    return sprintf $XSLATE_MAGIC,
+        $VERSION, $fullpath, $compiler_options;
+}
+
+sub _compiler_options {
+    my($self) = @_;
+    my @options;
+    foreach my $name(sort keys %compiler_option) {
+        if(defined($self->{$name})) {
+            push @options, $name => $self->{$name};
+        }
+    }
+    return @options;
 }
 
 sub _compiler {
@@ -350,12 +368,13 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
+        $compiler ||= $self->compiler_class;
         require Any::Moose;
         Any::Moose::load_class($compiler);
+
         $compiler = $compiler->new(
-            engine       => $self,
-            syntax      => $self->{syntax},
-            escape_mode => $self->{escape},
+            engine => $self,
+            $self->_compiler_options,
         );
 
         $compiler->define_function(keys %{ $self->{function} });
