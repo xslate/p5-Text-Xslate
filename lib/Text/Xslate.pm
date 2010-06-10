@@ -147,7 +147,7 @@ sub load_string { # for <input>
 }
 
 sub find_file {
-    my($self, $file, $mtime) = @_;
+    my($self, $file, $threshold_mtime) = @_;
 
     my $fullpath;
     my $cachepath;
@@ -166,9 +166,8 @@ sub find_file {
         if(-f $cachepath) {
             my $cmt = (stat(_))[_ST_MTIME]; # compiled
 
-            # mtime indicates the threshold time.
             # see also tx_load_template() in xs/Text-Xslate.xs
-            if(($mtime || $cmt) >= $orig_mtime) {
+            if(($threshold_mtime || $cmt) >= $orig_mtime) {
                 $cache_mtime = $cmt;
             }
         }
@@ -218,7 +217,7 @@ sub load_file {
 }
 
 sub _load_compiled {
-    my($self, $fi, $mtime) = @_;
+    my($self, $fi, $threshold_mtime) = @_;
 
     $fi->{cache_mtime} = undef if $self->{cache} == 0;
 
@@ -243,7 +242,7 @@ sub _load_compiled {
         $assembly = <$in>;
     }
 
-    $mtime ||= $fi->{cache_mtime};
+    $threshold_mtime ||= $fi->{cache_mtime};
 
     # deserialize
     my @asm;
@@ -268,13 +267,13 @@ sub _load_compiled {
                 $dep_mtime = '+inf'; # force reload
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
-            if($dep_mtime > $mtime){
+            if($dep_mtime > $threshold_mtime){
                 unlink $cachepath
                     or $self->_error("LoadError: Cannot unlink $cachepath: $!");
 
                 printf "---> %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
-                    $cachepath, scalar localtime($mtime)
+                    $cachepath, scalar localtime($threshold_mtime)
                         if _DUMP_LOAD_FILE;
 
                 return undef;
