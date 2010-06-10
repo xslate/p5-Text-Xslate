@@ -592,9 +592,21 @@ $CODE_MANIP{ 'symbol' } = sub {
     }
 
     $self->sa(
-        sprintf('$st->symbol->{ %s }', value_to_literal($arg) )
+#        sprintf('$st->symbol->{ %s }', value_to_literal($arg) )
+        sprintf('symbol( $st, %s, %s, %s )', value_to_literal($arg), $self->frame_and_line )
     );
 };
+
+sub symbol {
+    my ( $st, $name, $frame, $line ) = @_;
+
+    if ( !defined $st->symbol->{ $name } ) {
+#        _error( $st, $frame, $line, "Undefined symbol %s", $name ),
+        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
+    }
+
+    return $st->symbol->{ $name };
+}
 
 
 $CODE_MANIP{ 'funcall' } = sub {
