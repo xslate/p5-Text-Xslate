@@ -234,19 +234,16 @@ sub process_file {
         }
     }
 
-    my $fh;
-    if (! open( $fh, '>', $outfile ) ) {
-        die "Could not open file $outfile for writing: $!";
-    }
 
-    eval {
-        my $rendered = $xslate->render( $filearg, $self->define );
-        print $fh $rendered;
-    };
-    if ($@) {
-        die $@;
-    }
-    close $fh;
+    my $rendered = $xslate->render( $filearg, $self->define );
+
+    my $fh;
+    open( $fh, '>', $outfile )
+        or die "Could not open file $outfile for writing: $!";
+
+    print $fh $rendered;
+
+    close $fh or warn "Could not close file $outfile: $!";
 }
 
 package main;
