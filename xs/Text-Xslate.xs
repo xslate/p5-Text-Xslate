@@ -1775,7 +1775,7 @@ CODE:
     if(strNE(SvPV_nolen_const(klass), TX_RAW_CLASS)) {
         croak("You cannot extend %s", TX_RAW_CLASS);
     }
-    ST(0) = tx_mark_raw(aTHX_ str);
+    ST(0) = tx_mark_raw(aTHX_ tx_unmark_raw(aTHX_ str));
     XSRETURN(1);
 }
 
@@ -1787,13 +1787,5 @@ CODE:
         croak("You cannot call %s->as_string() as a class method", TX_RAW_CLASS);
     }
     ST(0) = SvRV(self);
-    XSRETURN(1);
-}
-
-void
-defined(self)
-CODE:
-{
-    ST(0) = &PL_sv_yes;
     XSRETURN(1);
 }

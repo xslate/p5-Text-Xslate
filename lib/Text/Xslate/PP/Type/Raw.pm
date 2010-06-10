@@ -23,6 +23,7 @@ sub new {
     elsif ( $class ne $the_class ) {
         Carp::croak("You cannot extend $the_class");
     }
+    $str = ${$str} if ref($str) eq $the_class; # unmark
     return bless \$str, $the_class;
 }
 

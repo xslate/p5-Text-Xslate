@@ -674,33 +674,47 @@ This method can be used for pre-compiling template files.
 
 =head2 Exportable functions
 
-=head3 C<< escaped_string($str :Str) -> EscapedString >>
+=head3 C<< mark_raw($str :Str) -> RawString >>
 
-Marks I<$str> as escaped. Escaped strings will not be escaped by the template 
-engine, so you have to escape these strings by yourself.
+Marks I<$str> as raw, so that the content of I<$str> will be rendered as is,
+so you have to escape these strings by yourself.
 
 For example:
 
     my $tx   = Text::Xslate->new();
     my $tmpl = 'Mailaddress: <: $email :>';
     my %vars = (
-        email => 'Foo &lt;foo@example.com&gt;',
+        email => mark_raw('Foo &lt;foo@example.com&gt;'),
     );
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
-This function is available in templates as the C<raw> filter:
+This function is available in templates as the C<mark_raw> filter:
 
-    <: $var | raw :>
+    <: $var | mark_raw :>
+    <: $var | raw # alias :>
 
-=head3 C<< html_escape($str :Str) -> EscapedString >>
+=head3 C<< unmark_raw($str :Str) -> Str >>
 
-Escapes html special characters in I<$str>, and returns an escaped string (see above).
+Clears the raw marker from I<$str>, so that the content of I<$str> will
+be escaped before rendered.
 
-Although you need not call it explicitly, this function is available in
-templates as the C<html> filter:
+This function is available in templates as the C<unmark_raw> filter:
 
-    <: $var | html :>
+    <: $var | unmark_raw :>
+
+=head3 C<< html_escape($str :Str) -> RawString >>
+
+Escapes html special characters in I<$str>, and returns a raw string (see above).
+If I<$str> is already a raw string, it returns I<$str> as is.
+
+You need not call this function explicitly, because all the values
+will be escaped automatically.
+
+This function is available in templates as the C<html> filter, but keep
+in mind that it will do nothing if the argument is already escaped.
+Consider C<< <: $var | unmark_raw | html :> >>, which forces to escape
+the argument.
 
 =head2 Application
 

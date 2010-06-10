@@ -76,6 +76,15 @@ T
     &lt;br&gt;
 X
 
+    [<<'T', {}, <<'X'],
+: macro foo -> {
+    <br>
+: }
+: foo() | unmark_raw | html
+T
+    &lt;br&gt;
+X
+
 );
 
 foreach my $d(@set) {
