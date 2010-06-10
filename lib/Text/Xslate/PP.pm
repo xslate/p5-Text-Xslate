@@ -21,7 +21,7 @@ use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
 
 use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
-                            :               'Booster'; # default
+                            :               'Opcode'; # default
 
 use constant _DUMP_LOAD_TEMPLATE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
