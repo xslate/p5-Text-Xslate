@@ -1,6 +1,7 @@
 package Text::Xslate::Parser;
 use Any::Moose;
 
+use Scalar::Util ();
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
@@ -479,7 +480,7 @@ sub init_symbols {
 
     $parser->symbol('include')  ->set_std(\&std_include);
 
-    # template inheritance
+    # macros
 
     $parser->symbol('cascade')  ->set_std(\&std_cascade);
     $parser->symbol('macro')    ->set_std(\&std_proc);
@@ -490,7 +491,9 @@ sub init_symbols {
     $parser->symbol('super')    ->set_std(\&std_marker);
     $parser->symbol('override') ->set_std(\&std_override);
 
-    # lexical variable stuff
+    $parser->symbol('->')       ->set_nud(\&nud_lambda);
+
+    # lexical variables/constants stuff
     $parser->symbol('constant')->set_nud(\&nud_constant);
     $parser->symbol('my'      )->set_nud(\&nud_constant);
 
@@ -1081,6 +1084,56 @@ sub nud_constant {
     );
 }
 
+# -> $x { ... }
+sub nud_lambda {
+    my($parser, $symbol) = @_;
+
+    my $unique_name = $parser->symbol('(name)')->clone(
+        id => sprintf('lambda@0x%x', Scalar::Util::refaddr($symbol)),
+    );
+
+    my $pointy = $symbol->clone(
+        arity => 'proc',
+        id    => 'macro',
+        first => $unique_name, # name
+    );
+
+    $parser->new_scope();
+    my @params;
+    if($parser->token->id ne "{") { # has params
+        my $paren = ($parser->token->id eq "(");
+
+        $parser->advance("(") if $paren; # optional
+
+        my $t = $parser->token;
+        while($t->arity eq "variable") {
+            push @params, $t;
+            $parser->define($t);
+
+            $t = $parser->advance();
+            if($t->id eq ",") {
+                $t = $parser->advance(); # ","
+            }
+            else {
+                last;
+            }
+        }
+
+        $parser->advance(")") if $paren;
+    }
+    $pointy->second( \@params );
+
+    $parser->advance("{");
+    $pointy->third($parser->statements());
+    $parser->advance("}");
+    $parser->pop_scope();
+
+    return $symbol->clone(
+        arity => 'lambda',
+        first => $pointy,
+    );
+}
+
 #sub std_var {
 #    my($parser, $symbol) = @_;
 #    my @a;
@@ -1115,14 +1168,14 @@ sub nud_constant {
 # ->      { STATEMENTS }
 #         { STATEMENTS }
 sub pointy {
-    my($parser, $node, $in_for) = @_;
+    my($parser, $pointy, $in_for) = @_;
 
-    my @vars;
+    my @params;
 
     $parser->new_scope();
 
     if($parser->token->id eq "->") {
-        $parser->advance("->");
+        $parser->advance();
         if($parser->token->id ne "{") {
             my $paren = ($parser->token->id eq "(");
 
@@ -1130,7 +1183,7 @@ sub pointy {
 
             my $t = $parser->token;
             while($t->arity eq "variable") {
-                push @vars, $t;
+                push @params, $t;
                 $parser->define($t);
 
                 if($in_for) {
@@ -1150,10 +1203,10 @@ sub pointy {
             $parser->advance(")") if $paren;
         }
     }
-    $node->second( \@vars );
+    $pointy->second( \@params );
 
     $parser->advance("{");
-    $node->third($parser->statements());
+    $pointy->third($parser->statements());
     $parser->advance("}");
     $parser->pop_scope();
 

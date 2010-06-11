@@ -417,17 +417,23 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
     return FALSE;
 }
 
-SV* /* proc may be a Xslate macro or a Perl subroutine (code ref) */
+/* called by tx_methodcall() */
+/* proc may be a Xslate macro or a Perl subroutine (code ref) */
+SV*
 tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name) {
     if(tx_sv_is_macro(aTHX_ proc)) {
+        U32 const save_pc = TX_st->pc;
         tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->code_len /* retaddr */);
 
         /* execute */
         while(TX_st->pc < TX_st->code_len) {
             CALL_FPTR(TX_st->code[TX_st->pc].exec_code)(aTHX_ TX_st);
         }
-
         /* after tx_macro_end */
+
+        TX_st->pc = save_pc;
+        //warn("# return from %s\n", name);
+
         return TX_st_sa;
     }
     else {
@@ -1447,7 +1453,8 @@ CODE:
     av_store(mainframe, TXframe_NAME,    newSVpvs_share("main"));
     av_store(mainframe, TXframe_RETADDR, newSVuv(len));
 
-    Newxz(st.lines, len, U16);
+    Newxz(st.lines, len + 1, U16);
+    st.lines[len] = (U16)-1;
 
     Newxz(st.code, len, tx_code_t);
 

@@ -179,11 +179,13 @@ TXBM(array, map) {
     SV* const proc      = *(++MARK);
     I32 const len       = av_len(av) + 1;
     AV* const result    = newAV();
-    SV* const resultref = sv_2mortal(newRV_noinc((SV*)result));
+    SV* const resultref = newRV_noinc((SV*)result);
     I32 i;
 
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
     av_fill(result, len - 1);
-
     for(i = 0; i < len; i++) {
         dSP;
         SV** const svp = av_fetch(av, i, FALSE);
@@ -196,9 +198,11 @@ TXBM(array, map) {
         sv = tx_proccall(aTHX_ st, proc, "map callback");
         av_store(result, i, newSVsv(sv));
     }
+    sv_setsv(retval, resultref);
+    FREETMPS;
+    LEAVE;
 
     /* setting retval must be here because retval is actually st->targ */
-    sv_setsv(retval, resultref);
 }
 
 /* HASH */

@@ -45,6 +45,37 @@ T
     2, 3, 4
 X
 
+    [<<'T', { data => [1 .. 3] }, <<'X'],
+    <: $data.map(-> $x { $x + 1 }).join(', ') :>
+T
+    2, 3, 4
+X
+
+    [<<'T', { data => [1 .. 3] }, <<'X'],
+<: $data.map(-> $x { $x + 1 }).join(', ') :>/<: $data.map(-> $x { $x + 2 }).join(', ') :>/<: $data.map(-> $x { $x + 3 }).join(', ') :>
+T
+2, 3, 4/3, 4, 5/4, 5, 6
+X
+
+
+    [<<'T', { data => [1 .. 3] }, <<'X'],
+: for $data.map(-> $x { $x + 1 }) -> $v {
+    [<: $v :>]
+: }
+T
+    [2]
+    [3]
+    [4]
+X
+
+    [<<'T', { data => ['<foo>', '<bar>'] }, <<'X'],
+: for $data.map(-> $x { $x }) -> $v {
+    [<: $v :>]
+: }
+T
+    [&lt;foo&gt;]
+    [&lt;bar&gt;]
+X
 );
 
 foreach my $d(@set) {
