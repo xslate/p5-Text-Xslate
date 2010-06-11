@@ -257,7 +257,9 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
         if(mgv) {
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, (SV*)GvCV(mgv), 0, "object method call");
+            retval = st->targ;
+            sv_setsv(retval, tx_call_sv(aTHX_ st, (SV*)GvCV(mgv), 0, "method call"));
+            return retval;
         }
 
         goto not_found;
@@ -315,7 +317,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         }
         else { /* user defined methods */
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, entity, 0, "builtin method call");
+            return tx_proccall(aTHX_ st, entity, "method call");
         }
     }
     if(!SvOK(invocant)) {

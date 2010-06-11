@@ -171,55 +171,48 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     return newframe;
 }
 
-SV*
-tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
-    SV* retval = NULL;
-    if(!(flags & G_METHOD)) { /* functions */
-        if(SvTYPE(proc) != SVt_PVCV) {
-            HV* dummy_stash;
-            GV* dummy_gv;
-            CV* cv;
-            SvGETMAGIC(proc);
-            if(UNLIKELY(!SvOK(proc))) {
-                tx_code_t* const c = &(st->code[ st->pc - 1 ]);
-                (void)POPMARK;
-                tx_error(aTHX_ st, "Undefined function%s is called on %s",
-                    c->exec_code == TXCODE_fetch_s
-                        ? form(" %"SVf"()", c->arg)
-                        : "", name);
-                goto finish;
-            }
-
-            cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
-            if(UNLIKELY(!cv)) {
-                (void)POPMARK;
-                tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
-                    tx_neat(aTHX_ proc));
-
-                goto finish;
-            }
-            proc = (SV*)cv;
-        }
-    }
-    else { /* methods */
-        SV* const invocant = PL_stack_base[TOPMARK+1];
-        if(!SvOK(invocant)) {
-            (void)POPMARK;
-            tx_warn(aTHX_ st, "Use of nil to invoke method %s",
-                tx_neat(aTHX_ proc));
-
-            goto finish;
-        }
-    }
-
-    call_sv(proc, G_SCALAR | G_EVAL | flags);
+SV* /* thin wrapper of Perl_call_sv() */
+tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char* const name) {
+    call_sv(sv, G_SCALAR | G_EVAL | flags);
 
     if(UNLIKELY(!!sv_true(ERRSV))) {
         tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
 
-    retval = TX_pop();
+    return TX_pop();
+}
+
+static SV*
+tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
+    HV* dummy_stash;
+    GV* dummy_gv;
+    CV* cv;
+    SV* retval;
+    SvGETMAGIC(func);
+
+    if(UNLIKELY(!SvOK(func))) {
+        tx_code_t* const c = &(st->code[ st->pc - 1 ]);
+        (void)POPMARK;
+        tx_error(aTHX_ st, "Undefined function%s is called on %s",
+            c->exec_code == TXCODE_fetch_s
+                ? form(" %"SVf"()", c->arg)
+                : "", name);
+        retval = NULL;
+        goto finish;
+    }
+
+    cv = sv_2cv(func, &dummy_stash, &dummy_gv, FALSE);
+
+    if(UNLIKELY(!cv)) {
+        (void)POPMARK;
+        tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
+            tx_neat(aTHX_ func));
+        retval = NULL;
+        goto finish;
+    }
+
+    retval = tx_call_sv(aTHX_ st, (SV*)cv, 0, "function call");
 
     finish:
     sv_setsv_nomg(st->targ, retval);
@@ -237,7 +230,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
         XPUSHs(var);
         PUTBACK;
 
-        sv = tx_call(aTHX_ st, key, G_METHOD, "accessor");
+        sv = tx_call_sv(aTHX_ st, key, G_METHOD, "accessor");
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
@@ -419,6 +412,16 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
         }
     }
     return FALSE;
+}
+
+SV* /* proc may be a Xslate macro or a Perl subroutine (code ref) */
+tx_proccall(pTHX_ tx_state_t* const st, SV* const proc, const char* const name) {
+    if(tx_sv_is_macro(aTHX_ proc)) {
+        croak("Not yet implemented");
+    }
+    else {
+        return tx_funcall(aTHX_ st, proc, name);
+    }
 }
 
 /*********************
@@ -923,7 +926,7 @@ TXC(funcall) { /* call a function or a macro */
         tx_macro_enter(aTHX_ TX_st, macro);
     }
     else {
-        TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");
+        TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
         TX_st->pc++;
     }
 }
@@ -1183,7 +1186,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
 
     call_method("load_file", G_EVAL | G_VOID);
     if(sv_true(ERRSV)){
-        croak("%"SVf" ...", ERRSV);
+        croak("%"SVf"\t...", ERRSV);
     }
 
     FREETMPS;
