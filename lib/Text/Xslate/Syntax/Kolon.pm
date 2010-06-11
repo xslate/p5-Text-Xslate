@@ -448,7 +448,8 @@ because template cascading is statically processed.
 =head2 Macro blocks
 
 Macros are supported, which are called in the same way as functions and
-return a C<raw> string. Macros returns what their body renders.
+return a C<raw> string. Macros returns what their bodies render, so
+macros cannot returns references nor objects including other macros.
 
     : macro add ->($x, $y) {
     :   $x + $y;
@@ -484,6 +485,11 @@ Macros are first-class objects, so you can bind them to symbols.
            bar => bar,
        }; -:>
     : $dispatcher{$key}()
+
+Anonymous macros are also supported, although they returns
+only strings.
+
+    <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
 
 =head2 Comments
 
