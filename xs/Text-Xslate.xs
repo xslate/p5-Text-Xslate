@@ -79,6 +79,9 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
 
+static void
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr);
+
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
     SV* const filesv = *av_fetch(st->tmpl, TXo_NAME, TRUE);
@@ -415,12 +418,20 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
 }
 
 SV* /* proc may be a Xslate macro or a Perl subroutine (code ref) */
-tx_proccall(pTHX_ tx_state_t* const st, SV* const proc, const char* const name) {
+tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name) {
     if(tx_sv_is_macro(aTHX_ proc)) {
-        croak("Not yet implemented");
+        tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->code_len /* retaddr */);
+
+        /* execute */
+        while(TX_st->pc < TX_st->code_len) {
+            CALL_FPTR(TX_st->code[TX_st->pc].exec_code)(aTHX_ TX_st);
+        }
+
+        /* after tx_macro_end */
+        return TX_st_sa;
     }
     else {
-        return tx_funcall(aTHX_ st, proc, name);
+        return tx_funcall(aTHX_ TX_st, proc, name);
     }
 }
 
@@ -826,7 +837,7 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
 }
 
 static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro) {
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr) {
     dSP;
     dMARK;
     I32 const items = SP - MARK;
@@ -858,7 +869,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro) {
 
     /* setup frame info: name, retaddr and output buffer */
     sv_setsv(*av_fetch(cframe, TXframe_NAME,    TRUE), name);
-    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), TX_st->pc + 1);
+    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), retaddr);
 
     /* swap TXframe_OUTPUT and TX_st->output.
        I know it's ugly. Any ideas?
@@ -923,7 +934,7 @@ TXC(funcall) { /* call a function or a macro */
 
     if(tx_sv_is_macro(aTHX_ func)) {
         AV* const macro = (AV*)SvRV(func);
-        tx_macro_enter(aTHX_ TX_st, macro);
+        tx_macro_enter(aTHX_ TX_st, macro, TX_st->pc + 1 /* retaddr */);
     }
     else {
         TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");

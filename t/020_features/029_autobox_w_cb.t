@@ -34,6 +34,17 @@ T
 2, 3, 4
 X
 
+    [<<'T', { data => [1 .. 3] }, <<'X'],
+: macro add_one -> $x { $x + 1 }
+: for $data -> $i {
+    <: $data.map(add_one).join(', ') :>
+: }
+T
+    2, 3, 4
+    2, 3, 4
+    2, 3, 4
+X
+
 );
 
 foreach my $d(@set) {
