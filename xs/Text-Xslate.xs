@@ -919,7 +919,7 @@ TXC_w_int(macro_end) {
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    if(sv_true(TX_op_arg)) { /* immediate macros; skip to mark as raw */
+    if(SvIVX(TX_op_arg) > 0) { /* immediate macros; skip to mark as raw */
         sv_setsv(TX_st->targ, TX_st->output);
     }
     else { /* normal macros */
