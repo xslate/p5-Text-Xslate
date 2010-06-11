@@ -9,6 +9,8 @@ use Text::Xslate::Parser;
 
 my $tx = Text::Xslate->new( cache => 0 );
 
+# parse/compile errors
+
 eval {
     $tx->render_string(<<'T');
     Hello, <:= $foo $bar :> world!
@@ -96,6 +98,7 @@ T
 unlike $@, qr/;/, q{don't include ";"}; # '
 like $@, qr/Expected "\)"/;
 
+# semantics errors
 
 eval {
     $tx->render_string(<<'T');
@@ -176,5 +179,17 @@ eval {
 T
 };
 like $@, qr/\b foo \b/xms;
+
+foreach my $iter(qw($~foo $~foo.index $~foo.count $~foo.is_first $~foo.is_last)) {
+    eval {
+        $tx->render_string("<: $iter :>");
+    };
+    like $@, qr/\$~foo/, $iter;
+}
+
+eval {
+    $tx->render_string('<: for $data -> $i { $i~.foobar } :>');
+};
+like $@, qr/\b foobar \b/xms;
 
 done_testing;

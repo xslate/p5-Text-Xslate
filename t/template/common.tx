@@ -1,0 +1,12 @@
+: macro foo -> {
+    This is <foo>!
+: }
+
+
+: before bar -> {
+    before <bar>!
+: }
+
+: block baz -> {
+    This is <baz>!
+: }

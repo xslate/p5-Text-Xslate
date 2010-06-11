@@ -18,3 +18,9 @@ Parser's terminology:
     nud    Null denotation; processing values and prefix operators
     led    Left denotation; processing infix and postfix operators
     std    Statement denotation; processing statements
+
+Callbacks: functios, methods, and macros
+tx_call_sv() is a thin wrapper to Perl_call_sv()
+tx_funcall()      tries to call Perl fuctions
+tx_proccall()     tries to call macros, or fallback to tx_funcall()
+tx_methodcall()   tries to call Perl methods, or fallback to tx_proccall()

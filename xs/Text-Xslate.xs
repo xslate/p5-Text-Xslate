@@ -17,8 +17,8 @@
 #define TX_op_arg *tx_sv_safe(aTHX_ &(TX_op->arg), "TX_st->arg", __FILE__, __LINE__)
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
-    if(UNLIKELY(*svp == NULL)) {
-        croak("panic: %s is NULL at %s line %d.\n", name, f, l);
+    if(*svp == NULL) {
+        croak("Oops: %s is NULL at %s line %d.\n", name, f, l);
     }
     return svp;
 }
@@ -38,7 +38,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     }
 
     if(!st->pad) {
-        croak("panic: Refers to local variable %d before initialization",
+        croak("Oops: Refers to local variable %d before initialization",
             (int)lvar_ix);
     }
     return st->pad[lvar_ix];
@@ -78,6 +78,9 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
+
+static void
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr);
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
@@ -158,6 +161,8 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     if(st->current_frame > 100) {
         croak("Macro call is too deep (> 100)");
     }
+    /* local $st->{current_frame} = $st->{current_frame} + 1 */
+    SAVEI32(st->current_frame);
     st->current_frame++;
 
     newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
@@ -171,55 +176,48 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     return newframe;
 }
 
-SV*
-tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name) {
-    SV* retval = NULL;
-    if(!(flags & G_METHOD)) { /* functions */
-        if(SvTYPE(proc) != SVt_PVCV) {
-            HV* dummy_stash;
-            GV* dummy_gv;
-            CV* cv;
-            SvGETMAGIC(proc);
-            if(!SvOK(proc)) {
-                tx_code_t* const c = &(st->code[ st->pc - 1 ]);
-                (void)POPMARK;
-                tx_error(aTHX_ st, "Undefined function%s is called on %s",
-                    c->exec_code == TXCODE_fetch_s
-                        ? form(" %"SVf"()", c->arg)
-                        : "", name);
-                goto finish;
-            }
+SV* /* thin wrapper of Perl_call_sv() */
+tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char* const name) {
+    call_sv(sv, G_SCALAR | G_EVAL | flags);
 
-            cv = sv_2cv(proc, &dummy_stash, &dummy_gv, FALSE);
-            if(!cv) {
-                (void)POPMARK;
-                tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
-                    tx_neat(aTHX_ proc));
-
-                goto finish;
-            }
-            proc = (SV*)cv;
-        }
-    }
-    else { /* methods */
-        SV* const invocant = PL_stack_base[TOPMARK+1];
-        if(!SvOK(invocant)) {
-            (void)POPMARK;
-            tx_warn(aTHX_ st, "Use of nil to invoke method %s",
-                tx_neat(aTHX_ proc));
-
-            goto finish;
-        }
-    }
-
-    call_sv(proc, G_SCALAR | G_EVAL | flags);
-
-    if(UNLIKELY(sv_true(ERRSV))) {
+    if(UNLIKELY(!!sv_true(ERRSV))) {
         tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
 
-    retval = TX_pop();
+    return TX_pop();
+}
+
+static SV*
+tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
+    HV* dummy_stash;
+    GV* dummy_gv;
+    CV* cv;
+    SV* retval;
+    SvGETMAGIC(func);
+
+    if(UNLIKELY(!SvOK(func))) {
+        tx_code_t* const c = &(st->code[ st->pc - 1 ]);
+        (void)POPMARK;
+        tx_error(aTHX_ st, "Undefined function%s is called on %s",
+            c->exec_code == TXCODE_fetch_s
+                ? form(" %"SVf"()", c->arg)
+                : "", name);
+        retval = NULL;
+        goto finish;
+    }
+
+    cv = sv_2cv(func, &dummy_stash, &dummy_gv, FALSE);
+
+    if(UNLIKELY(!cv)) {
+        (void)POPMARK;
+        tx_error(aTHX_ st, "Functions must be a CODE reference, not %s",
+            tx_neat(aTHX_ func));
+        retval = NULL;
+        goto finish;
+    }
+
+    retval = tx_call_sv(aTHX_ st, (SV*)cv, 0, "function call");
 
     finish:
     sv_setsv_nomg(st->targ, retval);
@@ -237,7 +235,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
         XPUSHs(var);
         PUTBACK;
 
-        sv = tx_call(aTHX_ st, key, G_METHOD, "accessor");
+        sv = tx_call_sv(aTHX_ st, key, G_METHOD, "accessor");
     }
     else if(SvROK(var)){
         SV* const rv = SvRV(var);
@@ -356,7 +354,7 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
         len = SvCUR(dest) + parts_len + 1;
         (void)SvGROW(dest, len);
 
-        if(LIKELY(parts_len == 1)) {
+        if(parts_len == 1) {
             *SvEND(dest) = *parts;
         }
         else {
@@ -378,6 +376,70 @@ tx_html_escape(pTHX_ SV* const str) {
     }
     else {
         return str;
+    }
+}
+
+static I32
+tx_sv_eq(pTHX_ SV* const a, SV* const b) {
+    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
+    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
+
+    if(af && bf) { /* shortcut for performance */
+        if(af == SVf_IOK && bf == SVf_IOK) {
+            return SvIVX(a) == SvIVX(b);
+        }
+        else {
+            return sv_eq(a, b);
+        }
+    }
+
+    SvGETMAGIC(a);
+    SvGETMAGIC(b);
+
+    if(SvOK(a)) {
+        return SvOK(b) && sv_eq(a, b);
+    }
+    else { /* !SvOK(a) */
+        return !SvOK(b);
+    }
+}
+
+static bool
+tx_sv_is_macro(pTHX_ SV* const sv) {
+    if(sv_isobject(sv)) {
+        AV* const macro = (AV*)SvRV(sv);
+        dMY_CXT;
+        if(SvSTASH(macro) == MY_CXT.macro_stash) {
+            if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
+                croak("Oops: Invalid macro object");
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/* called by tx_methodcall() */
+/* proc may be a Xslate macro or a Perl subroutine (code ref) */
+SV*
+tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name) {
+    if(tx_sv_is_macro(aTHX_ proc)) {
+        U32 const save_pc = TX_st->pc;
+        tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->code_len /* retaddr */);
+
+        /* execute */
+        while(TX_st->pc < TX_st->code_len) {
+            CALL_FPTR(TX_st->code[TX_st->pc].exec_code)(aTHX_ TX_st);
+        }
+        /* after tx_macro_end */
+
+        TX_st->pc = save_pc;
+        //warn("# return from %s\n", name);
+
+        return TX_st_sa;
+    }
+    else {
+        return tx_funcall(aTHX_ TX_st, proc, name);
     }
 }
 
@@ -477,7 +539,7 @@ TXC_w_key(fetch_s) { /* fetch a field from the top */
     HV* const vars = TX_st->vars;
     HE* const he   = hv_fetch_ent(vars, TX_op_arg, FALSE, 0U);
 
-    TX_st_sa = LIKELY(he != NULL) ? hv_iterval(vars, he) : &PL_sv_undef;
+    TX_st_sa = he ? hv_iterval(vars, he) : &PL_sv_undef;
 
     TX_st->pc++;
 }
@@ -595,7 +657,7 @@ TXC_goto(for_iter) {
         }
     }
     else { /* magical variables */
-        if(LIKELY(++SvIVX(i) <= av_len(av))) {
+        if(++SvIVX(i) <= av_len(av)) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
             sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
             TX_st->pc++;
@@ -739,31 +801,6 @@ TXC(builtin_html_escape) {
     TX_st->pc++;
 }
 
-static I32
-tx_sv_eq(pTHX_ SV* const a, SV* const b) {
-    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
-    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
-
-    if(af && bf) { /* shortcut for performance */
-        if(af == SVf_IOK && bf == SVf_IOK) {
-            return SvIVX(a) == SvIVX(b);
-        }
-        else {
-            return sv_eq(a, b);
-        }
-    }
-
-    SvGETMAGIC(a);
-    SvGETMAGIC(b);
-
-    if(SvOK(a)) {
-        return SvOK(b) && sv_eq(a, b);
-    }
-    else { /* !SvOK(a) */
-        return !SvOK(b);
-    }
-}
-
 TXC(eq) {
     TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
@@ -808,7 +845,7 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
 }
 
 static void
-tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr) {
     dSP;
     dMARK;
     I32 const items = SP - MARK;
@@ -836,11 +873,12 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
     }
 
     /* create a new frame */
+    ENTER; /* to save current_frame */
     cframe = tx_push_frame(aTHX_ TX_st);
 
     /* setup frame info: name, retaddr and output buffer */
     sv_setsv(*av_fetch(cframe, TXframe_NAME,    TRUE), name);
-    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), TX_st->pc + 1);
+    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), retaddr);
 
     /* swap TXframe_OUTPUT and TX_st->output.
        I know it's ugly. Any ideas?
@@ -878,13 +916,13 @@ tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
 
 TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
-    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame]; /* pop frame */
+    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
     SV* tmp;
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    if(sv_true(TX_op_arg)) { /* immediate macros; skip to mark as raw */
+    if(SvIVX(TX_op_arg) > 0) { /* immediate macros; skip to mark as raw */
         sv_setsv(TX_st->targ, TX_st->output);
     }
     else { /* normal macros */
@@ -896,22 +934,9 @@ TXC_w_int(macro_end) {
     AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
     TX_st->output                     = tmp;
 
-    TX_st->pc = SvUVX(retaddr);
-}
+    LEAVE; /* to retrieve saved current_frame */
 
-static bool
-tx_sv_is_macro(pTHX_ SV* const sv) {
-    if(sv_isobject(sv)) {
-        AV* const macro = (AV*)SvRV(sv);
-        dMY_CXT;
-        if(SvSTASH(macro) == MY_CXT.macro_stash) {
-            if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
-                croak("Oops: Invalid macro object");
-            }
-            return TRUE;
-        }
-    }
-    return FALSE;
+    TX_st->pc = SvUVX(retaddr);
 }
 
 TXC(funcall) { /* call a function or a macro */
@@ -920,10 +945,10 @@ TXC(funcall) { /* call a function or a macro */
 
     if(tx_sv_is_macro(aTHX_ func)) {
         AV* const macro = (AV*)SvRV(func);
-        tx_do_macrocall(aTHX_ TX_st, macro);
+        tx_macro_enter(aTHX_ TX_st, macro, TX_st->pc + 1 /* retaddr */);
     }
     else {
-        TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");
+        TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
         TX_st->pc++;
     }
 }
@@ -1058,7 +1083,7 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
         CALL_FPTR(st.code[st.pc].exec_code)(aTHX_ &st);
 #ifdef DEBUGGING
         if(UNLIKELY(old_pc == st.pc)) {
-            croak("panic: pogram counter has not been changed on [%d]", (int)st.pc);
+            croak("Oops: pogram counter has not been changed on [%d]", (int)st.pc);
         }
 #endif
     }
@@ -1183,7 +1208,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
 
     call_method("load_file", G_EVAL | G_VOID);
     if(sv_true(ERRSV)){
-        croak("%"SVf" ...", ERRSV);
+        croak("%"SVf"\t...", ERRSV);
     }
 
     FREETMPS;
@@ -1329,6 +1354,7 @@ XS(XS_Text__Xslate__Type__Raw_fallback); /* prototype to pass -Wmissing-prototyp
 XS(XS_Text__Xslate__Type__Raw_fallback)
 {
    dXSARGS;
+   PERL_UNUSED_VAR(cv);
    PERL_UNUSED_VAR(items);
    XSRETURN_EMPTY;
 }
@@ -1432,7 +1458,8 @@ CODE:
     av_store(mainframe, TXframe_NAME,    newSVpvs_share("main"));
     av_store(mainframe, TXframe_RETADDR, newSVuv(len));
 
-    Newxz(st.lines, len, U16);
+    Newxz(st.lines, len + 1, U16);
+    st.lines[len] = (U16)-1;
 
     Newxz(st.code, len, tx_code_t);
 

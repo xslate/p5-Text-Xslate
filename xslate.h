@@ -166,11 +166,15 @@ const char*
 tx_neat(pTHX_ SV* const sv);
 
 SV*
-tx_call(pTHX_ tx_state_t* const st, SV* proc, I32 const flags, const char* const name);
+tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char* const name);
+
+SV*
+tx_proccall(pTHX_ tx_state_t* const st, SV* const proc, const char* const name);
+
+/* builtin method stuff */
 
 SV*
 tx_methodcall(pTHX_ tx_state_t* const st, SV* const method);
 
 void
 tx_register_builtin_methods(pTHX_ HV* const hv);
-

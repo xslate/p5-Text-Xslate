@@ -174,6 +174,36 @@ TXBM(array, sort) {
     sv_setsv(retval, resultref);
 }
 
+TXBM(array, map) {
+    AV* const av        = (AV*)SvRV(*MARK);
+    SV* const proc      = *(++MARK);
+    I32 const len       = av_len(av) + 1;
+    AV* const result    = newAV();
+    SV* const resultref = newRV_noinc((SV*)result);
+    I32 i;
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
+    av_fill(result, len - 1);
+    for(i = 0; i < len; i++) {
+        dSP;
+        SV** const svp = av_fetch(av, i, FALSE);
+        SV* sv;
+
+        PUSHMARK(SP);
+        /* no need to extend SP because of the args of the method is > 0 */
+        PUSHs(svp ? *svp : &PL_sv_undef);
+        PUTBACK;
+        sv = tx_proccall(aTHX_ st, proc, "map callback");
+        av_store(result, i, newSVsv(sv));
+    }
+    sv_setsv(retval, resultref);
+    FREETMPS;
+    LEAVE;
+
+    /* setting retval must be here because retval is actually st->targ */
+}
 
 /* HASH */
 
@@ -226,6 +256,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array, join,    1),
     TXBM_SETUP(array, reverse, 0),
     TXBM_SETUP(array, sort,    0),
+    TXBM_SETUP(array, map,     1),
 
     TXBM_SETUP(hash, defined,  0),
     TXBM_SETUP(hash, size,     0),
@@ -257,7 +288,9 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
         if(mgv) {
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, (SV*)GvCV(mgv), 0, "object method call");
+            retval = st->targ;
+            sv_setsv(retval, tx_call_sv(aTHX_ st, (SV*)GvCV(mgv), 0, "method call"));
+            return retval;
         }
 
         goto not_found;
@@ -266,27 +299,27 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     if(SvROK(invocant)) {
         SV* const referent = SvRV(invocant);
         if(SvTYPE(referent) == SVt_PVAV) {
-            type_name = "array";
+            type_name = "array::";
         }
         else if(SvTYPE(referent) == SVt_PVHV) {
-            type_name = "hash";
+            type_name = "hash::";
         }
         else {
-            type_name = "scalar";
+            type_name = "scalar::";
         }
     }
     else {
         if(SvOK(invocant)) {
-            type_name = "scalar";
+            type_name = "scalar::";
         }
         else {
-            type_name = "nil";
+            type_name = "nil::";
         }
     }
 
+    /* make type::method */
     fq_name = st->targ;
     sv_setpv(fq_name, type_name);
-    sv_catpvs(fq_name, "::");
     sv_catsv(fq_name, method);
 
     he = hv_fetch_ent(st->symbol, fq_name, FALSE, 0U);
@@ -315,7 +348,7 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         }
         else { /* user defined methods */
             PUSHMARK(ORIGMARK); /* re-pushmark */
-            return tx_call(aTHX_ st, entity, 0, "builtin method call");
+            return tx_proccall(aTHX_ st, entity, "method call");
         }
     }
     if(!SvOK(invocant)) {

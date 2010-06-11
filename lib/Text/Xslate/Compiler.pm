@@ -628,8 +628,6 @@ sub _generate_proc { # definition of macro, block, before, around, after
         immediate => 0,
     );
 
-    my @code;
-
     if(any_in($type, qw(macro block))) {
         if(exists $self->macro_table->{$name}) {
             $self->_error("Redefinition of $type $name is forbidden", $node);
@@ -647,7 +645,16 @@ sub _generate_proc { # definition of macro, block, before, around, after
 
     $macro{body} = [ $self->_compile_ast($block) ];
 
-    return @code;
+    return;
+}
+
+sub _generate_lambda {
+    my($self, $node) = @_;
+
+    my $macro = $node->first;
+    $self->_compile_ast([$macro]);
+
+    return [ symbol => $macro->first->id, $node->line, 'lambda' ];
 }
 
 sub _generate_if {
@@ -750,7 +757,11 @@ sub _generate_variable {
         @op = ( load_lvar => $lvar_id );
     }
     else {
-        @op = ( fetch_s => $self->_variable_to_value($node) );
+        my $name = $self->_variable_to_value($node);
+        if($name =~ /~/) {
+            $self->_error("Undefined iterator variable $node", $node);
+        }
+        @op = ( fetch_s => $name );
     }
     $op[2] = $node->line;
     $op[3] = $node->id;

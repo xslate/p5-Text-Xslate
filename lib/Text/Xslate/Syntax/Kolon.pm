@@ -117,8 +117,10 @@ String operators (C<< ~ >>)
 Operator precedence is the same as Perl's:
 
     . () []
+    ! prefix<+> prefix<->
     * / %
     + - ~
+    prefix<defined>
     < <= > >=
     == !=
     |
@@ -129,7 +131,7 @@ Operator precedence is the same as Perl's:
     and
     or
 
-=head2 Constants
+=head2 Constants (or binding)
 
 You can define lexical constants with C<constant>, which requires a bare name,
 and C<my>, which requires a variable name.
@@ -242,7 +244,7 @@ You can register functions via C<function> or C<module> options for
 C<< Text::Xslate->new() >>.
 
 Once you have registered functions, you can call them with the C<()> operator.
-The C<|> operator is supported as a syntactic sugar to C<()>.
+The C<|> operator is also supported as a syntactic sugar to C<()>.
 
     : f()        # without args
     : f(1, 2, 3) # with args
@@ -271,15 +273,16 @@ Functions are Perl's subroutines, so you can define dynamic functions:
 
 There are several builtin functions, which you cannot redefine:
 
-    : $var | raw  # not to html-escape it
-    : $var | html # explicitly html-escape it (default)
-    : $var | dump # dump it with Data::Dumper
+    : $var | mark_raw   # marks it as a raw string
+    : $var | unmark_raw # removes "raw" marker from it
+    : $var | html       # does html-escape to it and marks it as raw
+    : $var | dump       # dumps it with Data::Dumper
 
-NOTE: C<raw> and C<html> might be optimized away by the compiler.
+NOTE: C<mark_raw> and C<html> might be optimized away while compiling.
 
 =head2 Methods
 
-When I<$var> is an object instance, you can call its methods with the C<()>
+When I<$var> is an object instance, you can call its methods with the C<.>
 operator.
 
     <: $var.method() :>
@@ -288,6 +291,10 @@ operator.
 
 There is an autoboxing mechanism that provides primitive types with builtin
 methods.
+
+For any primitive types:
+
+    <: $any.defined() :>
 
 For arrays:
 
@@ -441,7 +448,8 @@ because template cascading is statically processed.
 =head2 Macro blocks
 
 Macros are supported, which are called in the same way as functions and
-return a string marked as escaped.
+return a C<raw> string. Macros returns what their bodies render, so
+macros cannot returns references nor objects including other macros.
 
     : macro add ->($x, $y) {
     :   $x + $y;
@@ -459,7 +467,16 @@ return a string marked as escaped.
     : factorial(1)  # as a function
     : 1 | factorial # as a filter
 
-Macros are first objects.
+If you want to html-escape the return values of macros, you can use
+C<unmark_raw> to remove C<raw-ness> from the values.
+
+    : macro em -> $s {
+    <em><: $s :></em>
+    : }
+    : em("foo")               # renders "<em>foo</em>"
+    : em("foo") | unmark_raw  # renders "&lt;em&gt;foo&lt;em&gt;"
+
+Macros are first-class objects, so you can bind them to symbols.
 
     <: macro foo -> { "foo" }
        macro bar -> { "bar" }
@@ -469,24 +486,23 @@ Macros are first objects.
        }; -:>
     : $dispatcher{$key}()
 
-Macros returns what their body renders. That is, macros themselves output nothing.
+Anonymous macros are also supported, although they returns
+only strings.
 
-Note that you cannot call macros before their definitions.
+    <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
 
 =head2 Comments
+
+Comments start from C<#> to a new line or semicolon.
 
     :# this is a comment
     <:
       # this is also a comment
-      $var
+      $foo # $foo is rendered
     :>
 
-    <: $foo # this is ok :>
-
-Comments are closed by a new line or semicolon, so the following template
-outputs "Hello".
-
-    <: # this is a comment; "Hello" :>
+    <: $bar # this is ok :>
+    <: # this is comment; $baz # $baz is rendered :>
 
 =head1 SEE ALSO
 
