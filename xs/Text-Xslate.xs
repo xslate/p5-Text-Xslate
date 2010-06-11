@@ -161,6 +161,8 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     if(st->current_frame > 100) {
         croak("Macro call is too deep (> 100)");
     }
+    /* local $st->{current_frame} = $st->{current_frame} + 1 */
+    SAVEI32(st->current_frame);
     st->current_frame++;
 
     newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
@@ -871,6 +873,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
     }
 
     /* create a new frame */
+    ENTER; /* to save current_frame */
     cframe = tx_push_frame(aTHX_ TX_st);
 
     /* setup frame info: name, retaddr and output buffer */
@@ -913,7 +916,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
 
 TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
-    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[--TX_st->current_frame]; /* pop frame */
+    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
     SV* tmp;
 
@@ -930,6 +933,8 @@ TXC_w_int(macro_end) {
     tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];
     AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
     TX_st->output                     = tmp;
+
+    LEAVE; /* to retrieve saved current_frame */
 
     TX_st->pc = SvUVX(retaddr);
 }

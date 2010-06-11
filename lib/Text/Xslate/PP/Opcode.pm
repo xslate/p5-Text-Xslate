@@ -37,6 +37,9 @@ my %html_escape = (
 );
 my $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
+our $_current_frame;
+
+
 #
 #
 #
@@ -431,8 +434,8 @@ sub op_symbol {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub _macro_enter {
-    my($st, $macro) = @_;
+sub tx_macro_enter {
+    my($st, $macro, $retaddr) = @_;
     my $name   = $macro->name;
     my $addr   = $macro->addr;
     my $nargs  = $macro->nargs;
@@ -447,9 +450,9 @@ sub _macro_enter {
         return;
     }
 
-    my $cframe = tx_push_frame( $st );
+    my $cframe = Text::Xslate::PP::tx_push_frame( $st );
 
-    $cframe->[ TXframe_RETADDR ] = $st->{ pc } + 1;
+    $cframe->[ TXframe_RETADDR ] = $retaddr;
     $cframe->[ TXframe_OUTPUT ]  = $st->{ output };
     $cframe->[ TXframe_NAME ]    = $name;
 
@@ -490,20 +493,19 @@ sub op_macro_end {
 
     $st->{ output } = $oldframe->[ TXframe_OUTPUT ];
     $st->{ pc }     = $oldframe->[ TXframe_RETADDR ];
-
     goto $st->{ code }->[ $st->{ pc } ]->{ exec_code };
 }
 
 sub op_funcall {
-    my $func = $_[0]->{sa};
+    my($st) = @_;
+    my $func = $st->{sa};
     if(ref $func eq 'Text::Xslate::PP::Macro') {
-        _macro_enter($_[0], $func);
-        goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
+        tx_macro_enter($st, $func, $st->{ pc } + 1);
+        goto $st->{ code }->[ $st->{ pc } ]->{ exec_code };
     }
     else {
-        my ( @args ) = @{ pop @{ $_[0]->{ SP } } };
-        $_[0]->{sa} = tx_call( $_[0], 0, $func, @args );
-        goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+        $st->{sa} = tx_funcall( $st, $func );
+        goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
     }
 }
 
@@ -568,45 +570,37 @@ sub tx_access_lvar {
 }
 
 
-sub tx_push_frame {
-    my ( $st ) = @_;
-
-    if ( $st->current_frame > 100 ) {
-        Carp::croak("Macro call is too deep (> 100)");
-    }
-
-    return $st->frame->[ $st->current_frame( $st->current_frame + 1 ) ] ||= [];
-}
-
-sub tx_call {
-    my ( $st, $is_method_call, $proc, @args ) = @_;
+sub tx_funcall {
+    my ( $st, $proc ) = @_;
+    my ( @args ) = @{ pop @{ $st->{ SP } } };
     my $ret;
 
-    if ( $is_method_call ) { # XXX: fetch() doesn't use methodcall for speed
-        my $obj = shift @args;
-
-        unless ( defined $obj ) {
-            tx_warn( $st, "Use of nil to invoke method %s", $proc );
-        }
-        else {
-            $ret = eval { $obj->$proc( @args ) };
-            #_error( $st, $frame, $line, "%s\t...", $@) if $@;
-        }
+    if(!defined $proc) {
+        my $c = $st->{code}->[ $st->{pc} - 1 ];
+        tx_error( $st, "Undefined function%s is called",
+            $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
+        );
     }
-    else { # function call
-        if(!defined $proc) {
-            my $c = $st->{code}->[ $st->{pc} - 1 ];
-            tx_error( $st, "Undefined function is called%s",
-                $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
-            );
-        }
-        else {
-            $ret = eval { $proc->( @args ) };
-            tx_error( $st, "%s\t...", $@) if $@;
-        }
+    else {
+        $ret = eval { $proc->( @args ) };
+        tx_error( $st, "%s", $@) if $@;
     }
 
     return $ret;
+}
+
+sub tx_proccall {
+    my($st, $proc) = @_;
+    if(ref $proc eq 'Text::Xslate::PP::Macro') {
+        local $st->{pc} = $st->{pc};
+
+        tx_macro_enter($st, $proc, $st->{code_len});
+        $st->{code}->[ $st->{pc} ]->{ exec_code }->( $st );
+        return $st->{sa};
+    }
+    else {
+        return tx_funcall($st, $proc);
+    }
 }
 
 sub tx_fetch {
@@ -614,7 +608,8 @@ sub tx_fetch {
     my $ret;
 
     if ( Scalar::Util::blessed($var) ) {
-        $ret = tx_call( $st, 1, $key, $var );
+        $ret = eval { $var->$key() };
+        tx_error($st, "%s", $@) if $@;
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {

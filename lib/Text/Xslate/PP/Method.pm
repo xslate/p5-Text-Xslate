@@ -12,6 +12,8 @@ use Carp         ();
 
 our @CARP_NOT = qw(Text::Xslate::PP::Opcode);
 
+our $_st;
+
 sub _bad_arg {
     Carp::carp("Wrong number of arguments for @_");
     return undef;
@@ -45,6 +47,15 @@ sub _array_sort {
     my($array_ref) = @_;
     return _bad_arg('sort') if @_ != 1;
     return [ sort @{$array_ref} ];
+}
+
+sub _array_map {
+    my($array_ref, $callback) = @_;
+    return _bad_arg('map') if @_ != 2;
+    return [ map {
+        push @{ $_st->{ SP } }, [ $_ ];
+        Text::Xslate::PP::Opcode::tx_proccall($_st, $callback);
+    } @{$array_ref} ];
 }
 
 sub _hash_size {
@@ -85,6 +96,7 @@ my %builtin_method = (
     'array::join'    => \&_array_join,
     'array::reverse' => \&_array_reverse,
     'array::sort'    => \&_array_sort,
+    'array::map'     => \&_array_map,
 
     'hash::defined'  => \&_any_defined,
     'hash::size'     => \&_hash_size,
@@ -100,27 +112,24 @@ sub tx_methodcall {
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
             my $retval = eval { $invocant->$method(@args) };
-            if($@) {
-                tx_error($st, "%s", $@);
-            }
+            tx_error($st, "%s", $@) if $@;
             return $retval;
         }
         tx_error($st, "Undefined method %s called for %s",
             $method, $invocant);
+        return undef;
     }
 
-    my $type = ref($invocant) eq 'ARRAY' ? 'array'
-             : ref($invocant) eq 'HASH'  ? 'hash'
-             : defined($invocant)        ? 'scalar'
-             :                             'nil';
-    my $fq_name = $type . "::" . $method;
+    my $type = ref($invocant) eq 'ARRAY' ? 'array::'
+             : ref($invocant) eq 'HASH'  ? 'hash::'
+             : defined($invocant)        ? 'scalar::'
+             :                             'nil::';
+    my $fq_name = $type . $method;
 
     if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
-        my $retval = eval { $body->($invocant, @args) };
-        if($@) {
-            tx_error($st, "%s", $@);
-        }
-        return $retval;
+        local $_st = $st;
+        push @{ $st->{ SP } }, [ $invocant, @args ]; # re-pushmark
+        return Text::Xslate::PP::Opcode::tx_proccall($st, $body);
     }
     if(!defined $invocant) {
         tx_warn($st, "Use of nil to invoke method %s", $method);

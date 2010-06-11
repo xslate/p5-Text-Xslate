@@ -129,6 +129,7 @@ sub _assemble {
     my $code = [];
     my $macro;
 
+    my $line;
     for ( my $i = 0; $i < $len; $i++ ) {
         my $pair = $proto->[ $i ];
 
@@ -136,7 +137,7 @@ sub _assemble {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
         }
 
-        my ( $opname, $arg, $line ) = @$pair;
+        my ( $opname, $arg, $op_line ) = @$pair;
         my $opnum = $OPS{ $opname };
 
         unless ( defined $opnum ) {
@@ -187,6 +188,9 @@ sub _assemble {
         }
 
         # set up line number
+        if(defined $op_line) {
+            $line = $op_line;
+        }
         $st->lines->[ $i ] = $line;
 
         # special cases
@@ -223,6 +227,8 @@ sub _assemble {
     $st->{ booster_code } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto )
         if _PP_BACKEND eq 'Booster';
 
+    push @{ $st->lines }, -1;
+    push @{$code}, { exec_code => $OPCODE[ $OPS{end} ] }; # for threshold
     $st->{ code } = $code;
     return;
 }
@@ -273,15 +279,8 @@ sub tx_push_frame {
         Carp::croak("Macro call is too deep (> 100)");
     }
 
-    $st->current_frame( $st->current_frame + 1 );
-
-    $st->frame->[ $st->current_frame ] ||= [];
-
-    $st->pad( $st->frame->[ $st->current_frame ] );
-
-    $st->frame->[ $st->current_frame ];
+    return $st->frame->[ $st->current_frame( $st->current_frame + 1 ) ] ||= [];
 }
-
 
 
 sub tx_load_template {
