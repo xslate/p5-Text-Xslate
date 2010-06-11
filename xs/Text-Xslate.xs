@@ -823,7 +823,7 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
 }
 
 static void
-tx_do_macrocall(pTHX_ tx_state_t* const txst, AV* const macro) {
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro) {
     dSP;
     dMARK;
     I32 const items = SP - MARK;
@@ -920,7 +920,7 @@ TXC(funcall) { /* call a function or a macro */
 
     if(tx_sv_is_macro(aTHX_ func)) {
         AV* const macro = (AV*)SvRV(func);
-        tx_do_macrocall(aTHX_ TX_st, macro);
+        tx_macro_enter(aTHX_ TX_st, macro);
     }
     else {
         TX_st_sa = tx_call(aTHX_ TX_st, TX_st_sa, 0, "function call");

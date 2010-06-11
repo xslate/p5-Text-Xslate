@@ -431,7 +431,7 @@ sub op_symbol {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub _do_macrocall {
+sub _macro_enter {
     my($st, $macro) = @_;
     my $name   = $macro->name;
     my $addr   = $macro->addr;
@@ -497,7 +497,7 @@ sub op_macro_end {
 sub op_funcall {
     my $func = $_[0]->{sa};
     if(ref $func eq 'Text::Xslate::PP::Macro') {
-        _do_macrocall($_[0], $func);
+        _macro_enter($_[0], $func);
         goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
     }
     else {
