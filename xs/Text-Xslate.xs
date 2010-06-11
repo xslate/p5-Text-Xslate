@@ -1329,6 +1329,7 @@ XS(XS_Text__Xslate__Type__Raw_fallback); /* prototype to pass -Wmissing-prototyp
 XS(XS_Text__Xslate__Type__Raw_fallback)
 {
    dXSARGS;
+   PERL_UNUSED_VAR(cv);
    PERL_UNUSED_VAR(items);
    XSRETURN_EMPTY;
 }
