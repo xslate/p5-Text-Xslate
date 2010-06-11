@@ -482,7 +482,8 @@ This document describes Text::Xslate version 0.1032.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> is a template engine tuned for persistent applications.
+B<Text::Xslate> (pronounced as /eks-leit/) is a high performance template engine
+tuned for persistent applications.
 This engine introduces the virtual machine paradigm. Templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
