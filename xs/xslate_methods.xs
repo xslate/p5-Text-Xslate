@@ -174,6 +174,32 @@ TXBM(array, sort) {
     sv_setsv(retval, resultref);
 }
 
+TXBM(array, map) {
+    AV* const av        = (AV*)SvRV(*MARK);
+    SV* const proc      = *(++MARK);
+    I32 const len       = av_len(av) + 1;
+    AV* const result    = newAV();
+    SV* const resultref = sv_2mortal(newRV_noinc((SV*)result));
+    I32 i;
+
+    av_fill(result, len - 1);
+
+    for(i = 0; i < len; i++) {
+        dSP;
+        SV** const svp = av_fetch(av, i, FALSE);
+        SV* sv;
+
+        PUSHMARK(SP);
+        /* no need to extend SP because of the args of the method is > 0 */
+        PUSHs(svp ? *svp : &PL_sv_undef);
+        PUTBACK;
+        sv = tx_proccall(aTHX_ st, proc, "map callback");
+        av_store(result, i, newSVsv(sv));
+    }
+
+    /* setting retval must be here because retval is actually st->targ */
+    sv_setsv(retval, resultref);
+}
 
 /* HASH */
 
@@ -226,6 +252,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array, join,    1),
     TXBM_SETUP(array, reverse, 0),
     TXBM_SETUP(array, sort,    0),
+    TXBM_SETUP(array, map,     1),
 
     TXBM_SETUP(hash, defined,  0),
     TXBM_SETUP(hash, size,     0),
