@@ -381,6 +381,46 @@ tx_html_escape(pTHX_ SV* const str) {
     }
 }
 
+static I32
+tx_sv_eq(pTHX_ SV* const a, SV* const b) {
+    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
+    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
+
+    if(af && bf) { /* shortcut for performance */
+        if(af == SVf_IOK && bf == SVf_IOK) {
+            return SvIVX(a) == SvIVX(b);
+        }
+        else {
+            return sv_eq(a, b);
+        }
+    }
+
+    SvGETMAGIC(a);
+    SvGETMAGIC(b);
+
+    if(SvOK(a)) {
+        return SvOK(b) && sv_eq(a, b);
+    }
+    else { /* !SvOK(a) */
+        return !SvOK(b);
+    }
+}
+
+static bool
+tx_sv_is_macro(pTHX_ SV* const sv) {
+    if(sv_isobject(sv)) {
+        AV* const macro = (AV*)SvRV(sv);
+        dMY_CXT;
+        if(SvSTASH(macro) == MY_CXT.macro_stash) {
+            if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
+                croak("Oops: Invalid macro object");
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /*********************
 
  Xslate opcodes TXC(xxx)
@@ -739,31 +779,6 @@ TXC(builtin_html_escape) {
     TX_st->pc++;
 }
 
-static I32
-tx_sv_eq(pTHX_ SV* const a, SV* const b) {
-    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
-    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
-
-    if(af && bf) { /* shortcut for performance */
-        if(af == SVf_IOK && bf == SVf_IOK) {
-            return SvIVX(a) == SvIVX(b);
-        }
-        else {
-            return sv_eq(a, b);
-        }
-    }
-
-    SvGETMAGIC(a);
-    SvGETMAGIC(b);
-
-    if(SvOK(a)) {
-        return SvOK(b) && sv_eq(a, b);
-    }
-    else { /* !SvOK(a) */
-        return !SvOK(b);
-    }
-}
-
 TXC(eq) {
     TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
@@ -897,21 +912,6 @@ TXC_w_int(macro_end) {
     TX_st->output                     = tmp;
 
     TX_st->pc = SvUVX(retaddr);
-}
-
-static bool
-tx_sv_is_macro(pTHX_ SV* const sv) {
-    if(sv_isobject(sv)) {
-        AV* const macro = (AV*)SvRV(sv);
-        dMY_CXT;
-        if(SvSTASH(macro) == MY_CXT.macro_stash) {
-            if(!(SvTYPE(macro) == SVt_PVAV && AvFILLp(macro) == (TXm_size - 1))) {
-                croak("Oops: Invalid macro object");
-            }
-            return TRUE;
-        }
-    }
-    return FALSE;
 }
 
 TXC(funcall) { /* call a function or a macro */
