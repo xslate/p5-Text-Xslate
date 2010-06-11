@@ -266,27 +266,27 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     if(SvROK(invocant)) {
         SV* const referent = SvRV(invocant);
         if(SvTYPE(referent) == SVt_PVAV) {
-            type_name = "array";
+            type_name = "array::";
         }
         else if(SvTYPE(referent) == SVt_PVHV) {
-            type_name = "hash";
+            type_name = "hash::";
         }
         else {
-            type_name = "scalar";
+            type_name = "scalar::";
         }
     }
     else {
         if(SvOK(invocant)) {
-            type_name = "scalar";
+            type_name = "scalar::";
         }
         else {
-            type_name = "nil";
+            type_name = "nil::";
         }
     }
 
+    /* make type::method */
     fq_name = st->targ;
     sv_setpv(fq_name, type_name);
-    sv_catpvs(fq_name, "::");
     sv_catsv(fq_name, method);
 
     he = hv_fetch_ent(st->symbol, fq_name, FALSE, 0U);
