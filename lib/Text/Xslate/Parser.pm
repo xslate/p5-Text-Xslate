@@ -425,6 +425,8 @@ sub init_basic_operators {
 
     $parser->infix('==', 150)->is_logical(1);
     $parser->infix('!=', 150)->is_logical(1);
+    $parser->infix('<=>', 150);
+    $parser->infix('cmp', 150);
 
     $parser->infix('|',  140, \&led_bar);
 

@@ -201,7 +201,7 @@ TXBM(array, sort) {
     if(items == 0) {
         cmpfunc = Perl_sv_cmp;
     }
-    else {
+    else if(items == 1) {
         dMY_CXT;
         cmpfunc = tx_sv_cmp;
 
@@ -210,10 +210,11 @@ TXBM(array, sort) {
 
         MY_CXT.cmparg_st   = st;
         MY_CXT.cmparg_proc = *(++MARK);
-
-        if( items != 1 ) {
-            tx_error(aTHX_ st, "Too many arguments for sort");
-        }
+    }
+    else {
+        tx_error(aTHX_ st, "Wrong number of arguments for sort");
+        sv_setsv(retval, &PL_sv_undef);
+        goto finish;
     }
 
 
@@ -226,6 +227,7 @@ TXBM(array, sort) {
 
     sv_setsv(retval, resultref);
 
+    finish:
     FREETMPS;
     LEAVE;
 }

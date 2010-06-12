@@ -77,8 +77,8 @@ T
     [&lt;bar&gt;]
 X
 
-    [<<'T', { data => ['a', 'c', 'b', 'd', 'a'] , rev_cmp => sub { $_[1] cmp $_[0] }}, <<'X', 'sort with callback'],
-: for $data.sort($rev_cmp) -> $v {
+    [<<'T', { data => ['a', 'c', 'b', 'd', 'a'] , cmp => sub { $_[1] cmp $_[0] }}, <<'X', 'sort with callback'],
+: for $data.sort($cmp) -> $v {
     [<: $v :>]
 : }
 T
@@ -89,8 +89,8 @@ T
     [a]
 X
 
-    [<<'T', { data => [99, 20, 10, 1, 100] , rev_cmp => sub { $_[0] <=> $_[1] }}, <<'X'],
-: for $data.sort($rev_cmp) -> $v {
+    [<<'T', { data => [99, 20, 10, 1, 100] , cmp => sub { $_[0] <=> $_[1] }}, <<'X'],
+: for $data.sort($cmp) -> $v {
     [<: $v :>]
 : }
 T
@@ -100,6 +100,41 @@ T
     [99]
     [100]
 X
+
+    [<<'T', { data => [99, 20, 10, 1, 100]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x <=> $y }) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [20]
+    [99]
+    [100]
+X
+
+    [<<'T', { data => [99, 20, 10, 1, 100]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x cmp $y }) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [100]
+    [20]
+    [99]
+X
+
+    [<<'T', { data => [ { name => 'foo', value => 30 }, { name => 'foo', value => 20 }, { name => 'bar', value => 10 }]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x.name cmp $y.name or $x.value <=> $y.value }) -> $v {
+    [<: $v.name :>=<: $v.value :>]
+: }
+T
+    [bar=10]
+    [foo=20]
+    [foo=30]
+X
+
 
 );
 

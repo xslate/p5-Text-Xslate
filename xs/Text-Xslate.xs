@@ -830,6 +830,36 @@ TXC(ge) {
     TX_st->pc++;
 }
 
+TXC(ncmp) {
+    NV const lhs = SvNVx(TX_st_sb);
+    NV const rhs = SvNVx(TX_st_sa);
+    IV value;
+    if(lhs == rhs) {
+        value =  0;
+    }
+    else if(lhs < rhs) {
+        value = -1;
+    }
+    else if(lhs > rhs) {
+        value =  1;
+    }
+    else {
+        TX_st_sa = &PL_sv_undef;
+        TX_st->pc++;
+        return;
+    }
+
+    sv_setiv(TX_st->targ, value);
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+
+TXC(scmp) {
+    sv_setiv(TX_st->targ, sv_cmp(TX_st_sb, TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+
 TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
     SV* const name = TX_op_arg;
     HE* he;
