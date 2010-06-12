@@ -330,6 +330,7 @@ sub _load_compiled {
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold_mtime){
+                close $in; # Win32 doesn't allow to remove opend files
                 unlink $cachepath
                     or $self->_error("LoadError: Cannot unlink $cachepath: $!");
 
@@ -482,7 +483,8 @@ This document describes Text::Xslate version 0.1032.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> is a template engine tuned for persistent applications.
+B<Text::Xslate> (pronounced as /eks-leit/) is a high performance template engine
+tuned for persistent applications.
 This engine introduces the virtual machine paradigm. Templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.

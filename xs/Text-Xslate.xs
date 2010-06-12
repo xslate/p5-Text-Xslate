@@ -289,7 +289,7 @@ tx_str_is_marked_raw(pTHX_ SV* const sv) {
     return FALSE;
 }
 
-static SV*
+SV*
 tx_mark_raw(pTHX_ SV* const str) {
     if(tx_str_is_marked_raw(aTHX_ str)) {
         return str;
@@ -302,7 +302,7 @@ tx_mark_raw(pTHX_ SV* const str) {
     }
 }
 
-static SV*
+SV*
 tx_unmark_raw(pTHX_ SV* const str) {
     if(tx_str_is_marked_raw(aTHX_ str)) {
         return SvRV(str);
@@ -827,6 +827,36 @@ TXC(gt) {
 }
 TXC(ge) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) >= SvNVx(TX_st_sa) );
+    TX_st->pc++;
+}
+
+TXC(ncmp) {
+    NV const lhs = SvNVx(TX_st_sb);
+    NV const rhs = SvNVx(TX_st_sa);
+    IV value;
+    if(lhs == rhs) {
+        value =  0;
+    }
+    else if(lhs < rhs) {
+        value = -1;
+    }
+    else if(lhs > rhs) {
+        value =  1;
+    }
+    else {
+        TX_st_sa = &PL_sv_undef;
+        TX_st->pc++;
+        return;
+    }
+
+    sv_setiv(TX_st->targ, value);
+    TX_st_sa = TX_st->targ;
+    TX_st->pc++;
+}
+
+TXC(scmp) {
+    sv_setiv(TX_st->targ, sv_cmp(TX_st_sb, TX_st_sa));
+    TX_st_sa = TX_st->targ;
     TX_st->pc++;
 }
 

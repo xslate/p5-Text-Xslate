@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use parent qw(Exporter);
-our @EXPORT_OK = qw(tx_error tx_warn);
+our @EXPORT_OK = qw(tx_error tx_warn tx_proccall);
 
 use Carp ();
 use Scalar::Util ();
@@ -418,6 +418,15 @@ sub op_gt {
 
 sub op_ge {
     $_[0]->{sa} = $_[0]->{sb} >= $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_ncmp {
+    $_[0]->{sa} = $_[0]->{sb} <=> $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+sub op_scmp {
+    $_[0]->{sa} = $_[0]->{sb} cmp $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 

@@ -76,6 +76,99 @@ T
     [&lt;foo&gt;]
     [&lt;bar&gt;]
 X
+
+    [<<'T', { data => ['a', 'c', 'b', 'd', 'a'] , cmp => sub { $_[1] cmp $_[0] }}, <<'X', 'sort with callback'],
+: for $data.sort($cmp) -> $v {
+    [<: $v :>]
+: }
+T
+    [d]
+    [c]
+    [b]
+    [a]
+    [a]
+X
+
+    [<<'T', { data => [99, 20, 10, 1, 100] , cmp => sub { $_[0] <=> $_[1] }}, <<'X'],
+: for $data.sort($cmp) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [20]
+    [99]
+    [100]
+X
+
+    [<<'T', { data => [99, 20, 10, 1, 100]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x <=> $y }) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [20]
+    [99]
+    [100]
+X
+
+    [<<'T', { data => [99, 20, 10, 1, 100]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x cmp $y }) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [100]
+    [20]
+    [99]
+X
+
+    [<<'T', { data => [ { name => 'foo', value => 30 }, { name => 'foo', value => 20 }, { name => 'bar', value => 10 }]  }, <<'X'],
+: for $data.sort(-> $x, $y { $x.name cmp $y.name or $x.value <=> $y.value }) -> $v {
+    [<: $v.name :>=<: $v.value :>]
+: }
+T
+    [bar=10]
+    [foo=20]
+    [foo=30]
+X
+
+    [<<'T', { data => [map { +{ value => $_ } } reverse 1 .. 10 ] }, <<'X'],
+: for $data.sort(-> $x, $y { $x.value <=> $y.value }) -> $v {
+    [<: $v.value :>]
+: }
+T
+    [1]
+    [2]
+    [3]
+    [4]
+    [5]
+    [6]
+    [7]
+    [8]
+    [9]
+    [10]
+X
+
+    [<<'T' x 2, { data => [map { +{ value => $_ } } reverse 1 .. 10 ] }, <<'X' x 2],
+: for $data.sort(-> $x, $y { $x.value <=> $y.value }) -> $v {
+    [<: $v.value :>]
+: }
+T
+    [1]
+    [2]
+    [3]
+    [4]
+    [5]
+    [6]
+    [7]
+    [8]
+    [9]
+    [10]
+X
+
 );
 
 foreach my $d(@set) {

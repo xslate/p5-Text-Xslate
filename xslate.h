@@ -171,6 +171,13 @@ tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char
 SV*
 tx_proccall(pTHX_ tx_state_t* const st, SV* const proc, const char* const name);
 
+SV*
+tx_mark_raw(pTHX_ SV* const str);
+
+SV*
+tx_unmark_raw(pTHX_ SV* const str);
+
+
 /* builtin method stuff */
 
 SV*
