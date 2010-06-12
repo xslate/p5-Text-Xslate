@@ -1131,6 +1131,7 @@ my %builtin_method = (
     'array::join'    => \&Text::Xslate::PP::Method::_array_join,
     'array::reverse' => \&Text::Xslate::PP::Method::_array_reverse,
     'array::sort'    => \&Text::Xslate::PP::Method::_array_sort,
+    'array::map'     => \&_array_map,
 
     'hash::defined'  => \&Text::Xslate::PP::Method::_any_defined,
     'hash::size'     => \&Text::Xslate::PP::Method::_hash_size,
@@ -1138,6 +1139,7 @@ my %builtin_method = (
     'hash::values'   => \&Text::Xslate::PP::Method::_hash_values,
     'hash::kv'       => \&Text::Xslate::PP::Method::_hash_kv,
 );
+
 
 our @_f_l_for_methodcall;
 
@@ -1150,6 +1152,16 @@ our @_f_l_for_methodcall;
         return undef;
     }
 
+}
+
+
+sub _array_map {
+    my( $array_ref, $callback ) = @_;
+    my ( $st, $frame, $line ) = @_f_l_for_methodcall;
+    return Text::Xslate::PP::Method::_bad_arg('map') if @_ != 2;
+    return [ map {
+        proccall( $st, $callback, [ [ $_ ] ], [ $frame, $line ] );
+    } @{$array_ref} ];
 }
 
 
@@ -1177,11 +1189,8 @@ sub methodcall {
     local @_f_l_for_methodcall = ( $st, $frame, $line );
 
     if( my $body = $st->symbol->{ $fq_name } || $builtin_method{ $fq_name } ){
-        my $retval = eval { $body->($invocant, @args) };
-        if($@) {
-            _error( $st, $frame, $line, "%s", $@ );
-        }
-        return $retval;
+        my $pad = [ [ $invocant, @args ] ]; # re-pushmark
+        return proccall( $st, $body, $pad, [ $frame, $line ] );
     }
 
     if ( not defined $invocant ) {
@@ -1192,6 +1201,24 @@ sub methodcall {
     _error($st, $frame, $line, "Undefined method %s called for %s", $method, $invocant);
 
     return undef;
+}
+
+
+sub proccall {
+    my ( $st, $proc, $pad, $f_l ) = @_;
+    my $ret;
+
+    if ( ref( $proc ) eq 'Text::Xslate::PP::Booster::Macro' ) {
+        return bless \do {
+            $st->{ booster_macro }->{ $proc->[0] }->( $st, $pad, $f_l)
+        }, 'Text::Xslate::Type::Raw';
+    }
+    else {
+        $ret = eval { $proc->( @{ $pad->[ -1 ] } ) };
+        _error( $st, @$f_l, "%s\t...", $@) if $@;
+    }
+
+    return $ret;
 }
 
 
