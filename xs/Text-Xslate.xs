@@ -289,7 +289,7 @@ tx_str_is_marked_raw(pTHX_ SV* const sv) {
     return FALSE;
 }
 
-static SV*
+SV*
 tx_mark_raw(pTHX_ SV* const str) {
     if(tx_str_is_marked_raw(aTHX_ str)) {
         return str;
@@ -302,7 +302,7 @@ tx_mark_raw(pTHX_ SV* const str) {
     }
 }
 
-static SV*
+SV*
 tx_unmark_raw(pTHX_ SV* const str) {
     if(tx_str_is_marked_raw(aTHX_ str)) {
         return SvRV(str);
