@@ -958,6 +958,10 @@ CODE
         my $expr = $self->sa;
         $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
 
+        if ( _logic_is_sort( $ops, $i, $addr ) ) { # series of sort ops
+            return $self->sa( sprintf( '( %s %s %s )', $expr, $type, $st_true->sa ) );
+        }
+
         if ( $st_true->code ) { # Ah, if-style had gone..., but again write if-style!
             my $if_style = $type eq 'and' ? 'if' : 'unless';
             $self->write_lines( sprintf( <<'CODE', $if_style, $expr, $st_true->code ) );
@@ -988,6 +992,13 @@ sub _logic_is_max_min {
     and $ops->[ $i + 1 ]->[ 0 ] eq 'load_lvar_to_sb'
     and $ops->[ $i + 2 ]->[ 0 ] eq 'move_from_sb'
     and $arg == 2
+}
+
+
+sub _logic_is_sort {
+    my ( $ops, $i, $arg ) = @_;
+        $ops->[ $i - 1  ]->[ 0 ]        =~ /[sn]cmp/
+    and $ops->[ $i + $arg - 1 ]->[ 0 ]  =~ /[sn]cmp/
 }
 
 
