@@ -135,6 +135,39 @@ T
     [foo=30]
 X
 
+    [<<'T', { data => [map { +{ value => $_ } } reverse 1 .. 10 ] }, <<'X'],
+: for $data.sort(-> $x, $y { $x.value <=> $y.value }) -> $v {
+    [<: $v.value :>]
+: }
+T
+    [1]
+    [2]
+    [3]
+    [4]
+    [5]
+    [6]
+    [7]
+    [8]
+    [9]
+    [10]
+X
+
+    [<<'T' x 2, { data => [map { +{ value => $_ } } reverse 1 .. 10 ] }, <<'X' x 2],
+: for $data.sort(-> $x, $y { $x.value <=> $y.value }) -> $v {
+    [<: $v.value :>]
+: }
+T
+    [1]
+    [2]
+    [3]
+    [4]
+    [5]
+    [6]
+    [7]
+    [8]
+    [9]
+    [10]
+X
 
 );
 
