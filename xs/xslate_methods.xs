@@ -25,6 +25,13 @@ typedef struct {
     I16 nargs;
 } tx_builtin_method_t;
 
+#define MY_CXT_KEY "Text::Xslate::Methods::_guts" XS_VERSION
+typedef struct {
+    tx_state_t* cmparg_st;
+    SV*         cmparg_proc;
+} my_cxt_t;
+START_MY_CXT;
+
 static SV*
 tx_make_pair(pTHX_ HV* const stash, SV* const key, SV* const val) {
     AV* av;
@@ -157,21 +164,70 @@ TXBM(array, reverse) {
     sv_setsv(retval, resultref);
 }
 
+static I32
+tx_sv_cmp(pTHX_ SV* const x, SV* const y) {
+    dMY_CXT;
+    dSP;
+    tx_state_t* const st = MY_CXT.cmparg_st;
+    SV* const proc       = MY_CXT.cmparg_proc;
+    SV* result;
+
+    assert(st);
+    assert(proc);
+
+    PUSHMARK(SP);
+    /* no need to extend SP because of the args of the method (sort) is >= 2 */
+    PUSHs(x);
+    PUSHs(y);
+    PUTBACK;
+    result = tx_proccall(aTHX_ st, proc, "sort callback");
+    return SvIVx(tx_unmark_raw(aTHX_ result));
+}
+
 TXBM(array, sort) {
+    dSP;
+    I32 const items     = SP - MARK;
     AV* const av        = (AV*)SvRV(*MARK);
     I32 const len       = av_len(av) + 1;
     AV* const result    = newAV();
-    SV* const resultref = sv_2mortal(newRV_noinc((SV*)result));
+    SV* const resultref = newRV_noinc((SV*)result);
+    SVCOMPARE_t cmpfunc;
     I32 i;
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
+
+    if(items == 0) {
+        cmpfunc = Perl_sv_cmp;
+    }
+    else {
+        dMY_CXT;
+        cmpfunc = tx_sv_cmp;
+
+        SAVEVPTR(MY_CXT.cmparg_st);
+        SAVESPTR(MY_CXT.cmparg_proc);
+
+        MY_CXT.cmparg_st   = st;
+        MY_CXT.cmparg_proc = *(++MARK);
+
+        if( items != 1 ) {
+            tx_error(aTHX_ st, "Too many arguments for sort");
+        }
+    }
+
 
     av_fill(result, len - 1);
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
         av_store(result, i, newSVsv(svp ? *svp : &PL_sv_undef));
     }
-    sortsv(AvARRAY(result), len, Perl_sv_cmp);
+    sortsv(AvARRAY(result), len, cmpfunc);
 
     sv_setsv(retval, resultref);
+
+    FREETMPS;
+    LEAVE;
 }
 
 TXBM(array, map) {
@@ -255,7 +311,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array, size,    0),
     TXBM_SETUP(array, join,    1),
     TXBM_SETUP(array, reverse, 0),
-    TXBM_SETUP(array, sort,    0),
+    TXBM_SETUP(array, sort,   -1),
     TXBM_SETUP(array, map,     1),
 
     TXBM_SETUP(hash, defined,  0),
@@ -378,6 +434,25 @@ tx_register_builtin_methods(pTHX_ HV* const hv) {
 }
 
 MODULE = Text::Xslate::Methods    PACKAGE = Text::Xslate::Type::Pair
+
+BOOT:
+{
+    MY_CXT_INIT;
+    PERL_UNUSED_VAR(MY_CXT);
+}
+
+#ifdef USE_ITHREADS
+
+void
+CLONE(...)
+CODE:
+{
+    MY_CXT_CLONE;
+    PERL_UNUSED_VAR(MY_CXT);
+    PERL_UNUSED_VAR(items);
+}
+
+#endif
 
 void
 key(AV* pair)

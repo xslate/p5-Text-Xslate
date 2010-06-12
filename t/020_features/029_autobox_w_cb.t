@@ -76,6 +76,31 @@ T
     [&lt;foo&gt;]
     [&lt;bar&gt;]
 X
+
+    [<<'T', { data => ['a', 'c', 'b', 'd', 'a'] , rev_cmp => sub { $_[1] cmp $_[0] }}, <<'X', 'sort with callback'],
+: for $data.sort($rev_cmp) -> $v {
+    [<: $v :>]
+: }
+T
+    [d]
+    [c]
+    [b]
+    [a]
+    [a]
+X
+
+    [<<'T', { data => [99, 20, 10, 1, 100] , rev_cmp => sub { $_[0] <=> $_[1] }}, <<'X'],
+: for $data.sort($rev_cmp) -> $v {
+    [<: $v :>]
+: }
+T
+    [1]
+    [10]
+    [20]
+    [99]
+    [100]
+X
+
 );
 
 foreach my $d(@set) {
