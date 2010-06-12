@@ -330,6 +330,7 @@ sub _load_compiled {
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold_mtime){
+                close $in; # Win32 doesn't allow to remove opend files
                 unlink $cachepath
                     or $self->_error("LoadError: Cannot unlink $cachepath: $!");
 
