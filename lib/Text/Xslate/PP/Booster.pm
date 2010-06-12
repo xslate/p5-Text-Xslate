@@ -494,6 +494,18 @@ $CODE_MANIP{ 'ge' } = sub {
 };
 
 
+$CODE_MANIP{ 'ncmp' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s <=> %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+};
+
+
+$CODE_MANIP{ 'scmp' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s cmp %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+};
+
+
 $CODE_MANIP{ 'macrocall' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $ops  = $self->ops;
@@ -1130,7 +1142,7 @@ my %builtin_method = (
     'array::size'    => \&Text::Xslate::PP::Method::_array_size,
     'array::join'    => \&Text::Xslate::PP::Method::_array_join,
     'array::reverse' => \&Text::Xslate::PP::Method::_array_reverse,
-    'array::sort'    => \&Text::Xslate::PP::Method::_array_sort,
+    'array::sort'    => \&_array_sort,
     'array::map'     => \&_array_map,
 
     'hash::defined'  => \&Text::Xslate::PP::Method::_any_defined,
@@ -1152,6 +1164,22 @@ our @_f_l_for_methodcall;
         return undef;
     }
 
+}
+
+
+sub _array_sort {
+    my( $array_ref, $callback ) = @_;
+    my ( $st, $frame, $line ) = @_f_l_for_methodcall;
+    return Text::Xslate::PP::Method::_bad_arg('sort') if !(@_ == 1 or @_ == 2);
+
+    if(@_ == 1) {
+        return [ sort @{ $array_ref } ];
+    }
+    else {
+        return [ sort {
+            proccall( $st, $callback, [ [ $a, $b ] ], [ $frame, $line ] );
+        } @{$array_ref} ];
+    }
 }
 
 
