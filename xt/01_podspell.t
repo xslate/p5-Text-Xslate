@@ -39,6 +39,7 @@ backend
 TT
 adaptor
 overridable
+inline
 
 # name
 lestrrat
