@@ -229,7 +229,8 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
     PERL_UNUSED_ARG(st);
-    if(sv_isobject(var)) { /* sv_isobject() invokes SvGETMAGIC */
+    SvGETMAGIC(var);
+    if(SvROK(var) && SvOBJECT(SvRV(var))) {
         dSP;
         PUSHMARK(SP);
         XPUSHs(var);
@@ -279,7 +280,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     return sv ? sv : &PL_sv_undef;
 }
 
-static bool
+static inline bool
 tx_str_is_marked_raw(pTHX_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         dMY_CXT;
@@ -312,7 +313,7 @@ tx_unmark_raw(pTHX_ SV* const str) {
     }
 }
 
-inline static void /* doesn't care about raw-ness */
+static inline void /* doesn't care about raw-ness */
 tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
@@ -348,20 +349,24 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
         default:
             parts     = cur;
             parts_len = 1;
+            len       = SvCUR(dest) + 2; /* parts_len + 1 */
+            SvGROW(dest, len);
+            *SvEND(dest) = *parts;
+            SvCUR_set(dest, SvCUR(dest) + 1);
+            goto loop_continue;
             break;
         }
+
+        /* copy special characters */
 
         len = SvCUR(dest) + parts_len + 1;
         (void)SvGROW(dest, len);
 
-        if(parts_len == 1) {
-            *SvEND(dest) = *parts;
-        }
-        else {
-            Copy(parts, SvEND(dest), parts_len, char);
-        }
+        Copy(parts, SvEND(dest), parts_len, char);
+
         SvCUR_set(dest, SvCUR(dest) + parts_len);
 
+        loop_continue:
         cur++;
     }
     *SvEND(dest) = '\0';
@@ -649,8 +654,8 @@ TXC_goto(for_iter) {
     SvIOK_only(i); /* for $^item */
 
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
-    if(LIKELY(SvRMAGICAL(av) == 0)) {
-        if(LIKELY(++SvIVX(i) <= AvFILLp(av))) {
+    if(LIKELY(!SvRMAGICAL(av))) {
+        if(++SvIVX(i) <= AvFILLp(av)) {
             sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
             TX_st->pc++;
             return;
@@ -1084,7 +1089,6 @@ TXC_w_int(macro_outer);
 static void
 tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     dMY_CXT;
-    Size_t const code_len = base->code_len;
     tx_state_t st;
 
     StructCopy(base, &st, tx_state_t);
@@ -1106,7 +1110,7 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     SAVEI32(MY_CXT.depth);
     MY_CXT.depth++;
 
-    while(st.pc < code_len) {
+    while(st.pc < st.code_len) {
 #ifdef DEBUGGING
         Size_t const old_pc = st.pc;
 #endif
