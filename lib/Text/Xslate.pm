@@ -633,19 +633,6 @@ specific namespaces for plugins.
 
 Specifies PerlIO layers for reading templates.
 
-=item C<< syntax => $name // 'Kolon' >>
-
-Specifies the template syntax you want to use.
-
-I<$name> may be a short name (e.g. C<Kolon>), or a fully qualified name
-(e.g. C<Text::Xslate::Syntax::Kolon>).
-
-=item C<< escape => $mode // 'html' >>
-
-Specifies the escape mode, which is automatically applied to template expressions.
-
-Possible escape modes are B<html> and B<none>.
-
 =item C<< verbose => $level // 1 >>
 
 Specifies the verbose level.
@@ -660,6 +647,45 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 =item C<< suffix => $ext // '.tx' >>
 
 Specify the template suffix, which is used for template cascading.
+
+=item C<< syntax => $name // 'Kolon' >>
+
+Specifies the template syntax you want to use.
+
+I<$name> may be a short name (e.g. C<Kolon>), or a fully qualified name
+(e.g. C<Text::Xslate::Syntax::Kolon>).
+
+This option is passed to the compiler directly.
+
+=item C<< escape => $mode // 'html' >>
+
+Specifies the escape mode, which is automatically applied to template expressions.
+
+Possible escape modes are B<html> and B<none>.
+
+This option is passed to the compiler directly.
+
+=item C<< line_start => $token // $parser_defined >>
+
+Specify the token to start line code, which may be a string or a regular
+expression.
+
+This option is passed to the parser via the compiler.
+
+=item C<< tag_start => $str // $parser_defined >>
+
+Specify the token to start inline code, which may be a string or a
+regular expression.
+
+This option is passed to the parser via the compiler.
+
+=item C<< line_start => $str // $parser_defined >>
+
+Specify the token to end inline code, which may be a string or a
+regular expression.
+
+This option is passed to the parser via the compiler.
+
 
 =back
 
