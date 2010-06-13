@@ -66,6 +66,12 @@ my %compiler_option = (
     escape      => undef,
 );
 
+my %parser_option = (
+    line_start => undef,
+    tag_start  => undef,
+    tag_end    => undef,
+);
+
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
 sub options { # overridable
@@ -85,8 +91,8 @@ sub options { # overridable
         warn_handler => undef,
         die_handler  => undef,
 
-        # compiler options
         %compiler_option,
+        %parser_option,
     };
 }
 
@@ -362,19 +368,20 @@ sub _save_compiled {
 sub _magic {
     my($self, $fullpath) = @_;
 
-    my $compiler_options = join(',',
+    my $opt = join(',',
         ref($self->{compiler}) || $self->{compiler},
-        $self->_compiler_options,
+        $self->_extract_options(\%compiler_option),
+        $self->_extract_options(\%parser_option),
     );
 
     return sprintf $XSLATE_MAGIC,
-        $VERSION, $fullpath, $compiler_options;
+        $VERSION, $fullpath, $opt;
 }
 
-sub _compiler_options {
-    my($self) = @_;
+sub _extract_options {
+    my($self, $opt_ref) = @_;
     my @options;
-    foreach my $name(sort keys %compiler_option) {
+    foreach my $name(sort keys %{$opt_ref}) {
         if(defined($self->{$name})) {
             push @options, $name => $self->{$name};
         }
@@ -393,7 +400,10 @@ sub _compiler {
 
         $compiler = $compiler->new(
             engine => $self,
-            $self->_compiler_options,
+            $self->_extract_options(\%compiler_option),
+            parser_option => {
+                $self->_extract_options(\%parser_option),
+            },
         );
 
         $compiler->define_function(keys %{ $self->{function} });

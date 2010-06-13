@@ -6,15 +6,38 @@ use Test::More;
 use Text::Xslate;
 use Text::Xslate::Parser;
 
-my $myparser = Text::Xslate::Parser->new(
-    line_start => undef,
-    tag_start  => qr/\Q[%/xms,
-    tag_end    => qr/\Q%]/xms,
-);
 
 my $tx = Text::Xslate->new(
+    line_start => '#',
+);
+
+is $tx->render_string(<<'T'), "Hello, Xslate world!", 'line_start';
+# "Hello, Xslate world!"
+T
+is $tx->render_string(<<'T'), qq{: "Hello, Xslate world!"\n};
+: "Hello, Xslate world!"
+T
+
+
+$tx = Text::Xslate->new(
+    tag_start => '[%',
+    tag_end   => '%]',
+);
+
+is $tx->render_string(<<'T', { foo => "Xslate"}), q{<: $foo :>Xslate<: $foo :>} . "\n", 'tag_start & tag_end';
+<: $foo :>[% $foo %]<: $foo :>
+T
+
+my $myparser = Text::Xslate::Parser->new(
+    line_start => undef,
+    tag_start  => '[%',
+    tag_end    => '%]',
+);
+
+$tx = Text::Xslate->new(
     syntax => $myparser,
 );
+isa_ok $tx, 'Text::Xslate';
 
 my @data = (
     ['Hello, [%= $lang %] world!' => 'Hello, Xslate world!'],
@@ -35,7 +58,7 @@ foreach my $pair(@data) {
 
     my %vars = (lang => 'Xslate', foo => "<bar>");
 
-    is $tx->render_string($in, \%vars), $out, $in;
+    is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
 done_testing;

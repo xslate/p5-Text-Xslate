@@ -1,5 +1,6 @@
 package Text::Xslate::Parser;
 use Any::Moose;
+use Any::Moose '::Util::TypeConstraints';
 
 use Scalar::Util ();
 use Text::Xslate::Symbol;
@@ -54,6 +55,11 @@ my $CHOMP_FLAGS = qr/-/xms; # should support [-=~+] like Template-Toolkit?
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
+
+my $RegexpRefType = subtype __PACKAGE__ . '.RegexpRef' => as 'Maybe[RegexpRef]';
+coerce $RegexpRefType =>
+    from 'Str', via { qr/\Q$_\E/xms },
+;
 
 has symbol_table => ( # the global symbol table
     is  => 'ro',
@@ -116,21 +122,24 @@ has input => (
 
 has line_start => (
     is      => 'ro',
-    isa     => 'Maybe[RegexpRef]',
+    isa     => $RegexpRefType,
+    coerce  => 1,
     builder => '_build_line_start',
 );
 sub _build_line_start { qr/\Q:/xms }
 
 has tag_start => (
     is      => 'ro',
-    isa     => 'RegexpRef',
+    isa     => $RegexpRefType,
+    coerce  => 1,
     builder => '_build_tag_start',
 );
 sub _build_tag_start { qr/\Q<:/xms }
 
 has tag_end => (
     is      => 'ro',
-    isa     => 'RegexpRef',
+    isa     => $RegexpRefType,
+    coerce  => 1,
     builder => '_build_tag_end',
 );
 sub _build_tag_end { qr/\Q:>/xms }
@@ -1619,6 +1628,7 @@ sub _error {
         $parser->file, $parser->line, $message, $near);
 }
 
+no Any::Moose '::Util::TypeConstraints';
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 __END__
