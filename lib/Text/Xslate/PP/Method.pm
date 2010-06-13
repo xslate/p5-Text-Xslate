@@ -52,7 +52,7 @@ sub _array_sort {
     else {
         return [ sort {
             push @{ $_st->{ SP } }, [ $a, $b ];
-            tx_proccall($_st, $proc)
+            tx_proccall($_st, $proc) + 0; # need to numify
         } @{$array_ref} ];
     }
 }
@@ -92,7 +92,6 @@ sub _hash_kv {
         @{ _hash_keys($hash_ref) }
     ];
 }
-
 
 my %builtin_method = (
     'nil::defined'    => \&_any_defined,
