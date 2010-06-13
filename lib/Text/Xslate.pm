@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1032';
+our $VERSION = '0.1033';
 
 use Text::Xslate::Util qw($DEBUG
     mark_raw unmark_raw
@@ -439,7 +439,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1032.
+This document describes Text::Xslate version 0.1033.
 
 =head1 SYNOPSIS
 
