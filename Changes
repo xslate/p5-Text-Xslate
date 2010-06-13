@@ -1,5 +1,15 @@
 Revision history for Perl extension Text::Xslate
 
+0.1033
+    [BUG FIXES]
+    - Workaround a Win32 filesystem issue
+
+    [NEW FEATURES]
+    - Anonymous macro: <: -> $x, $y { $x + $y }(10, 20) # => 30 :>
+    - The sort method accepts an anonymous macro
+    - New methods: map
+    - New options for Text::Xslate: line_start, tag_start and tag_end
+
 0.1032 Thu Jun 10 18:00:25 2010
     [CHANGES]
     - Rename the term "escaped string" to "raw string":
