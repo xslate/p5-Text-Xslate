@@ -112,11 +112,32 @@ T
 Hello, /Xslate/ world!
 X
 
+    [<<'T', <<'X', 'DEFAULT' ],
+[% DEFAULT lang = 'TTerse' -%]
+Hello, [% lang %] world!
+T
+Hello, Xslate world!
+X
+
+    [<<'T', <<'X', 'DEFAULT' ],
+[% DEFAULT dialect = 'TTerse' -%]
+Hello, [% dialect %] world!
+T
+Hello, TTerse world!
+X
+
     [<<'T', <<'X', 'lower cased'],
 [% set lang = 'TTerse' -%]
 Hello, [% lang %] world!
 T
 Hello, TTerse world!
+X
+
+    [<<'T', <<'X' ],
+[% default lang = 'TTerse' -%]
+Hello, [% lang %] world!
+T
+Hello, Xslate world!
 X
 
     [<<'T', <<'X', 'chained assignment', 1],

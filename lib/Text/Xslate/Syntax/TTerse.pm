@@ -65,6 +65,8 @@ sub init_symbols {
 
     $parser->symbol('SET')     ->set_std(\&std_set);
     $parser->symbol('set')     ->set_std(\&std_set);
+    $parser->symbol('DEFAULT') ->set_std(\&std_set);
+    $parser->symbol('default') ->set_std(\&std_set);
     $parser->symbol('CALL')    ->set_std(\&std_call);
     $parser->symbol('call')    ->set_std(\&std_call);
 
@@ -293,10 +295,20 @@ sub set_list {
 sub std_set {
     my($parser, $symbol) = @_;
 
+    my $is_default = (uc($symbol->id) eq 'DEFAULT');
+
     my $set_list = $parser->set_list();
     my @assigns;
     for(my $i = 0; $i < @{$set_list}; $i += 2) {
         my($name, $value) = @{$set_list}[$i, $i+1];
+
+        if($is_default) {
+            my $var = $parser->symbol('(variable)')->clone(
+                id => $name->id,
+            );
+
+            $value = $parser->binary('//', $var, $value);
+        }
         my $assign = $symbol->clone(
             id     => '=',
             arity  => 'assign',
