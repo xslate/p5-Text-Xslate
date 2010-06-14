@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1034
+    [CHANGES]
+    - Rename $~iter.max to $~iter.max_index in Kolon
+
 0.1033 Sun Jun 13 17:14:36 2010
     [BUG FIXES]
     - Workaround a Win32 filesystem issue

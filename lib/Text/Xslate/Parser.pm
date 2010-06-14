@@ -521,7 +521,7 @@ sub init_iterator_elements {
         is_last   => \&iterator_is_last,
         body      => \&iterator_body,
         size      => \&iterator_size,
-        max       => \&iterator_max,
+        max_index => \&iterator_max_index,
         peek_next => \&iterator_peek_next,
         peek_prev => \&iterator_peek_prev,
     });
@@ -1554,8 +1554,8 @@ sub iterator_is_first {
 
 sub iterator_is_last {
     my($parser, $iterator) = @_;
-    # $~iterator == $~iterator.max
-    return $parser->binary('==', $iterator, $parser->iterator_max($iterator));
+    # $~iterator == $~iterator.max_index
+    return $parser->binary('==', $iterator, $parser->iterator_max_index($iterator));
 }
 
 sub iterator_body {
@@ -1568,11 +1568,11 @@ sub iterator_body {
 
 sub iterator_size {
     my($parser, $iterator) = @_;
-    # $~iterator.max + 1
-    return $parser->binary('+', $parser->iterator_max($iterator), 1);
+    # $~iterator.max_index + 1
+    return $parser->binary('+', $parser->iterator_max_index($iterator), 1);
 }
 
-sub iterator_max {
+sub iterator_max_index {
     my($parser, $iterator) = @_;
     # __builtin_max_index($~iterator.body)
     return $parser->symbol('max_index')->clone(

@@ -97,6 +97,7 @@ after init_iterator_elements => sub {
     $tab->{last}  = $tab->{is_last};
     $tab->{next}  = $tab->{peek_next};
     $tab->{prev}  = $tab->{peek_prev};
+    $tab->{max}   = $tab->{max_index};
 
     return;
 };
@@ -566,7 +567,7 @@ Loop iterators are partially supported.
         * [% loop.count     # loop.index + 1 %]
         * [% loop.body      # alias to arrayref %]
         * [% loop.size      # loop.body.size %]
-        * [% loop.max       # loop.size - 1 %]
+        * [% loop.max_index # loop.size - 1 %]
         * [% loop.peek_next # loop.body[ loop.index - 1 ]
         * [% loop.peek_prev # loop.body[ loop.index + 1 ]
         [%- IF loop.is_last -%]
@@ -574,10 +575,14 @@ Loop iterators are partially supported.
         [%- END -%]
     [% END %]
 
-For compatibility with Template-Toolkit, C<first> for C<is_first>, C<last>
-for C<is_last>, C<next> for C<peek_next>, C<prev> for C<peek_prev> are
-supported, but the use of them is discouraged because they are hard
-to understand.
+Template-Toolkit compatible names are also supported, but the use of them is
+discouraged because they are not easy to understand:
+
+    loop.max   # for loop.max_index
+    loop.next  # for loop.peek_next
+    loop.prev  # for loop.peek_prev
+    loop.first # for loop.is_first
+    loop.last  # for loop.is_last
 
 =head2 Conditional statements
 

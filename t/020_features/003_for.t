@@ -179,9 +179,9 @@ T
     3
 X
 
-    [<<'T', <<'X', 'max'],
+    [<<'T', <<'X', 'max_index'],
 : for $types -> ($item) {
-    <: $~item.max :>
+    <: $~item.max_index :>
 : }
 T
     2

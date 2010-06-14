@@ -179,7 +179,7 @@ via the dot-name syntax.
     : }
 
 Supported iterator elements are C<index :Int>, C<count :Int>,
-C<body : ArrayRef>, C<size : Int>, C<max :Int>, C<is_first :Bool>,
+C<body : ArrayRef>, C<size : Int>, C<max_index :Int>, C<is_first :Bool>,
 and C<is_last :Bool>, C<peek_next :Any>, C<peek_prev :Any>.
 
 C<while> loops are also supported in the same semantics as Perl's:
