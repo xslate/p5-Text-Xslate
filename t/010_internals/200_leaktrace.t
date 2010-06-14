@@ -2,9 +2,10 @@
 
 use strict;
 
-use Test::Requires qw(Test::LeakTrace);
+use Test::Requires { 'Test::LeakTrace' => 0.11 };
 use Test::More;
 use Text::Xslate;
+use Text::Xslate::Compiler;
 use t::lib::Util;
 
 use if Text::Xslate->isa('Text::Xslate::PP'),
@@ -129,6 +130,13 @@ X
 T
     Hello, A B C world!
 X
+
+    [<<'T', <<'X', 'builtin method for array'],
+    Hello, <: ['C', 'B', 'A'].sort(-> $a, $b { $b cmp $a }).join(" ") :> world!
+T
+    Hello, C B A world!
+X
+
 
     [<<'T', <<'X', 'builtin method for hash'],
     Hello, <: ({ lang => "Xslate" }).values().join(",") :> world!
