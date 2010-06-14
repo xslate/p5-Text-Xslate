@@ -95,6 +95,10 @@ sub options { # overridable
         function    => undef,
         compiler    => $class->compiler_class,
 
+        header  => undef,
+        footer  => undef,
+        wrapper => undef,
+
         verbose      => 1,
         warn_handler => undef,
         die_handler  => undef,
@@ -125,6 +129,12 @@ sub new {
         warnings::warnif(misc => "$class: Unknown option(s): " . join ' ', @unknowns);
     }
 
+    if(!ref $args{path}) {
+        $args{path} = [$args{path}];
+    }
+
+    # function
+
     my %funcs;
     if(defined $args{module}) {
         %funcs = import_from(@{$args{module}});
@@ -149,10 +159,6 @@ sub new {
 
     $args{function} = \%funcs;
 
-    if(!ref $args{path}) {
-        $args{path} = [$args{path}];
-    }
-
     # internal data
     $args{template} = {};
 
@@ -164,6 +170,7 @@ sub load_string { # for <input>
     if(not defined $string) {
         $self->_error("LoadError: Template string is not given");
     }
+    $self->_preprocess(\$string);
     $self->{string} = $string;
     my $asm = $self->compile($string);
     $self->_assemble($asm, undef, undef, undef, undef);
@@ -240,18 +247,40 @@ sub load_file {
     return $asm;
 }
 
+sub _slurp {
+    my($self, $fullpath) = @_;
+
+    open my($source), '<' . $self->{input_layer}, $fullpath
+        or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+    local $/;
+
+    return scalar <$source>;
+}
+
+sub _preprocess {
+    my($self, $source_ref) = @_;
+
+    my $s = '';
+    foreach my $file(@{$self->{header}}) {
+        $s .= $self->_slurp( $self->find_file($file)->{fullpath} );
+    }
+    substr ${$source_ref}, 0, 0, $s;
+
+    $s = '';
+    foreach my $file(@{$self->{footer}}) {
+        $s .= $self->_slurp( $self->find_file($file)->{fullpath} );
+    }
+    ${$source_ref} .= $s;
+    return;
+}
+
 sub _load_source {
     my($self, $fi) = @_;
     my $fullpath  = $fi->{fullpath};
     my $cachepath = $fi->{cachepath};
 
-    my $source;
-    {
-        open my($in), '<' . $self->{input_layer}, $fullpath
-            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
-        local $/;
-        $source = <$in>;
-    }
+    my $source = $self->_slurp($fullpath);
+    $self->_preprocess(\$source);
 
     my $asm = $self->compile($source,
         file     => $fi->{file},
