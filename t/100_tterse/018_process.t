@@ -44,7 +44,7 @@ $out = $t->render_string(<<'T');
 Hello, [% lang %] world!
 T
 
-is $out, <<'X';
+is $out, <<'X', 'header x 2 and footer x 2';
 header1
 Hello, TTerse world!
 footer1
@@ -57,6 +57,16 @@ T
 is $out, <<'X';
 header1
 Hello, Xslate world!
+footer1
+X
+
+$out = $t->render_string(<<'T', { lang => 'Xslate' });
+Hello, [% em(lang) %] world!
+T
+
+is $out, <<'X', 'call macros in header';
+header1
+Hello, <em>Xslate</em> world!
 footer1
 X
 

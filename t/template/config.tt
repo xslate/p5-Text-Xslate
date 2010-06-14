@@ -1,1 +1,4 @@
-[% SET lang = lang || 'TTerse' -%]
+[% DEFAULT lang = 'TTerse' -%]
+[% MACRO em(s) BLOCK -%]
+<em>[% s %]</em>
+[%- END -%]
