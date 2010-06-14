@@ -80,6 +80,9 @@ sub init_symbols {
     $parser->symbol('INTO');
     $parser->symbol('into');
 
+    $parser->symbol('FILTER')->set_std(\&std_filter);
+    $parser->symbol('filter')->set_std(\&std_filter);
+
     return;
 }
 
@@ -428,54 +431,48 @@ sub std_wrapper {
 # ...
 # [% END %]
 # is
-# : macro filter_xxx -> {
+# : __block filter_xxx -> {
 #   ...
 # : } filter_001() | html
 # in Kolon
-#
-#sub std_filter {
-#    my($parser, $symbol) = @_;
-#
-#    my $t = $parser->token;
-#    if($t->arity ne 'name') {
-#        $parser->_error("Expected filter name, not $t");
-#    }
-#    my $filter = $t->nud($parser);
-#    $parser->advance();
-#
-#    my $tmpname = $symbol->clone(
-#        arity => 'macro',
-#        id    => sprintf('%s@%d&0x%x', $symbol->id, $parser->line, Scalar::Util::refaddr($symbol)),
-#    );
-#
-#    my $proc = $symbol->clone(
-#        arity => 'proc',
-#        id    => 'macro',
-#    );
-#
-#    $proc->first($tmpname);
-#    $proc->second([]);
-#    $proc->third( $parser->statements() );
-#    $parser->advance("END");
-#
-#    my $callmacro = $symbol->clone(
-#        arity  => 'call',
-#        first  => $tmpname, # name
-#        second => [],       # args
-#    );
-#    my $callfilter  = $symbol->clone(
-#        arity  => 'call',
-#        first  => $filter,      # name
-#        second => [$callmacro], # args
-#    );
-#    my $print = $parser->symbol('print')->clone(
-#        arity => 'command',
-#        first => [$callfilter],
-#        line  => $symbol->line,
-#    );
-#
-#    return( $proc, $print );
-#}
+
+sub std_filter {
+    my($parser, $symbol) = @_;
+
+    my $t = $parser->token;
+    if($t->arity ne 'name') {
+        $parser->_error("Expected filter name, not $t");
+    }
+    my $filter = $t->nud($parser);
+    $parser->advance();
+
+    my $proc = $parser->lambda($symbol);
+    $proc->id('block'); # to return values without marking as raw
+
+    $proc->second([]);
+    $proc->third( $parser->statements() );
+    $parser->advance("END");
+
+    # _immediate_block() | filter
+
+    my $callmacro = $symbol->clone(
+        arity  => 'call',
+        first  => $proc->first, # name
+        second => [],           # args
+    );
+    my $callfilter  = $symbol->clone(
+        arity  => 'call',
+        first  => $filter,      # name
+        second => [$callmacro], # args
+    );
+    my $print = $parser->symbol('print')->clone(
+        arity => 'command',
+        first => [$callfilter],
+        line  => $symbol->line,
+    );
+
+    return( $proc, $print );
+}
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();

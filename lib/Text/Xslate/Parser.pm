@@ -1095,19 +1095,24 @@ sub nud_constant {
     );
 }
 
-# -> $x { ... }
-sub nud_lambda {
-    my($parser, $symbol) = @_;
-
+sub lambda {
+    my($parser, $proto) = @_;
     my $unique_name = $parser->symbol('(name)')->clone(
-        id => sprintf('lambda@0x%x', Scalar::Util::refaddr($symbol)),
+        id => sprintf('lambda@0x%x', Scalar::Util::refaddr($proto)),
     );
 
-    my $pointy = $symbol->clone(
+    return $proto->clone(
         arity => 'proc',
         id    => 'macro',
         first => $unique_name, # name
     );
+}
+
+# -> $x { ... }
+sub nud_lambda {
+    my($parser, $symbol) = @_;
+
+    my $pointy = $parser->lambda($symbol);
 
     $parser->new_scope();
     my @params;
