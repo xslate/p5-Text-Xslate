@@ -508,8 +508,11 @@ Text::Xslate::Syntax::TTerse - An alternative syntax like Template-Toolkit 2
 
 =head1 DESCRIPTION
 
-TTerse is a subset of the Template-Toolkit 2.0 (and partially  3.0) syntax,
+TTerse is a subset of the Template-Toolkit 2 (and partially  3) syntax,
 using C<< [% ... %] >> tags and C<< %% ... >> line code.
+
+(TODO: I should concentrait on the difference between Template-Toolkit 2 and
+TTerse)
 
 =head1 SYNTAX
 
@@ -702,6 +705,16 @@ discouraged.
 
     [% SET var1 = expr1, var2 = expr2 %]
     [% var = expr %]
+
+DEFAULT statements are supported as a syntactic sugar to C<< SET var = var // expr >>:
+
+    [% DEFAULT lang = "TTerse" %]
+
+FILTER blocks are supported:
+
+    [% FILTER html -%]
+    Hello, <Xslate> world!
+    [% END -%]
 
 =head1 SEE ALSO
 
