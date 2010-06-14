@@ -85,18 +85,18 @@ sub compiler_class() { 'Text::Xslate::Compiler' }
 sub options { # overridable
     my($class) = @_;
     return {
-        # name => default
-        suffix      => '.tx',
-        path        => ['.'],
-        input_layer => ':utf8',
-        cache       => 1,
-        cache_dir   => _DEFAULT_CACHE_DIR,
-        module      => undef,
-        function    => undef,
-        compiler    => $class->compiler_class,
+        # name       => default
+        suffix       => '.tx',
+        path         => ['.'],
+        input_layer  => ':utf8',
+        cache        => 1,
+        cache_dir    => _DEFAULT_CACHE_DIR,
+        module       => undef,
+        function     => undef,
+        compiler     => $class->compiler_class,
 
-        header  => undef,
-        footer  => undef,
+        header       => undef,
+        footer       => undef,
 
         verbose      => 1,
         warn_handler => undef,
