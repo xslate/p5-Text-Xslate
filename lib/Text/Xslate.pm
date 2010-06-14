@@ -72,6 +72,14 @@ my %parser_option = (
     tag_end    => undef,
 );
 
+my %builtin = (
+    raw        => \&Text::Xslate::Util::mark_raw,
+    html       => \&Text::Xslate::Util::html_escape,
+    mark_raw   => \&Text::Xslate::Util::mark_raw,
+    unmark_raw => \&Text::Xslate::Util::unmark_raw,
+    dump       => \&Text::Xslate::Util::p,
+);
+
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
 sub options { # overridable
@@ -130,18 +138,14 @@ sub new {
     }
 
     # the following functions are not overridable
-    foreach my $builtin(qw(raw html dump)) {
-        if(exists $funcs{$builtin}) {
+    foreach my $name(keys %builtin) {
+        if(exists $funcs{$name}) {
             warnings::warnif(redefine =>
-                "$class: You cannot redefine builtin function '$builtin',"
+                "$class: You cannot redefine builtin function '$name',"
                 . " because it is embeded in the engine");
         }
+        $funcs{$name} = $builtin{$name};
     }
-    $funcs{raw}         = \&Text::Xslate::Util::mark_raw;
-    $funcs{html}        = \&Text::Xslate::Util::html_escape;
-    $funcs{mark_raw}    = \&Text::Xslate::Util::mark_raw;
-    $funcs{unmark_raw}  = \&Text::Xslate::Util::unmark_raw;
-    $funcs{dump}        = \&Text::Xslate::Util::p;
 
     $args{function} = \%funcs;
 
