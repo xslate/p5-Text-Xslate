@@ -97,7 +97,6 @@ sub options { # overridable
 
         header  => undef,
         footer  => undef,
-        wrapper => undef,
 
         verbose      => 1,
         warn_handler => undef,
