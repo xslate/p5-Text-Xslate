@@ -4,6 +4,12 @@ Revision history for Perl extension Text::Xslate
     [CHANGES]
     - Rename $~iter.max to $~iter.max_index in Kolon
 
+    [NEW FEATURES]
+    - For TTerse
+        + Support header/footer/wrapper options
+          curresponding to TT's PRE_PROCESS/POST_PROCESS/WRAPPER
+        + Support DEFAULT and FILTER syntax
+
 0.1033 Sun Jun 13 17:14:36 2010
     [BUG FIXES]
     - Workaround a Win32 filesystem issue

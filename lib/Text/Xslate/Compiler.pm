@@ -188,12 +188,6 @@ sub lvar_use {
     return $self->lvar_id + $n;
 }
 
-{
-    package
-        Text::Xslate::Compiler::Guard;
-    sub DESTROY { $_[0]->() }
-}
-
 sub compile {
     my($self, $str, %args) = @_;
 

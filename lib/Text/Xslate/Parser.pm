@@ -1,7 +1,6 @@
 package Text::Xslate::Parser;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
-use warnings FATAL => 'all';
 
 use Scalar::Util ();
 use Text::Xslate::Symbol;
