@@ -155,4 +155,29 @@ Hello, TTerse world!
 </div>
 X
 
+
+$t = Text::Xslate->new(
+    syntax  => 'TTerse',
+    path    => path,
+    cache   => 0,
+    header  => [qw(config.tt)],
+    wrapper => [qw(wrapper1.tt)],
+);
+
+$out = $t->render('hello.tt', { lang => "Xslate" });
+
+is $out, <<'X', 'header+wrapper';
+<div class="wrapper1">
+Hello, Xslate world!
+</div>
+X
+
+$out = $t->render('hello.tt');
+
+is $out, <<'X', 'header+wrapper';
+<div class="wrapper1">
+Hello, TTerse world!
+</div>
+X
+
 done_testing;
