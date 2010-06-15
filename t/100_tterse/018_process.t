@@ -92,6 +92,14 @@ Hello, Xslate world!
 footer1
 X
 
+$out = $t->render('hello.tt', { lang => 'Xslate' });
+
+is $out, <<'X';
+header1
+Hello, Xslate world!
+footer1
+X
+
 $out = $t->render_string(<<'T', { lang => 'Xslate' });
 Hello, [% em(lang) %] world!
 T
@@ -130,6 +138,16 @@ Hello, [% lang %] world!
 T
 
 is $out, <<'X', 'wrappers x 2';
+<div class="wrapper1">
+<div class="wrapper2">
+Hello, TTerse world!
+</div>
+</div>
+X
+
+$out = $t->render('hello.tt', { lang => "TTerse" });
+
+is $out, <<'X', 'wrappers x 2 (file)';
 <div class="wrapper1">
 <div class="wrapper2">
 Hello, TTerse world!
