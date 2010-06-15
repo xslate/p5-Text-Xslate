@@ -600,7 +600,7 @@ Text::Xslate::Syntax::TTerse - An alternative syntax compatible with Template To
 TTerse is a subset of the Template-Toolkit 2 (and partially  3) syntax,
 using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
-(TODO: I should concentrait on the difference between Template-Toolkit 2 and
+(TODO: I should concentrate on the difference between Template-Toolkit 2 and
 TTerse)
 
 =head1 OPTIONS
