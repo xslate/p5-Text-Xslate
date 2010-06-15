@@ -108,13 +108,10 @@ has macro_table => (
     init_arg => undef,
 );
 
-has engine => (
-    is  => 'ro',
-    isa => 'Object', # Text::Xslate
-
-    weak_ref => 1,
-
+has engine => ( # Xslate engine
+    is       => 'ro',
     required => 0,
+    weak_ref => 1,
 );
 
 has escape_mode => (
@@ -158,7 +155,10 @@ has parser => (
                 "Text::Xslate::Syntax::" . $syntax,
                 $syntax,
             );
-            return $parser_class->new($self->parser_option);
+            return $parser_class->new(
+                %{$self->parser_option},
+                engine => $self->engine,
+            );
         }
     },
 

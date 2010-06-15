@@ -61,6 +61,12 @@ coerce $RegexpRefType =>
     from 'Str', via { qr/\Q$_\E/xms },
 ;
 
+has engine => ( # Xslate engine
+    is       => 'ro',
+    required => 0,
+    weak_ref => 1,
+);
+
 has symbol_table => ( # the global symbol table
     is  => 'ro',
     isa => 'HashRef',
@@ -150,6 +156,14 @@ has shortcut_table => (
     builder => '_build_shortcut_table',
 );
 sub _build_shortcut_table { \%shortcut_table }
+
+has [qw(header footer)] => (
+    is         => 'ro',
+    isa        => 'ArrayRef',
+    auto_deref => 1,
+    default    => sub { [] },
+    required   => 0,
+);
 
 has in_given => (
     is       => 'rw',
@@ -249,9 +263,28 @@ sub split :method {
 }
 
 sub preprocess {
-    my $parser = shift;
+    my($parser, $input) = @_;
 
-    my $tokens_ref = $parser->split(@_);
+    # insert headers and footers
+    if(@{$parser->header} or @{$parser->footer}) {
+        my $engine = $parser->engine
+            or $parser->_error("Cannot process header/footer without Xslate engine");
+        my $s = '';
+        foreach my $file($parser->header) {
+            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+        }
+        substr $input, 0, 0, $s if length($s);
+
+        $s = '';
+        foreach my $file($parser->footer) {
+            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+        }
+        $input .= $s if length($s);
+    }
+
+    # tokenization
+
+    my $tokens_ref = $parser->split($input);
     my $code = '';
 
     my $shortcut_table = $parser->shortcut_table;

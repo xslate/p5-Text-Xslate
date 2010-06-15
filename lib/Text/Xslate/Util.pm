@@ -37,9 +37,9 @@ defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
 
 require Text::Xslate; # load XS stuff
 
-sub mark_raw;   # XS
-sub unmark_raw; # XS
-sub html_escape;    # XS
+sub mark_raw;    # XS
+sub unmark_raw;  # XS
+sub html_escape; # XS
 sub escaped_string; *escaped_string = \&mark_raw;
 
 sub Text::Xslate::EscapedString::new {

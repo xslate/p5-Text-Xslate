@@ -70,6 +70,8 @@ my %parser_option = (
     line_start => undef,
     tag_start  => undef,
     tag_end    => undef,
+    header     => undef,
+    footer     => undef,
 );
 
 my %builtin = (
@@ -94,9 +96,6 @@ sub options { # overridable
         module       => undef,
         function     => undef,
         compiler     => $class->compiler_class,
-
-        header       => undef,
-        footer       => undef,
 
         verbose      => 1,
         warn_handler => undef,
@@ -169,7 +168,6 @@ sub load_string { # for <input>
     if(not defined $string) {
         $self->_error("LoadError: Template string is not given");
     }
-    $self->_preprocess(\$string);
     $self->{string} = $string;
     my $asm = $self->compile($string);
     $self->_assemble($asm, undef, undef, undef, undef);
@@ -246,7 +244,7 @@ sub load_file {
     return $asm;
 }
 
-sub _slurp {
+sub slurp {
     my($self, $fullpath) = @_;
 
     open my($source), '<' . $self->{input_layer}, $fullpath
@@ -256,30 +254,12 @@ sub _slurp {
     return scalar <$source>;
 }
 
-sub _preprocess {
-    my($self, $source_ref) = @_;
-
-    my $s = '';
-    foreach my $file(@{$self->{header}}) {
-        $s .= $self->_slurp( $self->find_file($file)->{fullpath} );
-    }
-    substr ${$source_ref}, 0, 0, $s;
-
-    $s = '';
-    foreach my $file(@{$self->{footer}}) {
-        $s .= $self->_slurp( $self->find_file($file)->{fullpath} );
-    }
-    ${$source_ref} .= $s;
-    return;
-}
-
 sub _load_source {
     my($self, $fi) = @_;
     my $fullpath  = $fi->{fullpath};
     my $cachepath = $fi->{cachepath};
 
-    my $source = $self->_slurp($fullpath);
-    $self->_preprocess(\$source);
+    my $source = $self->slurp($fullpath);
 
     my $asm = $self->compile($source,
         file     => $fi->{file},
