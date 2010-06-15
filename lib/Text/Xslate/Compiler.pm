@@ -150,28 +150,27 @@ has parser => (
 
     handles => [qw(file line define_function)],
 
-    lazy    => 1,
-    default => sub {
-        my($self) = @_;
-        my $syntax = $self->syntax;
-        if(blessed($syntax)) {
-            return $syntax;
-        }
-        else {
-            my $parser_class = Any::Moose::load_first_existing_class(
-                "Text::Xslate::Syntax::" . $syntax,
-                $syntax,
-            );
-            return $parser_class->new(
-                %{$self->parser_option},
-                engine   => $self->engine,
-                compiler => $self,
-            );
-        }
-    },
-
-    init_arg => undef,
+    builder => '_build_parser',
 );
+
+sub _build_parser {
+    my($self) = @_;
+    my $syntax = $self->syntax;
+    if(ref($syntax)) {
+        return $syntax;
+    }
+    else {
+        my $parser_class = Any::Moose::load_first_existing_class(
+            "Text::Xslate::Syntax::" . $syntax,
+            $syntax,
+        );
+        return $parser_class->new(
+            %{$self->parser_option},
+            engine   => $self->engine,
+            compiler => $self,
+        );
+    }
+}
 
 has cascade => (
     is       => 'rw',
