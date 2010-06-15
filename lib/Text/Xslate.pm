@@ -61,17 +61,18 @@ my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 # version-path-{compiler options}
 my $XSLATE_MAGIC    = qq{.xslate "%s-%s-{%s}"\n};
 
-my %compiler_option = (
-    syntax      => undef,
-    escape      => undef,
-);
-
 my %parser_option = (
     line_start => undef,
     tag_start  => undef,
     tag_end    => undef,
+);
+
+my %compiler_option = (
+    syntax     => undef,
+    escape     => undef,
     header     => undef,
     footer     => undef,
+    wrapper    => undef,
 );
 
 my %builtin = (
@@ -101,8 +102,8 @@ sub options { # overridable
         warn_handler => undef,
         die_handler  => undef,
 
-        %compiler_option,
         %parser_option,
+        %compiler_option,
     };
 }
 

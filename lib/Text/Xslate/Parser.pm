@@ -1,6 +1,7 @@
 package Text::Xslate::Parser;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
+use warnings FATAL => 'all';
 
 use Scalar::Util ();
 use Text::Xslate::Symbol;
@@ -61,8 +62,8 @@ coerce $RegexpRefType =>
     from 'Str', via { qr/\Q$_\E/xms },
 ;
 
-has engine => ( # Xslate engine
-    is       => 'ro',
+has [qw(compiler engine)] => (
+    is       => 'rw',
     required => 0,
     weak_ref => 1,
 );
@@ -156,14 +157,6 @@ has shortcut_table => (
     builder => '_build_shortcut_table',
 );
 sub _build_shortcut_table { \%shortcut_table }
-
-has [qw(header footer)] => (
-    is         => 'ro',
-    isa        => 'ArrayRef',
-    auto_deref => 1,
-    default    => sub { [] },
-    required   => 0,
-);
 
 has in_given => (
     is       => 'rw',
@@ -264,23 +257,6 @@ sub split :method {
 
 sub preprocess {
     my($parser, $input) = @_;
-
-    # insert headers and footers
-    if(@{$parser->header} or @{$parser->footer}) {
-        my $engine = $parser->engine
-            or $parser->_error("Cannot process header/footer without Xslate engine");
-        my $s = '';
-        foreach my $file($parser->header) {
-            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
-        }
-        substr $input, 0, 0, $s if length($s);
-
-        $s = '';
-        foreach my $file($parser->footer) {
-            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
-        }
-        $input .= $s if length($s);
-    }
 
     # tokenization
 
@@ -1128,16 +1104,17 @@ sub nud_constant {
     );
 }
 
+my $lambda_id = 0;
 sub lambda {
     my($parser, $proto) = @_;
-    my $unique_name = $parser->symbol('(name)')->clone(
-        id => sprintf('lambda@0x%x', Scalar::Util::refaddr($proto)),
+    my $name = $parser->symbol('(name)')->clone(
+        id => sprintf('lambda@%d', $lambda_id++),
     );
 
     return $proto->clone(
         arity => 'proc',
         id    => 'macro',
-        first => $unique_name, # name
+        first => $name,
     );
 }
 

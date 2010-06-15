@@ -25,6 +25,56 @@ around split => sub {
     return $tokens_ref;
 };
 
+around parse => sub {
+    my $super = shift;
+    my($parser, $input, %args) = @_;
+
+    my $compiler = $parser->compiler or return $super->(@_);
+    my $engine   = $parser->engine   or return $super->(@_);
+
+    my $header = delete $compiler->{header};
+    my $footer = delete $compiler->{footer};
+
+    if($header) {
+        my $s = '';
+        foreach my $file(@{$header}) {
+            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+        }
+        substr $input, 0, 0, $s;
+    }
+
+    if($footer) {
+        my $s = '';
+        foreach my $file(@{$footer}) {
+            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+        }
+        $input .= $s;
+    }
+    my $ast = $super->($parser, $input, %args);
+
+
+    my $wrapper = $compiler->wrapper;
+    if($wrapper && @{$wrapper}) {
+        my @w    = @{$wrapper};
+        my $file = pop @w;
+        $compiler->wrapper(\@w);
+#        if(@{$wrapper} > 1) {
+#            $parser->_error("Multiple wrappers are not supported");
+#        }
+        my $proto = $parser->symbol('(name)')->clone(
+            id => 'auto_wrapper',
+        );
+        $ast = [$parser->wrap(
+            $proto,
+            $file,
+            'content', # into what
+            [],        # extra vars
+            $ast,      # body
+        )];
+    }
+    return $ast;
+};
+
 sub init_symbols {
     my($parser) = @_;
 
@@ -410,8 +460,8 @@ sub std_macro {
 
 # WRAPPER "foo.tt" ...  END
 # is
-# cascade "foo.tt" { content => content@wrapper() }
-# macro content@wrapper -> { ... }
+# cascade "foo.tt" { content => content@xxx() }
+# macro content@xxx -> { ... }
 sub std_wrapper {
     my($parser, $symbol) = @_;
 
@@ -432,34 +482,35 @@ sub std_wrapper {
     my $body  = $parser->statements();
     $parser->advance("END");
 
-    my $cascade = $symbol->clone(
+    return $parser->wrap(
+        $symbol,
+        $base,
+        $into,
+        $vars,
+        $body,
+    );
+}
+
+sub wrap {
+    my($parser, $proto, $base, $into, $vars, $body) = @_;
+    my $cascade = $proto->clone(
         arity => 'cascade',
         first => $base,
     );
 
-    my $internal_name = $symbol->clone(
-        arity => 'name',
-        id    => 'content@wrapper',
+    my $content = $parser->lambda($proto);
+    $content->second([]); # args
+    $content->third($body);
+
+    my $call_content = $proto->clone(
+        arity  => 'call',
+        first  => $content->first, # name
+        second => [],
     );
 
-    my $into_name = $symbol->clone(
+    my $into_name = $proto->clone(
         arity => 'literal',
         id    => $into,
-    );
-
-    my $content = $symbol->clone(
-        arity => 'proc',
-        id    => 'macro',
-
-        first  => $internal_name,
-        second => [],
-        third  => $body,
-    );
-
-    my $call_content = $symbol->clone(
-        arity  => 'call',
-        first  => $internal_name,
-        second => [],
     );
 
     push @{$vars}, $into_name => $call_content;

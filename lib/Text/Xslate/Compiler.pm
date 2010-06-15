@@ -84,6 +84,7 @@ has lvar_id => ( # local varialbe id
     isa => 'Int',
 
     default  => 0,
+    lazy     => 1,
     init_arg => undef,
 );
 
@@ -91,6 +92,8 @@ has lvar => ( # local varialbe id table
     is  => 'rw',
     isa => 'HashRef[Int]',
 
+    default  => sub { {} },
+    lazy     => 1,
     init_arg => undef,
 );
 
@@ -98,6 +101,8 @@ has const => (
     is  => 'rw',
     isa => 'ArrayRef',
 
+    default  => sub { [] },
+    lazy     => 1,
     init_arg => undef,
 );
 
@@ -105,7 +110,9 @@ has macro_table => (
     is  => 'rw',
     isa => 'HashRef',
 
-    init_arg => undef,
+    default   => sub { {} },
+    lazy      => 1,
+    init_arg  => undef,
 );
 
 has engine => ( # Xslate engine
@@ -157,19 +164,23 @@ has parser => (
             );
             return $parser_class->new(
                 %{$self->parser_option},
-                engine => $self->engine,
+                engine   => $self->engine,
+                compiler => $self,
             );
         }
     },
 
-    required => 0,
+    init_arg => undef,
 );
 
 has cascade => (
-    is  => 'rw',
-    isa => 'Object',
-
+    is       => 'rw',
     init_arg => undef,
+);
+
+has [qw(header footer wrapper)] => (
+    is  => 'rw',
+    isa => 'ArrayRef',
 );
 
 sub lvar_use {
@@ -178,15 +189,22 @@ sub lvar_use {
     return $self->lvar_id + $n;
 }
 
+{
+    package
+        Text::Xslate::Compiler::Guard;
+    sub DESTROY { $_[0]->() }
+}
+
 sub compile {
     my($self, $str, %args) = @_;
 
-    my %mtable;
-    local $self->{macro_table} = \%mtable;
-    local $self->{cascade};
-    local $self->{lvar_id} = 0;
-    local $self->{lvar}    = {};
-    local $self->{const}   = [];
+    # each compiling process is independent
+    my @attrs = map { $_->name } $self->meta->get_all_attributes;
+    local @{$self}{@attrs} = @{$self}{@attrs}; # localize_all
+
+    foreach my $attr(grep { not defined( $_->init_arg) } $self->meta->get_all_attributes) {
+        delete $self->{$attr->name};
+    }
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
@@ -204,9 +222,9 @@ sub compile {
     my $cascade = $self->cascade;
     if(defined $cascade) {
         $self->_process_cascade($cascade, \%args, \@code);
-    } # if defined $cascade
+    }
 
-    push @code, $self->_flush_macro_table() if %mtable;
+    push @code, $self->_flush_macro_table() if %{$self->macro_table};
 
     if($OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
@@ -512,7 +530,7 @@ sub _generate_cascade {
         $self->_error("Cannot cascade twice in a template", $node);
     }
     $self->cascade( $node );
-    return ();
+    return;
 }
 
 sub _compile_block {
