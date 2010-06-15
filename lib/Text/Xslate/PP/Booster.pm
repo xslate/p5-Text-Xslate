@@ -1188,7 +1188,7 @@ sub _array_sort {
     }
     else {
         return [ sort {
-            proccall( $st, $callback, [ [ $a, $b ] ], [ $frame, $line ] );
+            proccall( $st, $callback, [ [ $a, $b ] ], [ $frame, $line ] ) + 0;
         } @{$array_ref} ];
     }
 }
