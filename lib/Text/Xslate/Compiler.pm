@@ -83,8 +83,6 @@ has lvar_id => ( # local varialbe id
     is  => 'rw',
     isa => 'Int',
 
-    default  => 0,
-    lazy     => 1,
     init_arg => undef,
 );
 
@@ -92,8 +90,6 @@ has lvar => ( # local varialbe id table
     is  => 'rw',
     isa => 'HashRef[Int]',
 
-    default  => sub { {} },
-    lazy     => 1,
     init_arg => undef,
 );
 
@@ -101,8 +97,6 @@ has const => (
     is  => 'rw',
     isa => 'ArrayRef',
 
-    default  => sub { [] },
-    lazy     => 1,
     init_arg => undef,
 );
 
@@ -110,8 +104,7 @@ has macro_table => (
     is  => 'rw',
     isa => 'HashRef',
 
-    default   => sub { {} },
-    lazy      => 1,
+    predicate => 'has_macro_table',
     init_arg  => undef,
 );
 
@@ -134,7 +127,6 @@ has syntax => (
     is       => 'rw',
 
     default  => 'Kolon',
-    required => 0,
 );
 
 has parser_option => (
@@ -150,7 +142,9 @@ has parser => (
 
     handles => [qw(file line define_function)],
 
-    builder => '_build_parser',
+    lazy     => 1,
+    builder  => '_build_parser',
+    init_arg => undef,
 );
 
 sub _build_parser {
@@ -192,12 +186,14 @@ sub compile {
     my($self, $str, %args) = @_;
 
     # each compiling process is independent
-    my @attrs = map { $_->name } $self->meta->get_all_attributes;
-    local @{$self}{@attrs} = @{$self}{@attrs}; # localize_all
-
-    foreach my $attr(grep { not defined( $_->init_arg) } $self->meta->get_all_attributes) {
-        delete $self->{$attr->name};
-    }
+    local $self->{macro_table} = {};
+    local $self->{lvar_id} = 0;
+    local $self->{lvar}    = {};
+    local $self->{const}   = [];
+    local $self->{cascade};
+    local $self->{header}  = $self->{header};
+    local $self->{footer}  = $self->{footer};
+    local $self->{wrapper} = $self->{wrapper};
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
@@ -217,7 +213,7 @@ sub compile {
         $self->_process_cascade($cascade, \%args, \@code);
     }
 
-    push @code, $self->_flush_macro_table() if %{$self->macro_table};
+    push @code, $self->_flush_macro_table() if $self->has_macro_table;
 
     if($OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
