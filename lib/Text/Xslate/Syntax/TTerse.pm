@@ -32,6 +32,7 @@ sub init_symbols {
     $parser->symbol('}');
 
     $parser->init_basic_operators();
+    $parser->symbol('$')->set_nud(\&nud_dollar);
     $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
     $parser->symbol('.')->set_led(\&led_dot); # redefine
 
@@ -110,6 +111,14 @@ around advance => sub {
     return $super->($parser, $id);
 };
 
+sub nud_dollar {
+    my($self, $symbol) = @_;
+    $self->advance("{");
+    my $expr = $self->expression(0);
+    $self->advance("}");
+    return $expr;
+}
+
 sub undefined_name {
     my($parser) = @_;
     # undefined names are always variables
@@ -124,10 +133,28 @@ sub is_valid_field {
 
 sub led_dot {
     my($parser, $symbol, $left) = @_;
-    my $dot = $parser->SUPER::led_dot($symbol, $left);
-    if($dot->second->id =~ /\A \$/xms) { # var.$field
-        $dot->id('['); # var[ $field ]
-        $dot->second->arity("variable");
+
+    my $rhs_starts_dollar = ($parser->token->id =~ qr/\A \$/xms);
+
+    my $rhs;
+
+    if($rhs_starts_dollar) { # var.$foo, var.${foo}
+        $rhs = $parser->expression( $symbol->lbp );
+        return $parser->binary("[", $left, $rhs);
+    }
+    else { # var.foo
+        $rhs = $parser->token->clone( arity => 'literal' );
+        $parser->advance();
+    }
+
+    my $dot = $parser->binary($symbol, $left, $rhs);
+
+    my $t = $parser->token();
+    if($t->id eq "(") { # foo.method()
+        $parser->advance(); # "("
+        $dot->third( $parser->expression_list() );
+        $parser->advance(")");
+        $dot->arity("methodcall");
     }
     return $dot;
 }
