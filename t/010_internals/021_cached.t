@@ -24,11 +24,24 @@ for(1 .. 2) {
     my $tx = Text::Xslate->new(
         path      => ['t/template'],
         cache_dir => 't/template/cache',
+        cache     => 1,
+    );
+
+    like $tx->render('myapp/derived.tx', { lang => 'Xslate' }),
+        qr/Hello, Xslate world!/, 'cache => 1';
+
+    ok !exists $INC{'Text/Xslate/Compiler.pm'}, 'Text::Xslate::Compiler is not loaded';
+}
+
+for(1 .. 2) {
+    my $tx = Text::Xslate->new(
+        path      => ['t/template'],
+        cache_dir => 't/template/cache',
         cache     => 2,
     );
 
     like $tx->render('myapp/derived.tx', { lang => 'Xslate' }),
-        qr/Hello, Xslate world!/, 'render()';
+        qr/Hello, Xslate world!/, 'cache => 2';
 
     ok !exists $INC{'Text/Xslate/Compiler.pm'}, 'Text::Xslate::Compiler is not loaded';
 }
