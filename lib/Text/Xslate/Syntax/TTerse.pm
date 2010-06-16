@@ -56,26 +56,6 @@ around parse => sub {
     }
     my $ast = $super->($parser, $input, %args);
 
-
-    my $wrapper = $compiler->wrapper;
-    if($wrapper && @{$wrapper}) {
-        my @w    = @{$wrapper};
-        my $file = pop @w;
-        $compiler->wrapper(\@w);
-#        if(@{$wrapper} > 1) {
-#            $parser->_error("Multiple wrappers are not supported");
-#        }
-        my $proto = $parser->symbol('(name)')->clone(
-            id => 'auto_wrapper',
-        );
-        $ast = [$parser->wrap(
-            $proto,
-            $file,
-            'content', # into what
-            [],        # extra vars
-            $ast,      # body
-        )];
-    }
     return $ast;
 };
 
@@ -622,12 +602,6 @@ This option corresponds to Template-Toolkit's C<PRE_PROCESS> option.
 Specify the footer template files, which are inserted to the head of each template.
 
 This option corresponds to Template-Toolkit's C<POST_PROCESS> option.
-
-=head2 C<< wrapper => \@templates >>
-
-Specify the wrapper template files, which are used to wrap each template.
-
-This option corresponds to Template-Toolkit's C<WRAPPER> option.
 
 =head1 SYNTAX
 

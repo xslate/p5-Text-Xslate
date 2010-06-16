@@ -72,7 +72,6 @@ my %compiler_option = (
     escape     => undef,
     header     => undef,
     footer     => undef,
-    wrapper    => undef,
 );
 
 my %builtin = (

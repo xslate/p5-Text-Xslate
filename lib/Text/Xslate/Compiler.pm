@@ -177,7 +177,7 @@ has cascade => (
     init_arg => undef,
 );
 
-has [qw(header footer wrapper)] => (
+has [qw(header footer)] => (
     is  => 'rw',
     isa => 'ArrayRef',
 );
