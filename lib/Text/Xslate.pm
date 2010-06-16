@@ -208,7 +208,7 @@ sub find_file {
         $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
     }
 
-    print STDOUT "  find_file: $fullpath\n" if _DUMP_LOAD_FILE;
+    print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD_FILE;
 
     return {
         file        => $file,
@@ -259,6 +259,13 @@ sub _load_source {
     my($self, $fi) = @_;
     my $fullpath  = $fi->{fullpath};
     my $cachepath = $fi->{cachepath};
+
+    # This routine is called when the cache is no longer valid (or not created yet)
+    # so it should be ensured that the cache, if exists, does not exist
+    if(-e $cachepath) {
+        unlink $cachepath
+            or Carp::carp("Xslate: cannot unlink $cachepath (ignored): $!");
+    }
 
     my $source = $self->slurp($fullpath);
 
@@ -317,9 +324,6 @@ sub _load_compiled {
 
     if(scalar(<$in>) ne $self->_magic($fi->{fullpath})) {
         # magic token is not matched
-        close $in;
-        unlink $cachepath
-            or $self->_error("LoadError: Cannot unlink $cachepath: $!");
         return undef;
     }
 
@@ -349,10 +353,6 @@ sub _load_compiled {
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold_mtime){
-                close $in; # Win32 doesn't allow to remove opend files
-                unlink $cachepath
-                    or $self->_error("LoadError: Cannot unlink $cachepath: $!");
-
                 printf "  _load_cache_compiled: %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold_mtime)
