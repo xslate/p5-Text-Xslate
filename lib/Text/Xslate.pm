@@ -238,7 +238,7 @@ sub load_file {
     # $cache_mtime == 0     : doesn't use caches
     my $cache_mtime;
     if($self->{cache} < 2) {
-        $cache_mtime = $fi->{cache_time} || 0;
+        $cache_mtime = $fi->{cache_mtime} || 0;
     }
 
     $self->_assemble($asm, $file, $fi->{fullpath}, $fi->{cachepath}, $cache_mtime);
