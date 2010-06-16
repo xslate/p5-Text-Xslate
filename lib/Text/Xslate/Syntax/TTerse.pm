@@ -38,7 +38,9 @@ around parse => sub {
     if($header) {
         my $s = '';
         foreach my $file(@{$header}) {
-            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+            my $fullpath = $engine->find_file($file)->{fullpath};
+            $s .= $engine->slurp( $fullpath );
+            $compiler->requires($fullpath);
         }
         substr $input, 0, 0, $s;
     }
@@ -46,7 +48,9 @@ around parse => sub {
     if($footer) {
         my $s = '';
         foreach my $file(@{$footer}) {
-            $s .= $engine->slurp( $engine->find_file($file)->{fullpath} );
+            my $fullpath = $engine->find_file($file)->{fullpath};
+            $s .= $engine->slurp( $fullpath );
+            $compiler->requires($fullpath);
         }
         $input .= $s;
     }

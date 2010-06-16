@@ -114,6 +114,12 @@ has engine => ( # Xslate engine
     weak_ref => 1,
 );
 
+has dependencies => (
+    is  => 'ro',
+    isa => 'ArrayRef',
+    init_arg => undef,
+);
+
 has escape_mode => (
     is  => 'rw',
     isa => enum([qw(html none)]),
@@ -186,10 +192,11 @@ sub compile {
     my($self, $str, %args) = @_;
 
     # each compiling process is independent
-    local $self->{macro_table} = {};
-    local $self->{lvar_id} = 0;
-    local $self->{lvar}    = {};
-    local $self->{const}   = [];
+    local $self->{macro_table}  = {};
+    local $self->{lvar_id     } = 0;
+    local $self->{lvar}         = {};
+    local $self->{const}        = [];
+    local $self->{dependencies} = [];
     local $self->{cascade};
     local $self->{header}  = $self->{header};
     local $self->{footer}  = $self->{footer};
@@ -224,6 +231,13 @@ sub compile {
             if _DUMP_ASM;
 
     $parser->file($old_file || '<input>'); # reset
+
+    {
+        my %uniq;
+        push @code,
+            map  { [ depend => $_ ] }
+            grep { !$uniq{$_}++ } @{$self->dependencies};
+    }
 
     return \@code;
 }
@@ -277,16 +291,14 @@ sub _process_cascade {
     if(defined $base) { # pure cascade
         $base_file = $self->_bare_to_file($base);
         $base_code = $engine->load_file($base_file);
-        unshift @{$base_code},
-            [ depend => $engine->find_file($base_file)->{fullpath} ];
+        $self->requires( $engine->find_file($base_file)->{fullpath} );
     }
     else { # overlay
         $base_file = $args->{file}; # only for error messages
         $base_code = $main_code;
 
         if(defined $args->{fullpath}) {
-            unshift @{$base_code},
-                [ depend => $args->{fullpath} ];
+            $self->requires( $args->{fullpath} );
         }
 
         push @{$main_code}, $self->_flush_macro_table();
@@ -318,7 +330,7 @@ sub _process_cascade {
             }
         }
 
-        unshift @{$base_code}, [ depend => $fullpath ];
+        $self->requires($fullpath);
         $self->_process_cascade_file($cfile, $base_code);
     }
 
@@ -1025,6 +1037,12 @@ sub _variable_to_value {
     my $name = $arg->id;
     $name =~ s/\$//;
     return $name;
+}
+
+sub requires {
+    my($self, @files) = @_;
+    push @{ $self->dependencies }, @files;
+    return;
 }
 
 # optimizatin stuff
