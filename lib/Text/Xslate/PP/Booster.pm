@@ -799,13 +799,12 @@ sub _check_logic {
     my $next_opname = $ops->[ $i + $addr ]->[ 0 ] || '';
 
     if ( $next_opname =~ /and|or/ ) { # &&, ||
-        my $fmt = $type eq 'and'  ? ' && '
-                : $type eq 'dand' ? 'defined( %s )'
-                : $type eq 'or'   ? ' || '
-                : $type eq 'dor'  ? '!(defined( %s ))'
+        my $fmt = $type eq 'and'  ? '%s && %%s'
+                : $type eq 'dand' ? $] < 5.010 ? 'cond_dand( %s, sub { %%s } )' : '%s // %%s'
+                : $type eq 'or'   ? '%s || %%s '
+                : $type eq 'dor'  ? $] < 5.010 ? 'cond_dor( %s, sub { %%s } )'  : '%s // %%s'
                 : die $type;
-        my $pre_exprs = $self->exprs || '';
-        $self->exprs( $pre_exprs . $self->sa() . $fmt ); # store
+        $self->exprs( sprintf( $fmt, $self->sa() ) ); # store
         return;
     }
 
@@ -819,7 +818,7 @@ sub _check_logic {
             : die $type;
 
     if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
-        my $if_block_start   = $i + 1;                  # open if block
+        my $if_block_start   = $i + 1;                   # open if block
         my $if_block_end     = $i + $addr - 2;           # close if block - subtract goto line
         my $else_block_start = $i + $addr;               # open else block
         my $else_block_end   = $i + $addr + $oparg - 2;  # close else block - subtract goto line
@@ -867,9 +866,9 @@ CODE
 
         if ( $code and $code !~ /^\n+$/ ) {
             my $expr = $self->sa;
-            $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
+            $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
             $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $fmt, $expr ) ) );
-            $self->exprs( '' );
+            $self->exprs( undef );
             $self->write_lines( $code );
             $self->write_lines( sprintf( '}' ) );
         }
@@ -902,7 +901,7 @@ CODE
 
         if ( defined $sa_1st and defined $sa_2nd ) {
             my $expr = $self->sa;
-            $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
+            $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
             $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $fmt, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
@@ -925,9 +924,9 @@ CODE
         );
 
         my $expr = $self->sa;
-        $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
+        $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
         $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $fmt, $expr ) ) );
-        $self->exprs( '' );
+        $self->exprs( undef );
         $self->write_lines( $st_wh->code );
         $self->write_lines( sprintf( '}' ) );
 
@@ -956,7 +955,7 @@ CODE
         );
 
         my $expr = $self->sa;
-        $expr = ( $self->exprs || '' ) . $expr; # adding expr if exists
+        $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
 
         if ( _logic_is_sort( $ops, $i, $addr ) ) { # series of sort ops
             return $self->sa( sprintf( '( %s %s %s )', $expr, $type, $st_true->sa ) );
