@@ -107,6 +107,8 @@ my @data = (
 
     [': defined $value10 + 10', defined 10 + 10],
 
+    [': $undefined1 // $undefined2 // 10', 10],
+    [': $undefined1 // ( $undefined2 // 10 )', 10],
 );
 
 foreach my $pair(@data) {
