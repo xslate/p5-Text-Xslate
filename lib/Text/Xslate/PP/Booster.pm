@@ -792,8 +792,6 @@ sub _check_logic {
     my ( $self, $type, $addr ) = @_;
     my $i = $self->current_line;
 
-    $self->write_lines("# $type [$i]");
-
     my $ops = $self->ops;
 
     my $next_opname = $ops->[ $i + $addr ]->[ 0 ] || '';
@@ -971,17 +969,13 @@ CODE
 
         }
         elsif ( $st_true->sa ) {
-            $self->sa( sprintf( <<'CODE', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
-cond_%s( %s, sub { %s } )
-CODE
-
+            $self->sa( sprintf( 'cond_%s( %s, sub { %s } )', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
         }
         else {
         }
 
     }
 
-    $self->write_lines("# end $type [$i]");
 }
 
 
