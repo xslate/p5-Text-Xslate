@@ -65,6 +65,13 @@
 #define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
 #define TX_current_frame()    TX_current_framex(TX_st)
 
+#define TX_RUNOPS(st) STMT_START {                                 \
+        while((st)->pc < (st)->code_len) {                         \
+            CALL_FPTR((st)->code[(st)->pc].exec_code)(aTHX_ (st)); \
+        }                                                          \
+    } STMT_END
+
+
 /* template object, stored in $self->{template}{$file} */
 enum txtmplo_ix {
     TXo_NAME,

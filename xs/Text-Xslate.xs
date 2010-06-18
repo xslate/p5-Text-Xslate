@@ -432,10 +432,7 @@ tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name
         U32 const save_pc = TX_st->pc;
         tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->code_len /* retaddr */);
 
-        /* execute */
-        while(TX_st->pc < TX_st->code_len) {
-            CALL_FPTR(TX_st->code[TX_st->pc].exec_code)(aTHX_ TX_st);
-        }
+        TX_RUNOPS(TX_st);
         /* after tx_macro_end */
 
         TX_st->pc = save_pc;
@@ -1110,17 +1107,7 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     SAVEI32(MY_CXT.depth);
     MY_CXT.depth++;
 
-    while(st.pc < st.code_len) {
-#ifdef DEBUGGING
-        Size_t const old_pc = st.pc;
-#endif
-        CALL_FPTR(st.code[st.pc].exec_code)(aTHX_ &st);
-#ifdef DEBUGGING
-        if(UNLIKELY(old_pc == st.pc)) {
-            croak("Oops: pogram counter has not been changed on [%d]", (int)st.pc);
-        }
-#endif
-    }
+    TX_RUNOPS(&st);
 
     /* clear temporary buffers */
     sv_setsv(st.targ, &PL_sv_undef);
