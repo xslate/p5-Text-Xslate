@@ -311,6 +311,7 @@ sub _process_cascade {
         my $mtable   = $self->macro_table;
         my $macro;
         foreach my $c(@{$code}) {
+            # retrieve macros
             if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
                 if($c->[0] eq 'macro_begin') {
                     $macro = [];
@@ -320,6 +321,12 @@ sub _process_cascade {
                         body  => [],
                     };
                     push @{ $mtable->{$c->[1]} ||= [] }, $macro;
+                }
+                elsif($c->[0] eq 'macro_nargs') {
+                    $macro->{nargs} = $c->[1];
+                }
+                elsif($c->[0] eq 'macro_outer') {
+                    $macro->{outer} = $c->[1];
                 }
                 elsif($c->[0] eq 'macro_end') {
                     $macro->{immediate} = $c->[1];
@@ -434,8 +441,8 @@ sub _flush_macro_table {
             push @code, [ macro_nargs => $macro->{nargs} ]
                 if $macro->{nargs};
 
-            push @code, [ macro_outer => $macro->{lvar_used} ]
-                if $macro->{lvar_used};
+            push @code, [ macro_outer => $macro->{outer} ]
+                if $macro->{outer};
 
             push @code, @{ $macro->{body} }, [ macro_end => $macro->{immediate} ];
         }
@@ -646,13 +653,16 @@ sub _generate_proc { # definition of macro, block, before, around, after
         body      => [ $self->_compile_ast($block) ],
         line      => $node->line,
         file      => $self->file,
-        lvar_used => $lvar_used, # outer lexical variables
+        outer     => $lvar_used,
         immediate => 0,
     );
 
     if(any_in($type, qw(macro block))) {
         if(exists $self->macro_table->{$name}) {
-            $self->_error("Redefinition of $type $name is forbidden", $node);
+            my $m = $self->macro_table->{$name};
+            if(p(\%macro) ne p($m)) {
+                $self->_error("Redefinition of $type $name is forbidden", $node);
+            }
         }
         if($type eq 'block') {
             $macro{immediate} = 1;
@@ -927,7 +937,6 @@ sub _generate_call {
         [ pushmark => undef, undef, "funcall " . $callable->id ],
         (map { $self->_expr($_), [ 'push' ] } @{$args}),
         $self->_expr($callable),
-        # lvar_used inidicates how many number of lexical variables refers
         [ funcall => undef, $node->line ],
     );
 }
