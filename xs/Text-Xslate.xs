@@ -158,8 +158,8 @@ static AV*
 tx_push_frame(pTHX_ tx_state_t* const st) {
     AV* newframe;
 
-    if(st->current_frame > 100) {
-        croak("Macro call is too deep (> 100)");
+    if(st->current_frame > TX_MAX_DEPTH) {
+        croak("Macro call is too deep (> %d)", TX_MAX_DEPTH);
     }
     /* local $st->{current_frame} = $st->{current_frame} + 1 */
     SAVEI32(st->current_frame);
@@ -1099,8 +1099,8 @@ tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
     SAVEVPTR(MY_CXT.current_st);
     MY_CXT.current_st = &st;
 
-    if(MY_CXT.depth > 100) {
-        croak("Execution is too deep (> 100)");
+    if(MY_CXT.depth > TX_MAX_DEPTH) {
+        croak("Execution is too deep (> %d)", TX_MAX_DEPTH);
     }
 
     /* local $depth = $depth + 1 */
