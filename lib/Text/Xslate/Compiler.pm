@@ -17,6 +17,7 @@ use Scalar::Util ();
 #use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);
 use constant _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms);
+use constant _DUMP_GEN => scalar($DEBUG =~ /\b dump=gen \b/xms);
 
 our $OPTIMIZE = scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
 if(not defined $OPTIMIZE) {
@@ -269,6 +270,8 @@ sub _finish_main {
     return;
 }
 
+our $_lv = -1;
+
 sub _compile_ast {
     my($self, $ast) = @_;
     return if not defined $ast;
@@ -278,9 +281,14 @@ sub _compile_ast {
     # TODO
     # $self->_optimize_ast($ast) if $self->optimize;
 
+    local $_lv = $_lv + 1 if _DUMP_GEN;
+
     my @code;
     foreach my $node(@{$ast}) {
         blessed($node) or Carp::confess("Oops: Not a node object: " . p($node));
+
+        printf STDERR "%s"."generate %s (%s)\n", "." x $_lv, $node->arity, $node->id if _DUMP_GEN;
+
         my $generator = $self->can('_generate_' . $node->arity)
             || Carp::confess("Oops: Unexpected node:  " . p($node));
 
