@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/local/bin/perl
 package App::Xslate;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
