@@ -626,6 +626,14 @@ sub _generate_while {
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
 
+    my $cond_op = "and";
+
+    if($OPTIMIZE) {
+        while(any_in($expr->id, "!", "not")) {
+            $expr    = $expr->first;
+            $cond_op = $cond_op eq "and" ? "or" : "and";
+        }
+    }
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -641,7 +649,7 @@ sub _generate_while {
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_block($block);
     return @code,
-        [ and  => scalar(@block_code) + 2, undef, "while" ],
+        [ $cond_op => scalar(@block_code) + 2, undef, "while" ],
         @block_code,
         [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
 
@@ -717,7 +725,7 @@ sub _generate_if {
     my $third  = $node->third;
 
     if($OPTIMIZE) {
-        while(any_in($first->id, "!", "no")) {
+        while(any_in($first->id, "!", "not")) {
             $first            = $first->first;
             ($second, $third) = ($third, $second);
         }
