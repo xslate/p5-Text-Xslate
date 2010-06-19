@@ -669,14 +669,14 @@ sub _generate_proc { # definition of macro, block, before, around, after
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
 
-    my $arg_ix = 0;
+    my $lvar_used = $self->lvar_id;
+    my $arg_ix    = 0;
     foreach my $arg(@args) {
         # to fetch ST(ix)
         # Note that arg_ix must be start from 1
-        $self->lvar->{$arg} = $arg_ix++;
+        $self->lvar->{$arg} = $lvar_used + $arg_ix++;
     }
 
-    my $lvar_used = $self->lvar_id;
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
     my %macro = (
@@ -717,7 +717,6 @@ sub _generate_lambda {
 
     my $macro = $node->first;
     $self->_compile_ast([$macro]);
-
     return [ symbol => $macro->first->id, $node->line, 'lambda' ];
 }
 
@@ -1058,12 +1057,11 @@ sub _generate_constant {
     my $lhs     = $node->first;
     my $rhs     = $node->second;
 
-    my $lvar      = $self->lvar;
-    my $lvar_name = $lhs->id;
-
     my @expr = $self->_expr($rhs);
 
+    my $lvar            = $self->lvar;
     my $lvar_id         = $self->lvar_id;
+    my $lvar_name       = $lhs->id;
     $lvar->{$lvar_name} = $lvar_id;
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 

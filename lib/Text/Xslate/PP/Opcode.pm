@@ -467,16 +467,16 @@ sub tx_macro_enter {
 
     $_[0]->{ output } = '';
 
+    my $i = 0;
     if($outer > 0) {
         # copies lexical variables from the old frame to the new one
         my $oframe = $_[0]->frame->[ $_[0]->current_frame - 1 ];
-        for(my $i = 0; $i < $outer; $i++) {
+        for(; $i < $outer; $i++) {
             my $real_ix = $i + TXframe_START_LVAR;
             $cframe->[$real_ix] = $oframe->[$real_ix];
         }
     }
 
-    my $i  = 0;
     for my $val (@{$args}) {
         tx_access_lvar( $_[0], $i++, $val );
     }
