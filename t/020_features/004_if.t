@@ -231,6 +231,38 @@ T
     foo
 X
 
+    [<<'T', <<'X'],
+: if $value != nil and 1 {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X'],
+: if $value != nil or 1 {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X'],
+: if 1 and $value != nil {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X'],
+: if 0 or $value != nil {
+    foo
+: }
+T
+    foo
+X
+
 );
 
 foreach my $d(@data) {
