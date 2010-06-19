@@ -191,6 +191,46 @@ T
     foo
 X
 
+    [<<'T', <<'X', "if defined"],
+: if defined $lang {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X', "if not defined"],
+: if not defined $undefined {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X', "if not not defined"],
+: if not not defined $lang {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X', "if nil"],
+: if $undefined == nil {
+    foo
+: }
+T
+    foo
+X
+
+    [<<'T', <<'X', "if not nil"],
+: if not $value == nil {
+    foo
+: }
+T
+    foo
+X
+
 );
 
 foreach my $d(@data) {

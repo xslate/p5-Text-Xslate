@@ -634,6 +634,7 @@ sub _generate_while {
             $cond_op = $cond_op eq "and" ? "or" : "and";
         }
     }
+
     my @code = $self->_expr($expr);
 
     my($iter_var) = @{$vars};
@@ -724,10 +725,29 @@ sub _generate_if {
     my $second = $node->second;
     my $third  = $node->third;
 
+    my $cond_true  = "and";
+    my $cond_false = "or";
+
     if($OPTIMIZE) {
         while(any_in($first->id, "!", "not")) {
             $first            = $first->first;
-            ($second, $third) = ($third, $second);
+
+            ($cond_true, $cond_false) = ($cond_false, $cond_true);
+        }
+
+        # optimize conditional expression
+        if($first->is_logical and any_in($first->id, qw(== !=))) {
+            my $rhs = $first->second;
+            if($rhs->arity eq "literal" and $rhs->id eq "nil") {
+                # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
+                substr $cond_true,  0, 0, 'd';
+                substr $cond_false, 0, 0, 'd';
+
+                if($first->id eq "==") {
+                    ($cond_true, $cond_false) = ($cond_false, $cond_true);
+                }
+                $first = $first->first;
+            }
         }
     }
 
@@ -761,7 +781,7 @@ sub _generate_if {
     if( (@then and @else) or !$OPTIMIZE) {
         return(
             @cond,
-            [ and  => scalar(@then) + 2, undef, $node->id . ' (then)' ],
+            [ $cond_true => scalar(@then) + 2, undef, $node->id . ' (then)' ],
             @then,
             [ goto => scalar(@else) + 1, undef, $node->id . ' (else)' ],
             @else,
@@ -770,14 +790,14 @@ sub _generate_if {
     elsif(!@else) { # no @else
         return(
             @cond,
-            [ and => scalar(@then) + 1, undef, $node->id . ' (then/no-else)' ],
+            [ $cond_true => scalar(@then) + 1, undef, $node->id . ' (then/no-else)' ],
             @then,
         );
     }
     else { # no @then
         return(
             @cond,
-            [ or => scalar(@else) + 1, undef, $node->id . ' (else/no-then)'],
+            [ $cond_false => scalar(@else) + 1, undef, $node->id . ' (else/no-then)'],
             @else,
         );
     }
