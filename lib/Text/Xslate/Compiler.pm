@@ -623,17 +623,11 @@ sub _generate_while {
     if(@{$vars} > 1) {
         $self->_error("A while-loop requires one or zero variable for each items", $node);
     }
+
+    (my $cond_op, undef, $expr) = $self->_prepare_cond_expr($expr);
+
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-
-    my $cond_op = "and";
-
-    if($OPTIMIZE) {
-        while(any_in($expr->id, "!", "not")) {
-            $expr    = $expr->first;
-            $cond_op = $cond_op eq "and" ? "or" : "and";
-        }
-    }
 
     my @code = $self->_expr($expr);
 
@@ -719,41 +713,46 @@ sub _generate_lambda {
     return [ symbol => $macro->first->id, $node->line, 'lambda' ];
 }
 
+sub _prepare_cond_expr {
+    my($self, $expr) = @_;
+    my $t = "and";
+    my $f = "or";
+
+    if($OPTIMIZE) {
+        while(any_in($expr->id, "!", "not")) {
+            $expr    = $expr->first;
+            ($t, $f) = ($f, $t);
+        }
+
+        if($expr->is_logical and any_in($expr->id, qw(== !=))) {
+            my $rhs = $expr->second;
+            if($rhs->arity eq "literal" and $rhs->id eq "nil") {
+                # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
+                substr $t, 0, 0, 'd';
+                substr $f, 0, 0, 'd';
+
+                if($expr->id eq "==") {
+                    ($t, $f) = ($f, $t);
+                }
+                $expr = $expr->first;
+            }
+        }
+    }
+
+    return($t, $f, $expr);
+}
+
 sub _generate_if {
     my($self, $node) = @_;
     my $first  = $node->first;
     my $second = $node->second;
     my $third  = $node->third;
 
-    my $cond_true  = "and";
-    my $cond_false = "or";
-
-    if($OPTIMIZE) {
-        while(any_in($first->id, "!", "not")) {
-            $first            = $first->first;
-
-            ($cond_true, $cond_false) = ($cond_false, $cond_true);
-        }
-
-        # optimize conditional expression
-        if($first->is_logical and any_in($first->id, qw(== !=))) {
-            my $rhs = $first->second;
-            if($rhs->arity eq "literal" and $rhs->id eq "nil") {
-                # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
-                substr $cond_true,  0, 0, 'd';
-                substr $cond_false, 0, 0, 'd';
-
-                if($first->id eq "==") {
-                    ($cond_true, $cond_false) = ($cond_false, $cond_true);
-                }
-                $first = $first->first;
-            }
-        }
-    }
+    my($cond_true, $cond_false, $expr) = $self->_prepare_cond_expr($first);
 
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-    my @cond  = $self->_expr($first);
+    my @cond  = $self->_expr($expr);
 
     my @then = do {
         local $self->{lvar}  = { %{$self->lvar}  }; # new scope
