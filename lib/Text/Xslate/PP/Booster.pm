@@ -853,11 +853,13 @@ sub _check_logic {
 
             my $st_2nd = $self->_spawn_child->_convert_opcode( $nested_ops );
 
-        $self->sa( sprintf(  <<'CODE', $self->sa, _rm_tailed_lf( $st_1st->sa ), _rm_tailed_lf( $st_2nd->sa ) ) );
-cond_ternary( %s, sub { %s; }, sub { %s; } )
-CODE
-
-            return;
+            return $self->sa(
+                sprintf( 'cond_ternary( %s, sub { %s; }, sub { %s; } )',
+                    sprintf( $fmt, $self->sa ),
+                    _rm_tailed_lf( $st_1st->sa ),
+                    _rm_tailed_lf( $st_2nd->sa ),
+                )
+            );
         }
 
         my $code = $st_1st->code;
@@ -960,13 +962,13 @@ CODE
         }
 
         if ( $st_true->code ) { # Ah, if-style had gone..., but again write if-style!
-            my $if_style = $type eq 'and' ? 'if' : 'unless';
-            $self->write_lines( sprintf( <<'CODE', $if_style, $expr, $st_true->code ) );
-%s ( %s ) {
-%s
-}
-CODE
-
+            my $cond_type = $type eq 'and'  ? 'if ( %s )'
+                          : $type eq 'or'   ? 'unless ( %s )'
+                          : $type eq 'dand' ? 'if ( defined( %s ) )'
+                          : $type eq 'dor'  ? 'unless ( defined( %s ) )'
+                          : die "invalid logic type" # can't reache here
+                          ;
+            $self->write_lines( sprintf( "%s {\n%s\n}\n", sprintf( $cond_type, $expr ), $st_true->code ) );
         }
         elsif ( $st_true->sa ) {
             $self->sa( sprintf( 'cond_%s( %s, sub { %s } )', $type, $expr, _rm_tailed_lf( $st_true->sa ) ) );
