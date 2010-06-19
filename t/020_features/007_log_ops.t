@@ -100,10 +100,10 @@ my @data = (
     [': defined $value0       ? 1 : 0', 1],
     [': defined $no_such_var  ? 1 : 0', 0],
 
-    [': defined($value0)      ? 1 : 0', 1],
-    [': defined($no_such_var) ? 1 : 0', 0],
-    [': defined $value0       ? 1 : 0', 1],
-    [': defined $no_such_var  ? 1 : 0', 0],
+    [': !defined($value0)      ? 1 : 0', 0],
+    [': !defined($no_such_var) ? 1 : 0', 1],
+    [': !defined $value0       ? 1 : 0', 0],
+    [': !defined $no_such_var  ? 1 : 0', 1],
 
     [': defined $value10 + 10', defined 10 + 10],
 
