@@ -921,10 +921,11 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
     sv_setpvs(tmp, "");
     SvUTF8_on(tmp); /* sv_utf8_upgrade(tmp); */
 
+    i = 0;
     if(outer > 0) { /* refers outer lexical variales */
         /* copies lexical variables from the old frame to the new one */
         AV* const oframe = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1];
-        for(i = 0; i < outer; i++) {
+        for(NOOP; i < outer; i++) {
             UV const real_ix = i + TXframe_START_LVAR;
             av_store(cframe, real_ix , SvREFCNT_inc_NN(AvARRAY(oframe)[real_ix]));
         }
@@ -933,11 +934,9 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
     if(items > 0) { /* has arguments */
         dORIGMARK;
         MARK++;
-        i = 0; /* must start zero */
-        while(MARK <= SP) {
+        for(NOOP; MARK <= SP; i++) {
             sv_setsv(TX_lvar(i), *MARK);
             MARK++;
-            i++;
         }
         SP = ORIGMARK;
         PUTBACK;
