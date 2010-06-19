@@ -538,11 +538,6 @@ Text::Xslate::Syntax::TTerse - An alternative syntax compatible with Template To
     # PRE_PROCESS/POST_PROCESS/WRAPPER
     $tx = Text::Xslate->new(
         syntax => 'TTerse',
-
-        # those options are passed directly to TTerse
-        header  => ['header.tt'],
-        footer  => ['footer.tt'],
-        wrapper => ['wrapper.tt'],
     );
 
 =head1 DESCRIPTION
@@ -552,22 +547,6 @@ using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
 (TODO: I should concentrate on the difference between Template-Toolkit 2 and
 TTerse)
-
-=head1 OPTIONS
-
-There are options which are specific to TTerse.
-
-=head2 C<< header => \@templates >>
-
-Specify the header template files, which are inserted to the head of each template.
-
-This option corresponds to Template-Toolkit's C<PRE_PROCESS> option.
-
-=head2 C<< footer => \@templates >>
-
-Specify the footer template files, which are inserted to the head of each template.
-
-This option corresponds to Template-Toolkit's C<POST_PROCESS> option.
 
 =head1 SYNTAX
 

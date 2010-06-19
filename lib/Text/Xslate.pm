@@ -555,6 +555,11 @@ Here is a result of F<benchmark/others.pl> to compare various template engines.
 You can see Xslate is 3 times faster than HTML::Template::Pro and Text::ClearSilver,
 which are implemented in XS.
 
+=head3 High extensiblity
+
+Xslate is highly extensible. You can add functions and methods to the template
+engine and even add a new syntax via extending the parser.
+
 =head3 Template cascading
 
 Xslate supports B<template cascading>, which allows you to extend
@@ -562,14 +567,6 @@ templates with block modifiers. It is like traditional template inclusion,
 but is more powerful.
 
 This mechanism is also called as template inheritance.
-
-=head3 Syntax alternation
-
-The Xslate virtual machine and the parser/compiler are completely separated
-so that one can use alternative parsers.
-
-For example, C<TTerse>, a Template-Toolkit compatible parser, is supported as a
-completely different syntax parser.
 
 =head1 INTERFACE
 
@@ -698,6 +695,17 @@ regular expression.
 
 This option is passed to the parser via the compiler.
 
+=item C<< header => \@template_files >>
+
+Specify the header template files, which are inserted to the head of each template.
+
+This option is passed to the compiler.
+
+=item C<< footer => \@template_files >>
+
+Specify the footer template files, which are inserted to the foot of each template.
+
+This option is passed to the compiler.
 
 =back
 
@@ -780,18 +788,18 @@ See L<xslate> for details.
 
 =head1 TEMPLATE SYNTAX
 
-There are several syntaxes you can use:
+Several syntaxes are provided for templates.
 
 =over
 
 =item Kolon
 
-B<Kolon> is the default syntax, using C<< <: ... :> >> tags and
+B<Kolon> is the default syntax, using C<< <: ... :> >> inline code and
 C<< : ... >> line code, which is explained in L<Text::Xslate::Syntax::Kolon>.
 
 =item Metakolon
 
-B<Metakolon> is the same as Kolon except for using C<< [% ... %] >> tags and
+B<Metakolon> is the same as Kolon except for using C<< [% ... %] >> inline code and
 C<< %% ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 
 =item TTerse
@@ -839,7 +847,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 Perl 5.8.1 or later.
 
 If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
-backend is used.
+backend will be used.
 
 =head1 BUGS
 
