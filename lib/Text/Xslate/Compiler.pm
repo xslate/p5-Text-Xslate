@@ -200,7 +200,6 @@ sub compile {
     local $self->{cascade};
     local $self->{header}  = $self->{header};
     local $self->{footer}  = $self->{footer};
-    local $self->{wrapper} = $self->{wrapper};
 
     my $parser   = $self->parser;
     my $old_file = $parser->file;
