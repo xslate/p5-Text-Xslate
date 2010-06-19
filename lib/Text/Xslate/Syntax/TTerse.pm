@@ -25,40 +25,6 @@ around split => sub {
     return $tokens_ref;
 };
 
-around parse => sub {
-    my $super = shift;
-    my($parser, $input, %args) = @_;
-
-    my $compiler = $parser->compiler or return $super->(@_);
-    my $engine   = $parser->engine   or return $super->(@_);
-
-    my $header = delete $compiler->{header};
-    my $footer = delete $compiler->{footer};
-
-    if($header) {
-        my $s = '';
-        foreach my $file(@{$header}) {
-            my $fullpath = $engine->find_file($file)->{fullpath};
-            $s .= $engine->slurp( $fullpath );
-            $compiler->requires($fullpath);
-        }
-        substr $input, 0, 0, $s;
-    }
-
-    if($footer) {
-        my $s = '';
-        foreach my $file(@{$footer}) {
-            my $fullpath = $engine->find_file($file)->{fullpath};
-            $s .= $engine->slurp( $fullpath );
-            $compiler->requires($fullpath);
-        }
-        $input .= $s;
-    }
-    my $ast = $super->($parser, $input, %args);
-
-    return $ast;
-};
-
 sub init_symbols {
     my($parser) = @_;
 

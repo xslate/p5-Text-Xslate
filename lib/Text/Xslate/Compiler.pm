@@ -189,7 +189,7 @@ sub lvar_use {
 }
 
 sub compile {
-    my($self, $str, %args) = @_;
+    my($self, $input, %args) = @_;
 
     # each compiling process is independent
     local $self->{macro_table}  = {};
@@ -206,9 +206,19 @@ sub compile {
 
     $args{file} ||= '<input>';
 
+    my $header = delete $self->{header};
+    my $footer = delete $self->{footer};
+
+    if($header) {
+        substr $input, 0, 0, $self->_cat_files($header);
+    }
+    if($footer) {
+        $input .= $self->_cat_files($footer);
+    }
+
     my @code; # main protocode
     {
-        my $ast = $parser->parse($str, %args);
+        my $ast = $parser->parse($input, %args);
         print STDERR p($ast) if _DUMP_AST;
         @code = $self->_compile_ast($ast);
         $self->_finish_main(\@code);
@@ -239,6 +249,18 @@ sub compile {
     }
 
     return \@code;
+}
+
+sub _cat_files {
+    my($self, $files) = @_;
+    my $engine = $self->engine || $self->_error("No Xslate engine which header/footer requires");
+    my $s = '';
+    foreach my $file(@{$files}) {
+        my $fullpath = $engine->find_file($file)->{fullpath};
+        $s .= $engine->slurp( $fullpath );
+        $self->requires($fullpath);
+    }
+    return $s;
 }
 
 sub _finish_main {
