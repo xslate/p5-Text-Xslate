@@ -157,7 +157,7 @@ sub led_dot {
 sub led_concat {
     my($parser, $symbol, $left) = @_;
 
-    return $parser->SUPER::led_infix($symbol->clone(id => '~'), $left);
+    return $parser->led_infix($symbol->clone(id => '~'), $left);
 }
 
 sub led_assignment {
