@@ -167,20 +167,22 @@ C<$~item> is a pseudo object, so you can access its elements
 via the dot-name syntax.
 
     : for $data -> $i {
+        : $~i       # iterator index (0, 1, 2, ...)
         : $~i.index # the same as $~i
         : $~i.count # the same as $~i + 1
 
         : if ($~i.index % 2) == 0 {
-            Even
+            even
         : }
         : else {
-            Odd
+            odd
         : }
+        : $i~.cycle("even", "odd") # => "even" -> "odd" -> "even" -> "odd" ...
     : }
 
 Supported iterator elements are C<index :Int>, C<count :Int>,
 C<body : ArrayRef>, C<size : Int>, C<max_index :Int>, C<is_first :Bool>,
-and C<is_last :Bool>, C<peek_next :Any>, C<peek_prev :Any>.
+C<is_last :Bool>, C<peek_next :Any>, C<peek_prev :Any>, C<cycle(...) :Any>.
 
 C<while> loops are also supported in the same semantics as Perl's:
 
