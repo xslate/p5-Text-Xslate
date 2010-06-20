@@ -191,6 +191,13 @@ C<while> loops are also supported in the same semantics as Perl's:
         [<: $item.field :>]
     : }
 
+C<< while defined expr -> $item >> is interpreted as
+C<< while defined(my $item = expr) >> for convenience.
+
+    : while defined $obj.fetch() -> $item {
+        [<: $item # $item can be false-but-defined:>]
+    : }
+
 =head2 Conditional statements
 
 There are C<if-else> and C<given-when> conditional statements.

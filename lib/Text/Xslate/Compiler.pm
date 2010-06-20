@@ -725,24 +725,22 @@ sub _prepare_cond_expr {
     my $t = "and";
     my $f = "or";
 
-    if($OPTIMIZE) {
-        while(any_in($expr->id, "!", "not")) {
-            $expr    = $expr->first;
-            ($t, $f) = ($f, $t);
-        }
+    while(any_in($expr->id, "!", "not")) {
+        $expr    = $expr->first;
+        ($t, $f) = ($f, $t);
+    }
 
-        if($expr->is_logical and any_in($expr->id, qw(== !=))) {
-            my $rhs = $expr->second;
-            if($rhs->arity eq "literal" and $rhs->id eq "nil") {
-                # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
-                substr $t, 0, 0, 'd';
-                substr $f, 0, 0, 'd';
+    if($expr->is_logical and any_in($expr->id, qw(== !=))) {
+        my $rhs = $expr->second;
+        if($rhs->arity eq "literal" and $rhs->id eq "nil") {
+            # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
+            substr $t, 0, 0, 'd';
+            substr $f, 0, 0, 'd';
 
-                if($expr->id eq "==") {
-                    ($t, $f) = ($f, $t);
-                }
-                $expr = $expr->first;
+            if($expr->id eq "==") {
+                ($t, $f) = ($f, $t);
             }
+            $expr = $expr->first;
         }
     }
 

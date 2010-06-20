@@ -90,6 +90,28 @@ T
 ---
 X
 
+    [ <<'T', <<'X', "while defined" ],
+: while defined $baz.fetch -> $x {
+    [<:$x:>]
+: }
+T
+    [0]
+    [1]
+    [2]
+    [3]
+X
+
+    [ <<'T', <<'X', "while defined" ],
+: while defined(my $x = $baz.fetch()) {
+    [<:$x:>]
+: }
+T
+    [0]
+    [1]
+    [2]
+    [3]
+X
+
 );
 
 foreach my $d(@data) {
@@ -103,6 +125,7 @@ foreach my $d(@data) {
             { title => 'B' },
             { title => 'C' },
         ]),
+        baz => ResultSet->new(data => [0 .. 3]),
         x => 42
     );
     is $tx->render_string($in, \%vars), $out, $msg or diag $in;
