@@ -10,20 +10,16 @@ sub _build_line_start { qr/%%/xms   }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
-around split => sub {
-    my $super = shift;
 
-    my $tokens_ref = $super->(@_);
+sub trim_code {
+    my($self, $code) = @_;
 
-    foreach my $t(@{$tokens_ref}) {
-        my($type, $value) = @{$t};
-        if($type eq 'code' && $value =~ /^#/) { # multiline comments
-            $t->[1] = '';
-        }
+    if($code =~ /^\#/) { # multiline comments
+        return '';
     }
 
-    return $tokens_ref;
-};
+    return $self->SUPER::trim_code($code);
+}
 
 sub init_symbols {
     my($parser) = @_;

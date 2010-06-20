@@ -185,8 +185,8 @@ has line => (
 
 sub symbol_class() { 'Text::Xslate::Symbol' }
 
-sub _trim {
-    my($s) = @_;
+sub trim_code {
+    my($parser, $s) = @_;
 
     $s =~ s/\A \s+         //xms;
     $s =~ s/   [ \t]+ \n?\z//xms;
@@ -220,7 +220,7 @@ sub split :method {
 
                 my($code, $chomp) = ($1, $2);
 
-                push @tokens, [ code => _trim($code) ];
+                push @tokens, [ code => $parser->trim_code($code) ];
                 if($chomp) {
                     push @tokens, [ postchomp => $chomp ];
                 }
@@ -233,7 +233,7 @@ sub split :method {
         # not $in_tag
         elsif($lex_line_code && s/$lex_line_code//xms) {
             push @tokens,
-                [ code => _trim($1) ];
+                [ code => $parser->trim_code($1) ];
         }
         elsif(s/$lex_tag_start//xms) {
             $in_tag = 1;

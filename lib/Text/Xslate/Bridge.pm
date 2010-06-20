@@ -4,12 +4,12 @@ use warnings;
 use Carp ();
 use Text::Xslate::Util qw(p);
 
-my %methods;
+my %storage;
 
 sub bridge {
     my $class = shift;
     while(my($type, $table) = splice @_, 0, 2) {
-        $methods{$class}{$type} = $table;
+        $storage{$class}{$type} = $table;
     }
     return;
 }
@@ -23,13 +23,13 @@ sub export_into_xslate {
 sub methods {
     my($class, %args) = @_;
 
-    if(!exists $methods{$class}) {
+    if(!exists $storage{$class}) {
         croak("$class has no methods (possibly not a bride class)");
     }
 
     if(exists $args{-exclude}) {
         my $exclude = $args{-exclude};
-        my $methods = $class->_methods;
+        my $methods = $class->_functions;
         my @export;
 
         if(ref($exclude) eq 'ARRAY') {
@@ -48,28 +48,29 @@ sub methods {
         return map { $_ => $methods->{$_} } @export;
     }
     else {
-        return %{ $class->_methods };
+        return %{ $class->_functions };
     }
 }
 
-sub _methods {
+sub _functions {
     my($class) = @_;
 
-    my $storage = $methods{$class}     ||= {};
-    my $methods = $storage->{_methods} ||= {};
+    my $st    = $storage{$class} ||= {};
+    my $funcs = $st->{_funcs}    ||= {};
 
+    # for methods
     foreach my $type qw(scalar hash array) {
-        my $table = $storage->{$type} || next;
+        my $table = $st->{$type} || next;
 
         while(my($name, $body) = each %{$table}) {
-            $methods->{$type . '::' . $name} = $body;
+            $funcs->{$type . '::' . $name} = $body;
         }
     }
-    return $methods;
+    return $funcs;
 }
 
 sub dump {
-    p(\%methods);
+    p(\%storage);
 }
 
 1;
