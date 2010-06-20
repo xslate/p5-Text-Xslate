@@ -1225,8 +1225,7 @@ sub methodcall {
     local @_f_l_for_methodcall = ( $st, $frame, $line );
 
     if( my $body = $st->symbol->{ $fq_name } || $builtin_method{ $fq_name } ){
-        my $pad = [ [ $invocant, @args ] ]; # re-pushmark
-        return proccall( $st, $body, $pad, [ $frame, $line ] );
+        return proccall( $st, $body, [ [ $invocant, @args ] ], [ $frame, $line ] );
     }
 
     if ( not defined $invocant ) {
