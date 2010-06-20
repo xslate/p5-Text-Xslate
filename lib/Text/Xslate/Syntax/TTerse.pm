@@ -10,16 +10,15 @@ sub _build_line_start { qr/%%/xms   }
 sub _build_tag_start  { qr/\Q[%/xms }
 sub _build_tag_end    { qr/\Q%]/xms }
 
-
-sub trim_code {
-    my($self, $code) = @_;
+around trim_code => sub {
+    my($super, $self, $code) = @_;
 
     if($code =~ /^\#/) { # multiline comments
         return '';
     }
 
-    return $self->SUPER::trim_code($code);
-}
+    return $super->($self, $code);
+};
 
 sub init_symbols {
     my($parser) = @_;
