@@ -555,7 +555,7 @@ Here is a result of F<benchmark/others.pl> to compare various template engines.
 You can see Xslate is 3 times faster than HTML::Template::Pro and Text::ClearSilver,
 which are implemented in XS.
 
-=head3 High extensiblity
+=head3 High extensibility
 
 Xslate is highly extensible. You can add functions and methods to the template
 engine and even add a new syntax via extending the parser.

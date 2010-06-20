@@ -86,6 +86,8 @@ __END__
 
 Text::Xslate::Bridge - The interface base class to import methods
 
+=for test_synopsis my(%nil_methods, %scalar_methods, %array_methods, %hash_methods, %functions);
+
 =head1 SYNOPSIS
 
     package SomeTemplate::Bridge::Xslate;
