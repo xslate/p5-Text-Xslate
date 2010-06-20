@@ -1651,20 +1651,24 @@ sub iterator_cycle {
         second       => $mod,
     );
 
-    my $parent = $iterator->clone(arity => 'if');
+    my $parent = $iterator->clone(
+        arity  => 'if',
+        first  => $parser->binary('==', $cond, 0),
+        second => [ $args[0] ],
+    );
     my $child  = $parent;
 
     my $last = pop @args;
-    for(my $i = 0; $i < @args; $i++) {
-        # $mod_n == $i ? $args[0] : ...
-        $child->first($parser->binary('==', $cond, $i));
-        $child->second([$args[$i]]);
+    for(my $i = 1; $i < @args; $i++) {
+        my $nth = $iterator->clone(
+            arity  => 'if',
+            id     => "$iterator.cycle: $i",
+            first  => $parser->binary('==', $tmp, $i),
+            second => [$args[$i]],
+        );
 
-        my $branch = $child->clone();
-        $child->third([$branch]);
-        $child = $branch;
-
-        $cond = $tmp; # use $temp anyway
+        $child->third([$nth]);
+        $child = $nth;
     }
     $child->third([$last]);
 
