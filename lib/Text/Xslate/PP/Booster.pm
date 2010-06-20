@@ -83,7 +83,7 @@ sub {
     my $output = q{};
     my $vars   = $st->{ vars };
 
-    $pad = [ [ ] ];
+    $st->{pad} = $pad = [ [ ] ];
 
 CODE
 
@@ -555,8 +555,10 @@ if ( @{$pad->[-1]} != $mobj->nargs ) {
 CODE
 
     $self->write_lines( sprintf( <<'CODE', $error ) );
-if ( $mobj->outer ) {
-    push @{$pad->[-1]}, @{$pad->[-2]};
+if ( my $outer = $mobj->outer ) {
+    my @temp = @{$pad->[-1]};
+    @{$pad->[-1]}[ 0 .. $outer - 1 ] = @{$pad->[-2]}[ 0 .. $outer - 1 ];
+    @{$pad->[-1]}[ $outer .. $outer + $mobj->nargs ] = @temp;
 }
 CODE
 
@@ -1124,7 +1126,7 @@ sub call {
         }
         elsif ( ref( $proc ) eq 'Text::Xslate::PP::Booster::Macro' ) {
             return bless \do {
-                $st->{ booster_macro }->{ $proc->[0] }->( $st, [ [ @args ] ], [ $frame, $line ] )
+                $st->{ booster_macro }->{ $proc->[0] }->( $st, push_pad( $st->{pad}, [ @args ] ), [ $frame, $line ] )
             }, 'Text::Xslate::Type::Raw';
         }
         else {
@@ -1223,8 +1225,7 @@ sub methodcall {
     local @_f_l_for_methodcall = ( $st, $frame, $line );
 
     if( my $body = $st->symbol->{ $fq_name } || $builtin_method{ $fq_name } ){
-        my $pad = [ [ $invocant, @args ] ]; # re-pushmark
-        return proccall( $st, $body, $pad, [ $frame, $line ] );
+        return proccall( $st, $body, [ [ $invocant, @args ] ], [ $frame, $line ] );
     }
 
     if ( not defined $invocant ) {
