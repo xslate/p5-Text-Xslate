@@ -220,6 +220,52 @@ T
     Int
 X
 
+    [<<'T', <<'X', 'cycle'],
+: for [1, 2, 3, 4] -> ($item) {
+    <: $~item.cycle("foo", "bar") :>
+: }
+T
+    foo
+    bar
+    foo
+    bar
+X
+
+    [<<'T', <<'X', 'cycle'],
+: for [1, 2, 3, 4, 5, 6, 7, 8, 9] -> ($item) {
+    <: $~item.cycle("foo", "bar", "baz") :>
+: }
+T
+    foo
+    bar
+    baz
+    foo
+    bar
+    baz
+    foo
+    bar
+    baz
+X
+
+    [<<'T', <<'X', 'cycle'],
+: for [1, 2, 3, 4] -> ($item) {
+    <: $~item.cycle("foo", "bar", "baz") :>
+: }
+-------
+: for [1, 2, 3, 4] -> ($item) {
+    <: $~item.cycle("FOO", "BAR", "BAZ") :>
+: }
+T
+    foo
+    bar
+    baz
+    foo
+-------
+    FOO
+    BAR
+    BAZ
+    FOO
+X
 
     [<<'T', <<'X', 'nested $~i'],
 : for $types -> $i {
@@ -238,6 +284,25 @@ T
         [2][2]
         [2][3]
 X
+
+    [<<'T', <<'X', 'nested $~i.cycle()'],
+: for $types -> $i {
+:   for $types -> $j {
+        [<: $~i.cycle("a", "b") :>][<: $~j.cycle("c", "d", "e") :>]
+:   }
+: }
+T
+        [a][c]
+        [a][d]
+        [a][e]
+        [b][c]
+        [b][d]
+        [b][e]
+        [a][c]
+        [a][d]
+        [a][e]
+X
+
 );
 
 foreach my $pair(@data) {

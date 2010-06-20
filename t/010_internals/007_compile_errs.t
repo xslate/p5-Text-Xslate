@@ -180,11 +180,22 @@ T
 };
 like $@, qr/\b foo \b/xms;
 
-foreach my $iter(qw($~foo $~foo.index $~foo.count $~foo.is_first $~foo.is_last)) {
+foreach my $iter qw(
+        $~foo.index $~foo.count
+        $~foo.max_index $~foo.size
+        $~foo.is_first $~foo.is_last
+        $~foo.peek_prev $~foo.peek_prev ) {
     eval {
         $tx->render_string("<: $iter :>");
     };
-    like $@, qr/\$~foo/, $iter;
+    like $@, qr/Undefined iterator/, $iter;
+    like $@, qr/\$~foo/;
+
+    eval {
+        $tx->render_string("<: for [] -> \$foo { $iter(1) } :>");
+    };
+    like $@, qr/Wrong number of arguments/;
+    like $@, qr/\Q$iter\E/;
 }
 
 eval {

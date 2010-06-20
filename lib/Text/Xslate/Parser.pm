@@ -532,6 +532,7 @@ sub init_iterator_elements {
         max_index => \&iterator_max_index,
         peek_next => \&iterator_peek_next,
         peek_prev => \&iterator_peek_prev,
+        cycle     => \&iterator_cycle,
     });
 
     return;
@@ -1066,15 +1067,15 @@ sub nud_iterator {
 
         $parser->advance(); # element name
 
+        my $args;
         if($parser->token->id eq "(") {
             $parser->advance();
-            # iterator elements are a psudo method,
-            # so they take no arguments.
+            $args = $parser->expression_list();
             $parser->advance(")");
         }
 
         $iterator->second($t);
-        return $generator->($parser, $iterator);
+        return $generator->($parser, $iterator, @{$args});
     }
     return $iterator;
 }
@@ -1543,32 +1544,42 @@ sub std_marker {
 
 # iterator elements
 
-sub iterator_index {
+sub bad_iterator_args {
     my($parser, $iterator) = @_;
+    $parser->_error("Wrong number of arguments for $iterator." . $iterator->second);
+}
+
+sub iterator_index {
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator
     return $iterator;
 }
 
 sub iterator_count {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator + 1
     return $parser->binary('+', $iterator, 1);
 }
 
 sub iterator_is_first {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator == 0
     return $parser->binary('==', $iterator, 0);
 }
 
 sub iterator_is_last {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator == $~iterator.max_index
     return $parser->binary('==', $iterator, $parser->iterator_max_index($iterator));
 }
 
 sub iterator_body {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator.body
     return $iterator->clone(
         arity => 'iterator_body',
@@ -1576,13 +1587,15 @@ sub iterator_body {
 }
 
 sub iterator_size {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator.max_index + 1
     return $parser->binary('+', $parser->iterator_max_index($iterator), 1);
 }
 
 sub iterator_max_index {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # __builtin_max_index($~iterator.body)
     return $parser->symbol('max_index')->clone(
         arity => 'unary',
@@ -1600,12 +1613,14 @@ sub _iterator_peek {
 }
 
 sub iterator_peek_next {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     return $parser->_iterator_peek($iterator, +1);
 }
 
 sub iterator_peek_prev {
-    my($parser, $iterator) = @_;
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args != 0;
     # $~iterator.is_first ? nil : <prev>
     return $parser->symbol('?')->clone(
         arity  => 'if',
@@ -1613,6 +1628,48 @@ sub iterator_peek_prev {
         second => [$parser->symbol('nil')],
         third  => [$parser->_iterator_peek($iterator, -1)],
     );
+}
+
+sub iterator_cycle {
+    my($parser, $iterator, @args) = @_;
+    $parser->bad_iterator_args($iterator) if @args < 2;
+    # $iterator.cycle("foo", "bar", "baz") makes:
+    #   ($tmp = $~iterator % n) == 0 ? "foo"
+    # :                    $tmp == 1 ? "bar"
+    # :                                "baz"
+    $parser->new_scope();
+
+    my $mod = $parser->binary('%', $iterator, scalar @args);
+
+    # for the second time
+    my $tmp = $parser->symbol('($cycle)')->clone(arity => 'name');
+
+    # for the first time
+    my $cond = $iterator->clone(
+        arity        => 'constant',
+        first        => $tmp,
+        second       => $mod,
+    );
+
+    my $parent = $iterator->clone(arity => 'if');
+    my $child  = $parent;
+
+    my $last = pop @args;
+    for(my $i = 0; $i < @args; $i++) {
+        # $mod_n == $i ? $args[0] : ...
+        $child->first($parser->binary('==', $cond, $i));
+        $child->second([$args[$i]]);
+
+        my $branch = $child->clone();
+        $child->third([$branch]);
+        $child = $branch;
+
+        $cond = $tmp; # use $temp anyway
+    }
+    $child->third([$last]);
+
+    $parser->pop_scope();
+    return $parent;
 }
 
 # utils
