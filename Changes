@@ -1,5 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+0.1035 Sun Jun 20 15:03:12 2010
+    [BUG FIXES]
+    - Macros with args could not refer to outer variables
+
+    [NEW FEATURES]
+    - "while defined expr -> $item" as a syntactic sugar to
+      "while defined(my $item = expr)"
+    - New iterator element: $~iter.cycle(...)
+
 0.1034 Wed Jun 16 17:27:44 2010
     [CHANGES]
     - Rename $~iter.max to $~iter.max_index in Kolon
