@@ -66,6 +66,12 @@ sub _functions {
             $funcs->{$type . '::' . $name} = $body;
         }
     }
+
+    # for functions
+    my $table = $st->{function};
+    while(my($name, $body) = each %{$table}) {
+        $funcs->{$name} = $body;
+    }
     return $funcs;
 }
 
@@ -87,10 +93,12 @@ Text::Xslate::Bridge - The interface base class to import methods
     use parent qw(Text::Xslate::Bridge);
 
     __PACKAGE__->bride(
-        nil    => \%SomeTemplate::nil_methods,
-        scalar => \%SomeTemplate::scalar_methods,
-        array  => \%SomeTemplate::array_methods,
-        hash   => \%SomeTemplate::hash_methods,
+        nil    => \%nil_methods,
+        scalar => \%scalar_methods,
+        array  => \%array_methods,
+        hash   => \%hash_methods,
+
+        function => \%functions,
     );
 
     # in your script

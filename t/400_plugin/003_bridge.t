@@ -14,7 +14,7 @@ use lib 't/lib';
         array  => { foo => sub { 'array foo'  }, size => sub { 42 } },
         hash   => { foo => sub { 'hash foo'   } },
 
-        #function => { foo => sub { 'func foo' } },
+        function => { foo => sub { 'func foo' } },
     );
 }
 
@@ -25,7 +25,7 @@ my $tx = Text::Xslate->new(
 is $tx->render_string('<: "xx".foo() :>'), 'scalar foo';
 is $tx->render_string('<: [42].foo() :>'), 'array foo';
 is $tx->render_string('<: {  }.foo() :>'), 'hash foo';
-#is $tx->render_string('<: "foo" | foo :>'), 'func foo';
+is $tx->render_string('<: "foo" | foo :>'), 'func foo';
 
 is $tx->render_string('<: [].size() :>'), '42';
 
