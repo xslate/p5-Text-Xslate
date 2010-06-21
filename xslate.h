@@ -74,6 +74,8 @@
         }                                                          \
     } STMT_END
 
+#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;     return; } STMT_END
+#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = (x); return; } STMT_END
 
 /* template object, stored in $self->{template}{$file} */
 enum txtmplo_ix {

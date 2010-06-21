@@ -452,16 +452,16 @@ tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name
  *********************/
 
 TXC(noop) {
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(move_to_sb) {
     TX_st_sb = TX_st_sa;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(move_from_sb) {
     TX_st_sa = TX_st_sb;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_var(save_to_lvar) {
@@ -469,17 +469,17 @@ TXC_w_var(save_to_lvar) {
     sv_setsv(sv, TX_st_sa);
     TX_st_sa = sv;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_var(load_lvar) {
     TX_st_sa = TX_lvar_get(SvIVX(TX_op_arg));
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_var(load_lvar_to_sb) {
     TX_st_sb = TX_lvar_get(SvIVX(TX_op_arg));
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 /* local $vars->{$key} = $val */
@@ -504,7 +504,7 @@ TXC_w_key(localize_s) {
     }
     sv_setsv(*svp, newval);
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(push) {
@@ -512,26 +512,26 @@ TXC(push) {
     XPUSHs(sv_mortalcopy(TX_st_sa));
     PUTBACK;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(pushmark) {
     dSP;
     PUSHMARK(SP);
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(nil) {
     TX_st_sa = &PL_sv_undef;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_sv(literal) {
     TX_st_sa = TX_op_arg;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 /* the same as literal, but make sure its argument is an integer */
@@ -543,7 +543,7 @@ TXC_w_key(fetch_s) { /* fetch a field from the top */
 
     TX_st_sa = he ? hv_iterval(vars, he) : &PL_sv_undef;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(fetch_field) { /* fetch a field from a variable (bin operator) */
@@ -551,7 +551,7 @@ TXC(fetch_field) { /* fetch a field from a variable (bin operator) */
     SV* const key = TX_st_sa;
 
     TX_st_sa = tx_fetch(aTHX_ TX_st, var, key);
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
@@ -559,7 +559,7 @@ TXC_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
     SV* const key = TX_op_arg;
 
     TX_st_sa = tx_fetch(aTHX_ TX_st, var, key);
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(print) {
@@ -582,7 +582,7 @@ TXC(print) {
         /* does nothing */
     }
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(print_raw) {
@@ -594,13 +594,13 @@ TXC(print_raw) {
     else {
         tx_warn(aTHX_ TX_st, "Use of nil to print");
     }
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_sv(print_raw_s) {
     sv_catsv_nomg(TX_st->output, TX_op_arg);
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(include) {
@@ -610,7 +610,7 @@ TXC(include) {
     tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_var(for_start) {
@@ -633,7 +633,7 @@ TXC_w_var(for_start) {
     sv_setiv(TX_lvar(id+1), -1); /* (re)set iterator */
     sv_setsv(TX_lvar(id+2), avref);
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_goto(for_iter) {
@@ -654,16 +654,14 @@ TXC_goto(for_iter) {
     if(LIKELY(!SvRMAGICAL(av))) {
         if(++SvIVX(i) <= AvFILLp(av)) {
             sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
-            TX_st->pc++;
-            return;
+            TX_RETURN_NEXT();
         }
     }
     else { /* magical variables */
         if(++SvIVX(i) <= av_len(av)) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
             sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
-            TX_st->pc++;
-            return;
+            TX_RETURN_NEXT();
         }
     }
 
@@ -675,7 +673,7 @@ TXC_goto(for_iter) {
         sv_setsv(avref, nil);
     }
 
-    TX_st->pc = SvUVX(TX_op_arg); /* goto */
+    TX_RETURN_PC( SvUVX(TX_op_arg) );
 }
 
 
@@ -686,30 +684,30 @@ TXC(add) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) + SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(sub) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) - SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(mul) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) * SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(div) {
     sv_setnv(TX_st->targ, SvNVx(TX_st_sb) / SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(mod) {
     sv_setiv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_sv(concat) {
@@ -719,15 +717,15 @@ TXC_w_sv(concat) {
 
     TX_st_sa = sv;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_goto(and) {
     if(sv_true(TX_st_sa)) {
-        TX_st->pc++;
+        TX_RETURN_NEXT();
     }
     else {
-        TX_st->pc = SvUVX(TX_op_arg);
+        TX_RETURN_PC( SvUVX(TX_op_arg) );
     }
 }
 
@@ -735,19 +733,19 @@ TXC_goto(dand) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
     if(SvOK(sv)) {
-        TX_st->pc++;
+        TX_RETURN_NEXT();
     }
     else {
-        TX_st->pc = SvUVX(TX_op_arg);
+        TX_RETURN_PC( SvUVX(TX_op_arg) );
     }
 }
 
 TXC_goto(or) {
     if(!sv_true(TX_st_sa)) {
-        TX_st->pc++;
+        TX_RETURN_NEXT();
     }
     else {
-        TX_st->pc = SvUVX(TX_op_arg);
+        TX_RETURN_PC( SvUVX(TX_op_arg) );
     }
 }
 
@@ -755,24 +753,24 @@ TXC_goto(dor) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
     if(!SvOK(sv)) {
-        TX_st->pc++;
+        TX_RETURN_NEXT();
     }
     else {
-        TX_st->pc = SvUVX(TX_op_arg);
+        TX_RETURN_PC( SvUVX(TX_op_arg) );
     }
 }
 
 TXC(not) {
     TX_st_sa = boolSV( !sv_true(TX_st_sa) );
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(minus) { /* unary minus */
     sv_setnv(TX_st->targ, -SvNVx(TX_st_sa));
     sv_2iv(TX_st->targ); /* IV please */
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(max_index) {
@@ -785,51 +783,51 @@ TXC(max_index) {
 
     sv_setiv(TX_st->targ, av_len((AV*)SvRV(avref)));
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(builtin_mark_raw) {
     TX_st_sa = tx_mark_raw(aTHX_ TX_st_sa);
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(builtin_unmark_raw) {
     TX_st_sa = tx_unmark_raw(aTHX_ TX_st_sa);
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(builtin_html_escape) {
     TX_st_sa = tx_html_escape(aTHX_ TX_st_sa);
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(eq) {
     TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(ne) {
     TX_st_sa = boolSV( !tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(lt) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) < SvNVx(TX_st_sa) );
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(le) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) <= SvNVx(TX_st_sa) );
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(gt) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) > SvNVx(TX_st_sa) );
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 TXC(ge) {
     TX_st_sa = boolSV( SvNVx(TX_st_sb) >= SvNVx(TX_st_sa) );
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(ncmp) {
@@ -847,19 +845,18 @@ TXC(ncmp) {
     }
     else {
         TX_st_sa = &PL_sv_undef;
-        TX_st->pc++;
-        return;
+        TX_RETURN_NEXT();
     }
 
     sv_setiv(TX_st->targ, value);
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(scmp) {
     sv_setiv(TX_st->targ, sv_cmp(TX_st_sb, TX_st_sa));
     TX_st_sa = TX_st->targ;
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
@@ -873,7 +870,7 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
         croak("Undefined symbol %s", tx_neat(aTHX_ name));
     }
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 static void
@@ -900,8 +897,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
         tx_error(aTHX_ TX_st, "Wrong number of arguments for %"SVf" (%d %c %d)",
             name, (int)items, items > nargs ? '>' : '<', (int)nargs);
         TX_st->sa = &PL_sv_undef;
-        TX_st->pc++;
-        return;
+        TX_RETURN_NEXT();
     }
 
     /* create a new frame */
@@ -942,7 +938,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
         PUTBACK;
     }
 
-    TX_st->pc = addr;
+    TX_RETURN_PC(addr);
 }
 
 TXC_w_int(macro_end) {
@@ -966,8 +962,7 @@ TXC_w_int(macro_end) {
     TX_st->output                     = tmp;
 
     LEAVE; /* to retrieve saved current_frame */
-
-    TX_st->pc = SvUVX(retaddr);
+    TX_RETURN_PC( SvUVX(retaddr) );
 }
 
 TXC(funcall) { /* call a function or a macro */
@@ -980,14 +975,14 @@ TXC(funcall) { /* call a function or a macro */
     }
     else {
         TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
-        TX_st->pc++;
+        TX_RETURN_NEXT();
     }
 }
 
 TXC_w_key(methodcall_s) {
     TX_st_sa = tx_methodcall(aTHX_ TX_st, TX_op_arg);
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(make_array) {
@@ -1013,7 +1008,7 @@ TXC(make_array) {
 
     TX_st_sa = avref;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(make_hash) {
@@ -1045,30 +1040,30 @@ TXC(make_hash) {
 
     TX_st_sa = hvref;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(enter) {
     ENTER;
     SAVETMPS;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC(leave) {
     FREETMPS;
     LEAVE;
 
-    TX_st->pc++;
+    TX_RETURN_NEXT();
 }
 
 TXC_goto(goto) {
-    TX_st->pc = SvUVX(TX_op_arg);
+    TX_RETURN_PC( SvUVX(TX_op_arg) );
 }
 
 TXC(end) {
     assert(TX_st->current_frame == 0);
-    TX_st->pc = TX_st->code_len;
+    TX_RETURN_PC( TX_st->code_len );
 }
 
 /* opcode markers (noop) */
