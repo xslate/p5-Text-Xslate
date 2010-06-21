@@ -29,6 +29,11 @@
 
 /* xslate stuff */
 
+#ifdef __GNUC__
+/* enable DTC optimization */
+#define TX_DIRECT_THREADED_CODE
+#endif
+
 #define TX_RAW_CLASS   "Text::Xslate::Type::Raw"
 #define TX_PAIR_CLASS  "Text::Xslate::Type::Pair"
 #define TX_MACRO_CLASS "Text::Xslate::Macro"
@@ -61,21 +66,11 @@
 
 /* TX_st and TX_op are valid only in opcodes */
 #define TX_st (txst)
-#define TX_op (&(TX_st->code[TX_st->pc]))
 
 #define TX_pop()   (*(PL_stack_sp--))
 
 #define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
 #define TX_current_frame()    TX_current_framex(TX_st)
-
-#define TX_RUNOPS(st) STMT_START {                                 \
-        while((st)->pc < (st)->code_len) {                         \
-            CALL_FPTR((st)->code[(st)->pc].exec_code)(aTHX_ (st)); \
-        }                                                          \
-    } STMT_END
-
-#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;     return; } STMT_END
-#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = (x); return; } STMT_END
 
 /* template object, stored in $self->{template}{$file} */
 enum txtmplo_ix {
@@ -115,11 +110,34 @@ struct tx_code_s;
 typedef struct tx_state_s tx_state_t;
 typedef struct tx_code_s  tx_code_t;
 
+#define TX_op            (TX_st->pc)
+#define TX_PC2POS(st, p) ((UV)((p) - (st)->code))
+#define TX_POS2PC(st, u) ((st)->code + (u))
+
+typedef tx_code_t* tx_pc_t;
+
+#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;              return; } STMT_END
+#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = (tx_pc_t)(x); return; } STMT_END
+
+#ifdef TX_DIRECT_THREADED_CODE
+
+typedef const void* tx_exec_t;
+#define TX_RUNOPS(st) tx_runops(aTHX_ st)
+
+#else /* TX_DIRECT_THREADED_CODE */
+
 typedef void (*tx_exec_t)(pTHX_ tx_state_t* const);
+#define TX_RUNOPS(st) STMT_START {                                 \
+        while((st)->pc < (st)->code_len) {                         \
+            CALL_FPTR((st)->code[(st)->pc].exec_code)(aTHX_ (st)); \
+        }                                                          \
+    } STMT_END
+
+#endif /* TX_DIRECT_THREADED_CODE */
 
 /* virtual machine state */
 struct tx_state_s {
-    U32 pc;       /* the program counter */
+    tx_pc_t pc;      /* the program counter */
 
     tx_code_t* code; /* compiled code */
     U32        code_len;

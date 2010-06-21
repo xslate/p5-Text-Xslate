@@ -80,7 +80,7 @@ static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
 
 static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr);
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr);
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
@@ -90,7 +90,7 @@ tx_file(pTHX_ const tx_state_t* const st) {
 
 static int
 tx_line(pTHX_ const tx_state_t* const st) {
-    return (int)st->lines[ st->pc ];
+    return (int)st->lines[ TX_PC2POS(st, st->pc) ];
 }
 
 const char*
@@ -197,10 +197,11 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
     SvGETMAGIC(func);
 
     if(UNLIKELY(!SvOK(func))) {
-        tx_code_t* const c = &(st->code[ st->pc - 1 ]);
+        void const* const* const addr_table = tx_runops(aTHX_ NULL);
+        tx_code_t* const c = st->pc - 1;
         (void)POPMARK;
         tx_error(aTHX_ st, "Undefined function%s is called on %s",
-            c->exec_code == TXCODE_fetch_s
+            c->exec_code == addr_table[TXOP_fetch_s]
                 ? form(" %"SVf"()", c->arg)
                 : "", name);
         retval = NULL;
@@ -429,9 +430,13 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
 SV*
 tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name) {
     if(tx_sv_is_macro(aTHX_ proc)) {
-        U32 const save_pc = TX_st->pc;
-        tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->code_len /* retaddr */);
+        tx_pc_t const save_pc = TX_st->pc;
+        tx_code_t proc_end;
+        void const* const* const addr_table = tx_runops(aTHX_ NULL);
 
+        proc_end.exec_code = addr_table[ TXOP_end ];
+        proc_end.arg = NULL;
+        tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), &proc_end);
         TX_RUNOPS(TX_st);
         /* after tx_macro_end */
 
@@ -874,24 +879,17 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
 }
 
 static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr) {
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr) {
     dSP;
     dMARK;
-    I32 const items = SP - MARK;
-    SV* const name  = AvARRAY(macro)[TXm_NAME];
-    U32 const addr  = (U32)SvUVX(AvARRAY(macro)[TXm_ADDR]);
-    IV const nargs  = SvIVX(AvARRAY(macro)[TXm_NARGS]);
-    UV const outer  = SvUVX(AvARRAY(macro)[TXm_OUTER]);
+    I32 const items    = SP - MARK;
+    SV* const name     = AvARRAY(macro)[TXm_NAME];
+    tx_pc_t const addr = (tx_pc_t)SvUVX(AvARRAY(macro)[TXm_ADDR]);
+    IV const nargs     = SvIVX(AvARRAY(macro)[TXm_NARGS]);
+    UV const outer     = SvUVX(AvARRAY(macro)[TXm_OUTER]);
     AV* cframe; /* new frame */
     UV i;
     SV* tmp;
-
-    assert( addr < TX_st->code_len );
-    assert( TX_st->code[addr].exec_code != NULL );
-
-    if(TX_st->code[addr].exec_code != TXCODE_macro_begin) {
-        croak("Oops: Invalid macro address: %u", (unsigned)addr);
-    }
 
     if(items != nargs) {
         tx_error(aTHX_ TX_st, "Wrong number of arguments for %"SVf" (%d %c %d)",
@@ -906,7 +904,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
 
     /* setup frame info: name, retaddr and output buffer */
     sv_setsv(*av_fetch(cframe, TXframe_NAME,    TRUE), name);
-    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), retaddr);
+    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), PTR2UV(retaddr));
 
     /* swap TXframe_OUTPUT and TX_st->output.
        I know it's ugly. Any ideas?
@@ -937,7 +935,6 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, U32 const retaddr)
         SP = ORIGMARK;
         PUTBACK;
     }
-
     TX_RETURN_PC(addr);
 }
 
@@ -1061,17 +1058,18 @@ TXC_goto(goto) {
     TX_RETURN_PC( SvUVX(TX_op_arg) );
 }
 
-TXC(end) {
-    assert(TX_st->current_frame == 0);
-    TX_RETURN_PC( TX_st->code_len );
-}
-
 /* opcode markers (noop) */
 TXC_w_sv(depend); /* tell the vm to dependent template files */
 
 TXC_w_key(macro_begin);
 TXC_w_int(macro_nargs);
 TXC_w_int(macro_outer);
+
+/* "end" must be here (the last opcode) */
+TXC(end) {
+    assert(TX_st->current_frame == 0);
+    TX_RETURN_PC( TX_st->code_len );
+}
 
 /* End of opcodes */
 
@@ -1411,6 +1409,7 @@ CODE:
 {
     dMY_CXT;
     MAGIC* mg;
+    void const* const* addr_table = tx_runops(aTHX_ NULL);
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     U32 const len = av_len(proto) + 1;
     U32 i;
@@ -1479,6 +1478,7 @@ CODE:
     Newxz(st.code, len, tx_code_t);
 
     st.code_len = len;
+    st.pc       = &st.code[0];
 
     mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
     mg->mg_flags |= MGf_DUP;
@@ -1498,7 +1498,8 @@ CODE:
             }
 
             opnum                = SvIVx(hv_iterval(ops, he));
-            st.code[i].exec_code = tx_opcode[ opnum ];
+            //st.code[i].exec_code = tx_opcode[ opnum ];
+            st.code[i].exec_code = addr_table[opnum];
             if(tx_oparg[opnum] & TXARGf_SV) {
                 if(!arg) {
                     croak("Oops: Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
@@ -1514,12 +1515,13 @@ CODE:
 
                     if(tx_oparg[opnum] & TXARGf_GOTO) {
                         /* calculate relational addresses to absolute addresses */
-                        UV const abs_addr = (UV)(i + SvIVX(st.code[i].arg));
-                        if(abs_addr >= (UV)len) {
+                        UV const abs_pos       = (UV)(i + SvIVX(st.code[i].arg));
+
+                        if(abs_pos >= (UV)len) {
                             croak("Oops: goto address %"IVdf" is out of range (must be 0 <= addr <= %"IVdf")",
                                 SvIVX(st.code[i].arg), (IV)len);
                         }
-                        sv_setuv(st.code[i].arg, abs_addr);
+                        sv_setuv(st.code[i].arg, PTR2UV(TX_POS2PC(&st, abs_pos)));
                     }
                     SvREADONLY_on(st.code[i].arg);
                 }
@@ -1557,7 +1559,7 @@ CODE:
 
                     (void)av_store(macro, TXm_OUTER, newSViv(0));
                     (void)av_store(macro, TXm_NARGS, newSViv(0));
-                    (void)av_store(macro, TXm_ADDR,  newSViv(i));
+                    (void)av_store(macro, TXm_ADDR,  newSVuv((UV)TX_POS2PC(&st, i)));
                     (void)av_store(macro, TXm_NAME,  name);
                     st.code[i].arg = NULL;
                 }
@@ -1701,7 +1703,7 @@ CODE:
 
     prefix = form("Xslate(%s:%d &%"SVf"[%d]): ",
             tx_file(aTHX_ st), tx_line(aTHX_ st),
-            name, (int)st->pc);
+            name, (int)TX_PC2POS(st, st->pc));
 
     if(instr(SvPV_nolen_const(msg), prefix)) {
         full_message = msg; /* msg has the prefix */
