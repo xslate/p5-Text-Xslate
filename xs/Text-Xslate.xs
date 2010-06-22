@@ -197,11 +197,11 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
     SvGETMAGIC(func);
 
     if(UNLIKELY(!SvOK(func))) {
-        void const* const* const addr_table = tx_runops(aTHX_ NULL);
+        dTX_optable;
         tx_code_t* const c = st->pc - 1;
         (void)POPMARK;
         tx_error(aTHX_ st, "Undefined function%s is called on %s",
-            c->exec_code == addr_table[TXOP_fetch_s]
+            c->exec_code == tx_optable[TXOP_fetch_s]
                 ? form(" %"SVf"()", c->arg)
                 : "", name);
         retval = NULL;
@@ -430,11 +430,11 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
 SV*
 tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name) {
     if(tx_sv_is_macro(aTHX_ proc)) {
+        dTX_optable;
         tx_pc_t const save_pc = TX_st->pc;
         tx_code_t proc_end;
-        void const* const* const addr_table = tx_runops(aTHX_ NULL);
 
-        proc_end.exec_code = addr_table[ TXOP_end ];
+        proc_end.exec_code = tx_optable[ TXOP_end ];
         proc_end.arg = NULL;
         tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), &proc_end);
         TX_RUNOPS(TX_st);
@@ -884,7 +884,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     dMARK;
     I32 const items    = SP - MARK;
     SV* const name     = AvARRAY(macro)[TXm_NAME];
-    tx_pc_t const addr = (tx_pc_t)SvUVX(AvARRAY(macro)[TXm_ADDR]);
+    tx_pc_t const addr = INT2PTR(tx_pc_t, SvUVX(AvARRAY(macro)[TXm_ADDR]));
     IV const nargs     = SvIVX(AvARRAY(macro)[TXm_NARGS]);
     UV const outer     = SvUVX(AvARRAY(macro)[TXm_OUTER]);
     AV* cframe; /* new frame */
@@ -1409,7 +1409,7 @@ CODE:
 {
     dMY_CXT;
     MAGIC* mg;
-    void const* const* addr_table = tx_runops(aTHX_ NULL);
+    dTX_optable;
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     U32 const len = av_len(proto) + 1;
     U32 i;
@@ -1499,7 +1499,7 @@ CODE:
 
             opnum                = SvIVx(hv_iterval(ops, he));
             //st.code[i].exec_code = tx_opcode[ opnum ];
-            st.code[i].exec_code = addr_table[opnum];
+            st.code[i].exec_code = tx_optable[opnum];
             if(tx_oparg[opnum] & TXARGf_SV) {
                 if(!arg) {
                     croak("Oops: Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
@@ -1559,7 +1559,7 @@ CODE:
 
                     (void)av_store(macro, TXm_OUTER, newSViv(0));
                     (void)av_store(macro, TXm_NARGS, newSViv(0));
-                    (void)av_store(macro, TXm_ADDR,  newSVuv((UV)TX_POS2PC(&st, i)));
+                    (void)av_store(macro, TXm_ADDR,  newSVuv(PTR2UV(TX_POS2PC(&st, i))));
                     (void)av_store(macro, TXm_NAME,  name);
                     st.code[i].arg = NULL;
                 }

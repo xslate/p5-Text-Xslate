@@ -29,7 +29,7 @@
 
 /* xslate stuff */
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(TX_NO_OPTIMIZE)
 /* enable DTC optimization */
 #define TX_DIRECT_THREADED_CODE
 #endif
@@ -116,8 +116,8 @@ typedef struct tx_code_s  tx_code_t;
 
 typedef tx_code_t* tx_pc_t;
 
-#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;              return; } STMT_END
-#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = (tx_pc_t)(x); return; } STMT_END
+#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;                     return; } STMT_END
+#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = INT2PTR(tx_pc_t, x); return; } STMT_END
 
 #ifdef TX_DIRECT_THREADED_CODE
 
@@ -127,10 +127,10 @@ typedef const void* tx_exec_t;
 #else /* TX_DIRECT_THREADED_CODE */
 
 typedef void (*tx_exec_t)(pTHX_ tx_state_t* const);
-#define TX_RUNOPS(st) STMT_START {                                 \
-        while((st)->pc < (st)->code_len) {                         \
-            CALL_FPTR((st)->code[(st)->pc].exec_code)(aTHX_ (st)); \
-        }                                                          \
+#define TX_RUNOPS(st) STMT_START {                      \
+        while((st)->pc->exec_code != TXCODE_end) {      \
+            CALL_FPTR((st)->pc->exec_code)(aTHX_ (st)); \
+        }                                               \
     } STMT_END
 
 #endif /* TX_DIRECT_THREADED_CODE */

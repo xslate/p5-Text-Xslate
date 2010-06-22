@@ -43,17 +43,9 @@ for(my $i = 0; $i < @ops; $i++) {
 print code <<'H';
 #    TXOP_last
 #}; /* enum tx_opcode_t */
-#
-#static const tx_exec_t tx_opcode[] = {
 H
 
-for(my $i = 0; $i < @ops; $i++) {
-    say "    TXCODE_$ops[$i][0],";
-}
-
 print code <<'H';
-#    NULL
-#}; /* tx_opcode[] */
 #
 #static const U8 tx_oparg[] = {
 H
@@ -86,11 +78,27 @@ print code <<'H';
 #} /* tx_register_ops() */
 H
 
-# direct threaded code stuff
+print code <<'H';
+#
+##ifndef TX_DIRECT_THREADED_CODE
+##define dTX_optable dNOOP
+#static const tx_exec_t tx_optable[] = {
+H
+
+for(my $i = 0; $i < @ops; $i++) {
+    say "    TXCODE_$ops[$i][0],";
+}
+
+print code <<'H';
+#    NULL
+#}; /* tx_optable[] */
+H
 
 print code <<'H';
 #
-##ifdef TX_DIRECT_THREADED_CODE
+##else /* TX_DIRECT_THREADED_CODE */
+##define dTX_optable void const* const* const tx_optable \
+#                    = tx_runops(aTHX_ NULL)
 ##define LABEL(x)     CAT2(TX_DTC_, x)
 ##define LABEL_PTR(x) &&LABEL(x)
 #static void const* const*
