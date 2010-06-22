@@ -163,6 +163,22 @@ sub new {
     return bless \%args, $class;
 }
 
+sub register_function {
+    my $self = shift;
+    my $function = $self->{function};
+    while(my($name, $body) = splice @_, 0, 2) {
+        $function->{$name} = $body;
+    }
+    $self->flush_cache();
+    return;
+}
+
+sub flush_cache {
+    my($self) = @_;
+    %{$self->{template}} = ();
+    return;
+}
+
 sub load_string { # for <input>
     my($self, $string) = @_;
     if(not defined $string) {
@@ -290,7 +306,7 @@ sub _load_source {
                  unlink $cachepath;
             }
             else {
-                $self->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
+                $fi->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
             }
         }
         else {
@@ -299,9 +315,8 @@ sub _load_source {
     }
 
     if(_DUMP_LOAD_FILE) {
-        print STDERR "  _load_source: cache(",
-            defined($self->{cache_mtime}) ? $self->{cache_mtime} : 'undef',
-            ")\n";
+        printf STDERR "  _load_source: cache(%s)\n",
+            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
     }
 
     return $asm;
@@ -365,7 +380,8 @@ sub _load_compiled {
     }
 
     if(_DUMP_LOAD_FILE) {
-        print STDERR "  _load_cache_compiled: cache(", $self->{cache_mtime}, ")\n";
+        printf STDERR "  _load_cache_compiled: cache(%s)\n",
+            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
     }
 
     return \@asm;
@@ -721,7 +737,7 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached so that this method is suitable for testing.
+Note that I<$string> is never cached.
 
 =head3 B<< Text::Xslate->engine :XslateEngine >>
 
