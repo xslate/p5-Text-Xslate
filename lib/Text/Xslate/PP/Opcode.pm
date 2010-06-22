@@ -193,7 +193,7 @@ sub op_print_raw_s {
 
 
 sub op_include {
-    my $st = Text::Xslate::PP::tx_load_template( $_[0]->self, $_[0]->{sa} );
+    my $st = Text::Xslate::PP::tx_load_template( $_[0]->engine, $_[0]->{sa} );
 
     $_[0]->{ output } .= Text::Xslate::PP::tx_execute( $st, $_[0]->{vars} );
 
@@ -648,7 +648,7 @@ sub tx_fetch {
 
 sub tx_error {
     my ( $st, $fmt, @args ) = @_;
-    if( $st->self->{verbose} >= TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} >= TX_VERBOSE_DEFAULT ) {
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }
@@ -656,7 +656,7 @@ sub tx_error {
 
 sub tx_warn {
     my ( $st, $fmt, @args ) = @_;
-    if( $st->self->{verbose} > TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} > TX_VERBOSE_DEFAULT ) {
         Carp::carp( sprintf( $fmt, @args ) );
     }
 }

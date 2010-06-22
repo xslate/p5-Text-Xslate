@@ -10,7 +10,7 @@ has tmpl => (
     is => 'rw',
 );
 
-has self => (
+has engine => (
     is => 'rw',
     weak_ref => 1,
 );

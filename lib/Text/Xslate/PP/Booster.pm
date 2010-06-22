@@ -304,7 +304,7 @@ $CODE_MANIP{ 'include' } = sub {
     $self->write_lines( sprintf( <<'CODE', $self->sa ) );
 # include
 {
-    my $st2 = Text::Xslate::PP::tx_load_template( $st->self, %s );
+    my $st2 = Text::Xslate::PP::tx_load_template( $st->engine, %s );
     $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
 }
 CODE
@@ -1404,7 +1404,7 @@ sub _unmark_raw {
 
 
 sub _verbose {
-    my $v = $_[0]->self->{ verbose };
+    my $v = $_[0]->engine->{ verbose };
     defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
 }
 

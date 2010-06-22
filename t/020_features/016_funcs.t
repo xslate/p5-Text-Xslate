@@ -10,6 +10,8 @@ my %funcs = (
     pi      => sub{ 3.14 },
     foo     => sub{ "<foo>" },
     em      => sub{ mark_raw("<em>@_</em>") },
+
+    engine  => sub{ ref(Text::Xslate->engine) },
 );
 my $tx = Text::Xslate->new(
     function => \%funcs,
@@ -72,6 +74,12 @@ my @set = (
         q{Hello, <:= em($value) :> world!},
         { value => 'Xslate' },
         "Hello, <em>Xslate</em> world!",
+    ],
+
+    [
+        q{Hello, <:= engine() :> world!},
+        {  },
+        "Hello, Text::Xslate world!",
     ],
 );
 

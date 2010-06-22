@@ -163,8 +163,8 @@ struct tx_state_s {
 
     U32 hint_size; /* suggested template size (bytes) */
 
-    AV* tmpl; /* see enum txtmplo_ix */
-    SV* self;
+    AV* tmpl;    /* template objects. see enum txtmplo_ix */
+    SV* engine;  /* Text::Xslate instance */
     U16* lines;  /* code index -> line number */
 };
 

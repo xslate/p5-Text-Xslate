@@ -723,6 +723,11 @@ I<\%vars> is optional.
 
 Note that I<$string> is never cached so that this method is suitable for testing.
 
+=head3 B<< Text::Xslate->engine :XslateEngine >>
+
+Returns the Xslate engine while executing. Otherwise, returns C<undef>.
+This method is significant when it is called by template functions and methods.
+
 =head3 B<< $tx->load_file($file) :Void >>
 
 Loads I<$file> for following C<render($file, \%vars)>. Compiles and saves it

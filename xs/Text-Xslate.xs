@@ -108,7 +108,7 @@ tx_neat(pTHX_ SV* const sv) {
 
 static IV
 tx_verbose(pTHX_ tx_state_t* const st) {
-    HV* const hv = (HV*)SvRV(st->self);
+    HV* const hv = (HV*)SvRV(st->engine);
     SV* const sv = *hv_fetchs(hv, "verbose", TRUE);
     return SvIV(sv);
 }
@@ -609,7 +609,7 @@ TXC_w_sv(print_raw_s) {
 }
 
 TXC(include) {
-    tx_state_t* const st = tx_load_template(aTHX_ TX_st->self, TX_st_sa);
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa);
 
     ENTER;
     tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
@@ -1143,7 +1143,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     SvREFCNT_dec(st->symbol);
     SvREFCNT_dec(st->frame);
     SvREFCNT_dec(st->targ);
-    SvREFCNT_dec(st->self);
+    SvREFCNT_dec(st->engine);
 
     PERL_UNUSED_ARG(sv);
 
@@ -1181,7 +1181,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     st->symbol   = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->symbol, param);
     st->frame    = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->frame,    param);
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
-    st->self     =      tx_sv_dup_inc(aTHX_ st->self, param);
+    st->engine   =      tx_sv_dup_inc(aTHX_ st->engine, param);
 #else
     PERL_UNUSED_ARG(mg);
     PERL_UNUSED_ARG(param);
@@ -1454,9 +1454,9 @@ CODE:
     sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
 
-    st.tmpl = tmpl;
-    st.self = newRV_inc((SV*)self);
-    sv_rvweaken(st.self);
+    st.tmpl   = tmpl;
+    st.engine = newRV_inc((SV*)self);
+    sv_rvweaken(st.engine);
 
     st.hint_size = TX_HINT_SIZE;
 
@@ -1656,6 +1656,16 @@ CODE:
 }
 
 void
+engine(klass)
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* const st = MY_CXT.current_st;
+    ST(0) = st ? st->engine : &PL_sv_undef;
+    XSRETURN(1);
+}
+
+void
 _warn(SV* msg)
 ALIAS:
     _warn = 0
@@ -1679,7 +1689,7 @@ CODE:
         PL_diehook  = NULL;
         croak("Not in $xslate->render()");
     }
-    self   = st->self;
+    self   = st->engine;
 
     cframe = TX_current_framex(st);
     name   = AvARRAY(cframe)[TXframe_NAME];

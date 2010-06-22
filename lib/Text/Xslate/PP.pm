@@ -41,8 +41,8 @@ our @OPCODE; # defined in PP::Const
     unshift our @ISA, 'Text::Xslate::PP';
 }
 
-
-sub compiler_class() { 'Text::Xslate::Compiler' }
+our $_depth = 0;
+our $_current_st;
 
 #
 # public APIs
@@ -80,6 +80,9 @@ sub render {
     return tx_execute( $st, $vars );
 }
 
+sub engine {
+    return defined($_current_st) ? $_current_st->engine : undef;
+}
 
 sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
@@ -108,7 +111,7 @@ sub _assemble {
     $tmpl->[ Text::Xslate::PP::TXo_FULLPATH ]  = $fullpath;
 
     $st->tmpl( $tmpl );
-    $st->self( $self ); # weak_ref!
+    $st->engine( $self ); # weak_ref!
 
     $st->{sa}   = undef;
     $st->{sb}   = undef;
@@ -361,9 +364,6 @@ sub tx_all_deps_are_fresh {
     return 1;
 }
 
-our $_depth = 0;
-our $_current_st;
-
 sub tx_execute { 
     my ( $st, $vars ) = @_;
     no warnings 'recursion';
@@ -419,7 +419,7 @@ sub _error_handler {
 
     if ( !$die ) { # warn
         # $h can ignore warnings
-        if ( my $h = $st->self->{ warn_handler } ) {
+        if ( my $h = $st->engine->{ warn_handler } ) {
             $h->( $mess );
         }
         else {
@@ -428,7 +428,7 @@ sub _error_handler {
     }
     else { # die
         # $h cannot ignore errors
-        if(my $h = $st->self->{ die_handler } ) {
+        if(my $h = $st->engine->{ die_handler } ) {
             $h->( $mess );
         }
         Carp::croak( $mess ); # MUST DIE!
