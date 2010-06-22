@@ -13,7 +13,7 @@ my %funcs = (
 
     # for extentions
     engine      => sub{ ref(Text::Xslate->engine) },
-    render_args => sub{ [Text::Xslate->render_args] }
+    render_args => sub{ Text::Xslate->render_args }
 );
 my $tx = Text::Xslate->new(
     function => \%funcs,
@@ -90,7 +90,7 @@ foreach my $d(@set) {
     is $tx->render_string($in, $vars), $out or diag $in;
 }
 
-is $tx->render_string(q{<: render_args().join("=") :>}, {}, foo => 42),
-    q{foo=42};
+is $tx->render_string(q{<: render_args().foo :>}, {}, foo => 42),
+    q{42};
 
 done_testing;
