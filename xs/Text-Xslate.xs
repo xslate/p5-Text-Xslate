@@ -1617,19 +1617,6 @@ CODE:
             tx_neat(aTHX_ vars));
     }
 
-    if(items > 3) { /* for extensions */
-        I32 i;
-        if( ((items - 3) % 2) != 0 ) {
-            croak("Xslate: Extra arguments must be even number");
-        }
-        MY_CXT.render_args = newHV();
-        sv_2mortal((SV*)MY_CXT.render_args);
-        for(i = 3; i < items; i += 2) {
-            (void)hv_store_ent(MY_CXT.render_args, ST(i), newSVsv(ST(i+1)), 0U);
-        }
-    }
-
-
     if(ix == 1) { /* render_string() */
         PUSHMARK(SP);
         EXTEND(SP, 2);
@@ -1647,6 +1634,22 @@ CODE:
         sv_setpvs(TARG, "<input>");
         source = TARG;
     }
+
+    if(items > 3) { /* for extensions */
+        I32 i;
+        if( ((items - 3) % 2) != 0 ) {
+            croak("Xslate: Extra arguments must be even number");
+        }
+        MY_CXT.render_args = newHV();
+        sv_2mortal((SV*)MY_CXT.render_args);
+        for(i = 3; i < items; i += 2) {
+            (void)hv_store_ent(MY_CXT.render_args, ST(i), newSVsv(ST(i+1)), 0U);
+        }
+    }
+    else {
+        MY_CXT.render_args = NULL;
+    }
+
 
     st = tx_load_template(aTHX_ self, source);
 
@@ -1684,7 +1687,7 @@ CODE:
 {
     dMY_CXT;
     HV* const args = MY_CXT.render_args;
-    RETVAL = MY_CXT.current_st ? newRV_inc((SV*)args) : &PL_sv_undef;
+    RETVAL = (MY_CXT.current_st && args) ? newRV_inc((SV*)args) : &PL_sv_undef;
 }
 OUTPUT:
     RETVAL
