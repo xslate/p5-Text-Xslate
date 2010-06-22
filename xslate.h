@@ -152,7 +152,7 @@ struct tx_state_s {
 
     /* variables */
 
-    HV* vars;    /* template variables */
+    HV* vars; /* template variables */
 
     /* stack frame */
     AV* frame;         /* see enum txframeo_ix */

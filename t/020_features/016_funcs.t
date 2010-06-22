@@ -11,7 +11,9 @@ my %funcs = (
     foo     => sub{ "<foo>" },
     em      => sub{ mark_raw("<em>@_</em>") },
 
-    engine  => sub{ ref(Text::Xslate->engine) },
+    # for extentions
+    engine      => sub{ ref(Text::Xslate->engine) },
+    render_args => sub{ [Text::Xslate->render_args] }
 );
 my $tx = Text::Xslate->new(
     function => \%funcs,
@@ -87,5 +89,8 @@ foreach my $d(@set) {
     my($in, $vars, $out) = @$d;
     is $tx->render_string($in, $vars), $out or diag $in;
 }
+
+is $tx->render_string(q{<: render_args().join("=") :>}, {}, foo => 42),
+    q{foo=42};
 
 done_testing;
