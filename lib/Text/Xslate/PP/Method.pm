@@ -13,6 +13,7 @@ use Carp         ();
 our @CARP_NOT = qw(Text::Xslate::PP::Opcode);
 
 our $_st;
+*_st = *Text::Xslate::PP::_current_st;
 
 sub _bad_arg {
     Carp::carp("Wrong number of arguments for @_");
@@ -134,7 +135,6 @@ sub tx_methodcall {
     my $fq_name = $type . $method;
 
     if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
-        local $_st = $st;
         push @{ $st->{ SP } }, [ $invocant, @args ]; # re-pushmark
         return tx_proccall($st, $body);
     }
