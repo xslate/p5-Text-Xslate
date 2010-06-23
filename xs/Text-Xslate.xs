@@ -1497,7 +1497,6 @@ CODE:
             }
 
             opnum                = SvIVx(hv_iterval(ops, he));
-            //st.code[i].exec_code = tx_opcode[ opnum ];
             st.code[i].exec_code = tx_optable[opnum];
             if(tx_oparg[opnum] & TXARGf_SV) {
                 if(!arg) {
