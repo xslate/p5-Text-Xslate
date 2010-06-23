@@ -72,7 +72,7 @@ sub render {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
 
-    local $_render_args = {@args} if @args;
+    local $_render_args = \@args if @args;
 
     my $st = tx_load_template( $self, $name );
 
@@ -87,7 +87,7 @@ sub engine {
 }
 
 sub render_args {
-    return defined($_current_st) ? $_render_args : undef;
+    return defined($_render_args) ? @{$_render_args} : ();
 }
 
 sub _assemble {
