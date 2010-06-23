@@ -1,6 +1,8 @@
 package Text::Xslate::Symbol;
 use Any::Moose;
 
+use Text::Xslate::Util qw(p $DEBUG);
+
 use overload
     bool => sub() { 1 },
     '""' => sub   { $_[0]->id },
@@ -8,6 +10,8 @@ use overload
 ;
 
 our @CARP_NOT = qw(Text::Xslate::Parser);
+
+use constant _DUMP_DENOTE => scalar($DEBUG =~ /\b dump=denote \b/xmsi);
 
 has id => (
     is       => 'rw',
@@ -161,59 +165,70 @@ has line => (
 
 
 sub _build_nud {
-    my($self) = @_;
-    return $self->can('_nud_default');
+    return \&_nud_default;
 }
 
 sub _build_led {
-    my($self) = @_;
-    return $self->can('_led_default');
+    return \&_led_default;
 }
 
 sub _build_std {
-    my($self) = @_;
-    return $self->can('_std_default');
+    return \&_std_default;
 }
 
 sub _nud_default {
     my($parser, $symbol) = @_;
-    return $symbol; # as is
+    return $parser->default_nud($symbol);
 }
 
 sub _led_default {
     my($parser, $symbol) = @_;
-    $parser->near_token($parser->token);
-    $parser->_error(
-        sprintf 'Missing operator (%s): %s',
-        $symbol->arity, $symbol->id);
+    return $parser->default_led($symbol);
 }
 
 sub _std_default {
     my($parser, $symbol) = @_;
-    $parser->near_token($parser->token);
-    $parser->_error(
-        sprintf 'Not a statement (%s): %s',
-        $symbol->arity, $symbol->id);
+    return $parser->default_std($symbol);
 }
 
 sub nud {
     my($self, $parser) = @_;
+    $self->_dump_denote('nud', $parser) if _DUMP_DENOTE;
     return $self->get_nud()->($parser, $self);
 }
 
 sub led {
     my($self, $parser, $left) = @_;
+    $self->_dump_denote('led', $parser) if _DUMP_DENOTE;
     return $self->get_led()->($parser, $self, $left);
 }
 
 sub std {
     my($self, $parser) = @_;
+    $self->_dump_denote('std', $parser) if _DUMP_DENOTE;
     return $self->get_std()->($parser, $self);
 }
 
 sub clone {
     my $self = shift;
     return $self->meta->clone_object($self, @_);
+}
+
+sub _dump_denote {
+    my($self, $type, $parser) = @_;
+    my $attr = $self->meta->get_attribute($type);
+
+    my $entity = $attr->has_value($self)
+        ? $attr->get_value($self)
+        : $parser->can('default_' . $type);
+
+    require B;
+    my $cvgv = B::svref_2object($entity)->GV;
+    printf STDERR "%s: %s::%s (%s)\n",
+        $type,
+        $cvgv->STASH->NAME, $cvgv->NAME,
+        $self->id,
+    ;
 }
 
 no Any::Moose;

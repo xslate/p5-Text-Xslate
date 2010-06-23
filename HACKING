@@ -6,6 +6,8 @@ Easy evaluation:
 Debugging options ($ENV{XSLATE}; or --debug for xslate(1)):
     dump=proto  Output preprocessed proto templates
     dump=token  Output token sequence
+    dump=denote Output code denotation
+    dump=gen    Output code generation
     dump=ast    Output abstract syntax tree
     dump=asm    Output xslate assembly
     dump=asm:ix Output xslate assembly with indexes

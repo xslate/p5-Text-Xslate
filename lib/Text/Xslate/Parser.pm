@@ -651,6 +651,27 @@ sub advance {
      ) );
 }
 
+sub default_nud {
+    my($parser, $symbol) = @_;
+    return $symbol; # as is
+}
+
+sub default_led {
+    my($parser, $symbol) = @_;
+    $parser->near_token($parser->token);
+    $parser->_error(
+        sprintf 'Missing operator (%s): %s',
+        $symbol->arity, $symbol->id);
+}
+
+sub default_std {
+    my($parser, $symbol) = @_;
+    $parser->near_token($parser->token);
+    $parser->_error(
+        sprintf 'Not a statement (%s): %s',
+        $symbol->arity, $symbol->id);
+}
+
 sub expression {
     my($parser, $rbp) = @_;
 
