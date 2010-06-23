@@ -44,7 +44,7 @@
 /* max calling depth (execution/macrocall) */
 #define TX_MAX_DEPTH 100
 
-#define TXC(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst)
+#define TXC(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst PERL_UNUSED_DECL)
 /* TXC_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
 #define TXC_w_sv(n)  TXC(n) /* has TX_op_arg as a SV */
 #define TXC_w_int(n) TXC(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
