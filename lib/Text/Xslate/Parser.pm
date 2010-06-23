@@ -1,6 +1,5 @@
 package Text::Xslate::Parser;
 use Any::Moose;
-use Any::Moose '::Util::TypeConstraints';
 
 use Scalar::Util ();
 use Text::Xslate::Symbol;
@@ -55,11 +54,6 @@ my $CHOMP_FLAGS = qr/-/xms; # should support [-=~+] like Template-Toolkit?
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
-
-my $RegexpRefType = subtype __PACKAGE__ . '.RegexpRef' => as 'Maybe[RegexpRef]';
-coerce $RegexpRefType =>
-    from 'Str', via { qr/\Q$_\E/xms },
-;
 
 has [qw(compiler engine)] => (
     is       => 'rw',
@@ -128,27 +122,27 @@ has input => (
 
 has line_start => (
     is      => 'ro',
-    isa     => $RegexpRefType,
+    isa     => 'Maybe[Str]',
     coerce  => 1,
     builder => '_build_line_start',
 );
-sub _build_line_start { qr/\Q:/xms }
+sub _build_line_start { ':' }
 
 has tag_start => (
     is      => 'ro',
-    isa     => $RegexpRefType,
+    isa     => 'Str',
     coerce  => 1,
     builder => '_build_tag_start',
 );
-sub _build_tag_start { qr/\Q<:/xms }
+sub _build_tag_start { '<:' }
 
 has tag_end => (
     is      => 'ro',
-    isa     => $RegexpRefType,
+    isa     => 'Str',
     coerce  => 1,
     builder => '_build_tag_end',
 );
-sub _build_tag_end { qr/\Q:>/xms }
+sub _build_tag_end { ':>' }
 
 has shortcut_table => (
     is      => 'ro',
@@ -205,11 +199,11 @@ sub split :method {
     my $tag_start     = $parser->tag_start;
     my $tag_end       = $parser->tag_end;
 
-    my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* $line_start ([^\n]* \n?) /xms;
-    my $lex_tag_start = qr/\A $tag_start ($CHOMP_FLAGS?)/xms;
-    my $lex_tag_end   = qr/\A ($CODE) ($CHOMP_FLAGS?) $tag_end/xms;
+    my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* \Q$line_start\E ([^\n]* \n?) /xms;
+    my $lex_tag_start = qr/\A \Q$tag_start\E ($CHOMP_FLAGS?)/xms;
+    my $lex_tag_end   = qr/\A ($CODE) ($CHOMP_FLAGS?) \Q$tag_end\E/xms;
 
-    my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= $tag_start ) | \z ) ) /xms;
+    my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= \Q$tag_start\E ) | \z ) ) /xms;
 
     my $in_tag = 0;
 
@@ -1725,7 +1719,6 @@ sub _error {
         $parser->file, $parser->line, $message, $near);
 }
 
-no Any::Moose '::Util::TypeConstraints';
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 __END__

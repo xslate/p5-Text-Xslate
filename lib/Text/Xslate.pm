@@ -692,22 +692,19 @@ This option is passed to the compiler directly.
 
 =item C<< line_start => $token // $parser_defined >>
 
-Specify the token to start line code, which may be a string or a regular
-expression.
+Specify the token to start line code as a string, which C<quotemeta> will be applied to.
 
 This option is passed to the parser via the compiler.
 
 =item C<< tag_start => $str // $parser_defined >>
 
-Specify the token to start inline code, which may be a string or a
-regular expression.
+Specify the token to start inline code as a string, which C<quotemeta> will be applied to.
 
 This option is passed to the parser via the compiler.
 
 =item C<< line_start => $str // $parser_defined >>
 
-Specify the token to end inline code, which may be a string or a
-regular expression.
+Specify the token to end inline code as a string, which C<quotemeta> will be applied to.
 
 This option is passed to the parser via the compiler.
 

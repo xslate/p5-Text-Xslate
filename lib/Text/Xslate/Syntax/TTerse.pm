@@ -6,9 +6,9 @@ use Scalar::Util ();
 extends qw(Text::Xslate::Parser);
 
 # [% ... %] and %% ...
-sub _build_line_start { qr/%%/xms   }
-sub _build_tag_start  { qr/\Q[%/xms }
-sub _build_tag_end    { qr/\Q%]/xms }
+sub _build_line_start { '%%' }
+sub _build_tag_start  { '[%' }
+sub _build_tag_end    { '%]' }
 
 around trim_code => sub {
     my($super, $self, $code) = @_;

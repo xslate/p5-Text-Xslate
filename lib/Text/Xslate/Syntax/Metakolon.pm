@@ -4,9 +4,9 @@ use Any::Moose;
 extends qw(Text::Xslate::Parser);
 
 # [% ... %] and %% ...
-sub _build_line_start { qr/\Q%%/xms  }
-sub _build_tag_start  { qr/\Q[%/xms }
-sub _build_tag_end    { qr/\Q%]/xms }
+sub _build_line_start { '%%' }
+sub _build_tag_start  { '[%' }
+sub _build_tag_end    { '%]' }
 
 no Any::Moose;
 __PACKAGE__->meta->make_immutable();
