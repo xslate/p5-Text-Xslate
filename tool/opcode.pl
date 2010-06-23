@@ -132,7 +132,7 @@ H
 
 
 print code << 'H';
-#    LABEL(end):
+#    LABEL(end): TXCODE_end(aTHX_ st);
 #    return NULL;
 #} /* end of tx_runops() */
 ##undef LABEL

@@ -1068,7 +1068,6 @@ TXC_w_int(macro_outer);
 /* "end" must be here (the last opcode) */
 TXC(end) {
     assert(TX_st->current_frame == 0);
-    TX_RETURN_PC( TX_st->code_len );
 }
 
 /* End of opcodes */
