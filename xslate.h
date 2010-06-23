@@ -29,7 +29,7 @@
 
 /* xslate stuff */
 
-#if defined(__GNUC__) && !defined(TX_NO_OPTIMIZE)
+#if defined(__GNUC__) && !defined(TX_NO_DTC)
 /* enable DTC optimization */
 #define TX_DIRECT_THREADED_CODE
 #endif
