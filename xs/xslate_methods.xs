@@ -437,6 +437,9 @@ tx_register_builtin_methods(pTHX_ HV* const hv) {
 
 MODULE = Text::Xslate::Methods    PACKAGE = Text::Xslate::Type::Pair
 
+PROTOTYPES:   DISABLE
+VERSIONCHECK: DISABLE
+
 BOOT:
 {
     MY_CXT_INIT;
