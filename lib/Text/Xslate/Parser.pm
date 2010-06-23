@@ -244,7 +244,7 @@ sub split :method {
             }
         }
         elsif(s/$lex_text//xms) {
-            push @tokens, [ text => $1 ];
+            push @tokens, [ text => $1 ] if length($1);
         }
         else {
             confess "Oops: Unreached code, near" . p($_);
@@ -349,7 +349,7 @@ sub parse {
     my $ast = $parser->statements();
 
     if($parser->input ne '') {
-        $parser->_error("Syntax error", $parser->token);
+        $parser->_error("Syntax error", $parser->token, $parser->input);
     }
 
     return $ast;
