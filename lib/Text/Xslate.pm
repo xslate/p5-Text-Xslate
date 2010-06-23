@@ -398,7 +398,7 @@ sub _magic {
 
     my $opt = join(',',
         ref($self->{compiler}) || $self->{compiler},
-        $self->_extract_options(\%compiler_option),
+        (map { ref $_ ? "[@{$_}]" : $_ } $self->_extract_options(\%compiler_option)),
         $self->_extract_options(\%parser_option),
     );
 
