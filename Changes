@@ -1,5 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+0.1036 Wed Jun 23 20:05:44 2010
+    [CHANGES]
+    - Change line_start, tag_start and tag_end to take string tokens,
+      not regexps
+
+    [NEW FEATURES]
+    - Improve performance (about 10%+) by direct threaded code, although it's
+      enabled only on gcc
+    - Text::Xslate->engine() method to access the executing engine
+      from functions and methods
+
 0.1035 Sun Jun 20 15:03:12 2010
     [BUG FIXES]
     - Macros with args could not refer to outer variables
