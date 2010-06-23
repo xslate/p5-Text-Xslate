@@ -65,7 +65,6 @@ typedef struct {
     HV* macro_stash;
 
     tx_state_t* current_st; /* set while tx_execute(), othewise NULL */
-    AV* render_args;        /* extra args to render() */
 
     /* those handlers are just \&_warn and \&_die,
        but stored here for performance */
@@ -1595,7 +1594,7 @@ CODE:
 }
 
 SV*
-render(SV* self, SV* source, SV* vars = &PL_sv_undef, ...)
+render(SV* self, SV* source, SV* vars = &PL_sv_undef)
 ALIAS:
     render        = 0
     render_string = 1
@@ -1615,15 +1614,6 @@ CODE:
     else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
-    }
-
-    if(items > 3) { /* for extensions */
-        I32 i;
-        MY_CXT.render_args = newAV();
-        sv_2mortal((SV*)MY_CXT.render_args);
-        for(i = 3; i < items; i++) {
-            av_push(MY_CXT.render_args, newSVsv(ST(i)));
-        }
     }
 
 
@@ -1673,24 +1663,6 @@ CODE:
     tx_state_t* const st = MY_CXT.current_st;
     ST(0) = st ? st->engine : &PL_sv_undef;
     XSRETURN(1);
-}
-
-void
-render_args(klass)
-PPCODE:
-{
-    dMY_CXT;
-    tx_state_t* const st = MY_CXT.current_st;
-    AV* const args       = MY_CXT.render_args;
-    I32 len, i;
-    if(!st) {
-        XSRETURN_EMPTY;
-    }
-    len = AvFILLp(args) + 1;
-    EXTEND(SP, len);
-    for(i = 0; i < len; i++) {
-        PUSHs(AvARRAY(args)[i]);
-    }
 }
 
 void

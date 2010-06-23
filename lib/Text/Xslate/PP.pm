@@ -43,22 +43,22 @@ our @OPCODE; # defined in PP::Const
 
 our $_depth = 0;
 our $_current_st;
-our $_render_args;
+
 #
 # public APIs
 #
 
 sub render_string {
-    my($self, $string, $vars, @args) = @_;
+    my($self, $string, $vars) = @_;
     $self->load_string($string);
-    return $self->render(undef, $vars, @args);
+    return $self->render(undef, $vars);
 }
 
 sub render {
-    my ( $self, $name, $vars, @args ) = @_;
+    my ( $self, $name, $vars ) = @_;
 
     Carp::croak("Usage: Text::Xslate::render(self, name, vars)")
-        if @_ < 2;
+        if !( @_ == 2 or @_ == 3 );
 
     if(!defined $vars) {
         $vars = {};
@@ -72,8 +72,6 @@ sub render {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
 
-    local $_render_args = \@args if @args;
-
     my $st = tx_load_template( $self, $name );
 
     local $SIG{__DIE__}  = \&_die;
@@ -84,10 +82,6 @@ sub render {
 
 sub engine {
     return defined($_current_st) ? $_current_st->engine : undef;
-}
-
-sub render_args {
-    return defined($_render_args) ? @{$_render_args} : ();
 }
 
 sub _assemble {
