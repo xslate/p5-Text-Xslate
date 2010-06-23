@@ -220,7 +220,7 @@ sub split :method {
 
                 my($code, $chomp) = ($1, $2);
 
-                push @tokens, [ code => $parser->trim_code($code) ];
+                push @tokens, [ code => $code ];
                 if($chomp) {
                     push @tokens, [ postchomp => $chomp ];
                 }
@@ -232,8 +232,7 @@ sub split :method {
         }
         # not $in_tag
         elsif($lex_line_code && s/$lex_line_code//xms) {
-            push @tokens,
-                [ code => $parser->trim_code($1) ];
+            push @tokens, [ code => $1 ];
         }
         elsif(s/$lex_tag_start//xms) {
             $in_tag = 1;
@@ -304,6 +303,8 @@ sub preprocess {
             # shortcut commands
             $s =~ s/$shortcut_rx/$shortcut_table->{$1}/xms
                 if $shortcut;
+
+            $s = $parser->trim_code($s);
 
             if($s =~ /\A \s* [}] \s* \z/xms){
                 $code .= $s;
