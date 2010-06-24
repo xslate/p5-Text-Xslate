@@ -73,14 +73,47 @@ typedef struct {
 } my_cxt_t;
 START_MY_CXT
 
+const char*
+tx_neat(pTHX_ SV* const sv);
+
+static SV*
+tx_load_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix);
+
+static AV*
+tx_push_frame(pTHX_ tx_state_t* const st);
+
+static SV*
+tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
+
+static SV*
+tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
+
+static inline bool
+tx_str_is_marked_raw(pTHX_ SV* const sv);
+
+static inline void
+tx_force_html_escape(pTHX_ SV* const src, SV* const dest);
+
+static SV*
+tx_html_escape(pTHX_ SV* const str);
+
+static I32
+tx_sv_eq(pTHX_ SV* const a, SV* const b);
+
+static bool
+tx_sv_is_macro(pTHX_ SV* const sv);
+
+static void
+tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr);
+
 static void
 tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
 
-static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr);
+
+#include "xs/xslate_opcode.inc"
 
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
@@ -509,8 +542,6 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     }
     TX_RETURN_PC(addr);
 }
-
-#include "xs/xslate_opcode.inc"
 
 /* The virtual machine code interpreter */
 /* NOTE: tx_execute() must be surrounded in ENTER and LEAVE */
