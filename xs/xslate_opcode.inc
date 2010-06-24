@@ -426,66 +426,6 @@ TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
     TX_RETURN_NEXT();
 }
 
-static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr) {
-    dSP;
-    dMARK;
-    I32 const items    = SP - MARK;
-    SV* const name     = AvARRAY(macro)[TXm_NAME];
-    tx_pc_t const addr = INT2PTR(tx_pc_t, SvUVX(AvARRAY(macro)[TXm_ADDR]));
-    IV const nargs     = SvIVX(AvARRAY(macro)[TXm_NARGS]);
-    UV const outer     = SvUVX(AvARRAY(macro)[TXm_OUTER]);
-    AV* cframe; /* new frame */
-    UV i;
-    SV* tmp;
-
-    if(items != nargs) {
-        tx_error(aTHX_ TX_st, "Wrong number of arguments for %"SVf" (%d %c %d)",
-            name, (int)items, items > nargs ? '>' : '<', (int)nargs);
-        TX_st->sa = &PL_sv_undef;
-        TX_RETURN_NEXT();
-    }
-
-    /* create a new frame */
-    ENTER; /* to save current_frame */
-    cframe = tx_push_frame(aTHX_ TX_st);
-
-    /* setup frame info: name, retaddr and output buffer */
-    sv_setsv(*av_fetch(cframe, TXframe_NAME,    TRUE), name);
-    sv_setuv(*av_fetch(cframe, TXframe_RETADDR, TRUE), PTR2UV(retaddr));
-
-    /* swap TXframe_OUTPUT and TX_st->output.
-       I know it's ugly. Any ideas?
-    */
-    tmp                             = *av_fetch(cframe, TXframe_OUTPUT, TRUE);
-    AvARRAY(cframe)[TXframe_OUTPUT] = TX_st->output;
-    TX_st->output                   = tmp;
-    sv_setpvs(tmp, "");
-    SvUTF8_on(tmp); /* sv_utf8_upgrade(tmp); */
-
-    i = 0;
-    if(outer > 0) { /* refers outer lexical variales */
-        /* copies lexical variables from the old frame to the new one */
-        AV* const oframe = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1];
-        for(NOOP; i < outer; i++) {
-            UV const real_ix = i + TXframe_START_LVAR;
-            av_store(cframe, real_ix , SvREFCNT_inc_NN(AvARRAY(oframe)[real_ix]));
-        }
-    }
-
-    if(items > 0) { /* has arguments */
-        dORIGMARK;
-        MARK++;
-        for(NOOP; MARK <= SP; i++) {
-            sv_setsv(TX_lvar(i), *MARK);
-            MARK++;
-        }
-        SP = ORIGMARK;
-        PUTBACK;
-    }
-    TX_RETURN_PC(addr);
-}
-
 TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
