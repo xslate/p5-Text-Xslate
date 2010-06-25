@@ -2,6 +2,7 @@ package Text::Xslate::Parser;
 use Any::Moose;
 
 use Scalar::Util ();
+
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG

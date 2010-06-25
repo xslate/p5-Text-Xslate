@@ -3,6 +3,9 @@ use warnings FATAL => 'recursion';
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
 
+use Scalar::Util ();
+use Carp         ();
+
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
@@ -11,8 +14,6 @@ use Text::Xslate::Util qw(
     is_int any_in
     p
 );
-
-use Scalar::Util ();
 
 #use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
 use constant _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms);

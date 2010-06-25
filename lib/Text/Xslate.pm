@@ -6,14 +6,14 @@ use warnings;
 
 our $VERSION = '0.1036';
 
+use Carp       ();
+use File::Spec ();
+use Exporter   ();
+
 use Text::Xslate::Util qw($DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
 );
-
-use Carp       ();
-use File::Spec ();
-use Exporter   ();
 
 our @ISA = qw(Text::Xslate::Engine Exporter);
 
@@ -22,7 +22,8 @@ our @EXPORT_OK = qw(
     escaped_string html_escape
 );
 
-if(!__PACKAGE__->can('render')) { # The backend (which is maybe PP.pm) has been loaded
+# load backend (XS or PP)
+if(!__PACKAGE__->can('render')) { # The backend is already loaded
     if($DEBUG !~ /\b pp \b/xms) {
         eval {
             require XSLoader;
@@ -84,7 +85,7 @@ my %builtin = (
 
 sub compiler_class() { 'Text::Xslate::Compiler' }
 
-sub options { # overridable
+sub options {
     my($class) = @_;
     return {
         # name       => default
@@ -169,11 +170,11 @@ sub register_function {
     while(my($name, $body) = splice @_, 0, 2) {
         $function->{$name} = $body;
     }
-    $self->flush_cache();
+    $self->flush_memory_cache();
     return;
 }
 
-sub flush_cache {
+sub flush_memory_cache {
     my($self) = @_;
     %{$self->{template}} = ();
     return;
@@ -266,7 +267,6 @@ sub slurp {
     open my($source), '<' . $self->{input_layer}, $fullpath
         or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
     local $/;
-
     return scalar <$source>;
 }
 
@@ -336,8 +336,7 @@ sub _load_compiled {
     open my($in), '<' . $self->{input_layer}, $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
-    if(scalar(<$in>) ne $self->_magic($fi->{fullpath})) {
-        # magic token is not matched
+    if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
         return undef;
     }
 
@@ -389,11 +388,11 @@ sub _load_compiled {
 
 sub _save_compiled {
     my($self, $out, $asm, $fullpath) = @_;
-    print $out $self->_magic($fullpath), $self->_compiler->as_assembly($asm);
+    print $out $self->_magic_token($fullpath), $self->_compiler->as_assembly($asm);
     return;
 }
 
-sub _magic {
+sub _magic_token {
     my($self, $fullpath) = @_;
 
     my $opt = join(',',

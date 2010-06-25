@@ -3,6 +3,8 @@ package Text::Xslate::Util;
 use strict;
 use warnings;
 
+use Carp ();
+
 use parent qw(Exporter);
 our @EXPORT_OK = qw(
     mark_raw unmark_raw
@@ -13,8 +15,6 @@ our @EXPORT_OK = qw(
     p
     $STRING $NUMBER $DEBUG
 );
-
-use Carp ();
 
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
