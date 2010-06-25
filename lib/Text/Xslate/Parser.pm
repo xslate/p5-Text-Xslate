@@ -7,6 +7,7 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     is_int any_in
     value_to_literal
+    literal_to_value
     p
 );
 
@@ -621,6 +622,8 @@ sub advance {
 
     print STDOUT "[$arity => $value]\n" if _DUMP_TOKEN;
 
+    my @extra;
+
     if($arity eq "name") {
         $proto = $parser->find($value);
         $arity = $proto->arity;
@@ -634,6 +637,7 @@ sub advance {
     elsif($arity eq "string" or $arity eq "number") {
         $proto = $symtab->{"(literal)"};
         $arity = "literal";
+        push @extra, value => $parser->parse_literal($value);
     }
 
     if(not defined $proto) {
@@ -644,7 +648,13 @@ sub advance {
         id    => $value,
         arity => $arity,
         line  => $parser->line,
+        @extra,
      ) );
+}
+
+sub parse_literal {
+    my($parser, $literal) = @_;
+    return literal_to_value($literal);
 }
 
 sub default_nud {
@@ -1485,12 +1495,12 @@ sub barename {
     # "string" is ok
     if($t->arity eq 'literal') {
         $parser->advance();
-        return $t->id;
+        return $t;
     }
 
     # package::name
     my @parts;
-    push @parts, $t->id;
+    push @parts, $t;
     $parser->advance();
 
     while(1) {
@@ -1503,7 +1513,7 @@ sub barename {
                 $parser->_unexpected("a name", $t);
             }
 
-            push @parts, $t->id;
+            push @parts, $t;
             $parser->advance();
         }
         else {

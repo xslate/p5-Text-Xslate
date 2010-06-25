@@ -525,7 +525,7 @@ sub _generate_command {
 
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
-            push @code, [ $proc . '_s' => literal_to_value($arg->value), $node->line ];
+            push @code, [ $proc . '_s' => $arg->value, $node->line ];
         }
         elsif($self->_can_print_optimize($proc, $arg)){
             my $filter_name = $arg->first->id;
@@ -555,12 +555,11 @@ sub _generate_command {
 sub _bare_to_file {
     my($self, $file) = @_;
     if(ref($file) eq 'ARRAY') { # myapp::foo
-        $file  = join('/', @{$file}) . $self->{engine}->{suffix};
+        return join('/', map { $_->value } @{$file}) . $self->{engine}->{suffix};
     }
-    else { # "myapp/foo.tx"
-        $file = literal_to_value($file);
+    else {
+        return $file->value;
     }
-    return $file;
 }
 
 sub _generate_cascade {
@@ -864,12 +863,12 @@ sub _generate_marker {
 sub _generate_literal {
     my($self, $node) = @_;
 
-    my $value = literal_to_value($node->value);
+    my $value = $node->value;
     if(defined $value){
         return [ literal => $value ];
     }
     else {
-        return [ nil => undef ];
+        return [ 'nil' ];
     }
 }
 
@@ -920,7 +919,7 @@ sub _generate_binary {
             # $foo[literal]
             return
                 @lhs,
-                [ fetch_field_s => literal_to_value($node->second->value) ];
+                [ fetch_field_s => $node->second->value ];
         }
 
         local $self->{lvar_id} = $self->lvar_use(1);
@@ -1089,7 +1088,7 @@ sub _localize_vars {
         }
         push @localize,
             $self->_expr($expr),
-            [ localize_s => literal_to_value($key->value) ];
+            [ localize_s => $key->value ];
     }
     return @localize;
 }
