@@ -470,7 +470,7 @@ $CODE_MANIP{ 'eq' } = sub {
 
 $CODE_MANIP{ 'ne' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'cond_ne( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+    $self->sa( sprintf( '(!cond_eq( %s, %s ))', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
@@ -1350,11 +1350,6 @@ sub cond_eq {
     else {
         return !defined $sb;
     }
-}
-
-
-sub cond_ne {
-    !cond_eq( @_ );
 }
 
 
