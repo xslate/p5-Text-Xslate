@@ -794,12 +794,27 @@ sub led_fetch {
     return $fetch;
 }
 
+sub call {
+    my($parser, $proto, $function, @args) = @_;
+    if(not ref $function) {
+        $function = $proto->clone(
+            arity => 'name',
+            id    => $function,
+        );
+    }
+
+    return $proto->clone(
+        arity => 'call',
+        first => $function,
+        second => \@args,
+    );
+}
+
 sub led_call {
     my($parser, $symbol, $left) = @_;
 
     my $call = $symbol->clone(arity => 'call');
     $call->first($left);
-
     $call->second( $parser->expression_list() );
     $parser->advance(")");
 
@@ -808,13 +823,8 @@ sub led_call {
 
 sub led_bar { # filter
     my($parser, $symbol, $left) = @_;
-
-    my $call = $symbol->clone(arity => 'call');
-
-    $call->first($parser->expression($call->lbp));
-    $call->second([$left]);
-
-    return $call;
+    # a | b -> b(a)
+    return $parser->call($symbol, $parser->expression($symbol->lbp), $left);
 }
 
 
@@ -1313,11 +1323,7 @@ sub std_macro_block {
 
     my $macro = $parser->std_proc($symbol);
 
-    my $call  = $symbol->clone(
-        arity  => 'call',
-        first  => $macro->first, # name
-        second => [],            # args
-    );
+    my $call  = $parser->call($symbol, $macro->first);
 
     # The "block" keyword defines raw macros.
     # see _generate_proc()
