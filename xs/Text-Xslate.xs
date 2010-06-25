@@ -97,7 +97,7 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest);
 static SV*
 tx_html_escape(pTHX_ SV* const str);
 
-static I32
+static inline I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b);
 
 static I32
@@ -423,30 +423,24 @@ tx_html_escape(pTHX_ SV* const str) {
 
 static I32
 tx_sv_eq_nomg(pTHX_ SV* const a, SV* const b) {
-    U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
-    U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
-
-    if(af && bf) { /* shortcut for performance */
-        /* both are defined */
-        if(af == SVf_IOK && bf == SVf_IOK) {
-            return SvIVX(a) == SvIVX(b);
+    if(SvOK(a)) {
+        if(SvOK(b)) {
+            U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
+            U32 const bf =  SvFLAGS(b) & af;
+            return bf == SVf_IOK
+                ? SvIVX(a) == SvIVX(b)
+                : sv_eq(a, b);
         }
         else {
-            return sv_eq(a, b);
+            return FALSE;
         }
-    }
-
-    /* eighter a or b is undefined or magical */
-
-    if(SvOK(a)) {
-        return SvOK(b) && sv_eq(a, b);
     }
     else { /* !SvOK(a) */
         return !SvOK(b);
     }
 }
 
-static I32
+static inline I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     SvGETMAGIC(a);
     SvSETMAGIC(b);
