@@ -330,7 +330,7 @@ TXC(max_index) {
     SV* const avref = TX_st_sa;
 
     if(!(SvROK(avref) && SvTYPE(SvRV(avref)) == SVt_PVAV)) {
-        croak("Oops: Not an ARRAY reference for the size operator: %s",
+        croak("Oops: Not an ARRAY reference for builtin max_index: %s",
             tx_neat(aTHX_ avref));
     }
 
@@ -486,7 +486,7 @@ TXC(make_array) {
     while(++MARK <= SP) {
         SV* const val = *MARK;
         /* the SV is a mortal copy */
-        /* seek 'push' */
+        /* see 'push' */
         av_push(av, val);
         SvREFCNT_inc_simple_void_NN(val);
     }
@@ -518,7 +518,7 @@ TXC(make_hash) {
         SV* const val = *(++MARK);
 
         /* the SVs are a mortal copy */
-        /* seek 'push' */
+        /* see 'push' */
         (void)hv_store_ent(hv, key, val, 0U);
         SvREFCNT_inc_simple_void_NN(val);
     }
