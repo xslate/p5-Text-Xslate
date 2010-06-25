@@ -39,6 +39,8 @@ my %binary = (
     '>'  => 'gt',
     '>=' => 'ge',
 
+    '~~'  => 'match',
+
     '<=>' => 'ncmp',
     'cmp' => 'scmp',
 

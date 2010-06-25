@@ -435,10 +435,11 @@ sub init_basic_operators {
     $parser->infix('>',  160)->is_logical(1);
     $parser->infix('>=', 160)->is_logical(1);
 
-    $parser->infix('==', 150)->is_logical(1);
-    $parser->infix('!=', 150)->is_logical(1);
+    $parser->infix('==',  150)->is_logical(1);
+    $parser->infix('!=',  150)->is_logical(1);
     $parser->infix('<=>', 150);
     $parser->infix('cmp', 150);
+    $parser->infix('~~',  150);
 
     $parser->infix('|',  140, \&led_bar);
 
@@ -1403,8 +1404,7 @@ sub std_given {
 
         if(defined(my $test = $when->first)) { # when
             if(!$test->is_logical) {
-                # XXX: should implement smart match?
-                $when->first( $parser->binary('==', $topic, $test) );
+                $when->first( $parser->binary('~~', $topic, $test) );
             }
         }
         else { # default

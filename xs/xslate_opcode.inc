@@ -354,15 +354,18 @@ TXC(builtin_html_escape) {
     TX_RETURN_NEXT();
 }
 
-TXC(eq) {
-    TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
+TXC(match) {
+    TX_st_sa = boolSV( tx_sv_match(aTHX_ TX_st_sb, TX_st_sa) );
+    TX_RETURN_NEXT();
+}
 
+TXC(eq) {
+    TX_st_sa = boolSV(  tx_sv_eq(aTHX_ TX_st_sb, TX_st_sa) );
     TX_RETURN_NEXT();
 }
 
 TXC(ne) {
-    TX_st_sa = boolSV( !tx_sv_eq(aTHX_ TX_st_sa, TX_st_sb) );
-
+    TX_st_sa = boolSV( !tx_sv_eq(aTHX_ TX_st_sb, TX_st_sa) );
     TX_RETURN_NEXT();
 }
 

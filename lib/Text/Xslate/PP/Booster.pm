@@ -456,6 +456,11 @@ $CODE_MANIP{ 'builtin_html_escape' } = sub  {
     $self->sa( sprintf( 'Text::Xslate::html_escape( %s )', $self->sa ) );
 };
 
+$CODE_MANIP{ 'match' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'Text::Xslate::Util::match( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+};
+
 
 $CODE_MANIP{ 'eq' } = sub {
     my ( $self, $arg, $line ) = @_;
@@ -1339,10 +1344,6 @@ sub cond_dor {
 
 sub cond_eq {
     my ( $sa, $sb ) = @_;
-    if ( defined $sa and defined $sb ) {
-        return $sa eq $sb;
-    }
-
     if ( defined $sa ) {
         return defined $sb && $sa eq $sb;
     }

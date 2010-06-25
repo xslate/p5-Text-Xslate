@@ -269,6 +269,35 @@ sub _assemble {
 
         return bless \$s, $esc_class;
     }
+
+    sub match { # simple smart matching
+        my($a, $b) = @_;
+
+        if(ref($b) eq 'ARRAY') {
+            foreach my $item(@{$b}) {
+                if(defined($item)) {
+                    if(defined($a) && $a eq $item) {
+                        return 1;
+                    }
+                }
+                else {
+                    if(not defined($a)) {
+                        return 1;
+                    }
+                }
+            }
+            return '';
+        }
+        elsif(ref($b) eq 'HASH') {
+            return defined($a) && exists $b->{$a};
+        }
+        elsif(defined($b)) {
+            return defined($a) && $a eq $b;
+        }
+        else {
+            return !defined($a);
+        }
+    }
 }
 
 #

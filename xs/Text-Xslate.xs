@@ -100,6 +100,9 @@ tx_html_escape(pTHX_ SV* const str);
 static I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b);
 
+static I32
+tx_sv_match(pTHX_ SV* const a, SV* const b);
+
 static bool
 tx_sv_is_macro(pTHX_ SV* const sv);
 
@@ -419,11 +422,12 @@ tx_html_escape(pTHX_ SV* const str) {
 }
 
 static I32
-tx_sv_eq(pTHX_ SV* const a, SV* const b) {
+tx_sv_eq_nomg(pTHX_ SV* const a, SV* const b) {
     U32 const af = (SvFLAGS(a) & (SVf_POK|SVf_IOK|SVf_NOK));
     U32 const bf = (SvFLAGS(b) & (SVf_POK|SVf_IOK|SVf_NOK));
 
     if(af && bf) { /* shortcut for performance */
+        /* both are defined */
         if(af == SVf_IOK && bf == SVf_IOK) {
             return SvIVX(a) == SvIVX(b);
         }
@@ -432,8 +436,7 @@ tx_sv_eq(pTHX_ SV* const a, SV* const b) {
         }
     }
 
-    SvGETMAGIC(a);
-    SvGETMAGIC(b);
+    /* eighter a or b is undefined or magical */
 
     if(SvOK(a)) {
         return SvOK(b) && sv_eq(a, b);
@@ -441,6 +444,59 @@ tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     else { /* !SvOK(a) */
         return !SvOK(b);
     }
+}
+
+static I32
+tx_sv_eq(pTHX_ SV* const a, SV* const b) {
+    SvGETMAGIC(a);
+    SvSETMAGIC(b);
+    return tx_sv_eq_nomg(aTHX_ a, b);
+}
+
+static I32
+tx_sv_match(pTHX_ SV* const a, SV* const b) {
+    SvGETMAGIC(a);
+    SvGETMAGIC(b);
+
+    if(SvROK(b)) {
+        SV* const r = SvRV(b);
+        if(SvOBJECT(r)) { /* a ~~ $object */
+            /* XXX: what I should do? */
+            return tx_sv_eq_nomg(aTHX_ a, b);
+        }
+        else if(SvTYPE(r) == SVt_PVAV) { /* a ~~ [ ... ] */
+            AV* const av  = (AV*)r;
+            I32 const len = av_len(av) + 1;
+            I32 i;
+            for(i = 0; i < len; i++) {
+                SV** const svp = av_fetch(av, i, FALSE);
+                SV* item;
+                if(svp) {
+                    item = *svp;
+                    SvGETMAGIC(item);
+                }
+                else {
+                    item = &PL_sv_undef;
+                }
+                if(tx_sv_eq_nomg(aTHX_ a, item)) {
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        }
+        else if(SvTYPE(r) == SVt_PVHV) { /* a ~~ { ... } */
+            if(SvOK(a)) {
+                HV* const hv = (HV*)r;
+                return hv_exists_ent(hv, a, 0U);
+            }
+            else {
+                return FALSE;
+            }
+        }
+        /* fallthrough */
+    }
+
+    return tx_sv_eq_nomg(aTHX_ a, b);
 }
 
 static bool
@@ -1266,6 +1322,15 @@ CODE:
     ST(0) = tx_html_escape(aTHX_ str);
     XSRETURN(1);
 }
+
+bool
+match(SV* a, SV* b)
+CODE:
+{
+    RETVAL = tx_sv_match(aTHX_ a, b);
+}
+OUTPUT:
+    RETVAL
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
 
