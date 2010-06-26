@@ -3,9 +3,6 @@ package Text::Xslate::PP::Opcode;
 use strict;
 use warnings;
 
-use parent qw(Exporter);
-our @EXPORT_OK = qw(tx_error tx_warn tx_proccall);
-
 use Carp ();
 use Scalar::Util ();
 
@@ -153,36 +150,38 @@ sub op_fetch_field_s {
 
 
 sub op_print {
-    my $sv = $_[0]->{sa};
+    my($st) = @_;
+    my $sv = $st->{sa};
 
     if ( ref( $sv ) eq 'Text::Xslate::Type::Raw' ) {
         if(defined ${$sv}) {
-            $_[0]->{ output } .= ${$sv};
+            $st->{ output } .= ${$sv};
         }
         else {
-            tx_warn( $_[0], "Use of nil to print" );
+            $st->warn(undef, "Use of nil to print" );
         }
     }
     elsif ( defined $sv ) {
         $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
-        $_[0]->{ output } .= $sv;
+        $st->{ output } .= $sv;
     }
     else {
-        tx_warn( $_[0], "Use of nil to print" );
+        $st->warn( undef, "Use of nil to print" );
     }
 
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
 sub op_print_raw {
-    if(defined $_[0]->{sa}) {
-        $_[0]->{ output } .= $_[0]->{sa};
+    my($st) = @_;
+    if(defined $st->{sa}) {
+        $st->{ output } .= $st->{sa};
     }
     else {
-        tx_warn( $_[0], "Use of nil to print" );
+        $st->warn( undef, "Use of nil to print" );
     }
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
@@ -202,49 +201,51 @@ sub op_include {
 
 
 sub op_for_start {
-    my $ar = $_[0]->{sa};
-    my $id = $_[0]->op_arg;
+    my($st) = @_;
+    my $ar = $st->{sa};
+    my $id = $st->op_arg;
 
     unless ( $ar and ref $ar eq 'ARRAY' ) {
         if ( defined $ar ) {
-            tx_error( $_[0], "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
+            $st->error( undef, "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
         }
         else {
-            tx_warn( $_[0], "Use of nil to iterate" );
+            $st->warn( undef, "Use of nil to iterate" );
         }
         $ar = [];
     }
 
-    #tx_access_lvar( $_[0], $id + _FOR_ITEM, undef );
-    tx_access_lvar( $_[0], $id + _FOR_ITER, -1 );
-    tx_access_lvar( $_[0], $id + _FOR_ARRAY, $ar );
+    #tx_access_lvar( $st, $id + _FOR_ITEM, undef );
+    tx_access_lvar( $st, $id + _FOR_ITER, -1 );
+    tx_access_lvar( $st, $id + _FOR_ARRAY, $ar );
 
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
 sub op_for_iter {
-    my $id = $_[0]->{sa};
-    my $av = tx_access_lvar( $_[0], $id + _FOR_ARRAY );
+    my($st) = @_;
+    my $id = $st->{sa};
+    my $av = tx_access_lvar( $st, $id + _FOR_ARRAY );
 
     if(defined $av) {
-        my $i = tx_access_lvar( $_[0], $id + _FOR_ITER );
+        my $i = tx_access_lvar( $st, $id + _FOR_ITER );
         $av = [ $av ] unless ref $av;
         if ( ++$i < scalar(@{ $av })  ) {
-            tx_access_lvar( $_[0], $id + _FOR_ITEM, $av->[ $i ] );
-            tx_access_lvar( $_[0], $id + _FOR_ITER, $i );
-            goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+            tx_access_lvar( $st, $id + _FOR_ITEM, $av->[ $i ] );
+            tx_access_lvar( $st, $id + _FOR_ITER, $i );
+            goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
         }
         else {
-            tx_access_lvar( $_[0], $id + _FOR_ITEM,  undef );
-            tx_access_lvar( $_[0], $id + _FOR_ITER,  undef );
-            tx_access_lvar( $_[0], $id + _FOR_ARRAY, undef );
+            tx_access_lvar( $st, $id + _FOR_ITEM,  undef );
+            tx_access_lvar( $st, $id + _FOR_ITER,  undef );
+            tx_access_lvar( $st, $id + _FOR_ARRAY, undef );
         }
     }
 
     # finish
-    $_[0]->{ pc } = $_[0]->op_arg;
-    goto $_[0]->{ code }->[ $_[0]->{ pc } ]->{ exec_code };
+    $st->{ pc } = $st->op_arg;
+    goto $st->{ code }->[ $st->{ pc } ]->{ exec_code };
 }
 
 
@@ -432,16 +433,19 @@ sub op_scmp {
 }
 
 sub op_symbol {
-    my $name = $_[0]->op_arg;
+    my($st) = @_;
+    my $name = $st->op_arg;
 
-    if ( my $func = $_[0]->symbol->{ $name } ) {
-        $_[0]->{sa} = $func;
+    if ( my $func = $st->symbol->{ $name } ) {
+        $st->{sa} = $func;
     }
     else {
-        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
+        Carp::croak("Undefined symbol $name");
+        #$st->error( undef, "Undefined symbol %s", $name );
+        #$st->{sa} = undef;
     }
 
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 sub tx_macro_enter {
@@ -453,7 +457,7 @@ sub tx_macro_enter {
     my $args   = pop @{ $st->{SP} };
 
     if(@{$args} != $nargs) {
-        tx_error($st, "Wrong number of arguments for %s (%d %s %d)",
+        $st->error(undef, "Wrong number of arguments for %s (%d %s %d)",
             $name, scalar(@{$args}), scalar(@{$args}) > $nargs ? '>' : '<', $nargs);
         $st->{ sa } = undef;
         $st->{ pc }++;
@@ -587,13 +591,13 @@ sub tx_funcall {
 
     if(!defined $proc) {
         my $c = $st->{code}->[ $st->{pc} - 1 ];
-        tx_error( $st, "Undefined function%s is called",
+        $st->error( undef, "Undefined function%s is called",
             $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
         );
     }
     else {
         $ret = eval { $proc->( @args ) };
-        tx_error( $st, "%s", $@) if $@;
+        $st->error( undef, "%s", $@) if $@;
     }
 
     return $ret;
@@ -619,14 +623,14 @@ sub tx_fetch {
 
     if ( Scalar::Util::blessed($var) ) {
         $ret = eval { $var->$key() };
-        tx_error($st, "%s", $@) if $@;
+        $st->error(undef, "%s", $@) if $@;
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {
             $ret = $var->{ $key };
         }
         else {
-            tx_warn( $st, "Use of nil as a field key" );
+            $st->warn( undef, "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
@@ -634,34 +638,18 @@ sub tx_fetch {
             $ret = $var->[ $key ];
         }
         else {
-            tx_warn( $st, "Use of %s as an array index", tx_neat( $key ) );
+            $st->warn( undef, "Use of %s as an array index", tx_neat( $key ) );
         }
     }
     elsif ( $var ) {
-        tx_error( $st, "Cannot access %s (%s is not a container)", tx_neat($key), tx_neat($var) );
+        $st->error( undef, "Cannot access %s (%s is not a container)", tx_neat($key), tx_neat($var) );
     }
     else {
-        tx_warn( $st, "Use of nil to access %s", tx_neat( $key ) );
+        $st->warn( undef, "Use of nil to access %s", tx_neat( $key ) );
     }
 
     return $ret;
 }
-
-sub tx_error {
-    my ( $st, $fmt, @args ) = @_;
-    if( $st->engine->{verbose} >= TX_VERBOSE_DEFAULT ) {
-        Carp::carp( sprintf( $fmt, @args ) );
-    }
-}
-
-
-sub tx_warn {
-    my ( $st, $fmt, @args ) = @_;
-    if( $st->engine->{verbose} > TX_VERBOSE_DEFAULT ) {
-        Carp::carp( sprintf( $fmt, @args ) );
-    }
-}
-
 
 sub tx_neat {
     my($s) = @_;

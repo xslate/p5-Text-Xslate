@@ -3,98 +3,92 @@ package Text::Xslate::PP::Method;
 use strict;
 use warnings;
 
-use Text::Xslate::PP::Opcode qw(tx_error tx_warn tx_proccall);
-
+use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Pair;
 
 use Scalar::Util ();
 use Carp         ();
 
-our @CARP_NOT = qw(Text::Xslate::PP::Opcode);
+our @CARP_NOT = qw(Text::Xslate::PP::Opcode Text::Xslate::PP::Booster);
 
 our $_st;
 *_st = *Text::Xslate::PP::_current_st;
 
-sub _bad_arg {
-    Carp::carp("Wrong number of arguments for @_");
-    return undef;
-}
-
 sub _any_defined {
     my($any) = @_;
-    return _bad_arg('defined') if @_ != 1;
+    return $_st->bad_arg('defined') if @_ != 1;
     return defined($any);
 }
 
 sub _array_size {
     my($array_ref) = @_;
-    return _bad_arg('size') if @_ != 1;
+    return $_st->bad_arg('size') if @_ != 1;
     return scalar @{$array_ref};
 }
 
 sub _array_join {
     my($array_ref, $sep) = @_;
-    return _bad_arg('join') if @_ != 2;
+    return $_st->bad_arg('join') if @_ != 2;
     return join $sep, @{$array_ref};
 }
 
 sub _array_reverse {
     my($array_ref) = @_;
-    return _bad_arg('reverse') if @_ != 1;
+    return $_st->bad_arg('reverse') if @_ != 1;
     return [ reverse @{$array_ref} ];
 }
 
 sub _array_sort {
     my($array_ref, $proc) = @_;
-    return _bad_arg('sort') if !(@_ == 1 or @_ == 2);
+    return $_st->bad_arg('sort') if !(@_ == 1 or @_ == 2);
     if(@_ == 1) {
         return [ sort @{$array_ref} ];
     }
     else {
         return [ sort {
             push @{ $_st->{ SP } }, [ $a, $b ];
-            tx_proccall($_st, $proc) + 0; # need to numify
+            Text::Xslate::PP::Opcode::tx_proccall($_st, $proc) + 0; # need to numify
         } @{$array_ref} ];
     }
 }
 
 sub _array_map {
     my($array_ref, $callback) = @_;
-    return _bad_arg('map') if @_ != 2;
+    return $_st->bad_arg('map') if @_ != 2;
     return [ map {
         push @{ $_st->{ SP } }, [ $_ ];
-        tx_proccall($_st, $callback);
+        Text::Xslate::PP::Opcode::tx_proccall($_st, $callback);
     } @{$array_ref} ];
 }
 
 sub _hash_size {
     my($hash_ref) = @_;
-    return _bad_arg('size') if @_ != 1;
+    return $_st->bad_arg('size') if @_ != 1;
     return scalar keys %{$hash_ref};
 }
 
 sub _hash_keys {
     my($hash_ref) = @_;
-    return _bad_arg('keys') if @_ != 1;
+    return $_st->bad_arg('keys') if @_ != 1;
     return [sort { $a cmp $b } keys %{$hash_ref}];
 }
 
 sub _hash_values {
     my($hash_ref) = @_;
-    return _bad_arg('values') if @_ != 1;
+    return $_st->bad_arg('values') if @_ != 1;
     return [map { $hash_ref->{$_} } @{ _hash_keys($hash_ref) } ];
 }
 
 sub _hash_kv {
     my($hash_ref) = @_;
-    _bad_arg('kv') if @_ != 1;
+    $_st->bad_arg('kv') if @_ != 1;
     return [
         map { Text::Xslate::PP::Type::Pair->new(key => $_, value => $hash_ref->{$_}) }
         @{ _hash_keys($hash_ref) }
     ];
 }
 
-my %builtin_method = (
+our %builtin_method = (
     'nil::defined'    => \&_any_defined,
 
     'scalar::defined' => \&_any_defined,
@@ -120,10 +114,10 @@ sub tx_methodcall {
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
             my $retval = eval { $invocant->$method(@args) };
-            tx_error($st, "%s", $@) if $@;
+            $st->error(undef, "%s", $@) if $@;
             return $retval;
         }
-        tx_error($st, "Undefined method %s called for %s",
+        $st->error(undef, "Undefined method %s called for %s",
             $method, $invocant);
         return undef;
     }
@@ -136,14 +130,14 @@ sub tx_methodcall {
 
     if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
         push @{ $st->{ SP } }, [ $invocant, @args ]; # re-pushmark
-        return tx_proccall($st, $body);
+        return Text::Xslate::PP::Opcode::tx_proccall($st, $body);
     }
     if(!defined $invocant) {
-        tx_warn($st, "Use of nil to invoke method %s", $method);
+        $st->warn(undef, "Use of nil to invoke method %s", $method);
         return undef;
     }
 
-    tx_error($st, "Undefined method %s called for %s",
+    $st->error(undef, "Undefined method %s called for %s",
         $method, $invocant);
 
     return undef;

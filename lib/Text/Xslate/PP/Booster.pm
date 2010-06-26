@@ -208,7 +208,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 
             $self->write_lines(
                 sprintf(
-                    '_error( $st, %s, %s, "Too few arguments for %s" ) unless defined $pad->[ -1 ]->[ %s ];',
+                    '$st->error( [%s, %s], "Too few arguments for %s" ) unless defined $pad->[ -1 ]->[ %s ];',
                     $self->frame_and_line, $self->stash->{ in_macro }, $arg
                 )
             );
@@ -236,7 +236,7 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
 $CODE_MANIP{ 'print_raw' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    my $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
+    my $err = sprintf( '$st->warn( [%s, %s], "Use of nil to print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err ) );
 # print_raw
@@ -274,7 +274,7 @@ $CODE_MANIP{ 'print' } = sub {
     my $sv = $self->sa();
     my $err;
 
-    $err = sprintf( '_warn( $st, %s, %s, "Use of nil to print" );', $self->frame_and_line );
+    $err = sprintf( '$st->warn( [%s, %s], "Use of nil to print" );', $self->frame_and_line );
 
     $self->write_lines( sprintf( <<'CODE', $sv, $err, $err ) );
 # print
@@ -548,7 +548,7 @@ $CODE_MANIP{ 'macro_begin' } = sub {
     $self->write_code( "\n" );
 
     my $error = sprintf(
-        '_error($st, @$f_l, _macro_args_error( $mobj, $pad ) )',
+        '$st->error( $f_l, _macro_args_error( $mobj, $pad ) )',
         $self->stash->{ in_macro }
     );
 
@@ -1112,7 +1112,7 @@ sub call {
         my $obj = shift @args;
 
         unless ( defined $obj ) {
-            _warn( $st, $frame, $line, "Use of nil to invoke method %s", $proc );
+            $st->warn( [$frame, $line], "Use of nil to invoke method %s", $proc );
         }
         else {
             $ret = eval { $obj->$proc( @args ) };
@@ -1123,8 +1123,8 @@ sub call {
         if(!defined $proc) {
             if ( defined $line ) {
                 my $c = $st->{code}->[ $line - 1 ];
-                _error(
-                    $st, $frame, $line, "Undefined function is called%s",
+                $st->error(
+                    [$frame, $line], "Undefined function is called%s",
                     $c->{ opname } eq 'fetch_s' ? " $c->{arg}()" : ""
                 );
             }
@@ -1136,7 +1136,7 @@ sub call {
         }
         else {
             $ret = eval { $proc->( @args ) };
-            _error( $st, $frame, $line, "%s\t...", $@) if $@;
+            $st->error( [$frame, $line], "%s\t...", $@) if $@;
         }
     }
 
@@ -1146,44 +1146,17 @@ sub call {
 
 use Text::Xslate::PP::Method;
 
-my %builtin_method = (
-    'nil::defined'    => \&Text::Xslate::PP::Method::_any_defined,
-
-    'scalar::defined' => \&Text::Xslate::PP::Method::_any_defined,
-
-    'array::defined' => \&Text::Xslate::PP::Method::_any_defined,
-    'array::size'    => \&Text::Xslate::PP::Method::_array_size,
-    'array::join'    => \&Text::Xslate::PP::Method::_array_join,
-    'array::reverse' => \&Text::Xslate::PP::Method::_array_reverse,
-    'array::sort'    => \&_array_sort,
-    'array::map'     => \&_array_map,
-
-    'hash::defined'  => \&Text::Xslate::PP::Method::_any_defined,
-    'hash::size'     => \&Text::Xslate::PP::Method::_hash_size,
-    'hash::keys'     => \&Text::Xslate::PP::Method::_hash_keys,
-    'hash::values'   => \&Text::Xslate::PP::Method::_hash_values,
-    'hash::kv'       => \&Text::Xslate::PP::Method::_hash_kv,
-);
-
+our %builtin_method = %Text::Xslate::PP::Method::builtin_method;
+$builtin_method{'array::sort'} = \&_array_sort;
+$builtin_method{'array::map'}  = \&_array_map;
 
 our @_f_l_for_methodcall;
-
-{
-    no warnings;
-
-    sub Text::Xslate::PP::Method::_bad_arg {
-        my ( $st, $frame, $line ) = @_f_l_for_methodcall;
-        _error( $st, $frame, $line, "Wrong number of arguments for %s", $_[0] );
-        return undef;
-    }
-
-}
 
 
 sub _array_sort {
     my( $array_ref, $callback ) = @_;
     my ( $st, $frame, $line ) = @_f_l_for_methodcall;
-    return Text::Xslate::PP::Method::_bad_arg('sort') if !(@_ == 1 or @_ == 2);
+    return $st->bad_arg([$frame, $line], 'sort') if !(@_ == 1 or @_ == 2);
 
     if(@_ == 1) {
         return [ sort @{ $array_ref } ];
@@ -1199,7 +1172,7 @@ sub _array_sort {
 sub _array_map {
     my( $array_ref, $callback ) = @_;
     my ( $st, $frame, $line ) = @_f_l_for_methodcall;
-    return Text::Xslate::PP::Method::_bad_arg('map') if @_ != 2;
+    return $st->bad_arg([$frame, $line], 'map') if @_ != 2;
     return [ map {
         proccall( $st, $callback, [ [ $_ ] ], [ $frame, $line ] );
     } @{$array_ref} ];
@@ -1213,11 +1186,11 @@ sub methodcall {
         if($invocant->can($method)) {
             my $retval = eval { $invocant->$method(@args) };
             if($@) {
-                _error( $st, $frame, $line, "%s" . "\t...", $@ );
+                $st->error( [$frame, $line], "%s" . "\t...", $@ );
             }
             return $retval;
         }
-        _error($st, $frame, $line, "Undefined method %s called for %s",
+        $st->error( [$frame, $line], "Undefined method %s called for %s",
             $method, $invocant);
     }
 
@@ -1234,11 +1207,11 @@ sub methodcall {
     }
 
     if ( not defined $invocant ) {
-        _warn($st, $frame, $line, "Use of nil to invoke method %", $method);
+        $st->warn( [$frame, $line], "Use of nil to invoke method %", $method);
         return undef;
     }
 
-    _error($st, $frame, $line, "Undefined method %s called for %s", $method, $invocant);
+    $st->error( [$frame, $line], "Undefined method %s called for %s", $method, $invocant);
 
     return undef;
 }
@@ -1255,7 +1228,7 @@ sub proccall {
     }
     else {
         $ret = eval { $proc->( @{ $pad->[ -1 ] } ) };
-        _error( $st, @$f_l, "%s\t...", $@) if $@;
+        $st->error( $f_l, "%s\t...", $@) if $@;
     }
 
     return $ret;
@@ -1273,7 +1246,7 @@ sub fetch {
             return $var->{ $key };
         }
         else {
-            _warn( $st, $frame, $line, "Use of nil as a field key" );
+            $st->warn( [$frame, $line], "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
@@ -1281,14 +1254,14 @@ sub fetch {
             return $var->[ $key ];
         }
         else {
-            _warn( $st, $frame, $line, "Use of %s as an array index", neat( $key ) );
+            $st->warn( [$frame, $line], "Use of %s as an array index", neat( $key ) );
         }
     }
     elsif ( defined $var ) {
-        _error( $st, $frame, $line, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+        $st->error( [$frame, $line], "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
-        _warn( $st, $frame, $line, "Use of nil to access %s", neat( $key ) );
+        $st->warn( [$frame, $line], "Use of nil to access %s", neat( $key ) );
     }
 
     return;
@@ -1300,10 +1273,10 @@ sub check_itr_ar {
 
     if ( ref($ar) ne 'ARRAY' ) {
         if ( defined $ar ) {
-            _error( $st, $frame, $line, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
+            $st->error( [$frame, $line], "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
         }
         else {
-            _warn( $st, $frame, $line, "Use of nil to iterate" );
+            $st->warn( [$frame, $line], "Use of nil to iterate" );
         }
         $ar = [];
     }
@@ -1396,36 +1369,6 @@ sub _mark_raw {
 
 sub _unmark_raw {
     defined $_[0] ? unmark_raw( $_[0] ) : undef;
-}
-
-
-sub _verbose {
-    my $v = $_[0]->engine->{ verbose };
-    defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
-}
-
-
-sub _warn {
-    my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( _verbose( $st ) > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
-        if ( defined $line ) {
-            $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
-        }
-        Carp::carp( sprintf( $fmt, @args ) );
-    }
-}
-
-
-sub _error {
-    my ( $st, $frame, $line, $fmt, @args ) = @_;
-    if( _verbose( $st ) >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
-        if ( defined $line ) {
-            $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
-        }
-        Carp::carp( sprintf( $fmt, @args ) );
-    }
 }
 
 
