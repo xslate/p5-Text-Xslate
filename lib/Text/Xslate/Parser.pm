@@ -1314,35 +1314,85 @@ sub std_while {
     return $proc;
 }
 
+# macro name -> { ... }
 sub std_proc {
     my($parser, $symbol) = @_;
 
     my $macro = $symbol->clone(arity => "proc");
     my $name  = $parser->token;
+
     if($name->arity ne "name") {
         $parser->_unexpected("a name", $name);
     }
 
     $parser->define_function($name->id);
-    $macro->first( $parser->symbol($name->id)->nud($parser) );
+    $macro->first($name);
     $parser->advance();
     $parser->pointy($macro);
     return $macro;
 }
 
+# block name -> { ... }
 sub std_macro_block {
     my($parser, $symbol) = @_;
 
-    my $macro = $parser->std_proc($symbol);
+    my $macro = $symbol->clone(arity => "proc");
+    my $name  = $parser->token;
 
-    my $call  = $parser->call($symbol, $macro->first);
+    if($name->arity ne "name") {
+        $parser->_unexpected("a name", $name);
+    }
 
-    # The "block" keyword defines raw macros.
-    # see _generate_proc()
-    my $print = $parser->symbol('print_raw')->clone(
-        arity => 'command',
-        first => [$call],
-    );
+    # auto filters
+    my @filters;
+    my $t = $parser->advance();
+    while($t->id eq "|") {
+        $t = $parser->advance();
+
+        if($t->arity ne "name") {
+            $parser->_unexpected("a name", $name);
+        }
+        my $filter = $t->clone();
+        $t = $parser->advance();
+
+        my $args;
+        if($t->id eq "(") {
+            $parser->advance();
+            $args = $parser->expression_list();
+            $t = $parser->advance(")");
+        }
+        push @filters, $args
+            ? $parser->call($symbol, $filter, @{$args})
+            : $filter;
+    }
+
+    $parser->define_function($name->id);
+    $macro->first($name);
+    $parser->pointy($macro);
+
+    my $call = $parser->call($symbol, $macro->first);
+    my $print;
+    if(@filters) {
+        # XXX: id('block') returns a normal string,
+        #      while id('macro') returns a raw string.
+        $macro->id('macro');
+        foreach my $filter(@filters) { # apply filters
+            $call = $parser->call($symbol, $filter, $call);
+        }
+        $print = $parser->symbol('print')->clone(
+            arity => 'command',
+            first => [$call],
+        );
+    }
+    else {
+        # The "block" keyword defines "immediate" macros, which
+        # returns a normal string, instead of a raw string.
+        # see _generate_proc()
+        $print = $parser->symbol('print_raw')->clone(
+            arity => 'command',
+            first => [$call],
+        );
+    }
     # std() returns a list
     return( $macro, $print );
 }
