@@ -1,8 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-0.1037
+0.1037 Sun Jun 27 17:37:57 2010
     [BUG FIXES]
     - Template cascading broke the file name of error messages
+
+    [OTHERS]
+    - Internal refactoring
 
 0.1036 Wed Jun 23 20:05:44 2010
     [CHANGES]
