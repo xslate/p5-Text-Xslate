@@ -100,7 +100,7 @@ sub error :method {
 sub bad_arg {
     my $st = shift;
     unshift @_, undef if @_ == 1; # hack to share it with PP::Booster and PP::Opcode
-    my($context, $name) = @_; 
+    my($context, $name) = @_;
     return $st->error($context, "Wrong number of arguments for %s", $name);
 }
 
