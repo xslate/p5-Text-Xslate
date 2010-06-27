@@ -16,7 +16,7 @@ Debugging options ($ENV{XSLATE}; or --debug for xslate(1)):
 
 Parser's terminology:
     arity  Symbol class; used while compiling
-    bp     Bond power; or operator precedence
+    bp     Binding power; or operator precedence
     nud    Null denotation; processing values and prefix operators
     led    Left denotation; processing infix and postfix operators
     std    Statement denotation; processing statements
