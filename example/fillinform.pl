@@ -2,7 +2,6 @@
 use strict;
 
 use Text::Xslate;
-use Text::Xslate::Util qw(p mark_raw);
 BEGIN {
     eval{ require HTML::FillInForm::Lite::Compat };
 }

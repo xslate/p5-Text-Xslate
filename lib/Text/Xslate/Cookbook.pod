@@ -11,9 +11,10 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head2 How to use FillInForm with Xslate
 
-Use the block filter syntax.
+Use the block filter syntax with C<HTML::FillInForm> or
+C<HTML::FillInForm::Lite>.
 
-Kolon code:
+Code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
@@ -37,7 +38,10 @@ Kolon code:
         },
     );
 
-    print $tx->render_string(<<'T', { q => { foo => "<filled value>" } });
+    my %vars = (
+        q => { foo => "<filled value>" },
+    );
+    print $tx->render_string(<<'T', \%vars);
     FillInForm
     : block form | fillinform($q) | raw -> {
     <form>
@@ -54,6 +58,33 @@ Output:
     </form>
 
 Note that the C<raw> filter is required to render HTML components.
+
+=head2 How to apply uri escape to template expressions
+
+Use C<URI::Escape> or C<URI::Escape::XS>.
+
+Code using C<URI::Escape>:
+
+    #!perl -w
+    use strict;
+
+    use Text::Xslate;
+
+    my $tx  = Text::Xslate->new(
+        cache  => 0,
+        module => ['URI::Escape'],
+    );
+
+    print $tx->render_string(<<'T', { app_param => "foo & bar" });
+    <a href="http://example.com/app/<:
+        $app_param | uri_escape_utf8 :>">something</a>
+    T
+
+Output:
+
+    <a href="http://example.com/app/foo%20%26%20bar">something</a>
+
+See also L<URI::Escape> or L<URI::Escape::XS>.
 
 =head1 SEE ALSO
 
