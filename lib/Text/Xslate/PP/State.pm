@@ -31,8 +31,13 @@ has current_frame => (
     is => 'rw',
 );
 
-has lines => (
-    is => 'rw',
+# opinfo is integrated into code
+#has info => (
+#    is => 'rw',
+#);
+
+has code => (
+    is  => 'rw',
 );
 
 has code_len => (

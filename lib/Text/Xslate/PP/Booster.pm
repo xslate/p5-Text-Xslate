@@ -1206,7 +1206,7 @@ sub methodcall {
     }
 
     if ( not defined $invocant ) {
-        $st->warn( [$frame, $line], "Use of nil to invoke method %", $method);
+        $st->warn( [$frame, $line], "Use of nil to invoke method %s", $method);
         return undef;
     }
 

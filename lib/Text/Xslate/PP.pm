@@ -125,31 +125,46 @@ sub _assemble {
     $mainframe->[ Text::Xslate::PP::TXframe_NAME ]    = 'main';
     $mainframe->[ Text::Xslate::PP::TXframe_RETADDR ] = $len;
 
-    $st->lines( [] );
-
     $st->code_len( $len );
 
-    my $code = [];
+    my $code = $st->code([]);
     my $macro;
 
-    my $line;
+    my $oi_line = -1;
+    my $oi_file = $name;
     for ( my $i = 0; $i < $len; $i++ ) {
-        my $pair = $proto->[ $i ];
+        my $c = $proto->[ $i ];
 
-        unless ( $pair and ref $pair eq 'ARRAY' ) {
+        if ( ref $c ne 'ARRAY' ) {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
         }
 
-        my ( $opname, $arg, $op_line ) = @$pair;
+        my ( $opname, $arg, $line, $file ) = @{$c};
         my $opnum = $OPS{ $opname };
 
         unless ( defined $opnum ) {
             Carp::croak( sprintf( "Oops: Unknown opcode '%s' on [%d]", $opname, $i ) );
         }
 
-        $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ]
-            if _PP_BACKEND eq 'Opcode';
-        $code->[ $i ]->{ opname }    = $opname; # for test
+        if(defined $line) {
+            $oi_line = $line;
+        }
+        if(defined $file) {
+            $oi_file = $file;
+        }
+
+        $code->[$i] = {
+            # opcode
+            opname => $opname,
+
+            # opinfo
+            line   => $oi_line,
+            file   => $oi_file,
+        };
+
+        if(_PP_BACKEND eq 'Opcode') {
+            $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ];
+        }
 
         my $oparg = $OPARGS[ $opnum ];
 
@@ -190,12 +205,6 @@ sub _assemble {
             $code->[ $i ]->{ arg } = undef;
         }
 
-        # set up line number
-        if(defined $op_line) {
-            $line = $op_line;
-        }
-        $st->lines->[ $i ] = $line;
-
         # special cases
         if( $opnum == $OPS{ macro_begin } ) {
             my $name = $code->[ $i ]->{ arg };
@@ -230,9 +239,7 @@ sub _assemble {
     $st->{ booster_code } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto )
         if _PP_BACKEND eq 'Booster';
 
-    push @{ $st->lines }, -1;
     push @{$code}, { exec_code => $OPCODE[ $OPS{end} ] }; # for threshold
-    $st->{ code } = $code;
     return;
 }
 
@@ -442,9 +449,9 @@ sub _error_handler {
         $_depth = 0;
     }
 
-    my $file = $st->tmpl->[ Text::Xslate::PP::TXo_NAME ];
-    my $line = $st->lines->[ $st->{ pc } ] || 0;
-    my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s", $file, $line, $name, $st->{ pc }, $str );
+    my $opcode = $st->code->[ $st->{ pc } ];
+    my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s",
+        $opcode->{file}, $opcode->{line}, $name, $st->{ pc }, $str );
 
     if ( !$die ) { # warn
         # $h can ignore warnings

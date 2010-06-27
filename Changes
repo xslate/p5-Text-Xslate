@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1037
+    [BUG FIXES]
+    - Template cascading broke the file name of error messages
+
 0.1036 Wed Jun 23 20:05:44 2010
     [CHANGES]
     - Change line_start, tag_start and tag_end to take string tokens,
