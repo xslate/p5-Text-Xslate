@@ -228,8 +228,8 @@ C<given-when>(also known as B<switch statement>):
     :   when "foo" {
             it is foo.
     :   }
-    :   when "bar" {
-            it is bar.
+    :   when ["bar", "baz" ] {
+            it is either bar or baz.
     :   }
     :   default {
             it is not foo nor bar.
@@ -243,7 +243,7 @@ You can specify the topic variable.
             it is foo.
     :   }
     :   when $it == "bar" or $it == "baz" {
-            it is bar or baz.
+            it is either bar or baz.
     :   }
     : }
 
