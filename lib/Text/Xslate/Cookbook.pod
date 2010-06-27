@@ -32,7 +32,6 @@ Code using C<HTML::FillInForm>:
     }
 
     my $tx  = Text::Xslate->new(
-        cache => 0,
         function => {
             fillinform => \&fillinform,
         },
@@ -71,7 +70,6 @@ Code using C<URI::Escape>:
     use Text::Xslate;
 
     my $tx  = Text::Xslate->new(
-        cache  => 0,
         module => ['URI::Escape'],
     );
 
