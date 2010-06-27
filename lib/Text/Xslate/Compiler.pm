@@ -230,12 +230,15 @@ sub compile {
         $input .= $self->_cat_files($footer);
     }
 
-    my @code; # main protocode
+    my @code; # main code
     {
         my $ast = $parser->parse($input, %args);
         print STDERR p($ast) if _DUMP_AST;
-        @code = $self->_compile_ast($ast);
-        $self->_finish_main(\@code);
+        @code = (
+            $self->opcode(set_opinfo => undef, file => $args{file}, line => 1),
+            $self->_compile_ast($ast),
+            $self->opcode('end'),
+        );
     }
 
     my $cascade = $self->cascade;
@@ -266,12 +269,15 @@ sub compile {
 sub opcode { # build an opcode
     my($self, $name, $arg, %args) = @_;
     my $symbol = $args{symbol};
-    my $file   = $args{file} || $self->file;
-    if($file ne $self->current_file) {
-        $self->current_file($file);
-    }
-    else {
-        $file = undef;
+    my $file   = $args{file};
+    if(not defined $file) {
+        $file = $self->file;
+        if($file ne $self->current_file) {
+            $self->current_file($file);
+        }
+        else {
+            $file = undef;
+        }
     }
     # name, arg, line, file, symbol, comment
     return [ $name => $arg,
@@ -292,12 +298,6 @@ sub _cat_files {
         $self->requires($fullpath);
     }
     return $s;
-}
-
-sub _finish_main {
-    my($self, $main_code) = @_;
-    push @{$main_code}, $self->opcode('end');
-    return;
 }
 
 our $_lv = -1;
@@ -370,13 +370,16 @@ sub _process_cascade {
         my $mtable   = $self->macro_table;
         my $macro;
         foreach my $c(@{$code}) {
-            # retrieve macros
+            # $c = [name, arg, line, file, symbol ]
+
+            # retrieve macros from assembly code
             if($c->[0] eq 'macro_begin' .. $c->[0] eq 'macro_end') {
                 if($c->[0] eq 'macro_begin') {
                     $macro = [];
                     $macro = {
                         name  => $c->[1],
                         line  => $c->[2],
+                        file  => $c->[3],
                         body  => [],
                     };
                     push @{ $mtable->{$c->[1]} ||= [] }, $macro;
@@ -395,7 +398,6 @@ sub _process_cascade {
                 }
             }
         }
-
         $self->requires($fullpath);
         $self->_process_cascade_file($cfile, $base_code);
     }
@@ -407,13 +409,8 @@ sub _process_cascade {
         }
 
         foreach my $c(@{$main_code}) {
-            if(!($c->[0] eq 'print_raw_s' && $c->[1] =~ m{\A [ \t\r\n]* \z}xms)) {
-                if($c->[0] eq 'print_raw_s') {
-                    Carp::carp("Xslate: Uselses use of text '$c->[1]'");
-                }
-                else {
-                    #Carp::carp("Xslate: Useless use of $c->[0] " . ($c->[1] // ""));
-                }
+            if($c->[0] eq 'print_raw_s' && $c->[1] =~ m{ [^ \t\r\n] }xms) {
+                Carp::carp("Xslate: Uselses use of text '$c->[1]'");
             }
         }
         @{$main_code} = @{$base_code};
@@ -495,7 +492,9 @@ sub _flush_macro_table {
     foreach my $macros(values %{$mtable}) {
         foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
             push @code,
-                $self->opcode( macro_begin => $macro->{name}, line => $macro->{line}, file => $macro->{file});
+                $self->opcode( macro_begin => $macro->{name},
+                    file => $macro->{file},
+                    line => $macro->{line} );
 
             push @code, $self->opcode( macro_nargs => $macro->{nargs} )
                 if $macro->{nargs};
@@ -526,7 +525,7 @@ sub _generate_name {
         }
     }
 
-    return $self->opcode( symbol => $node->id, symbol => $node );
+    return $self->opcode( symbol => $node->id, line => $node->line );
 }
 
 sub _can_print_optimize {
@@ -553,7 +552,7 @@ sub _generate_command {
 
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
-            push @code, $self->opcode( $proc . '_s' => $arg->value, line => $node->line );
+            push @code, $self->opcode( $proc . '_s' => $arg->value );
         }
         elsif($self->_can_print_optimize($proc, $arg)){
             my $filter      = $arg->first;
@@ -709,14 +708,15 @@ sub _generate_proc { # definition of macro, block, before, around, after
 
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
+    my $opinfo = $self->opcode(set_opinfo => undef, file => $self->file, line => $node->line);
     my %macro = (
         name      => $name,
         nargs     => $arg_ix,
-        body      => [ $self->_compile_ast($block) ],
-        line      => $node->line,
-        file      => $self->file,
+        body      => [ $opinfo, $self->_compile_ast($block) ],
+        line      => $opinfo->[2],
+        file      => $opinfo->[3],
         outer     => $lvar_used,
-        immediate => 0,
+        immediate => 0, # whether it returns normal string or raw string
     );
 
     if(any_in($type, qw(macro block))) {
@@ -736,9 +736,6 @@ sub _generate_proc { # definition of macro, block, before, around, after
         $macro{name} = $fq_name;
         push @{ $self->macro_table->{ $fq_name } ||= [] }, \%macro;
     }
-
-    $macro{body} = [ $self->_compile_ast($block) ];
-
     return;
 }
 
@@ -747,7 +744,7 @@ sub _generate_lambda {
 
     my $macro = $node->first;
     $self->_compile_ast([$macro]);
-    return $self->opcode( symbol => $macro->first->id, symbol => $node );
+    return $self->opcode( symbol => $macro->first->id, line => $node->line );
 }
 
 sub _prepare_cond_expr {
@@ -999,7 +996,7 @@ sub _generate_methodcall {
         $self->_expr($node->first),
         $self->opcode( 'push' ),
         (map { $self->_expr($_), $self->opcode('push') } @{$args}),
-        $self->opcode( methodcall_s => $method ),
+        $self->opcode( methodcall_s => $method, line => $node->line ),
     );
 }
 

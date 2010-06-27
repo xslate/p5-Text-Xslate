@@ -551,10 +551,10 @@ TXC_goto(goto) {
 
 /* opcode markers (noop) */
 TXC_w_sv(depend); /* tell the vm to dependent template files */
-
 TXC_w_key(macro_begin);
 TXC_w_int(macro_nargs);
 TXC_w_int(macro_outer);
+TXC(set_opinfo);
 
 /* "end" must be here (the last opcode) */
 TXC(end) {

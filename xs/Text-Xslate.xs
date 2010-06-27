@@ -9,6 +9,15 @@
 #include "ppport.h"
 
 #include "xslate.h"
+
+/* aliases */
+#define TXCODE_literal_i   TXCODE_literal
+#define TXCODE_depend      TXCODE_noop
+#define TXCODE_macro_begin TXCODE_noop
+#define TXCODE_macro_nargs TXCODE_noop
+#define TXCODE_macro_outer TXCODE_noop
+#define TXCODE_set_opinfo  TXCODE_noop
+
 #include "xslate_ops.h"
 
 #ifdef DEBUGGING
@@ -118,15 +127,15 @@ tx_load_template(pTHX_ SV* const self, SV* const name);
 
 #include "xs/xslate_opcode.inc"
 
+
 static const char*
 tx_file(pTHX_ const tx_state_t* const st) {
-    SV* const filesv = *av_fetch(st->tmpl, TXo_NAME, TRUE);
-    return SvPV_nolen_const(filesv);
+    return SvPV_nolen_const(st->info[ TX_PC2POS(st, st->pc) ].file);
 }
 
 static int
 tx_line(pTHX_ const tx_state_t* const st) {
-    return (int)st->lines[ TX_PC2POS(st, st->pc) ];
+    return (int)st->info[ TX_PC2POS(st, st->pc) ].line;
 }
 
 const char*
@@ -648,17 +657,23 @@ mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
 
 static int
 tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
-    tx_state_t* const st  = (tx_state_t*)mg->mg_ptr;
-    tx_code_t* const code = st->code;
-    I32 const len         = st->code_len;
+    tx_state_t* const st      = (tx_state_t*)mg->mg_ptr;
+    tx_info_t* const info     = st->info;
+    tx_code_t* const code     = st->code;
+    I32 const len             = st->code_len;
     I32 i;
 
     for(i = 0; i < len; i++) {
+        /* opcode */
         SvREFCNT_dec(code[i].arg);
+
+        /* opinfo */
+        SvREFCNT_dec(info[i].file);
+        SvREFCNT_dec(info[i].symbol);
     }
 
     Safefree(code);
-    Safefree(st->lines);
+    Safefree(info);
 
     SvREFCNT_dec(st->symbol);
     SvREFCNT_dec(st->frame);
@@ -673,30 +688,33 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 #ifdef USE_ITHREADS
 static SV*
 tx_sv_dup_inc(pTHX_ SV* const sv, CLONE_PARAMS* const param) {
-    SV* const newsv = sv_dup(sv, param);
-    SvREFCNT_inc_simple_void(newsv);
-    return newsv;
+    return SvREFCNT_inc( sv_dup(sv, param) );
 }
 #endif
 
 static int
 tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
 #ifdef USE_ITHREADS /* single threaded perl has no "xxx_dup()" APIs */
-    tx_state_t*       st              = (tx_state_t*)mg->mg_ptr;
-    const U16* const proto_lines      = st->lines;
-    const tx_code_t* const proto_code = st->code;
-    U32 const len                     = st->code_len;
+    tx_state_t*       st        = (tx_state_t*)mg->mg_ptr;
+    tx_info_t* const proto_info = st->info;
+    tx_code_t* const proto_code = st->code;
+    U32 const len               = st->code_len;
     U32 i;
 
     Newx(st->code, len, tx_code_t);
+    Newx(st->info, len, tx_info_t);
 
     for(i = 0; i < len; i++) {
+        /* opcode */
         st->code[i].exec_code = proto_code[i].exec_code;
         st->code[i].arg       = tx_sv_dup_inc(aTHX_ proto_code[i].arg, param);
-    }
 
-    Newx(st->lines, len, U16);
-    Copy(proto_lines, st->lines, len, U16);
+        /* opinfo */
+        st->info[i].optype    = proto_info[i].optype;
+        st->info[i].line      = proto_info[i].line;
+        st->info[i].file      = tx_sv_dup_inc(aTHX_ proto_info[i].file, param);
+        st->info[i].symbol    = tx_sv_dup_inc(aTHX_ proto_info[i].symbol, param);
+    }
 
     st->symbol   = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->symbol, param);
     st->frame    = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->frame,    param);
@@ -933,7 +951,8 @@ CODE:
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     U32 const len = av_len(proto) + 1;
     U32 i;
-    U16 l = 0;
+    U16 oi_line; /* opinfo.line */
+    SV* oi_file;
     tx_state_t st;
     AV* tmpl;
     SV* tobj;
@@ -949,7 +968,7 @@ CODE:
     }
 
     if(!SvOK(name)) { /* for strings */
-        name     = newSVpvs_flags("<input>", SVs_TEMP);
+        name     = sv_2mortal(newSVpvs_share("<input>"));
         fullpath = cachepath = &PL_sv_undef;
         mtime    = sv_2mortal(newSViv( time(NULL) ));
     }
@@ -992,8 +1011,9 @@ CODE:
     av_store(mainframe, TXframe_NAME,    newSVpvs_share("main"));
     av_store(mainframe, TXframe_RETADDR, newSVuv(len));
 
-    Newxz(st.lines, len + 1, U16);
-    st.lines[len] = (U16)-1;
+    Newxz(st.info, len + 1, tx_info_t);
+    st.info[len].line = (U16)-1; /* invalid value */
+    st.info[len].file = SvREFCNT_inc_simple_NN(name);
 
     Newxz(st.code, len, tx_code_t);
 
@@ -1003,6 +1023,9 @@ CODE:
     mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
     mg->mg_flags |= MGf_DUP;
 
+    oi_line = 0;
+    oi_file = name;
+
     for(i = 0; i < len; i++) {
         SV* const pair = *av_fetch(proto, i, TRUE);
         if(SvROK(pair) && SvTYPE(SvRV(pair)) == SVt_PVAV) {
@@ -1010,6 +1033,8 @@ CODE:
             SV* const opname = *av_fetch(av, 0, TRUE);
             SV** const arg   =  av_fetch(av, 1, FALSE);
             SV** const line  =  av_fetch(av, 2, FALSE);
+            SV** const file  =  av_fetch(av, 3, FALSE);
+            SV** const sym   =  av_fetch(av, 4, FALSE);
             HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
             IV  opnum;
 
@@ -1056,12 +1081,17 @@ CODE:
                 st.code[i].arg = NULL;
             }
 
-            /* setup line number */
+            /* setup opinfo */
             if(line && SvOK(*line)) {
-                l = (U16)SvIV(*line);
+                oi_line = (U16)SvUV(*line);
             }
-            st.lines[i] = l;
-
+            if(file && SvOK(*file) && !sv_eq(*file, oi_file)) {
+                oi_file = sv_mortalcopy(*file);
+            }
+            st.info[i].optype = (U16)opnum;
+            st.info[i].line   = oi_line;
+            st.info[i].file   = SvREFCNT_inc_simple_NN(oi_file);
+            st.info[i].symbol = (sym && SvOK(*sym)) ? newSVsv(*sym) : NULL;
 
             /* special cases */
             if(opnum == TXOP_macro_begin) {

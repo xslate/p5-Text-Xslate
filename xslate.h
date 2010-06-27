@@ -106,9 +106,11 @@ enum txmacro_ix {
 
 struct tx_state_s;
 struct tx_code_s;
+struct tx_info_s;
 
-typedef struct tx_state_s tx_state_t;
-typedef struct tx_code_s  tx_code_t;
+typedef struct tx_state_s  tx_state_t;
+typedef struct tx_code_s   tx_code_t;
+typedef struct tx_info_s   tx_info_t;
 
 #define TX_op            (TX_st->pc)
 #define TX_PC2POS(st, p) ((UV)((p) - (st)->code))
@@ -165,7 +167,7 @@ struct tx_state_s {
 
     AV* tmpl;    /* template objects. see enum txtmplo_ix */
     SV* engine;  /* Text::Xslate instance */
-    U16* lines;  /* code index -> line number */
+    tx_info_t* info;  /* index -> an oinfo object */
 };
 
 /* opcode structure */
@@ -175,14 +177,15 @@ struct tx_code_s {
     SV* arg;
 };
 
-#define TX_VERBOSE_DEFAULT 1
+/* opcode information */
+struct tx_info_s {
+    U16 optype;
+    U16 line;
+    SV* file;
+    SV* symbol;
+};
 
-/* aliases */
-#define TXCODE_literal_i   TXCODE_literal
-#define TXCODE_depend      TXCODE_noop
-#define TXCODE_macro_begin TXCODE_noop
-#define TXCODE_macro_nargs TXCODE_noop
-#define TXCODE_macro_outer TXCODE_noop
+#define TX_VERBOSE_DEFAULT 1
 
 void
 tx_warn(pTHX_ tx_state_t* const, const char* const fmt, ...)

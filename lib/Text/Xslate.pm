@@ -313,7 +313,6 @@ sub _load_source {
             Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
         }
     }
-
     if(_DUMP_LOAD_FILE) {
         printf STDERR "  _load_source: cache(%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
@@ -356,11 +355,11 @@ sub _load_compiled {
 
                 # the following components are optional
                 (?: [ \t]+ ($STRING|$NUMBER) )? # operand
-                (?: \#($NUMBER)                 # line number
+                (?: [ \t]+ \#($NUMBER)          # line number
                     (?: [:] ($STRING))?         # file name
                 )?
-                (?: \*($STRING) )?              # symbol name
-                [^\n]*                          # comments (anything)
+                (?: [ \t]+ \*($STRING) )?       # symbol name
+                (?: [ \t]* // [^\n]*)?          # comments (anything)
             \z
         }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
 
@@ -374,7 +373,7 @@ sub _load_compiled {
                 Carp::carp("Xslate: failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold_mtime){
-                printf "  _load_cache_compiled: %s(%s) is newer than %s(%s)\n",
+                printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold_mtime)
                         if _DUMP_LOAD_FILE;
@@ -383,11 +382,11 @@ sub _load_compiled {
             }
         }
 
-        push @asm, [ $name, $value, $line ];
+        push @asm, [ $name, $value, $line, $file, $symbol ];
     }
 
     if(_DUMP_LOAD_FILE) {
-        printf STDERR "  _load_cache_compiled: cache(%s)\n",
+        printf STDERR "  _load_compiled: cache(%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
     }
 
