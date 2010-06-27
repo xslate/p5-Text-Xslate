@@ -4,6 +4,37 @@ NAME
 
 Text::Xslate - High performance template engine in Perl
 
+SYNOPSIS
+
+    use Text::Xslate;
+    use FindBin qw($Bin);
+
+    my $tx = Text::Xslate->new(
+        # the fillowing options are optional.
+        path       => ['.'],
+        cache_dir  => "$ENV{HOME}/.xslate_cache",
+        cache      => 1,
+    );
+
+    my %vars = (
+        title => 'A list of books',
+        books => [
+            { title => 'Islands in the stream' },
+            { title => 'Programming Perl'      },
+            # ...
+        ],
+    );
+
+    # given 'hello.tx':
+    #<h1><: $title :></h1>
+    #<ul>
+    #: for $books -> $book {
+    #    <li><: $book.title :></li>
+    #: } # for
+    #</ul>
+
+    print $tx->render('hello.tx', \%vars);
+
 INSTALLATION
 
 Text::Xslate installation is straightforward. If your CPAN shell is set up,

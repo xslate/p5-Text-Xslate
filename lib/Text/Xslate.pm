@@ -492,8 +492,7 @@ This document describes Text::Xslate version 0.1036.
         books => [
             { title => 'Islands in the stream' },
             { title => 'Programming Perl'      },
-            { title => 'River out of Eden'     },
-            { title => 'Beautiful code'        },
+            # ...
         ],
     );
 
