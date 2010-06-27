@@ -186,6 +186,13 @@ has [qw(header footer)] => (
     isa => 'ArrayRef',
 );
 
+has current_file => (
+    is  => 'rw',
+    isa => 'Str',
+
+    init_arg => undef,
+);
+
 sub lvar_use {
     my($self, $n) = @_;
 
@@ -195,6 +202,8 @@ sub lvar_use {
 sub compile {
     my($self, $input, %args) = @_;
 
+    my $default_filename = '<input>';
+
     # each compiling process is independent
     local $self->{macro_table}  = {};
     local $self->{lvar_id     } = 0;
@@ -202,13 +211,14 @@ sub compile {
     local $self->{const}        = [];
     local $self->{dependencies} = [];
     local $self->{cascade};
-    local $self->{header}  = $self->{header};
-    local $self->{footer}  = $self->{footer};
+    local $self->{header}       = $self->{header};
+    local $self->{footer}       = $self->{footer};
+    local $self->{current_file} = $default_filename;
 
-    my $parser   = $self->parser;
-    my $old_file = $parser->file;
+    my $parser = $self->parser;
+    local $parser->{file};
 
-    $args{file} ||= '<input>';
+    $args{file} ||= $default_filename;
 
     my $header = delete $self->{header};
     my $footer = delete $self->{footer};
@@ -243,8 +253,6 @@ sub compile {
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b ix \b/xms))
             if _DUMP_ASM;
 
-    $parser->file($old_file || '<input>'); # reset
-
     {
         my %uniq;
         push @code,
@@ -253,6 +261,25 @@ sub compile {
     }
 
     return \@code;
+}
+
+sub opcode { # build an opcode
+    my($self, $name, $arg, %args) = @_;
+    my $symbol = $args{symbol};
+    my $file   = $args{file} || $self->file;
+    if($file ne $self->current_file) {
+        $self->current_file($file);
+    }
+    else {
+        $file = undef;
+    }
+    # name, arg, line, file, symbol, comment
+    return [ $name => $arg,
+                $args{line} || (ref $symbol ? $symbol->line : undef),
+                $file,
+                (ref $symbol ? $symbol->id : $symbol),
+                $args{comment},
+           ];
 }
 
 sub _cat_files {
@@ -269,7 +296,7 @@ sub _cat_files {
 
 sub _finish_main {
     my($self, $main_code) = @_;
-    push @{$main_code}, ['end'];
+    push @{$main_code}, $self->opcode('end');
     return;
 }
 
@@ -468,15 +495,15 @@ sub _flush_macro_table {
     foreach my $macros(values %{$mtable}) {
         foreach my $macro(ref($macros) eq 'ARRAY' ? @{$macros} : $macros) {
             push @code,
-                [ macro_begin => $macro->{name}, $macro->{line} ];
+                $self->opcode( macro_begin => $macro->{name}, line => $macro->{line}, file => $macro->{file});
 
-            push @code, [ macro_nargs => $macro->{nargs} ]
+            push @code, $self->opcode( macro_nargs => $macro->{nargs} )
                 if $macro->{nargs};
 
-            push @code, [ macro_outer => $macro->{outer} ]
+            push @code, $self->opcode( macro_outer => $macro->{outer} )
                 if $macro->{outer};
 
-            push @code, @{ $macro->{body} }, [ macro_end => $macro->{immediate} ];
+            push @code, @{ $macro->{body} }, $self->opcode( macro_end => $macro->{immediate} );
         }
     }
     %{$mtable} = ();
@@ -495,11 +522,11 @@ sub _generate_name {
             return @{$code};
         }
         else {
-            return [ load_lvar => $lvar_id, $node->line, "constant $node" ];
+            return $self->opcode( load_lvar => $lvar_id, symbol => $node );
         }
     }
 
-    return [ symbol => $node->id, $node->line ];
+    return $self->opcode( symbol => $node->id, symbol => $node );
 }
 
 sub _can_print_optimize {
@@ -526,25 +553,26 @@ sub _generate_command {
 
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
-            push @code, [ $proc . '_s' => $arg->value, $node->line ];
+            push @code, $self->opcode( $proc . '_s' => $arg->value, line => $node->line );
         }
         elsif($self->_can_print_optimize($proc, $arg)){
-            my $filter_name = $arg->first->id;
+            my $filter      = $arg->first;
+            my $filter_name = $filter->id;
             my $command = $builtin{ $filter_name } eq 'builtin_mark_raw'
                 ? 'print_raw'  # mark_raw, raw
                 : 'print';     # html
             push @code,
                 $self->_expr($arg->second->[0]),
-                [ $command => undef, $node->line, "$filter_name (builtin filter)" ];
+                $self->opcode( $command => undef, symbol => $filter );
         }
         else {
             push @code,
                 $self->_expr($arg),
-                [ $proc => undef, $node->line ];
+                $self->opcode( $proc => undef, line => $node->line );
         }
     }
     if(defined(my $vars = $node->second)) {
-        @code = (['enter'], $self->_localize_vars($vars), @code, ['leave']);
+        @code = ($self->opcode('enter'), $self->_localize_vars($vars), @code, $self->opcode('leave'));
     }
 
     if(!@code) {
@@ -580,8 +608,8 @@ sub _compile_block {
         if($op->[0] eq 'pushmark') {
             # pushmark ... funcall (or something) may create mortal SVs
             # so surround the block with ENTER and LEAVE
-            unshift @block_code, ['enter'];
-            push    @block_code, ['leave'];
+            unshift @block_code, $self->opcode('enter');
+            push    @block_code, $self->opcode('leave');
             last;
         }
     }
@@ -609,17 +637,17 @@ sub _generate_for {
 
     $self->lvar->{$lvar_name} = $lvar_id;
 
-    push @code, [ for_start => $lvar_id, $expr->line, $lvar_name ];
+    push @code, $self->opcode( for_start => $lvar_id, symbol => $iter_var );
 
     # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(3);
 
     my @block_code = $self->_compile_block($block);
     push @code,
-        [ literal_i => $lvar_id, $expr->line, $lvar_name ],
-        [ for_iter  => scalar(@block_code) + 2 ],
+        $self->opcode( literal_i => $lvar_id, symbol => $iter_var ),
+        $self->opcode( for_iter  => scalar(@block_code) + 2 ),
         @block_code,
-        [ goto      => -(scalar(@block_code) + 2), undef, "end for" ];
+        $self->opcode( goto      => -(scalar(@block_code) + 2), comment => "end for" );
 
     return @code;
 }
@@ -648,15 +676,15 @@ sub _generate_while {
         $lvar_id                  = $self->lvar_id;
         $lvar_name                = $iter_var->id;
         $self->lvar->{$lvar_name} = $lvar_id;
-        push @code, [ save_to_lvar => $lvar_id, $expr->line, $lvar_name ];
+        push @code, $self->opcode( save_to_lvar => $lvar_id, symbol => $iter_var );
     }
 
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
     my @block_code = $self->_compile_block($block);
     return @code,
-        [ $cond_op => scalar(@block_code) + 2, undef, "while" ],
+        $self->opcode( $cond_op => scalar(@block_code) + 2, symbol => $node ),
         @block_code,
-        [ goto => -(scalar(@block_code) + scalar(@code) + 1), undef, "end while" ];
+        $self->opcode( goto => -(scalar(@block_code) + scalar(@code) + 1), comment => "end while" );
 
     return @code;
 }
@@ -719,7 +747,7 @@ sub _generate_lambda {
 
     my $macro = $node->first;
     $self->_compile_ast([$macro]);
-    return [ symbol => $macro->first->id, $node->line, 'lambda' ];
+    return $self->opcode( symbol => $macro->first->id, symbol => $node );
 }
 
 sub _prepare_cond_expr {
@@ -787,23 +815,23 @@ sub _generate_if {
     if( (@then and @else) or !$OPTIMIZE) {
         return(
             @cond,
-            [ $cond_true => scalar(@then) + 2, undef, $node->id . ' (then)' ],
+            $self->opcode( $cond_true => scalar(@then) + 2, comment => $node->id . ' (then)' ),
             @then,
-            [ goto => scalar(@else) + 1, undef, $node->id . ' (else)' ],
+            $self->opcode( goto => scalar(@else) + 1, comment => $node->id . ' (else)' ),
             @else,
         );
     }
     elsif(!@else) { # no @else
         return(
             @cond,
-            [ $cond_true => scalar(@then) + 1, undef, $node->id . ' (then/no-else)' ],
+            $self->opcode( $cond_true => scalar(@then) + 1, comment => $node->id . ' (then/no-else)' ),
             @then,
         );
     }
     else { # no @then
         return(
             @cond,
-            [ $cond_false => scalar(@else) + 1, undef, $node->id . ' (else/no-then)'],
+            $self->opcode( $cond_false => scalar(@else) + 1, comment => $node->id . ' (else/no-then)'),
             @else,
         );
     }
@@ -830,7 +858,7 @@ sub _generate_given {
     $self->lvar->{$lvar_name} = $lvar_id;
 
     local $self->{lvar_id} = $self->lvar_use(1); # topic variable
-    push @code, [ save_to_lvar => $lvar_id, undef, "given $lvar_name" ],
+    push @code, $self->opcode( save_to_lvar => $lvar_id, symbol => $lvar ),
         $self->_compile_ast($block);
 
     return @code;
@@ -839,26 +867,22 @@ sub _generate_given {
 sub _generate_variable {
     my($self, $node) = @_;
 
-    my @op;
     if(defined(my $lvar_id = $self->lvar->{$node->id})) {
-        @op = ( load_lvar => $lvar_id );
+        return $self->opcode( load_lvar => $lvar_id, symbol => $node );
     }
     else {
         my $name = $self->_variable_to_value($node);
         if($name =~ /~/) {
             $self->_error("Undefined iterator variable $node", $node);
         }
-        @op = ( fetch_s => $name );
+        return $self->opcode( fetch_s => $name, line => $node->line );
     }
-    $op[2] = $node->line;
-    $op[3] = $node->id;
-    return \@op;
 }
 
 sub _generate_marker {
     my($self, $node) = @_;
 
-    return [ $node->id => undef, $node->line ];
+    return return $self->opcode( $node->id => undef, symbol => $node );
 }
 
 sub _generate_literal {
@@ -866,10 +890,10 @@ sub _generate_literal {
 
     my $value = $node->value;
     if(defined $value){
-        return [ literal => $value ];
+        return $self->opcode( literal => $value );
     }
     else {
-        return [ 'nil' ];
+        return $self->opcode( 'nil' );
     }
 }
 
@@ -880,9 +904,9 @@ sub _generate_objectliteral {
     my $type = $node->id eq '{' ? 'make_hash' : 'make_array';
 
     return
-        ['pushmark', undef, undef, $type],
+        $self->opcode( pushmark => undef, comment => $type ),
         (map{ $self->_expr($_), ['push'] } @{$list}),
-        [$type],
+        $self->opcode($type),
     ;
 }
 
@@ -891,7 +915,10 @@ sub _generate_unary {
 
     my $id = $node->id;
     if(exists $unary{$id}) {
-        my @code = ($self->_expr($node->first), [ $unary{$id} ]);
+        my @code = (
+            $self->_expr($node->first),
+            $self->opcode( $unary{$id} )
+        );
         if( $OPTIMIZE and $self->_code_is_literal($code[0]) ) {
             $self->_fold_constants(\@code);
         }
@@ -911,7 +938,7 @@ sub _generate_binary {
     if($id eq '.') {
         return
             @lhs,
-            [ fetch_field_s => $node->second->id ];
+            $self->opcode( fetch_field_s => $node->second->id );
     }
     elsif(exists $binary{$id}) {
         if($id eq "["
@@ -920,28 +947,28 @@ sub _generate_binary {
             # $foo[literal]
             return
                 @lhs,
-                [ fetch_field_s => $node->second->value ];
+                $self->opcode( fetch_field_s => $node->second->value );
         }
 
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
         my @code = (
             @lhs,
-            [ save_to_lvar => $self->lvar_id ],
+            $self->opcode( save_to_lvar => $self->lvar_id ),
             @rhs,
-            [ load_lvar_to_sb => $self->lvar_id ],
-            [ $binary{$id}   => undef ],
+            $self->opcode( load_lvar_to_sb => $self->lvar_id ),
+            $self->opcode( $binary{$id} ),
         );
 
         if(any_in($id, qw(min max))) {
             local $self->{lvar_id} = $self->lvar_use(1);
             splice @code, -1, 0,
-                [save_to_lvar => $self->lvar_id ]; # save lhs
+                $self->opcode(save_to_lvar => $self->lvar_id ); # save lhs
             push @code,
-                [ or              => +2 , undef, $id ],
-                [ load_lvar_to_sb => $self->lvar_id, undef, "$id on false" ],
+                $self->opcode( or => +2 , symbol => $node ),
+                $self->opcode( load_lvar_to_sb => $self->lvar_id ), # on true
                 # fall through
-                [ move_from_sb    => undef, undef, "$id on true" ],
+                $self->opcode( 'move_from_sb' ), # on false
         }
 
         if($OPTIMIZE) {
@@ -955,7 +982,7 @@ sub _generate_binary {
         my @rhs = $self->_expr($node->second);
         return
             @lhs,
-            [ $logical_binary{$id} => scalar(@rhs) + 1, undef, "logical $id" ],
+            $self->opcode( $logical_binary{$id} => scalar(@rhs) + 1, symbol => $node ),
             @rhs;
     }
 
@@ -968,11 +995,11 @@ sub _generate_methodcall {
     my $args   = $node->third;
     my $method = $node->second->id;
     return (
-        [ pushmark => undef, undef, $method ],
+        $self->opcode( pushmark => undef, comment => $method ),
         $self->_expr($node->first),
-        [ 'push' ],
-        (map { $self->_expr($_), [ 'push' ] } @{$args}),
-        [ methodcall_s => $method, $node->line ],
+        $self->opcode( 'push' ),
+        (map { $self->_expr($_), $self->opcode('push') } @{$args}),
+        $self->opcode( methodcall_s => $method ),
     );
 }
 
@@ -989,10 +1016,10 @@ sub _generate_call {
     }
 
     return(
-        [ pushmark => undef, undef, "funcall " . $callable->id ],
-        (map { $self->_expr($_), [ 'push' ] } @{$args}),
+        $self->opcode( pushmark => undef, comment => $callable->id ),
+        (map { $self->_expr($_), $self->opcode( 'push' ) } @{$args}),
         $self->_expr($callable),
-        [ funcall => undef, $node->line ],
+        $self->opcode( 'funcall' )
     );
 }
 
@@ -1007,7 +1034,7 @@ sub _generate_iterator {
             $node);
     }
 
-    return [ load_lvar => $lvar_id+1, $node->line, $node->id ];
+    return $self->opcode( load_lvar => $lvar_id+1, symbol => $node );
 }
 
 sub _generate_iterator_body {
@@ -1020,7 +1047,7 @@ sub _generate_iterator_body {
             $node);
     }
 
-    return [ load_lvar => $lvar_id+2, $node->line, $node->id ];
+    return $self->opcode( load_lvar => $lvar_id+2, symbol => $node );
 }
 
 sub _generate_assign {
@@ -1049,7 +1076,7 @@ sub _generate_assign {
 
     return
         @expr,
-        [ save_to_lvar => $lvar->{$lvar_name}, $node->line, $lvar_name ];
+        $self->opcode( save_to_lvar => $lvar->{$lvar_name}, symbol => $lhs, comment => $node->id);
 }
 
 sub _generate_constant {
@@ -1075,7 +1102,7 @@ sub _generate_constant {
 
     return
         @expr,
-        [ save_to_lvar => $lvar_id, $node->line, "constant $lvar_name" ];
+        $self->opcode( save_to_lvar => $lvar_id, symbol => $lhs, comment => $node->id);
 }
 
 
@@ -1089,7 +1116,7 @@ sub _localize_vars {
         }
         push @localize,
             $self->_expr($expr),
-            [ localize_s => $key->value ];
+            $self->opcode( localize_s => $key->value, symbol => $key );
     }
     return @localize;
 }
@@ -1124,7 +1151,8 @@ sub _fold_constants {
     local $engine->{verbose}      = 1;
 
     my $result = eval {
-        $engine->_assemble([@{$code}, ['print_raw'], ['end']], undef, undef, undef, undef);
+        my @tmp_code = (@{$code}, $self->opcode('print_raw'), $self->opcode('end'));
+        $engine->_assemble(\@tmp_code, undef, undef, undef, undef);
         $engine->render(undef);
     };
     if($@) {
@@ -1132,7 +1160,7 @@ sub _fold_constants {
         return 0;
     }
 
-    @{$code} = ([ literal => $result, undef, "optimized by constant folding"]);
+    @{$code} = ($self->opcode( literal => $result, comment => "optimized by constant folding"));
     return 1;
 }
 
@@ -1147,8 +1175,8 @@ my %goto_family;
 )} = ();
 
 sub _noop {
-    my($op) = @_;
-    @{$op} = (noop => undef, undef, "ex-$op->[0]");
+    my($self, $op) = @_;
+    @{$op} = @{ $self->opcode( noop => undef, comment => "ex-$op->[0]") };
     return;
 }
 
@@ -1196,7 +1224,7 @@ sub _optimize_vmcode {
 
                 $c->[$i][1] .= $c->[$j][1];
 
-                _noop($c->[$j]);
+                $self->_noop($c->[$j]);
                 $j++;
             }
         }
@@ -1215,9 +1243,9 @@ sub _optimize_vmcode {
             if(defined($nn)
                 && $nn->[0] eq 'load_lvar_to_sb'
                 && $nn->[1] == $it->[1]) {
-                @{$it} = ('move_to_sb', undef, undef, "ex-$it->[0]");
+                @{$it} = @{$self->opcode( move_to_sb => undef, comment => "ex-$it->[0]" )};
 
-                _noop($nn);
+                $self->_noop($nn);
             }
         }
         elsif($name eq 'literal') {
@@ -1229,9 +1257,9 @@ sub _optimize_vmcode {
             my $prev = $c->[$i-1];
             if($prev->[0] =~ /^literal/) { # literal or literal_i
                 $c->[$i][0] = 'fetch_field_s';
-                $c->[$i][1] = $prev->[1];
+                $c->[$i][1] = $prev->[1]; # arg
 
-                _noop($prev);
+                $self->_noop($prev);
             }
         }
     }
@@ -1258,25 +1286,32 @@ sub _optimize_vmcode {
 sub as_assembly {
     my($self, $code_ref, $addix) = @_;
 
-    my $as = "";
+    my $asm = "";
     foreach my $ix(0 .. (@{$code_ref}-1)) {
-        my($opname, $arg, $line, $comment) = @{$code_ref->[$ix]};
-        $as .= "$ix:" if $addix; # for debugging
+        my($name, $arg, $line, $file, $symbol, $comment) = @{$code_ref->[$ix]};
+        $asm .= "$ix:" if $addix; # for debugging
 
-        # "$opname $arg #$line // $comment"
-        $as .= $opname;
+        # "$opname $arg #$line:$file *$symbol // $comment"
+        ref($name) and die "Oops: " . p($code_ref->[$ix]);
+        $asm .= $name;
         if(defined $arg) {
-            $as .= " " . value_to_literal($arg);
+            $asm .= " " . value_to_literal($arg);
         }
         if(defined $line) {
-            $as .= " #$line";
+            $asm .= " #$line";
+            if(defined $file) {
+                $asm .= ":" . value_to_literal($file);
+            }
+        }
+        if(defined $symbol) {
+            $asm .= " *" . value_to_literal($symbol);
         }
         if(defined $comment) {
-            $as .= " // $comment";
+            $asm .= " // $comment";
         }
-        $as .= "\n";
+        $asm .= "\n";
     }
-    return $as;
+    return $asm;
 }
 
 sub _error {

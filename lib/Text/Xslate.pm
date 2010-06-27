@@ -342,19 +342,27 @@ sub _load_compiled {
 
     # parse assembly
     my @asm;
-    while(defined(my $line = <$in>)) {
-        next if $line =~ m{\A [ \t]* (?: \# | // )}xms; # comments
-        chomp $line;
+    while(defined(my $s = <$in>)) {
+        next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
+        chomp $s;
 
-        my($name, $value, $line) = $line =~ m{
+        # See ::Compiler::as_assembly()
+        # "$opname $arg #$line:$file *$symbol // $comment"
+
+        my($name, $value, $line, $file, $symbol) = $s =~ m{
             \A
                 [ \t]*
                 ($IDENT)                        # an opname
-                (?: [ \t]+ ($STRING|$NUMBER) )? # an operand   (optional)
-                (?:\#($NUMBER))?                # line number  (optional)
-                [^\n]*                          # any comments (optional)
+
+                # the following components are optional
+                (?: [ \t]+ ($STRING|$NUMBER) )? # operand
+                (?: \#($NUMBER)                 # line number
+                    (?: [:] ($STRING))?         # file name
+                )?
+                (?: \*($STRING) )?              # symbol name
+                [^\n]*                          # comments (anything)
             \z
-        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $line");
+        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
 
         $value = literal_to_value($value);
 
