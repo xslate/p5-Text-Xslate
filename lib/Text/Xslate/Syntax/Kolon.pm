@@ -500,6 +500,52 @@ only strings.
 
     <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
 
+The C<block> keyword is also used to make a group of template code,
+and you can apply filters to that block with C<< infix:<|> >>.
+Here is an example to apply C<fillinform> to an HTML form.
+
+Code:
+
+    #!perl -w
+    use strict;
+
+    use Text::Xslate;
+    use HTML::FillInForm::Lite;
+
+    sub fillinform {
+        my($q) = @_;
+
+        return sub {
+            my($html) = @_;
+            return HTML::FillInForm::Lite->fill(\$html, $q);
+        };
+    }
+
+    my $tx  = Text::Xslate->new(
+        cache => 0,
+        function => {
+            fillinform => \&fillinform,
+        },
+    );
+
+    print $tx->render_string(<<'T', { q => { foo => "<filled value>" } });
+    FillInForm
+    : block form | fillinform($q) | raw -> {
+    <form>
+    <input type="text" name="foo" />
+    </form>
+    : }
+    T
+
+Output:
+
+    FillInForm
+    <form>
+    <input type="text" name="foo" value="&lt;filled value&gt;" />
+    </form>
+
+Note that the C<raw> filter is required to render HTML components.
+
 =head2 Comments
 
 Comments start from C<#> to a new line or semicolon.

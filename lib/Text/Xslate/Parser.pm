@@ -1333,6 +1333,10 @@ sub std_proc {
 }
 
 # block name -> { ... }
+# Note that the "block" keyword defines "immediate" macros, which
+# returns a normal string, instead of a raw string.
+# see _generate_proc()
+
 sub std_macro_block {
     my($parser, $symbol) = @_;
 
@@ -1371,29 +1375,21 @@ sub std_macro_block {
     $parser->pointy($macro);
 
     my $call = $parser->call($symbol, $macro->first);
-    my $print;
+    my $command;
     if(@filters) {
-        # XXX: id('block') returns a normal string,
-        #      while id('macro') returns a raw string.
-        $macro->id('macro');
         foreach my $filter(@filters) { # apply filters
             $call = $parser->call($symbol, $filter, $call);
         }
-        $print = $parser->symbol('print')->clone(
-            arity => 'command',
-            first => [$call],
-        );
+        $command = 'print'; # need to explicit 'raw' filter for security
     }
     else {
-        # The "block" keyword defines "immediate" macros, which
-        # returns a normal string, instead of a raw string.
-        # see _generate_proc()
-        $print = $parser->symbol('print_raw')->clone(
-            arity => 'command',
-            first => [$call],
-        );
+        $command = 'print_raw';
     }
-    # std() returns a list
+    my $print = $parser->symbol($command)->clone(
+        arity => 'command',
+        first => [$call],
+    );
+    # std() can return a list
     return( $macro, $print );
 }
 
