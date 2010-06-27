@@ -888,6 +888,10 @@ L<Text::Xslate::Syntax::Metakolon>
 
 L<Text::Xslate::Syntax::TTerse>
 
+Cookbook:
+
+L<Text::Xslate::Cookbook>
+
 Xslate command:
 
 L<xlsate>
