@@ -61,6 +61,30 @@ T
     Hello, world!
 </p>
 X
+
+    [<<'T', undef, <<'X'],
+: block main | html -> {
+    <em>Hello, world!</em>
+: }
+T
+    &lt;em&gt;Hello, world!&lt;/em&gt;
+X
+
+    [<<'T', undef, <<'X'],
+: block main | unmark_raw -> {
+    <em>Hello, world!</em>
+: }
+T
+    &lt;em&gt;Hello, world!&lt;/em&gt;
+X
+
+    [<<'T', undef, <<'X'],
+: block main | raw -> {
+    <em>Hello, world!</em>
+: }
+T
+    <em>Hello, world!</em>
+X
 );
 
 foreach my $d(@set) {

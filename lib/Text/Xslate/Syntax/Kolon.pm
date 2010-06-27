@@ -502,49 +502,18 @@ only strings.
 
 The C<block> keyword is also used to make a group of template code,
 and you can apply filters to that block with C<< infix:<|> >>.
-Here is an example to apply C<fillinform> to an HTML form.
+Here is an example to embed HTML source code into templates.
 
-Code:
-
-    #!perl -w
-    use strict;
-
-    use Text::Xslate;
-    use HTML::FillInForm::Lite;
-
-    sub fillinform {
-        my($q) = @_;
-
-        return sub {
-            my($html) = @_;
-            return HTML::FillInForm::Lite->fill(\$html, $q);
-        };
-    }
-
-    my $tx  = Text::Xslate->new(
-        cache => 0,
-        function => {
-            fillinform => \&fillinform,
-        },
-    );
-
-    print $tx->render_string(<<'T', { q => { foo => "<filled value>" } });
-    FillInForm
-    : block form | fillinform($q) | raw -> {
-    <form>
-    <input type="text" name="foo" />
-    </form>
+Template:
+    : block source | html -> {
+        <em>Hello, world!</em>
     : }
-    T
 
 Output:
+        &lt;em&gt;Hello, world!&lt;/em&gt;
 
-    FillInForm
-    <form>
-    <input type="text" name="foo" value="&lt;filled value&gt;" />
-    </form>
-
-Note that the C<raw> filter is required to render HTML components.
+See also L<Text::Xslate::Cookbook/"How to use FillInForm with Xslate"> for
+another example to use C<FillInForm> with this block filter syntax.
 
 =head2 Comments
 

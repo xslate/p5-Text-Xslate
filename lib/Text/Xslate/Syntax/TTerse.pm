@@ -463,9 +463,9 @@ sub wrap {
 # ...
 # [% END %]
 # is
-# : __block filter_xxx -> {
+# : block filter_xxx | html -> {
 #   ...
-# : } filter_001() | html
+# : }
 # in Kolon
 
 sub std_filter {
