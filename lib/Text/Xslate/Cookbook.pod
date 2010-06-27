@@ -84,6 +84,30 @@ Output:
 
 See also L<URI::Escape> or L<URI::Escape::XS>.
 
+=head2 How to use Template Toolkit's WRAPPER feature in Kolon
+
+Use template cascading, which is a super-set of the C<WRAPPER> directive.
+
+F<wrapper.tx>:
+
+    <div class="wrapper">
+    block content -> { }
+    </div>
+
+F<content.tx>
+
+    : cascade wrapper
+
+    : override content -> {
+        Hello, world!
+    : }
+
+Output:
+
+    <div class="wrapper">
+        Hello, world!
+    </div>
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
