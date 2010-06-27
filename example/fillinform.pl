@@ -3,14 +3,17 @@ use strict;
 
 use Text::Xslate;
 use Text::Xslate::Util qw(p mark_raw);
-use HTML::FillInForm::Lite;
+BEGIN {
+    eval{ require HTML::FillInForm::Lite::Compat };
+}
+use HTML::FillInForm;
 
 sub fillinform {
     my($q) = @_;
 
     return sub {
         my($html) = @_;
-        return HTML::FillInForm::Lite->fill(\$html, $q);
+        return HTML::FillInForm->fill(\$html, $q);
     };
 }
 

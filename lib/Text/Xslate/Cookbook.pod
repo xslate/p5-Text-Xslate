@@ -1,0 +1,62 @@
+
+=head1 NAME
+
+Text::Xslate::Cookbook - How to cook Xslate templates
+
+=head1 DESCRIPTION
+
+The Xslate cookbook is a set of recipes showing Xslate features.
+
+=head1 RECIPES
+
+=head2 How to use FillInForm with Xslate
+
+Use the block filter syntax.
+
+Kolon code:
+
+    #!perl -w
+    use strict;
+
+    use Text::Xslate;
+    use HTML::FillInForm;
+
+    sub fillinform {
+        my($q) = @_;
+
+        return sub {
+            my($html) = @_;
+            return HTML::FillInForm->fill(\$html, $q);
+        };
+    }
+
+    my $tx  = Text::Xslate->new(
+        cache => 0,
+        function => {
+            fillinform => \&fillinform,
+        },
+    );
+
+    print $tx->render_string(<<'T', { q => { foo => "<filled value>" } });
+    FillInForm
+    : block form | fillinform($q) | raw -> {
+    <form>
+    <input type="text" name="foo" />
+    </form>
+    : }
+    T
+
+Output:
+
+    FillInForm
+    <form>
+    <input type="text" name="foo" value="&lt;filled value&gt;" />
+    </form>
+
+Note that the C<raw> filter is required to render HTML components.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+=cut
