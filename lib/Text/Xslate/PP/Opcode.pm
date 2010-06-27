@@ -573,6 +573,7 @@ sub op_depend; *op_depend = \&op_noop;
 sub op_macro_begin; *op_macro_begin = \&op_noop;
 sub op_macro_nargs; *op_macro_nargs = \&op_noop;
 sub op_macro_outer; *op_macro_outer = \&op_noop;
+sub op_set_opinfo;  *op_set_opinfo  = \&op_noop;
 
 #
 # INTERNAL COMMON FUNCTIONS

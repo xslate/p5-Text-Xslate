@@ -710,15 +710,14 @@ $CODE_MANIP{ 'goto' } = sub {
 
 $CODE_MANIP{ 'depend' } = $CODE_MANIP{'noop'};
 
+$CODE_MANIP{ 'macro_nargs' } = $CODE_MANIP{'noop'};
+$CODE_MANIP{ 'macro_outer' } = $CODE_MANIP{'noop'};
+$CODE_MANIP{ 'set_opinfo'  } = $CODE_MANIP{'noop'};
 
 $CODE_MANIP{ 'end' } = sub {
     my ( $self, $arg, $line ) = @_;
     $self->write_lines( "# process end" );
 };
-
-
-$CODE_MANIP{ 'macro_nargs' } = $CODE_MANIP{'noop'};
-$CODE_MANIP{ 'macro_outer' } = $CODE_MANIP{'noop'};
 
 
 #
