@@ -1,0 +1,5 @@
+HEAD
+: block hello -> {
+    Hello, <:= $a.bad_code_foo() :> world!
+: }
+FOOT
