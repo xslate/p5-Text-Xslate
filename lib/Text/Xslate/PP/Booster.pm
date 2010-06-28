@@ -859,6 +859,16 @@ sub _check_logic {
 
             my $st_2nd = $self->_spawn_child->_convert_opcode( $nested_ops );
 
+            if ( $last_op->[0] eq 'print' ) { # optimization
+                return $self->sa(
+                        sprintf( '( %s ? %s : %s )',
+                        sprintf( $fmt, $self->sa ),
+                        _rm_tailed_lf( $st_1st->sa ),
+                        _rm_tailed_lf( $st_2nd->sa ),
+                    )
+                );
+            }
+
             return $self->sa(
                 sprintf( 'cond_ternary( %s, sub { %s; }, sub { %s; } )',
                     sprintf( $fmt, $self->sa ),
