@@ -1,9 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
 0.1038
+    [BUG FIXES]
+    - Extra white spaces caused syntax errors in given blocks
+
     [NEW FEATURES]
     - New document Text::Xslate::Cookbook
     - Block filter syntax in Kolon. See Text::Xslate::Cookbook.
+    - SWITCH-CASE directives in TTerse
 
 0.1037 Sun Jun 27 17:37:57 2010
     [BUG FIXES]
