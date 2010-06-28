@@ -79,6 +79,10 @@ typedef struct {
        but stored here for performance */
     SV* warn_handler;
     SV* die_handler;
+
+    /* original error handlers */
+    SV* orig_warn_handler;
+    SV* orig_die_handler;
 } my_cxt_t;
 START_MY_CXT
 
@@ -1190,11 +1194,13 @@ CODE:
 
     /* local $SIG{__WARN__} = \&warn_handler */
     SAVESPTR(PL_warnhook);
-    PL_warnhook = MY_CXT.warn_handler;
+    MY_CXT.orig_warn_handler = PL_warnhook;
+    PL_warnhook              = MY_CXT.warn_handler;
 
     /* local $SIG{__DIE__}  = \&die_handler */
     SAVESPTR(PL_diehook);
-    PL_diehook = MY_CXT.die_handler;
+    MY_CXT.orig_die_handler = PL_diehook;
+    PL_diehook              = MY_CXT.die_handler;
 
     RETVAL = sv_newmortal();
     sv_grow(RETVAL, st->hint_size + TX_HINT_SIZE);
@@ -1278,7 +1284,7 @@ CODE:
     ENTER;
     if(ix == 0) { /* warn */
         SAVESPTR(PL_warnhook);
-        PL_warnhook = NULL;
+        PL_warnhook = MY_CXT.orig_warn_handler;
 
         /* handler can ignore warnings */
         if(handler) {
@@ -1293,7 +1299,7 @@ CODE:
     }
     else {
         SAVESPTR(PL_diehook);
-        PL_diehook = NULL;
+        PL_diehook = MY_CXT.orig_die_handler;
 
         /* unroll the stack frame */
         /* to fix TXframe_OUTPUT */

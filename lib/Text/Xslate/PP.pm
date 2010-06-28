@@ -44,6 +44,7 @@ our @OPCODE; # defined in PP::Const
 our $_depth = 0;
 our $_current_st;
 
+our($_orig_die_handler, $_orig_warn_handler);
 #
 # public APIs
 #
@@ -74,8 +75,10 @@ sub render {
 
     my $st = tx_load_template( $self, $name );
 
-    local $SIG{__DIE__}  = \&_die;
-    local $SIG{__WARN__} = \&_warn;
+    local $_orig_die_handler  = $SIG{__DIE__};
+    local $_orig_warn_handler = $SIG{__WARN__};
+    local $SIG{__DIE__}       = \&_die;
+    local $SIG{__WARN__}      = \&_warn;
 
     return tx_execute( $st, $vars );
 }
@@ -452,7 +455,8 @@ sub _error_handler {
     my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s",
         $opcode->{file}, $opcode->{line}, $name, $st->{ pc }, $str );
 
-    if ( !$die ) { # warn
+    if ( !$die ) {
+        local $SIG{__WARN__} = $_orig_warn_handler;
         # $h can ignore warnings
         if ( my $h = $st->engine->{ warn_handler } ) {
             $h->( $mess );
@@ -461,7 +465,8 @@ sub _error_handler {
             Carp::carp( $mess );
         }
     }
-    else { # die
+    else {
+        local $SIG{__DIE__} = $_orig_die_handler;
         # $h cannot ignore errors
         if(my $h = $st->engine->{ die_handler } ) {
             $h->( $mess );
@@ -471,16 +476,13 @@ sub _error_handler {
     return;
 }
 
-
-sub _die {
-    _error_handler( $_[0], 1 );
-}
-
-
 sub _warn {
     _error_handler( $_[0], 0 );
 }
 
+sub _die {
+    _error_handler( $_[0], 1 );
+}
 
 1;
 __END__
