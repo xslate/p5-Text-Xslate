@@ -11,10 +11,9 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head2 How to cooperate with FillInForm
 
-Use the block filter syntax with C<HTML::FillInForm> or
-C<HTML::FillInForm::Lite>.
+Use the block filter syntax with the C<raw> filter.
 
-Code using C<HTML::FillInForm>:
+Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
@@ -58,14 +57,13 @@ Output:
 
 Note that the C<raw> filter is required to render HTML components.
 
+See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite>.
+
 =head2 How to cooperate with HTML form builders
 
-All you have to do is to apply the C<raw> filter to the result form builders
-return.
+Fill the result form builders renders with the C<raw> filter.
 
-Here is an example for a form builder as a PSGI application.
-
-Code using C<HTML::Shakan>:
+Example code using C<HTML::Shakan>:
 
     #!psgi
     use strict;
@@ -120,6 +118,8 @@ Output:
     </p>
     </body>
     </html>
+
+See also L<HTML::Shakan>.
 
 =head2 How to apply uri escape to template expressions
 
