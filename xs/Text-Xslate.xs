@@ -588,8 +588,13 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
         /* copies lexical variables from the old frame to the new one */
         AV* const oframe = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1];
         for(NOOP; i < outer; i++) {
-            UV const real_ix = i + TXframe_START_LVAR;
-            av_store(cframe, real_ix , SvREFCNT_inc_NN(AvARRAY(oframe)[real_ix]));
+            IV const real_ix = i + TXframe_START_LVAR;
+            /* XXX: macros can refer to unallocated lvars */
+            SV* const sv     = AvFILLp(oframe) >= real_ix
+                ? AvARRAY(oframe)[real_ix]
+                : &PL_sv_undef;
+            av_store(cframe, real_ix , sv);
+            SvREFCNT_inc_simple_void_NN(sv);
         }
     }
 
