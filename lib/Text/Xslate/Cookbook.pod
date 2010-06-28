@@ -9,9 +9,16 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head1 RECIPES
 
-=head2 How to cooperate with FillInForm
+=head2 How to manage HTML forms
 
-Use the block filter syntax with the C<raw> filter.
+Managing HTML forms is an important issue on web applications.
+you'd better to use modules that manage HTML forms, rather than do something
+with templates. There are two basic solutions in Xslate.
+
+=head3 Using FillInForm
+
+One solution to manage HTML forms is to use FillInForm modules with
+the block filter syntax and the C<raw> filter.
 
 Example code using C<HTML::FillInForm>:
 
@@ -57,11 +64,13 @@ Output:
 
 Note that the C<raw> filter is required to render HTML components.
 
-See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite>.
+See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 
-=head2 How to cooperate with HTML form builders
+=head3 Using HTML form builders
 
-Fill the result form builders renders with the C<raw> filter.
+Another solution to manage HTML forms is to use form builders.
+All you have to do is to apply the C<raw> filter to the result form builders
+renders.
 
 Example code using C<HTML::Shakan>:
 
@@ -119,7 +128,7 @@ Output:
     </body>
     </html>
 
-See also L<HTML::Shakan>.
+See also L<HTML::Shakan> for details.
 
 =head2 How to apply uri escape to template expressions
 
