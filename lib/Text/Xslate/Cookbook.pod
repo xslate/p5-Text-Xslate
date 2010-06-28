@@ -9,7 +9,7 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head1 RECIPES
 
-=head2 How to use FillInForm with Xslate
+=head2 How to use FillInForm
 
 Use the block filter syntax with C<HTML::FillInForm> or
 C<HTML::FillInForm::Lite>.

@@ -212,7 +212,7 @@ This is the entity of the C<html_escape> filter.
 
 =head3 C<p($any)>
 
-This is the entity of the C<dump> filter.
+This is the entity of the C<dump> filter, useful for debugging.
 
 =head1 SEE ALSO
 
