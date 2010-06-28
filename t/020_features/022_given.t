@@ -31,6 +31,7 @@ X
     [$tmpl, { value => undef }, <<'X', 'given-when (default)'],
         BAZ
 X
+
     [<<'T', { value => undef }, <<'X', 'default can be the first'],
 : given $value {
 :    default {
@@ -264,6 +265,27 @@ X
 : }
 T
         FOO
+X
+
+    [<<'T', { value => "foo" }, <<'X', 'extra spaces'],
+<: given $value { :>
+
+
+    <: when "foo" { :>
+        FOO
+    <: } :>
+
+
+    <: default { :>
+        unlikely
+    <: } :>
+
+
+<: } :>
+T
+
+        FOO
+    
 X
 
 );
