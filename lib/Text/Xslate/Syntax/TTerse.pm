@@ -657,17 +657,26 @@ discouraged because they are not easy to understand:
 
 =head2 Conditional statements
 
-    [% IF expression %]
-        This is true
-    [% ELSE %]
-        Tis is false
-    [% END %]
-
-    [% IF expression %]
+    [% IF logical_expression %]
         Case 1
-    [% ELSIF expression %]
+    [% ELSIF logical_expression %]
         Case 2
     [% ELSE %]
+        Case 3
+    [% END %]
+
+    [% UNLESS logical_expression %]
+        Case 1
+    [% ELSE %]
+        Case 2
+    [% END %]
+
+    [% SWITCH expression %]
+    [% CASE case1 %]
+        Case 1
+    [% CASE case2 %]
+        Case 2
+    [% CASE DEFAULT %]
         Case 3
     [% END %]
 
