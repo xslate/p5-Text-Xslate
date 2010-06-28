@@ -9,7 +9,7 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head1 RECIPES
 
-=head2 How to use FillInForm
+=head2 How to cooperate with FillInForm
 
 Use the block filter syntax with C<HTML::FillInForm> or
 C<HTML::FillInForm::Lite>.
@@ -41,7 +41,7 @@ Code using C<HTML::FillInForm>:
         q => { foo => "<filled value>" },
     );
     print $tx->render_string(<<'T', \%vars);
-    FillInForm
+    FillInForm:
     : block form | fillinform($q) | raw -> {
     <form>
     <input type="text" name="foo" />
@@ -51,12 +51,75 @@ Code using C<HTML::FillInForm>:
 
 Output:
 
-    FillInForm
+    FillInForm:
     <form>
     <input type="text" name="foo" value="&lt;filled value&gt;" />
     </form>
 
 Note that the C<raw> filter is required to render HTML components.
+
+=head2 How to cooperate with HTML form builders
+
+All you have to do is to apply the C<raw> filter to the result form builders
+return.
+
+Here is an example for a form builder as a PSGI application.
+
+Code using C<HTML::Shakan>:
+
+    #!psgi
+    use strict;
+
+    use Text::Xslate;
+    use HTML::Shakan;
+    use Plack::Request;
+
+    my $tx = Text::Xslate->new();
+
+    sub app {
+        my($env) = @_;
+        my $req  = Plack::Request->new($env);
+
+        my $form = HTML::Shakan->new(
+            request => $req,
+            fields  => [ TextField(name => 'name', label => 'Your name: ') ],
+        );
+
+        my $res = $req->new_response(200);
+
+        $res->body( $tx->render_string(<<'T', { form => $form }) );
+    <!doctype html>
+    <html>
+    <head><title>Building form</title></head>
+    <body>
+    <form>
+    <p>
+    Form:<br />
+    <: $form.render() | raw :>
+    </p>
+    </body>
+    </html>
+    T
+        return $res->finalize();
+
+    }
+
+    return \&app;
+
+Output:
+
+    <!doctype html>
+    <html>
+    <head><title>Building form</title></head>
+    <body>
+    <form>
+    <p>
+    Form:<br />
+    <label for="id_name">Your name</label>
+    <input id="id_name" name="name" type="text" value="&lt;Xslate&gt;" />
+    </p>
+    </body>
+    </html>
 
 =head2 How to apply uri escape to template expressions
 
