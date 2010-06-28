@@ -96,7 +96,7 @@ Relational operators (C<< == != < <= > >= >>):
 
 Note that C<==> and C<!=> are similar to Perl's C<eq> and C<ne> except that
 C<$var == nil> is true B<iff> I<$var> is uninitialized, while other
-relational operators are numerical operators.
+relational operators are numerical.
 
 Arithmetic operators (C<< + - * / % min max >>):
 
@@ -253,7 +253,7 @@ You can register functions via C<function> or C<module> options for
 C<< Text::Xslate->new() >>.
 
 Once you have registered functions, you can call them with the C<()> operator.
-The C<|> operator is also supported as a syntactic sugar to C<()>.
+C<< infix:<|> >> is also supported as a syntactic sugar to C<()>.
 
     : f()        # without args
     : f(1, 2, 3) # with args
@@ -291,7 +291,7 @@ NOTE: C<mark_raw> and C<html> might be optimized away while compiling.
 
 =head2 Methods
 
-When I<$var> is an object instance, you can call its methods with the C<.>
+When I<$var> is an object instance, you can call its methods with the dot
 operator.
 
     <: $var.method() :>
@@ -531,5 +531,7 @@ Comments start from C<#> to a new line or semicolon.
 =head1 SEE ALSO
 
 L<Text::Xslate>
+
+L<Text::Xslate::Cookbook>
 
 =cut
