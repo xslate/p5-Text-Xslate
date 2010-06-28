@@ -105,7 +105,6 @@ sub _assemble {
     $self->{ template }->{ $name } = $tmpl;
     $self->{ tmpl_st }->{ $name }  = $st;
 
-    $tmpl->[ Text::Xslate::PP::TXo_NAME ]      = $name;
     $tmpl->[ Text::Xslate::PP::TXo_MTIME ]     = $mtime;
     $tmpl->[ Text::Xslate::PP::TXo_CACHEPATH ] = $cachepath;
     $tmpl->[ Text::Xslate::PP::TXo_FULLPATH ]  = $fullpath;

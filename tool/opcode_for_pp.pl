@@ -99,11 +99,9 @@ use constant TXCODE_W_KEY   => (TXARGf_SV | TXARGf_KEY);
 use constant TXCODE_GOTO    => (TXARGf_SV | TXARGf_INT | TXARGf_GOTO);
 
 # template representation, stored in $self->{template}{$file}
-use constant TXo_NAME           => 0;
-use constant TXo_ERROR_HANDLER  => 1;
-use constant TXo_MTIME          => 2;
-use constant TXo_CACHEPATH      => 3;
-use constant TXo_FULLPATH       => 4;
+use constant TXo_MTIME          => 0;
+use constant TXo_CACHEPATH      => 1;
+use constant TXo_FULLPATH       => 2;
 
 # vm execution frame
 use constant TXframe_NAME       => 0;

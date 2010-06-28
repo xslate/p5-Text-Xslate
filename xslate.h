@@ -74,7 +74,6 @@
 
 /* template object, stored in $self->{template}{$file} */
 enum txtmplo_ix {
-    TXo_NAME,
     TXo_MTIME,
 
     TXo_CACHEPATH,

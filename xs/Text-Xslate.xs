@@ -988,7 +988,6 @@ CODE:
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
     av_extend(tmpl, TXo_least_size - 1);
 
-    sv_setsv(*av_fetch(tmpl, TXo_NAME,      TRUE),  name);
     sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
     sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
