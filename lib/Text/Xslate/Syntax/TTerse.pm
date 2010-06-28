@@ -573,9 +573,11 @@ Text::Xslate::Syntax::TTerse - An alternative syntax compatible with Template To
         { dialect => 'TTerse' }
     );
 
-    # PRE_PROCESS/POST_PROCESS/WRAPPER
+    # PRE_PROCESS/POST_PROCESS
     $tx = Text::Xslate->new(
         syntax => 'TTerse',
+        header => ['header.tt'],
+        footer => ['footer.tt'],
     );
 
 =head1 DESCRIPTION
@@ -771,13 +773,12 @@ implementation.
     use Text::Xslate::Bridge::TT2;
 
     my $tx = Text::Xslate->new(
-        module => [qw(Text::Xslate:*Bridge::TT2)],
+        module => [qw(Text::Xslate::Bridge::TT2)],
     );
 
    print $tx->render_strig('[% "foo".length() %]'); # => 3
 
-See L<Text::Xslate::Bridge>, L<Text::Xslate::Bridge::TT2>, and
-L<Text::Xslate::Bridge::Alloy> for details.
+See L<Text::Xslate::Bridge>, or search for C<Text::Xslate::Bridge::*> on CPAN.
 
 =head2 Misc.
 
@@ -808,5 +809,11 @@ L<Text::Xslate>
 L<Template::Toolkit>
 
 L<Template::Tiny>
+
+L<Text::Xslate::Bridge::TT2>
+
+L<Text::Xslate::Bridge::TT2::Like>
+
+L<Text::Xslate::Bridge::Alloy>
 
 =cut
