@@ -5,10 +5,14 @@ use Test::More;
 use Text::Xslate;
 use utf8;
 
-use FindBin qw($Bin);
 use t::lib::Util;
 
-END { unlink "$Bin/../template/hello_utf8.txc"; }
+END {
+    unlink path . "/$_" for
+        "hello_sjis.txc",
+        "hello_utf8.txc",
+    ;
+}
 
 my $tx = Text::Xslate->new(
     path      => [path],
@@ -46,10 +50,20 @@ for(1 .. 2) {
     );
 
     is $tx->render("hello_utf8.tx", { name => "エクスレート" }),
-        "こんにちは！ エクスレート！\n", "encoding(utf-8)";
+        "こんにちは！ エクスレート！\n", ":encoding(utf-8)";
 }
 
-unlink "$Bin/../template/hello_utf8.txc";
+for(1 .. 2) {
+    $tx = Text::Xslate->new(
+        path        => [path],
+        cache_dir   =>  path,
+        input_layer => ":encoding(Shift_JIS)",
+    );
+
+    is $tx->render("hello_sjis.tx", { name => "エクスレート" }),
+        "こんにちは！ エクスレート！\n", ":encoding(Shift_JIS)";
+}
+
 
 for(1 .. 2) {
     no utf8;
