@@ -85,6 +85,18 @@ X
 T
     <em>Hello, world!</em>
 X
+
+    [<<'T', undef, <<'X'],
+: constant tag_p = tag('p');
+: block main | tag_p | raw -> {
+    Hello, world!
+: }
+T
+<p>
+    Hello, world!
+</p>
+X
+
 );
 
 foreach my $d(@set) {

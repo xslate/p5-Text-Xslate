@@ -22,6 +22,7 @@ around trim_code => sub {
 
 sub init_symbols {
     my($parser) = @_;
+    my $s;
 
     $parser->symbol(']');
     $parser->symbol('}');
@@ -53,6 +54,15 @@ sub init_symbols {
     $parser->symbol('for')     ->set_std(\&std_foreach);
     $parser->symbol('WHILE')   ->set_std(\&std_while);
     $parser->symbol('while')   ->set_std(\&std_while);
+
+    $parser->symbol('SWITCH')   ->set_std(\&std_switch);
+    $parser->symbol('switch')   ->set_std(\&std_switch);
+    $s = $parser->symbol('CASE');
+    $s->set_std(\&std_case);
+    $s->is_block_end(1);
+    $s = $parser->symbol('case');
+    $s->set_std(\&std_case);
+    $s->is_block_end(1);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
     $parser->symbol('include') ->set_std(\&std_include);
@@ -225,6 +235,50 @@ sub std_if {
 
     $parser->advance("END");
     return $top_if;
+}
+
+sub std_switch {
+    my($parser, $symbol) = @_;
+
+    $parser->new_scope();
+
+    my $topic  = $parser->symbol('$_')->clone(arity => 'variable' );
+    my $switch = $symbol->clone(
+        arity  => 'given',
+        first  => $parser->expression(0),
+        second => [ $topic ],
+    );
+
+    local $parser->{in_given} = 1;
+
+    my @cases;
+    while(uc($parser->token->id) ne "END") {
+        push @cases, $parser->statement();
+    }
+    $switch->third( \@cases );
+
+    $parser->build_given_body($switch, "case");
+
+    $parser->advance("END");
+    $parser->pop_scope();
+    return $switch;
+}
+
+sub std_case {
+    my($parser, $symbol) = @_;
+    if(!$parser->in_given) {
+        $parser->_error("You cannot use $symbol statements outside switch statements");
+    }
+    my $case = $symbol->clone(arity => "case");
+
+    if(uc($parser->token->id) ne "DEFAULT") {
+        $case->first( $parser->expression(0) );
+    }
+    else {
+        $parser->advance();
+    }
+    $case->second( $parser->statements() );
+    return $case;
 }
 
 sub iterator_name {

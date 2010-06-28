@@ -55,7 +55,7 @@ sub render_str {
 
     if(USE_TT) {
         my $out;
-        $tt->process(\$in, $vars, \$out) or croak $tt->error;
+        $tt->process(\$in, $vars, \$out) or croak $tt->error, "($in)";
         return $out;
     }
     else {
