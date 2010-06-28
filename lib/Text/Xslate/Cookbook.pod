@@ -13,12 +13,12 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 Managing HTML forms is an important issue on web applications.
 you'd better to use modules that manage HTML forms, rather than do something
-with templates by youself. Basically there are two basic solutions in Xslate:
-use of FillInForm or HTML form builders.
+with templates by yourself. Basically there are two basic solutions in
+Xslate: use of FillInForm or HTML form builders.
 
-In both solutions, one should not use C<mark_raw> in templates because
-of itsB<security risks>. Instead, application code should be responsible for
-it.
+In both solutions, one should not use the C<mark_raw> filter in templates
+because of its B<security risks>. Instead, application code should be
+responsible for it.
 
 =head3 Using FillInForm
 
