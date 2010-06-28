@@ -30,8 +30,6 @@ if($want_xs) {
     use_ppport 3.19;
     cc_warnings;
 
-    build_requires 'ExtUtils::ParseXS' => 2.2205;
-
     cc_src_paths qw(xs);
 }
 
