@@ -973,24 +973,27 @@ CODE:
         mtime    = sv_2mortal(newSViv( time(NULL) ));
     }
 
+    /* fetch the template object from $self->{template}{$name} */
     tobj = hv_iterval((HV*)SvRV(*svp),
          hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U)
     );
 
-    svp = hv_fetchs(self, "function", FALSE);
-    if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
-        croak("Function table must be a HASH reference");
-    }
-    st.symbol = newHVhv((HV*)SvRV(*svp)); /* must be copied */
-    tx_register_builtin_methods(aTHX_ st.symbol);
-
     tmpl = newAV();
+    /* store the template object to $self->{template}{$name} */
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
     av_extend(tmpl, TXo_least_size - 1);
 
     sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
     sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
+
+    /* prepare function table */
+    svp = hv_fetchs(self, "function", FALSE);
+    if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
+        croak("Function table must be a HASH reference");
+    }
+    st.symbol = newHVhv((HV*)SvRV(*svp)); /* must be copied */
+    tx_register_builtin_methods(aTHX_ st.symbol);
 
     st.tmpl   = tmpl;
     st.engine = newRV_inc((SV*)self);

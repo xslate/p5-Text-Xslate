@@ -73,7 +73,7 @@
 #define TX_current_frame()    TX_current_framex(TX_st)
 
 /* template object, stored in $self->{template}{$file} */
-enum txtmplo_ix {
+enum tx_tobj_ix {
     TXo_MTIME,
 
     TXo_CACHEPATH,
@@ -83,7 +83,7 @@ enum txtmplo_ix {
 };
 
 /* vm execution frame object */
-enum txframeo_ix {
+enum tx_frame_ix {
     TXframe_NAME,
     TXframe_OUTPUT,
     TXframe_RETADDR,
@@ -94,7 +94,7 @@ enum txframeo_ix {
 };
 
 /* macro object */
-enum txmacro_ix {
+enum tx_macro_ix {
     TXm_NAME,
     TXm_ADDR,
     TXm_NARGS,
