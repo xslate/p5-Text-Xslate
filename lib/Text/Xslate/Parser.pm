@@ -807,17 +807,18 @@ sub led_fetch {
 }
 
 sub call {
-    my($parser, $proto, $function, @args) = @_;
+    my($parser, $function, @args) = @_;
     if(not ref $function) {
-        $function = $proto->clone(
+        $function = $parser->symbol('(name)')->clone(
             arity => 'name',
             id    => $function,
+            line  => $parser->line,
         );
     }
 
-    return $proto->clone(
-        arity => 'call',
-        first => $function,
+    return $parser->symbol('(call)')->clone(
+        arity  => 'call',
+        first  => $function,
         second => \@args,
     );
 }
@@ -836,7 +837,7 @@ sub led_call {
 sub led_bar { # filter
     my($parser, $symbol, $left) = @_;
     # a | b -> b(a)
-    return $parser->call($symbol, $parser->expression($symbol->lbp), $left);
+    return $parser->call($parser->expression($symbol->lbp), $left);
 }
 
 
@@ -1146,14 +1147,16 @@ sub nud_constant {
 my $lambda_id = 0;
 sub lambda {
     my($parser, $proto) = @_;
-    my $name = $parser->symbol('(name)')->clone(
-        id => sprintf('lambda@%d', $lambda_id++),
+    $proto ||= $parser->symbol('(lambda)');
+    my $name = $proto->clone(
+        id   => sprintf('lambda@%d', $lambda_id++),
     );
 
     return $proto->clone(
         arity => 'proc',
         id    => 'macro',
         first => $name,
+        line  => $parser->line,
     );
 }
 
@@ -1367,7 +1370,7 @@ sub std_macro_block {
             $t = $parser->advance(")");
         }
         push @filters, $args
-            ? $parser->call($symbol, $filter, @{$args})
+            ? $parser->call($filter, @{$args})
             : $filter;
     }
 
@@ -1375,11 +1378,11 @@ sub std_macro_block {
     $macro->first($name);
     $parser->pointy($macro);
 
-    my $call = $parser->call($symbol, $macro->first);
+    my $call = $parser->call($macro->first);
     my $command;
     if(@filters) {
         foreach my $filter(@filters) { # apply filters
-            $call = $parser->call($symbol, $filter, $call);
+            $call = $parser->call($filter, $call);
         }
         $command = 'print'; # need to explicit 'raw' filter for security
     }

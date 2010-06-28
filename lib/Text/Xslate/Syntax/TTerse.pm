@@ -501,7 +501,7 @@ sub wrap {
     $content->second([]); # args
     $content->third($body);
 
-    my $call_content = $parser->call($proto, $content->first);
+    my $call_content = $parser->call($content->first);
 
     my $into_name = $proto->clone(
         arity => 'literal',
@@ -541,8 +541,8 @@ sub std_filter {
 
     # _immediate_block() | filter
 
-    my $callmacro  = $parser->call($symbol, $proc->first);
-    my $callfilter = $parser->call($symbol, $filter, $callmacro);
+    my $callmacro  = $parser->call($proc->first);
+    my $callfilter = $parser->call($filter, $callmacro);
 
     my $print = $parser->symbol('print')->clone(
         arity => 'command',
