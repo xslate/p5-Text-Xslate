@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1038
+0.1038 Mon Jun 28 17:44:52 2010
     [BUG FIXES]
     - Extra white spaces caused syntax errors in given blocks
     - Original error handlers (i.e. $SIG{__WARN__} and $SIG{__DIE__})
