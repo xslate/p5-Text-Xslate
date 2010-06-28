@@ -24,7 +24,6 @@ Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
-
     use Text::Xslate;
     use HTML::FillInForm;
 
@@ -54,6 +53,17 @@ Example code using C<HTML::FillInForm>:
     </form>
     : }
     T
+
+Or using C<HTML::FillInForm::Lite> (as of 1.09):
+
+    #!perl -w
+    use strict;
+    use Text::Xslate;
+
+    my $tx  = Text::Xslate->new(
+        module => ['HTML::FillInForm::Lite' => [qw(fillinform)]],
+    );
+    # the same as the above example
 
 Output:
 
