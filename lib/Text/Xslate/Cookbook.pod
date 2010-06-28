@@ -24,7 +24,6 @@ Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
-
     use Text::Xslate;
     use HTML::FillInForm;
 
@@ -55,6 +54,17 @@ Example code using C<HTML::FillInForm>:
     : }
     T
 
+Or using C<HTML::FillInForm::Lite>:
+
+    #!perl -w
+    use strict;
+    use Text::Xslate;
+
+    my $tx  = Text::Xslate->new(
+        module => ['HTML::FillInForm::Lite' => [qw(fillinform)]],
+    );
+    # the same as the above example
+
 Output:
 
     FillInForm:
@@ -76,7 +86,6 @@ Example code using C<HTML::Shakan>:
 
     #!psgi
     use strict;
-
     use Text::Xslate;
     use HTML::Shakan;
     use Plack::Request;
@@ -138,7 +147,6 @@ Code using C<URI::Escape>:
 
     #!perl -w
     use strict;
-
     use Text::Xslate;
 
     my $tx  = Text::Xslate->new(
