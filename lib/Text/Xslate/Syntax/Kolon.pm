@@ -283,11 +283,15 @@ Functions are Perl's subroutines, so you can define dynamic functions:
 There are several builtin functions, which you cannot redefine:
 
     : $var | mark_raw   # marks it as a raw string
+    : $var | raw        # synonym to mark_raw
     : $var | unmark_raw # removes "raw" marker from it
     : $var | html       # does html-escape to it and marks it as raw
     : $var | dump       # dumps it with Data::Dumper
 
-NOTE: C<mark_raw> and C<html> might be optimized away while compiling.
+Note that you should not use C<mark_raw> in templates because of its security
+risks just like as type casts in C. If you want to generate HTML source
+dynamically, e.g. by HTML form builders, application code should be responsible
+for marking strings as C<raw>.
 
 =head2 Methods
 

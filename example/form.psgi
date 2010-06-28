@@ -1,6 +1,6 @@
 #!perl -w
 use strict;
-use Text::Xslate;
+use Text::Xslate qw(mark_raw);
 use HTML::Shakan;
 use Plack::Request;
 
@@ -31,16 +31,17 @@ sub app {
     my($env) = @_;
     my $req  = Plack::Request->new($env);
 
-    my $form = My::Form->get( add => ( request => $req) );
+    my $shakan = My::Form->get( add => ( request => $req) );
 
     my @errors;
-    if($form->has_error) {
-        $form->load_function_message('en');
-        @errors = $form->get_error_messages();
+    if($shakan->has_error) {
+        $shakan->load_function_message('en');
+        @errors = $shakan->get_error_messages();
     }
 
     my $res = $req->new_response(200);
 
+    my $form = mark_raw( $shakan->render() );
     $res->body( $tx->render_string(<<'T', { form => $form, errors => \@errors }) );
 <!doctype html>
 <html>
@@ -49,7 +50,7 @@ sub app {
 <form>
 <p>
 Form:<br />
-: $form.render() | raw
+<: $form :>
 <input type="submit" />
 </p>
 : if $errors.size() > 0 {

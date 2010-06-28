@@ -13,7 +13,12 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 Managing HTML forms is an important issue on web applications.
 you'd better to use modules that manage HTML forms, rather than do something
-with templates. There are two basic solutions in Xslate.
+with templates by youself. Basically there are two basic solutions in Xslate:
+use of FillInForm or HTML form builders.
+
+In both solutions, one should not use C<mark_raw> in templates because
+of itsB<security risks>. Instead, application code should be responsible for
+it.
 
 =head3 Using FillInForm
 
@@ -24,7 +29,7 @@ Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
-    use Text::Xslate;
+    use Text::Xslate qw(mark_raw);
     use HTML::FillInForm;
 
     sub fillinform {
@@ -32,7 +37,7 @@ Example code using C<HTML::FillInForm>:
 
         return sub {
             my($html) = @_;
-            return HTML::FillInForm->fill(\$html, $q);
+            return mark_raw(HTML::FillInForm->fill(\$html, $q));
         };
     }
 
@@ -47,23 +52,12 @@ Example code using C<HTML::FillInForm>:
     );
     print $tx->render_string(<<'T', \%vars);
     FillInForm:
-    : block form | fillinform($q) | raw -> {
+    : block form | fillinform($q) -> {
     <form>
     <input type="text" name="foo" />
     </form>
     : }
     T
-
-Or using C<HTML::FillInForm::Lite>:
-
-    #!perl -w
-    use strict;
-    use Text::Xslate;
-
-    my $tx  = Text::Xslate->new(
-        module => ['HTML::FillInForm::Lite' => [qw(fillinform)]],
-    );
-    # the same as the above example
 
 Output:
 
@@ -72,21 +66,17 @@ Output:
     <input type="text" name="foo" value="&lt;filled value&gt;" />
     </form>
 
-Note that the C<raw> filter is required to render HTML components.
-
 See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 
 =head3 Using HTML form builders
 
 Another solution to manage HTML forms is to use form builders.
-All you have to do is to apply the C<raw> filter to the result form builders
-renders.
 
 Example code using C<HTML::Shakan>:
 
     #!psgi
     use strict;
-    use Text::Xslate;
+    use Text::Xslate qw(mark_raw);
     use HTML::Shakan;
     use Plack::Request;
 
@@ -96,13 +86,14 @@ Example code using C<HTML::Shakan>:
         my($env) = @_;
         my $req  = Plack::Request->new($env);
 
-        my $form = HTML::Shakan->new(
+        my $shakan = HTML::Shakan->new(
             request => $req,
             fields  => [ TextField(name => 'name', label => 'Your name: ') ],
         );
 
         my $res = $req->new_response(200);
 
+        my $form = mark_raw($shakan->render());
         $res->body( $tx->render_string(<<'T', { form => $form }) );
     <!doctype html>
     <html>
@@ -111,7 +102,7 @@ Example code using C<HTML::Shakan>:
     <form>
     <p>
     Form:<br />
-    <: $form.render() | raw :>
+    <: $form :>
     </p>
     </body>
     </html>
