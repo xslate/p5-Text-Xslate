@@ -1,14 +1,17 @@
 #!perl -w
 
 use strict;
-use Test::Requires qw(Plack::Test Plack::Response);
+use Test::Requires { 'Plack' => 0.99 };
 use Test::More;
+
+use Plack::Test;
+use Plack::Response;
+use Plack::Builder;
 
 use Text::Xslate;
 use Text::Xslate::Util qw(p);
 use t::lib::Util;
 
-use Plack::Builder;
 
 my $tx = Text::Xslate->new(
     path  => path,
