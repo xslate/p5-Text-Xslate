@@ -12,13 +12,16 @@ foreach my $mod(qw(Text::Xslate Template)){
     print $mod, '/', $mod->VERSION, "\n";
 }
 
+my $file = 'list.tt';
+
 my $tt = Template->new(
     INCLUDE_PATH => ["$Bin/template"],
     COMPILE_EXT  => '.out',
 );
 my $tx = Text::Xslate->new(
-    path  => ["$Bin/template"],
-    cache => 2
+    syntax => 'TTerse',
+    path   => ["$Bin/template"],
+    cache  => 2,
 );
 
 my %vars = (
@@ -28,8 +31,9 @@ my %vars = (
 );
 {
     my $out;
-    $tt->process('list.tt', \%vars, \$out);
-    $tx->render('list.tx', \%vars) eq $out or die $tx->render('list.tx', \%vars), "\n", $out;
+    $tt->process($file, \%vars, \$out);
+    $tx->render($file, \%vars) eq $out
+        or die $tx->render($file, \%vars), "\n", $out;
 }
 
 $| = 1;
@@ -38,7 +42,7 @@ print "Template-Toolkit's process() x 1000\n";
 my $start = time();
 foreach (1 .. 1000) {
     print $_, "\r";
-    $tt->process('list.tt', \%vars, \my $out);
+    $tt->process($file, \%vars, \my $out);
 }
 print "\n";
 my $tt_used = time() - $start;
@@ -48,7 +52,7 @@ print "Text::Xslate's render() x 1000\n";
 $start = time();
 foreach (1 .. 1000) {
     print $_, "\r";
-    my $out = $tx->render('list.tx', \%vars);
+    my $out = $tx->render($file, \%vars);
 }
 print "\n";
 my $tx_used = time() - $start;
