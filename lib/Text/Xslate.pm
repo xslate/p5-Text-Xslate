@@ -186,7 +186,7 @@ sub load_string { # for <string>
     if(not defined $string) {
         $self->_error("LoadError: Template string is not given");
     }
-    $self->{string} = $string;
+    $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
     $self->_assemble($asm, undef, undef, undef, undef);
     return $asm;
@@ -242,7 +242,7 @@ sub load_file {
     print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
 
     if($file eq '<string>') { # simply reload it
-        return $self->load_string($self->{string});
+        return $self->load_string($self->{string_buffer});
     }
 
     my $fi = $self->find_file($file, $mtime);

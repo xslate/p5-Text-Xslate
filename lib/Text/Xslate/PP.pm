@@ -447,28 +447,35 @@ sub _error_handler {
 
     Carp::croak( $str ) unless $st;
 
+    my $engine = $st->engine;
+
     my $cframe = $st->frame->[ $st->current_frame ];
     my $name   = $cframe->[ Text::Xslate::PP::TXframe_NAME ];
 
     my $opcode = $st->code->[ $st->{ pc } ];
-    my $mess   = make_error($st->engine, $str, $opcode->{file}, $opcode->{line},
+    my $file   = $opcode->{file};
+    if($file eq '<string>' && exists $engine->{string_buffer}) {
+        $file = \$engine->{string_buffer};
+    }
+
+    my $mess   = make_error($engine, $str, $file, $opcode->{line},
         sprintf( "&%s[%d]", $name, $st->{pc} ));
 
     if ( !$die ) {
         # $h can ignore warnings
-        if ( my $h = $st->engine->{ warn_handler } ) {
+        if ( my $h = $engine->{ warn_handler } ) {
             $h->( $mess );
         }
         else {
-            Carp::carp( $mess );
+            warn $mess;
         }
     }
     else {
         # $h cannot ignore errors
-        if(my $h = $st->engine->{ die_handler } ) {
+        if(my $h = $engine->{ die_handler } ) {
             $h->( $mess );
         }
-        Carp::croak( $mess ); # MUST DIE!
+        die $mess; # MUST DIE!
     }
     return;
 }

@@ -131,17 +131,6 @@ tx_load_template(pTHX_ SV* const self, SV* const name);
 
 #include "xs/xslate_opcode.inc"
 
-
-static const char*
-tx_file(pTHX_ const tx_state_t* const st) {
-    return SvPV_nolen_const(st->info[ TX_PC2POS(st, st->pc) ].file);
-}
-
-static int
-tx_line(pTHX_ const tx_state_t* const st) {
-    return (int)st->info[ TX_PC2POS(st, st->pc) ].line;
-}
-
 const char*
 tx_neat(pTHX_ SV* const sv) {
     if(SvOK(sv)) {
@@ -1272,6 +1261,8 @@ CODE:
     SV* full_message;
     SV** svp;
     CV*  handler;
+    UV pc_pos;
+    SV* file;
 
     /* restore error handlers to avoid recursion */
     SAVESPTR(PL_warnhook);
@@ -1302,14 +1293,23 @@ CODE:
         handler = NULL;
     }
 
+    pc_pos = TX_PC2POS(st, st->pc);
+    file   = st->info[ pc_pos ].file;
+    if(strEQ(SvPV_nolen_const(file), "<string>")) {
+        svp = hv_fetchs((HV*)SvRV(self), "string_buffer", FALSE);
+        if(svp) {
+            file = sv_2mortal(newRV_inc(*svp));
+        }
+    }
+
     /* $full_message = make_error(...) */
     PUSHMARK(SP);
     EXTEND(SP, 6);
     PUSHs(self);
     PUSHs(msg);
-    mPUSHs(newSVpv(tx_file(aTHX_ st), 0));
-    mPUSHi(tx_line(aTHX_ st));
-    mPUSHs(newSVpvf("&%"SVf"[%d]", name, (int)TX_PC2POS(st, st->pc)));
+    PUSHs(  file );
+    mPUSHi( st->info[ pc_pos ].line);
+    mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
     PUTBACK;
     call_pv("Text::Xslate::Util::make_error", G_SCALAR);
     SPAGAIN;
