@@ -1,9 +1,11 @@
 #!perl -w
-
 use strict;
 use Test::More;
 
-use Text::Xslate::Util qw(literal_to_value);
+use Text::Xslate::Util qw(
+    literal_to_value
+    read_around
+);
 
 my @set = (
     [ q{"foo\\\\template"}, q{foo\template} ],
@@ -16,6 +18,7 @@ my @set = (
     [ q{'Hello, world\r'},  q{Hello, world\r} ],
     [ q{'Hello, world\t'},  q{Hello, world\t} ],
 
+    [ q{foobar}, q{foobar} ],
 
     [ q{010},  010 ],
     [ q{0x10}, 0x10 ],
@@ -36,5 +39,31 @@ foreach my $d(@set) {
     my($in, $out) = @{$d};
     is literal_to_value($in), $out, "literal: $in";
 }
+
+is read_around(__FILE__, 1), <<'X', 'read_around';
+#!perl -w
+use strict;
+X
+
+is read_around(__FILE__, 1, 2), <<'X', 'read_around';
+#!perl -w
+use strict;
+use Test::More;
+X
+
+#foo
+#bar
+#baz
+is read_around(__FILE__, __LINE__ - 2), <<'X', 'read_around';
+#foo
+#bar
+#baz
+X
+
+is read_around(__FILE__ . "__unlikely__", 1), <<'X', 'read_around';
+X
+
+is read_around(undef, undef), <<'X', 'read_around';
+X
 
 done_testing;

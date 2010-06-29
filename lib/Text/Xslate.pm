@@ -43,6 +43,7 @@ use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     literal_to_value
     import_from
+    make_error
 );
 
 BEGIN {
@@ -180,7 +181,7 @@ sub flush_memory_cache {
     return;
 }
 
-sub load_string { # for <input>
+sub load_string { # for <string>
     my($self, $string) = @_;
     if(not defined $string) {
         $self->_error("LoadError: Template string is not given");
@@ -221,13 +222,12 @@ sub find_file {
     }
 
     if(not defined $orig_mtime) {
-        $self->_error("LoadError: Cannot find $file (path: @{$self->{path}})");
+        $self->_error("LoadError: Cannot find '$file' (path: @{$self->{path}})");
     }
 
     print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD_FILE;
 
     return {
-        file        => $file,
         fullpath    => $fullpath,
         cachepath   => $cachepath,
 
@@ -241,7 +241,7 @@ sub load_file {
 
     print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
 
-    if($file eq '<input>') { # simply reload it
+    if($file eq '<string>') { # simply reload it
         return $self->load_string($self->{string});
     }
 
@@ -285,8 +285,7 @@ sub _load_source {
     my $source = $self->slurp($fullpath);
 
     my $asm = $self->compile($source,
-        file     => $fi->{file},
-        fullpath => $fullpath,
+        file => $fullpath,
     );
 
     if($self->{cache} >= 1) {
@@ -454,9 +453,7 @@ sub compile {
 }
 
 sub _error {
-    shift;
-    unshift @_, 'Xslate: ';
-    goto &Carp::croak;
+    die make_error(@_);
 }
 
 sub dump :method {

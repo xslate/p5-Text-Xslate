@@ -23,7 +23,7 @@ for(1 .. 2) { # to test including depth
     eval {
         $tx->render('include2.tx', { file => "include2.tx", lang => "Xslate" });
     };
-    like $@, qr/^Xslate/xms,      "recursion";
+    like $@, qr/\bXslate\b/xms,   "recursion";
     like $@, qr/too \s+ deep/xms, "recursion";
 }
 

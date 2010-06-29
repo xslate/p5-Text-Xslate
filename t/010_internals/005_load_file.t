@@ -21,11 +21,11 @@ eval {
 is $@, '', "load_file -> success";
 
 eval {
-    $tx->load_file("no such file");
+    $tx->load_file("no_such_file");
 };
 
-like $@, qr/^Xslate/, "load_file -> fail";
-like $@, qr/LoadError/, "load_file -> fail";
+like $@, qr/LoadError/xms,          "load_file -> LoadError";
+like $@, qr/\b no_such_file \b/xms, "include the filename";
 
 open my($out), '>', "./hello.txc";
 print $out "This is a broken txc file\n";

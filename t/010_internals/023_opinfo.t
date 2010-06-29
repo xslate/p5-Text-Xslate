@@ -27,7 +27,8 @@ eval {
 T
 };
 is $@,    '', 'exception';
-like $warn, qr{ \b bad_base\.tx \b [^\n]+ \b bad_code_foo \b }xms, 'warn';
+like $warn, qr{ \b bad_base\.tx \b }xms;
+like $warn, qr{ \b bad_code_foo \b }xms;
 
 $warn = '';
 eval {
@@ -36,7 +37,7 @@ eval {
 T
 };
 is $@,    '', 'exception';
-like $warn, qr{ \b bad_base\.tx \b [^\n]+ \b bad_code_foo \b }xms,      'warn (for base)';
-like $warn, qr{ \b bad_component\.tx \b [^\n]+ \b bad_code_bar \b }xms, 'warn (for component)';
+like $warn, qr{  \b bad_code_foo \b .+ \b bad_base\.tx \b }xms,      'warn (for base)';
+like $warn, qr{  \b bad_code_bar \b .+ \b bad_component\.tx \b }xms, 'warn (for component)';
 
 done_testing;

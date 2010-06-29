@@ -23,21 +23,27 @@ $warn = '';
 eval {
     $tx->render_string($template, {one => 1, two => 2});
 };
-like $warn, qr/^Xslate\Q(<input>:3/;
+like $warn, qr/\b Xslate \b/xms;
+like $warn, qr/<string>:3/xms;
+like $warn, qr/\b nil \b/xms;
 
 $warn = '';
 eval {
     $tx->render_string($template, {one => 1, three => 3});
 };
 
-like $warn, qr/^Xslate\Q(<input>:2/;
+like $warn, qr/\b Xslate \b/xms;
+like $warn, qr/<string>:2/xms;
+like $warn, qr/\b nil \b/xms;
 
 $warn = '';
 eval {
     $tx->render_string($template, {two => 2, three => 3});
 };
 
-like $warn, qr/^Xslate\Q(<input>:1/;
+like $warn, qr/\b Xslate \b/xms;
+like $warn, qr/<string>:1/xms;
+like $warn, qr/\b nil \b/xms;
 
 $template = <<'T';
 <:= $one :>
@@ -52,14 +58,14 @@ eval {
     $tx->render_string($template, {one => 1, three => 3});
 };
 is $@, '';
-like $warn, qr/^Xslate\Q(<input>:5/;
+like $warn, qr/<string>:5/xms;
 
 $warn = '';
 eval {
     $tx->render_string($template, {one => 1, five => 5});
 };
 is $@, '';
-like $warn, qr/^Xslate\Q(<input>:3/;
+like $warn, qr/<string>:3/xms;
 
 $warn = '';
 eval {
@@ -74,7 +80,7 @@ eval {
 T
 };
 is $@, '';
-like $warn, qr/^Xslate\Q(<input>:2/;
+like $warn, qr/<string>:2/xms;
 
 {
     package Foo;
@@ -90,7 +96,8 @@ eval {
 T
 };
 is $@, '';
-like $warn, qr/^Xslate\Q(<input>:2/;
+like $warn, qr/<string>:2/xms;
+like $warn, qr/\b 42 \b/xms;
 
 eval {
     $tx->render_string(<<'T', {});
@@ -101,7 +108,7 @@ eval {
 T
 };
 is $@, '';
-like $warn, qr/^Xslate\Q(<input>:2/, 'in a macro';
+like $warn, qr/<string>:2/xms, 'in a macro';
 
 $warn = '';
 eval {
@@ -115,7 +122,7 @@ eval {
 T
 };
 is $warn, '';
-like $@, qr/^Xslate::Compiler\Q(<input>:4/;
+like $@, qr/<string>:4/xms;
 like $@, qr/Redefinition of macro/, 'macro redefinition';
 
 $warn = '';
@@ -131,7 +138,7 @@ eval {
 T
 };
 is $warn, '';
-like $@, qr/^Xslate::Compiler\Q(<input>:5/;
+like $@, qr/<string>:5/xms;
 like $@, qr/Redefinition of block/, 'block redefinition';
 
 $warn = '';
@@ -146,7 +153,7 @@ T
 };
 
 is $warn, '';
-like $@, qr/^Xslate::Compiler\Q(<input>:3/;
+like $@, qr/<string>:3/;
 like $@, qr/Redefinition/, 'block redefinition';
 
 $warn = '';
@@ -156,9 +163,45 @@ eval {
 T
 };
 is $warn, '';
-like $@, qr{^Xslate::Compiler\Q(myapp/bad_redefine.tx:3};
+like $@, qr{\Qmyapp/bad_redefine.tx:3}xms;
 like $@, qr{\Qmyapp/base.tx};
 like $@, qr/Redefinition/, 'block redefinition';
 
+$warn = '';
+eval {
+    $tx->render("error/bad_include.tx", {});
+};
+is $warn, '';
+like $@, qr/\b Xslate \b/xms, 'error/bad_include.tx';
+like $@, qr{\b error/bad_include.tx:2 \b}xms;
+like $@, qr{               'no_such_file' }xms;
+like $@, qr{\b include \s+ "no_such_file" }xms;
+
+$warn = '';
+eval {
+    $tx->render("error/bad_syntax.tx", {});
+};
+is $warn, '';
+like $@, qr/\b Xslate \b/xms, 'error/bad_syntax.tx';
+like $@, qr{\b error/bad_syntax.tx:4 \b}xms;
+like $@, qr/\b dump \b/xms;
+
+$warn = '';
+eval {
+    $tx->render("error/bad_tags.tx", {});
+};
+is $warn, '';
+like $@, qr/\b Xslate \b/xms, 'error/bad_tags.tx';
+like $@, qr{\b error/bad_tags.tx:7 \b}xms;
+like $@, qr/\b Malformed \b/xms;
+
+$warn = '';
+eval {
+    $tx->render("error/bad_method.tx", {});
+};
+is $@, '';
+like $warn, qr/\b Xslate \b/xms, 'error/bad_method.tx';
+like $warn, qr{\b error/bad_method.tx:5 \b}xms;
+like $warn, qr{\b foobar \b}xms;
 
 done_testing;

@@ -12,7 +12,7 @@ BEGIN{
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Raw;
-use Text::Xslate::Util qw($DEBUG p);
+use Text::Xslate::Util qw($DEBUG p make_error);
 use Text::Xslate;
 
 use Carp ();
@@ -66,7 +66,7 @@ sub render {
     }
 
     if ( !defined $name ) {
-        $name = '<input>';
+        $name = '<string>';
     }
 
     unless ( ref $vars eq 'HASH' ) {
@@ -96,7 +96,7 @@ sub _assemble {
     our @OPARGS; # defined in Text::Xslate::PP::Const
 
     unless ( defined $name ) { # $name ... filename
-        $name = '<input>';
+        $name = '<string>';
         $fullpath = $cachepath = undef;
         $mtime    = time();
     }
@@ -438,25 +438,23 @@ sub _error_handler {
     my ( $str, $die ) = @_;
     my $st = $_current_st;
 
+    local $SIG{__WARN__} = $_orig_warn_handler;
+    local $SIG{__DIE__}  = $_orig_die_handler;
+
     if($str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
         $str = Carp::shortmess($str);
     }
 
-    Carp::croak( 'Not in $xslate->render()' ) unless $st;
+    Carp::croak( $str ) unless $st;
 
     my $cframe = $st->frame->[ $st->current_frame ];
     my $name   = $cframe->[ Text::Xslate::PP::TXframe_NAME ];
 
-    if( $die ) {
-        $_depth = 0;
-    }
-
     my $opcode = $st->code->[ $st->{ pc } ];
-    my $mess = sprintf( "Xslate(%s:%d &%s[%d]): %s",
-        $opcode->{file}, $opcode->{line}, $name, $st->{ pc }, $str );
+    my $mess   = make_error($st->engine, $str, $opcode->{file}, $opcode->{line},
+        sprintf( "&%s[%d]", $name, $st->{pc} ));
 
     if ( !$die ) {
-        local $SIG{__WARN__} = $_orig_warn_handler;
         # $h can ignore warnings
         if ( my $h = $st->engine->{ warn_handler } ) {
             $h->( $mess );
@@ -466,7 +464,6 @@ sub _error_handler {
         }
     }
     else {
-        local $SIG{__DIE__} = $_orig_die_handler;
         # $h cannot ignore errors
         if(my $h = $st->engine->{ die_handler } ) {
             $h->( $mess );

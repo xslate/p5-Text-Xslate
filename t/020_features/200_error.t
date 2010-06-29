@@ -50,7 +50,7 @@ my $out = eval {
     $tx->render_string("<: f() :>");
 };
 
-is $out, '', 'warn in render_string()';
+is $out, '', 'nothing' or die "Oops";
 like $warn, qr/DIE/, $warn;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';

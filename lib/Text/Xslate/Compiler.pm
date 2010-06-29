@@ -12,6 +12,7 @@ use Text::Xslate::Util qw(
     literal_to_value
     value_to_literal
     is_int any_in
+    make_error
     p
 );
 
@@ -188,7 +189,6 @@ has [qw(header footer)] => (
 
 has current_file => (
     is  => 'rw',
-    isa => 'Str',
 
     init_arg => undef,
 );
@@ -199,10 +199,14 @@ sub lvar_use {
     return $self->lvar_id + $n;
 }
 
+sub filename {
+    my($self) = @_;
+    my $file = $self->parser->file;
+    return ref($file) ? '<string>' : $file;
+}
+
 sub compile {
     my($self, $input, %args) = @_;
-
-    my $default_filename = '<input>';
 
     # each compiling process is independent
     local $self->{macro_table}  = {};
@@ -213,12 +217,10 @@ sub compile {
     local $self->{cascade};
     local $self->{header}       = $self->{header};
     local $self->{footer}       = $self->{footer};
-    local $self->{current_file} = $default_filename;
+    local $self->{current_file} = '<string>'; # for opinfo
 
     my $parser = $self->parser;
     local $parser->{file};
-
-    $args{file} ||= $default_filename;
 
     my $header = delete $self->{header};
     my $footer = delete $self->{footer};
@@ -252,7 +254,7 @@ sub compile {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
     }
 
-    print STDERR "// ", $self->file, "\n",
+    print STDERR "// ", $self->filename, "\n",
         $self->as_assembly(\@code, scalar($DEBUG =~ /\b ix \b/xms))
             if _DUMP_ASM;
 
@@ -271,7 +273,7 @@ sub opcode { # build an opcode
     my $symbol = $args{symbol};
     my $file   = $args{file};
     if(not defined $file) {
-        $file = $self->file;
+        $file = $self->filename;
         if($file ne $self->current_file) {
             $self->current_file($file);
         }
@@ -623,7 +625,7 @@ sub _generate_for {
     my $block = $node->third;
 
     if(@{$vars} != 1) {
-        $self->_error("A for-loop requires single variable for each items", $node);
+        $self->_error("A for-loop requires single variable for each item", $node);
     }
     local $self->{lvar}  = { %{$self->lvar} }; # new scope
     local $self->{const} = [];                 # new scope
@@ -708,7 +710,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
 
     local $self->{lvar_id} = $self->lvar_use($arg_ix);
 
-    my $opinfo = $self->opcode(set_opinfo => undef, file => $self->file, line => $node->line);
+    my $opinfo = $self->opcode(set_opinfo => undef, file => $self->filename, line => $node->line);
     my %macro = (
         name      => $name,
         nargs     => $arg_ix,
@@ -1314,8 +1316,8 @@ sub as_assembly {
 sub _error {
     my($self, $message, $node) = @_;
 
-    my $line = (ref($node) ? $node->line : $node) || 'unknown';
-    Carp::croak(sprintf 'Xslate::Compiler(%s:%s): %s', $self->file, $line, $message);
+    my $line = ref($node) ? $node->line : $node;
+    die make_error($self, $message, $self->file, $line);
 }
 
 no Any::Moose;
