@@ -301,10 +301,11 @@ CODE
 
 $CODE_MANIP{ 'include' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->write_lines( sprintf( <<'CODE', $self->sa ) );
+    $self->write_lines( sprintf( <<'CODE', $self->sa, $self->current_line ) );
 # include
 {
-    my $st2 = Text::Xslate::PP::tx_load_template( $st->engine, %s );
+    $st->{pc} = %2$s; # for error messages
+    my $st2 = Text::Xslate::PP::tx_load_template( $st->engine, %1$s );
     $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
 }
 CODE
@@ -1125,7 +1126,7 @@ sub call {
         }
         else {
             $ret = eval { $obj->$proc( @args ) };
-            #_error( $st, $frame, $line, "%s\t...", $@) if $@;
+            $st->error( [$frame, $line], "%s\t...", $@) if $@;
         }
     }
     else { # function call
