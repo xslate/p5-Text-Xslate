@@ -626,7 +626,7 @@ $CODE_MANIP{ 'symbol' } = sub {
     }
 
     $self->sa(
-        sprintf('fetch_symbol( $st, %s, %s, %s )', value_to_literal($arg), $self->frame_and_line )
+        sprintf('$st->fetch_symbol(%s, [%s, %s])', value_to_literal($arg), $self->frame_and_line )
     );
 };
 
@@ -1225,19 +1225,6 @@ sub cond_eq {
 sub push_pad {
     push @{ $_[0] }, $_[1];
     $_[0];
-}
-
-
-sub fetch_symbol {
-    my ( $st, $name, $frame, $line ) = @_;
-
-    if ( !defined $st->symbol->{ $name } ) {
-        $st->{ pc } = $line;
-        $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
-        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
-    }
-
-    return $st->symbol->{ $name };
 }
 
 

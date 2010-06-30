@@ -422,15 +422,7 @@ sub op_scmp {
 sub op_symbol {
     my($st) = @_;
     my $name = $st->op_arg;
-
-    if ( my $func = $st->symbol->{ $name } ) {
-        $st->{sa} = $func;
-    }
-    else {
-        Carp::croak("Undefined symbol $name");
-        #$st->error( undef, "Undefined symbol %s", $name );
-        #$st->{sa} = undef;
-    }
+    $st->{sa} = $st->fetch_symbol($name);
 
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }

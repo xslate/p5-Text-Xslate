@@ -87,6 +87,24 @@ sub fetch {
     return $ret;
 }
 
+sub fetch_symbol {
+    my ( $st, $name, $context ) = @_;
+
+    my $symbol_table = $st->symbol;
+    if ( !exists $symbol_table->{ $name } ) {
+        if(defined $context) {
+            my($frame, $line) = @{$context};
+            if ( defined $line ) {
+                $st->{ pc } = $line;
+                $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
+            }
+        }
+        Carp::croak( sprintf( "Undefined symbol %s", $name ) );
+    }
+
+    return $symbol_table->{ $name };
+}
+
 sub localize {
     my($st, $key, $newval) = @_;
     my $vars       = $st->vars;
