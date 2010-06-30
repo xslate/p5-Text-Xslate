@@ -8,6 +8,7 @@ our @CARP_NOT = qw(
     Text::Xslate::PP::Method
 );
 
+use Text::Xslate::Util qw(neat);
 use Text::Xslate::PP::Const ();
 
 has vars => (
@@ -51,6 +52,58 @@ has symbol => (
 has local_stack => (
     is => 'rw',
 );
+
+sub fetch {
+    my ( $st, $var, $key, $context ) = @_;
+    my $ret;
+
+    if ( Scalar::Util::blessed($var) ) {
+        $ret = eval { $var->$key() };
+        $st->error( $context, "%s", $@ ) if $@;
+    }
+    elsif ( ref $var eq 'HASH' ) {
+        if ( defined $key ) {
+            $ret = $var->{ $key };
+        }
+        else {
+            $st->warn( $context, "Use of nil as a field key" );
+        }
+    }
+    elsif ( ref $var eq 'ARRAY' ) {
+        if ( Scalar::Util::looks_like_number($key) ) {
+            $ret = $var->[ $key ];
+        }
+        else {
+            $st->warn( $context, "Use of %s as an array index", neat( $key ) );
+        }
+    }
+    elsif ( $var ) {
+        $st->error( $context, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+    }
+    else {
+        $st->warn( $context, "Use of nil to access %s", neat( $key ) );
+    }
+
+    return $ret;
+}
+
+sub localize {
+    my($st, $key, $newval) = @_;
+    my $vars       = $st->vars;
+    my $preeminent = exists $vars->{$key};
+    my $oldval     = delete $vars->{$key};
+
+    my $cleanup = $preeminent
+        ? sub { $vars->{$key} = $oldval; return }
+        : sub { delete $vars->{$key};    return };
+
+    push @{ $st->{local_stack} ||= [] },
+        bless($cleanup, 'Text::Xslate::PP::Guard');
+
+    $vars->{$key} = $newval;
+    return;
+}
+
 
 sub pad {
     my($st) = @_;

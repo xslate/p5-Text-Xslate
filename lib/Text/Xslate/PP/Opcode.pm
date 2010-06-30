@@ -1,13 +1,16 @@
 package Text::Xslate::PP::Opcode;
 
-use strict;
-use warnings;
+use Any::Moose;
+extends qw(Text::Xslate::PP::State);
 
 use Carp ();
 use Scalar::Util ();
 
 use Text::Xslate::PP::Const;
-use Text::Xslate::Util qw(p mark_raw unmark_raw html_escape);
+use Text::Xslate::Util qw(
+    p neat
+    mark_raw unmark_raw html_escape
+);
 
 use constant TXframe_NAME       => Text::Xslate::PP::TXframe_NAME;
 use constant TXframe_OUTPUT     => Text::Xslate::PP::TXframe_OUTPUT;
@@ -71,31 +74,13 @@ sub op_load_lvar_to_sb {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-{
-    package
-        Text::Xslate::PP::Opcode::Guard;
-
-    sub DESTROY { $_[0]->() }
-}
-
 sub op_localize_s {
     my($st) = @_;
-    my $vars   = $st->{vars};
     my $key    = $st->op_arg;
-    my $preeminent
-               = exists $vars->{$key};
-    my $oldval = delete $vars->{$key};
     my $newval = $st->{sa};
+    $st->localize($key, $newval);
 
-    my $cleanup = $preeminent
-        ? sub { $vars->{$key} = $oldval; return }
-        : sub { delete $vars->{$key};    return };
-    push @{ $_[0]->{local_stack} ||= [] },
-        bless($cleanup, 'Text::Xslate::PP::Opcode::Guard');
-
-    $vars->{$key} = $newval;
-
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 sub op_push {
@@ -134,18 +119,20 @@ sub op_fetch_s {
 }
 
 sub op_fetch_field {
-    my $var = $_[0]->{sb};
-    my $key = $_[0]->{sa};
-    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    my($st) = @_;
+    my $var = $st->{sb};
+    my $key = $st->{sa};
+    $st->{sa} = $st->fetch($var, $key);
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
 sub op_fetch_field_s {
-    my $var = $_[0]->{sa};
-    my $key = $_[0]->op_arg;
-    $_[0]->{sa} = tx_fetch( $_[0], $var, $key );
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    my($st) = @_;
+    my $var = $st->{sa};
+    my $key = $st->op_arg;
+    $st->{sa} = $st->fetch($var, $key);
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
@@ -207,7 +194,7 @@ sub op_for_start {
 
     unless ( $ar and ref $ar eq 'ARRAY' ) {
         if ( defined $ar ) {
-            $st->error( undef, "Iterator variables must be an ARRAY reference, not %s", tx_neat( $ar ) );
+            $st->error( undef, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
         }
         else {
             $st->warn( undef, "Use of nil to iterate" );
@@ -524,9 +511,11 @@ sub op_funcall {
 }
 
 sub op_methodcall_s {
+    my($st) = @_;
     require Text::Xslate::PP::Method;
-    $_[0]->{sa} = Text::Xslate::PP::Method::tx_methodcall($_[0], $_[0]->op_arg);
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    $st->{sa} = Text::Xslate::PP::Method::tx_methodcall(
+        $st, undef, $st->op_arg, @{ pop @{ $st->{SP} } });
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 sub op_make_array {
@@ -604,7 +593,7 @@ sub tx_funcall {
     return $ret;
 }
 
-sub tx_proccall {
+sub proccall {
     my($st, $proc) = @_;
     if(ref $proc eq 'Text::Xslate::PP::Macro') {
         local $st->{pc} = $st->{pc};
@@ -618,57 +607,8 @@ sub tx_proccall {
     }
 }
 
-sub tx_fetch {
-    my ( $st, $var, $key ) = @_;
-    my $ret;
-
-    if ( Scalar::Util::blessed($var) ) {
-        $ret = eval { $var->$key() };
-        $st->error(undef, "%s", $@) if $@;
-    }
-    elsif ( ref $var eq 'HASH' ) {
-        if ( defined $key ) {
-            $ret = $var->{ $key };
-        }
-        else {
-            $st->warn( undef, "Use of nil as a field key" );
-        }
-    }
-    elsif ( ref $var eq 'ARRAY' ) {
-        if ( Scalar::Util::looks_like_number($key) ) {
-            $ret = $var->[ $key ];
-        }
-        else {
-            $st->warn( undef, "Use of %s as an array index", tx_neat( $key ) );
-        }
-    }
-    elsif ( $var ) {
-        $st->error( undef, "Cannot access %s (%s is not a container)", tx_neat($key), tx_neat($var) );
-    }
-    else {
-        $st->warn( undef, "Use of nil to access %s", tx_neat( $key ) );
-    }
-
-    return $ret;
-}
-
-sub tx_neat {
-    my($s) = @_;
-    if ( defined $s ) {
-        if ( ref($s) || Scalar::Util::looks_like_number($s) ) {
-            return $s;
-        }
-        else {
-            return "'$s'";
-        }
-    }
-    else {
-        return 'nil';
-    }
-}
-
-
-1;
+no Any::Moose;
+__PACKAGE__->meta->make_immutable();
 __END__
 
 =head1 NAME

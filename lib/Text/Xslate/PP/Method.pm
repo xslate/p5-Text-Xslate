@@ -14,6 +14,8 @@ our @CARP_NOT = qw(Text::Xslate::PP::Opcode Text::Xslate::PP::Booster);
 our $_st;
 *_st = *Text::Xslate::PP::_current_st;
 
+our $_context;
+
 sub _any_defined {
     my($any) = @_;
     return $_st->bad_arg('defined') if @_ != 1;
@@ -39,7 +41,7 @@ sub _array_reverse {
 }
 
 sub _array_sort {
-    my($array_ref, $proc) = @_;
+    my($array_ref, $callback) = @_;
     return $_st->bad_arg('sort') if !(@_ == 1 or @_ == 2);
     if(@_ == 1) {
         return [ sort @{$array_ref} ];
@@ -47,7 +49,7 @@ sub _array_sort {
     else {
         return [ sort {
             push @{ $_st->{ SP } }, [ $a, $b ];
-            Text::Xslate::PP::Opcode::tx_proccall($_st, $proc) + 0; # need to numify
+            $_st->proccall($callback, $_context) + 0; # need to numify
         } @{$array_ref} ];
     }
 }
@@ -57,7 +59,7 @@ sub _array_map {
     return $_st->bad_arg('map') if @_ != 2;
     return [ map {
         push @{ $_st->{ SP } }, [ $_ ];
-        Text::Xslate::PP::Opcode::tx_proccall($_st, $callback);
+        $_st->proccall($callback, $_context);
     } @{$array_ref} ];
 }
 
@@ -108,16 +110,15 @@ our %builtin_method = (
 );
 
 sub tx_methodcall {
-    my($st, $method) = @_;
-    my($invocant, @args) = @{ pop @{ $st->{ SP } } };
+    my($st, $context, $method, $invocant, @args) = @_;
 
     if(Scalar::Util::blessed($invocant)) {
         if($invocant->can($method)) {
             my $retval = eval { $invocant->$method(@args) };
-            $st->error(undef, "%s", $@) if $@;
+            $st->error($context, "%s", $@) if $@;
             return $retval;
         }
-        $st->error(undef, "Undefined method %s called for %s",
+        $st->error($context, "Undefined method %s called for %s",
             $method, $invocant);
         return undef;
     }
@@ -130,14 +131,15 @@ sub tx_methodcall {
 
     if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
         push @{ $st->{ SP } }, [ $invocant, @args ]; # re-pushmark
-        return Text::Xslate::PP::Opcode::tx_proccall($st, $body);
+        local $_context = $context;
+        return $st->proccall($body, $context);
     }
     if(!defined $invocant) {
-        $st->warn(undef, "Use of nil to invoke method %s", $method);
+        $st->warn($context, "Use of nil to invoke method %s", $method);
         return undef;
     }
 
-    $st->error(undef, "Undefined method %s called for %s",
+    $st->error($context, "Undefined method %s called for %s",
         $method, $invocant);
 
     return undef;

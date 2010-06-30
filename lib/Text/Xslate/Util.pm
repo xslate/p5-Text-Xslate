@@ -11,6 +11,7 @@ our @EXPORT_OK = qw(
     html_escape escaped_string
     literal_to_value value_to_literal
     import_from
+    neat
     is_int any_in
     read_around
     make_error
@@ -55,6 +56,21 @@ sub Text::Xslate::EscapedString::new {
         => 'Text::Xslate::EscapedString->new has been deprecated. '
          . 'Use Text::Xslate::Type::Raw->new instead.');
     return Text::Xslate::Type::Raw->new($str);
+}
+
+sub neat {
+    my($s) = @_;
+    if ( defined $s ) {
+        if ( ref($s) || Scalar::Util::looks_like_number($s) ) {
+            return $s;
+        }
+        else {
+            return "'$s'";
+        }
+    }
+    else {
+        return 'nil';
+    }
 }
 
 sub is_int {

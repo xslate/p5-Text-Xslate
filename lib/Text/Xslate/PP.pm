@@ -29,6 +29,8 @@ use constant _DUMP_LOAD_TEMPLATE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
+my $state_class = 'Text::Xslate::PP::' . _PP_BACKEND;
+
 our @OPCODE; # defined in PP::Const
 
 {
@@ -90,7 +92,7 @@ sub engine {
 sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
     my $len = scalar( @$proto );
-    my $st  = Text::Xslate::PP::State->new;
+    my $st  = $state_class->new();
 
     our %OPS;    # defined in Text::Xslate::PP::Const
     our @OPARGS; # defined in Text::Xslate::PP::Const
@@ -486,6 +488,13 @@ sub _warn {
 
 sub _die {
     _error_handler( $_[0], 1 );
+}
+
+{
+    package
+        Text::Xslate::PP::Guard;
+
+    sub DESTROY { $_[0]->() }
 }
 
 1;
