@@ -61,12 +61,6 @@ sub op_arg {
     $_[0]->{ code }->[ $_[0]->{ pc } ]->{ arg };
 }
 
-
-sub _verbose {
-    my $v = $_[0]->engine->{ verbose };
-    defined $v ? $v : Text::Xslate::PP::TX_VERBOSE_DEFAULT;
-}
-
 sub _doerror {
     my ( $st, $context, $fmt, @args ) = @_;
     if(defined $context) { # hack to share it with PP::Booster and PP::Opcode
@@ -82,7 +76,7 @@ sub _doerror {
 
 sub warn :method {
     my $st = shift;
-    if( $st->_verbose > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         $st->_doerror(@_);
     }
     return;
@@ -91,7 +85,7 @@ sub warn :method {
 
 sub error :method {
     my $st = shift;
-    if( $st->_verbose >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
         $st->_doerror(@_);
     }
     return;
