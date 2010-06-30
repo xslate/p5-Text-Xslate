@@ -31,7 +31,7 @@ eval {
     Hello, <: if $lang { :> world!
 T
 };
-like $@, qr/Expected "}"/;
+like $@, qr/Expected '}'/;
 
 eval {
     $tx->render_string(<<'T');
@@ -59,7 +59,7 @@ eval {
 : macro foo -> ($var { ; }
 T
 };
-like $@, qr/Expected "\)"/;
+like $@, qr/Expected '\)'/;
 
 eval {
     $tx->render_string(<<'T');
@@ -96,7 +96,7 @@ Hello, <: foo(42 :>
 T
 };
 unlike $@, qr/;/, q{don't include ";"}; # '
-like $@, qr/Expected "\)"/;
+like $@, qr/Expected '\)'/;
 
 # semantics errors
 

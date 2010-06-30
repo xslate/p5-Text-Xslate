@@ -7,7 +7,7 @@ use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
     $NUMBER $STRING $DEBUG
     is_int any_in
-    value_to_literal
+    neat
     literal_to_value
     make_error
     p
@@ -602,7 +602,7 @@ sub advance {
 
     my $t = $parser->token;
     if(defined($id) && $t->id ne $id) {
-        $parser->_unexpected(value_to_literal($id), $t);
+        $parser->_unexpected(neat($id), $t);
     }
 
     $parser->near_token($t);
@@ -1786,7 +1786,7 @@ sub iterator_cycle {
 sub _unexpected {
     my($parser, $expected, $got) = @_;
     if(defined($got) && $got ne ";") {
-        $parser->_error("Expected $expected, but got $got");
+        $parser->_error("Expected $expected, but got " . neat("$got"));
      }
      else {
         $parser->_error("Expected $expected");
