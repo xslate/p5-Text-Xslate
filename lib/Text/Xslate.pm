@@ -427,7 +427,6 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        $compiler ||= $self->compiler_class;
         require Any::Moose;
         Any::Moose::load_class($compiler);
 
