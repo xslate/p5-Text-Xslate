@@ -19,6 +19,7 @@ my $tx = Text::Xslate->new(
     cache_dir =>  path,
 );
 
+note 'for strings';
 
 is $tx->render_string(<<'T', { value => "エクスレート" }),
 ようこそ <:= $value :> の世界へ！
@@ -38,6 +39,15 @@ T
 ようこそ エクスレート の世界へ！
 X
 
+is $tx->render_string(<<'T', { value => "<エクスレート>" }),
+Hello, <:= $value :> world!
+T
+    "Hello, &lt;エクスレート&gt; world!\n";
+
+is $tx->render_string(q{<: $value :>}, { value => "<エクスレート>" }),
+    "&lt;エクスレート&gt;";
+
+note 'for files';
 
 is $tx->render("hello_utf8.tx", { name => "エクスレート" }),
     "こんにちは！ エクスレート！\n", "in files" for 1 .. 2;

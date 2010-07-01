@@ -385,6 +385,9 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
     const char* const end = cur + len;
 
     (void)SvGROW(dest, SvCUR(dest) + len);
+    if(!SvUTF8(dest) && SvUTF8(src)) {
+        sv_utf8_upgrade(dest);
+    }
 
     while(cur != end) {
         const char* parts;
@@ -596,7 +599,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     AvARRAY(cframe)[TXframe_OUTPUT] = TX_st->output;
     TX_st->output                   = tmp;
     sv_setpvs(tmp, "");
-    SvUTF8_on(tmp); /* sv_utf8_upgrade(tmp); */
+    SvGROW(tmp, TX_HINT_SIZE);
 
     i = 0;
     if(outer > 0) { /* refers outer lexical variales */
