@@ -285,40 +285,50 @@ sub _assemble {
         $s =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
         return bless \$s, $esc_class;
     }
-
-    sub match { # simple smart matching
-        my($a, $b) = @_;
-
-        if(ref($b) eq 'ARRAY') {
-            foreach my $item(@{$b}) {
-                if(defined($item)) {
-                    if(defined($a) && $a eq $item) {
-                        return 1;
-                    }
-                }
-                else {
-                    if(not defined($a)) {
-                        return 1;
-                    }
-                }
-            }
-            return '';
-        }
-        elsif(ref($b) eq 'HASH') {
-            return defined($a) && exists $b->{$a};
-        }
-        elsif(defined($b)) {
-            return defined($a) && $a eq $b;
-        }
-        else {
-            return !defined($a);
-        }
-    }
 }
 
 #
 # INTERNAL
 #
+
+sub tx_sv_eq {
+    my($x, $y) = @_;
+    if ( defined $x ) {
+        return defined $y && $x eq $y;
+    }
+    else {
+        return !defined $y;
+    }
+}
+
+sub tx_match { # simple smart matching
+    my($x, $y) = @_;
+
+    if(ref($y) eq 'ARRAY') {
+        foreach my $item(@{$y}) {
+            if(defined($item)) {
+                if(defined($x) && $x eq $item) {
+                    return 1;
+                }
+            }
+            else {
+                if(not defined($x)) {
+                    return 1;
+                }
+            }
+        }
+        return '';
+    }
+    elsif(ref($y) eq 'HASH') {
+        return defined($x) && exists $y->{$x};
+    }
+    elsif(defined($y)) {
+        return defined($x) && $x eq $y;
+    }
+    else {
+        return !defined($x);
+    }
+}
 
 sub tx_push_frame {
     my ( $st ) = @_;
@@ -432,7 +442,6 @@ sub tx_execute {
     else {
         local $st->{sa};
         local $st->{sb};
-        local $st->{SP} = [];
         $st->{output} = '';
         $st->{code}->[0]->{ exec_code }->( $st );
         return $st->{output};

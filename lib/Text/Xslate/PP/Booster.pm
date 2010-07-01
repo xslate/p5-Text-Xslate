@@ -455,19 +455,19 @@ $CODE_MANIP{ 'builtin_html_escape' } = sub  {
 
 $CODE_MANIP{ 'match' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'Text::Xslate::Util::match( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+    $self->sa( sprintf( 'Text::Xslate::PP::tx_match( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'eq' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'cond_eq( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+    $self->sa( sprintf( 'Text::Xslate::PP::tx_sv_eq( %s, %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
 $CODE_MANIP{ 'ne' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '(!cond_eq( %s, %s ))', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
+    $self->sa( sprintf( '(!Text::Xslate::PP::tx_sv_eq( %s, %s ))', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
 
@@ -1197,17 +1197,6 @@ sub cond_dand {
 sub cond_dor {
     my ( $value, $subref ) = @_;
     !(defined $value) ? $subref->() : $value;
-}
-
-
-sub cond_eq {
-    my ( $sa, $sb ) = @_;
-    if ( defined $sa ) {
-        return defined $sb && $sa eq $sb;
-    }
-    else {
-        return !defined $sb;
-    }
 }
 
 

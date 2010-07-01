@@ -1388,15 +1388,6 @@ CODE:
     XSRETURN(1);
 }
 
-bool
-match(SV* a, SV* b)
-CODE:
-{
-    RETVAL = tx_sv_match(aTHX_ a, b);
-}
-OUTPUT:
-    RETVAL
-
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
 
 BOOT:

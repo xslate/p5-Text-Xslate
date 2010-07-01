@@ -338,29 +338,19 @@ sub op_builtin_html_escape{
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub _sv_eq {
-    my($x, $y) = @_;
-    if ( defined $x ) {
-        return defined $y && $x eq $y;
-    }
-    else {
-        return !defined $y;
-    }
-}
-
 sub op_match {
-    $_[0]->{sa} = Text::Xslate::Util::match($_[0]->{sb}, $_[0]->{sa});
+    $_[0]->{sa} = Text::Xslate::PP::tx_match($_[0]->{sb}, $_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_eq {
-    $_[0]->{sa} =  _sv_eq($_[0]->{sb}, $_[0]->{sa});
+    $_[0]->{sa} = Text::Xslate::PP::tx_sv_eq($_[0]->{sb}, $_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_ne {
-    $_[0]->{sa} = !_sv_eq($_[0]->{sb}, $_[0]->{sa});
+    $_[0]->{sa} = !Text::Xslate::PP::tx_sv_eq($_[0]->{sb}, $_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
