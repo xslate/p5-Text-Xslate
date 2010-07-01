@@ -1,9 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-0.1040
+0.1040 Thu Jul  1 15:33:14 2010
+    [BUG FIXES]
+    - UTF8 flags was not respected in some cases
+
     [CHANGES]
     - Error messages contain source lines
-    - UTF8 flags was not respected in some cases
 
 0.1039 Mon Jun 28 20:31:54 2010
     [DOCUMENTS]
