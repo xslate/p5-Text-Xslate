@@ -47,6 +47,16 @@ our $_depth = 0;
 our $_current_st;
 
 our($_orig_die_handler, $_orig_warn_handler);
+
+our %html_escape = (
+    '&' => '&amp;',
+    '<' => '&lt;',
+    '>' => '&gt;',
+    '"' => '&quot;',
+    "'" => '&apos;',
+);
+our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
+
 #
 # public APIs
 #
@@ -272,12 +282,7 @@ sub _assemble {
             ref($s) eq $esc_class
             or !defined($s);
 
-        $s =~ s/&/&amp;/g;
-        $s =~ s/</&lt;/g;
-        $s =~ s/>/&gt;/g;
-        $s =~ s/"/&quot;/g; # " for poor editors
-        $s =~ s/'/&apos;/g; # ' for poor editors
-
+        $s =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
         return bless \$s, $esc_class;
     }
 

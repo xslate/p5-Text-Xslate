@@ -51,17 +51,6 @@ has is_completed => ( is => 'rw', default => 1 );
 
 has stash => ( is => 'rw', default => sub { {}; } ); # store misc data
 
-our %html_escape = (
-    '&' => '&amp;',
-    '<' => '&lt;',
-    '>' => '&gt;',
-    '"' => '&quot;',
-    "'" => '&apos;',
-);
-our $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
-
-our $context; # frame and line
-
 #
 # public APIs
 #
@@ -295,7 +284,7 @@ if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
     }
 }
 elsif ( defined $sv ) {
-    $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
+    $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
     $output .= $sv;
 }
 else {

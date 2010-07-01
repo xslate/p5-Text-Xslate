@@ -27,16 +27,6 @@ no warnings 'recursion';
 
 our @CARP_NOT = qw(Text::Xslate);
 
-
-my %html_escape = (
-    '&' => '&amp;',
-    '<' => '&lt;',
-    '>' => '&gt;',
-    '"' => '&quot;',
-    "'" => '&apos;',
-);
-my $html_unsafe_chars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
-
 our $_current_frame;
 
 
@@ -149,7 +139,7 @@ sub op_print {
         }
     }
     elsif ( defined $sv ) {
-        $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
+        $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
         $st->{ output } .= $sv;
     }
     else {
