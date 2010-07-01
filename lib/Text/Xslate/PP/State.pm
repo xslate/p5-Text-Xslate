@@ -54,19 +54,19 @@ has local_stack => (
 );
 
 sub fetch {
-    my ( $st, $var, $key, $context ) = @_;
+    my ( $st, $var, $key, $frame, $line ) = @_;
     my $ret;
 
     if ( Scalar::Util::blessed($var) ) {
         $ret = eval { $var->$key() };
-        $st->error( $context, "%s", $@ ) if $@;
+        $st->error( [$frame, $line ], "%s", $@ ) if $@;
     }
     elsif ( ref $var eq 'HASH' ) {
         if ( defined $key ) {
             $ret = $var->{ $key };
         }
         else {
-            $st->warn( $context, "Use of nil as a field key" );
+            $st->warn( [$frame, $line ], "Use of nil as a field key" );
         }
     }
     elsif ( ref $var eq 'ARRAY' ) {
@@ -74,14 +74,14 @@ sub fetch {
             $ret = $var->[ $key ];
         }
         else {
-            $st->warn( $context, "Use of %s as an array index", neat( $key ) );
+            $st->warn( [$frame, $line ], "Use of %s as an array index", neat( $key ) );
         }
     }
     elsif ( $var ) {
-        $st->error( $context, "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+        $st->error( [$frame, $line ], "Cannot access %s (%s is not a container)", neat($key), neat($var) );
     }
     else {
-        $st->warn( $context, "Use of nil to access %s", neat( $key ) );
+        $st->warn( [$frame, $line ], "Use of nil to access %s", neat( $key ) );
     }
 
     return $ret;

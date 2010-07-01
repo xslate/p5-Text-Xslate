@@ -217,7 +217,7 @@ $CODE_MANIP{ 'fetch_lvar' } = sub {
 $CODE_MANIP{ 'fetch_field' } = sub {
     my ( $self, $arg, $line ) = @_;
 
-    $self->sa( sprintf( '$st->fetch( %s, %s, [%s, %s] )', $self->sb(), $self->sa(), $self->frame_and_line ) );
+    $self->sa( sprintf( '$st->fetch( %s, %s, %s, %s )', $self->sb(), $self->sa(), $self->frame_and_line ) );
 };
 
 
@@ -225,7 +225,7 @@ $CODE_MANIP{ 'fetch_field_s' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
 
-    $self->sa( sprintf( '$st->fetch( %s, %s, [%s, %s] )', $sv, value_to_literal( $arg ), $self->frame_and_line ) );
+    $self->sa( sprintf( '$st->fetch( %s, %s, %s, %s )', $sv, value_to_literal( $arg ), $self->frame_and_line ) );
 };
 
 
