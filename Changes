@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1040
+    [CHANGES]
+    - Error messages contain source lines
+
 0.1039 Mon Jun 28 20:31:54 2010
     [DOCUMENTS]
     - Applying the raw filter in templates is concidered harmful. Remove
