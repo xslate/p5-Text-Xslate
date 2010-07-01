@@ -46,6 +46,7 @@ my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     { }
     [ ]
     ;
+    `
 ), ',');
 
 my %shortcut_table = (
