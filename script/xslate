@@ -131,13 +131,28 @@ has eval => (
     traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
 );
 
+has engine => (
+    documentation => 'Template engine',
+    cmd_aliases   => [qw(E)],
+    is            => 'ro',
+    isa           => 'Str',
+    default       => 'Text::Xslate',
+    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+);
+
 has debug => (
     documentation => 'Debugging flags',
-    cmd_aliases   => 'd',
+    cmd_aliases   => ['d'],
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_debug',
     traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+);
+
+has version => (
+    documentation => 'Print version information',
+    is            => 'ro',
+    isa           => 'Bool',
 );
 
 sub run {
@@ -158,7 +173,14 @@ sub run {
         if $self->has_debug;
 
     require Text::Xslate;
-    my $xslate = Text::Xslate->new(%args);
+    Any::Moose::load_class($self->engine);
+
+    if($self->version) {
+        $self->print_version();
+        return;
+    }
+
+    my $xslate = $self->engine->new(%args);
 
     if($self->has_eval) {
         my %vars;
@@ -244,6 +266,19 @@ sub process_file {
     print $fh $rendered;
 
     close $fh or warn "Could not close file $outfile: $!";
+}
+
+sub print_version {
+    my($self) = @_;
+    printf <<'END',
+%s (%s) on Text::Xslate/%s, Perl/%vd, Any::Moose/%d (%s/%s).
+END
+    $0, ref($self),
+    Text::Xslate->VERSION,
+    $^V,
+    Any::Moose->VERSION,
+    any_moose(), any_moose()->VERSION,
+    ;
 }
 
 package main;
