@@ -527,7 +527,7 @@ sub _generate_name {
         }
     }
 
-    return $self->opcode( symbol => $node->id, line => $node->line );
+    return $self->opcode( fetch_symbol => $node->id, line => $node->line );
 }
 
 sub _can_print_optimize {
@@ -746,7 +746,7 @@ sub _generate_lambda {
 
     my $macro = $node->first;
     $self->_compile_ast([$macro]);
-    return $self->opcode( symbol => $macro->first->id, line => $node->line );
+    return $self->opcode( fetch_symbol => $macro->first->id, line => $node->line );
 }
 
 sub _prepare_cond_expr {

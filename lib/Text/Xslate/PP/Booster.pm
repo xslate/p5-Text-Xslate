@@ -610,7 +610,7 @@ $CODE_MANIP{ 'macro' } = sub {
 };
 
 
-$CODE_MANIP{ 'symbol' } = sub {
+$CODE_MANIP{ 'fetch_symbol' } = sub {
     my ( $self, $arg, $line ) = @_;
 
     # macro

@@ -415,7 +415,7 @@ TXC(scmp) {
     TX_RETURN_NEXT();
 }
 
-TXC_w_key(symbol) { /* find a symbol (function, macro, constant) */
+TXC_w_key(fetch_symbol) { /* functions, macros, constants */
     SV* const name = TX_op_arg;
     HE* he;
 
