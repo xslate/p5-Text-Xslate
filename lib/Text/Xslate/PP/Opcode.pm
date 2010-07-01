@@ -237,36 +237,31 @@ sub op_for_iter {
 
 
 sub op_add {
-    $_[0]->{targ} = $_[0]->{sb} + $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = $_[0]->{sb} + $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_sub {
-    $_[0]->{targ} = $_[0]->{sb} - $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = $_[0]->{sb} - $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_mul {
-    $_[0]->{targ} = $_[0]->{sb} * $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = $_[0]->{sb} * $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_div {
-    $_[0]->{targ} = $_[0]->{sb} / $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = $_[0]->{sb} / $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 
 sub op_mod {
-    $_[0]->{targ} = $_[0]->{sb} % $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = $_[0]->{sb} % $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -323,23 +318,13 @@ sub op_dor {
 
 }
 
-
 sub op_not {
     $_[0]->{sa} = ! $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-
-sub op_plus {
-    $_[0]->{targ} = + $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
-}
-
-
 sub op_minus {
-    $_[0]->{targ} = - $_[0]->{sa};
-    $_[0]->{sa} = $_[0]->{targ};
+    $_[0]->{sa} = -$_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
@@ -476,13 +461,11 @@ sub op_macro_end {
     my $cframe   = $frames->[ $st->current_frame( $st->current_frame - 1 ) ]; # pop frame
 
     if($st->op_arg) { # immediate macros
-        $st->{targ} = $st->{ output };
+        $st->{sa} = $st->{ output };
     }
     else {
-        $st->{targ} = mark_raw( $st->{ output } );
+        $st->{sa} = mark_raw( $st->{ output } );
     }
-
-    $st->{sa} = $st->{targ};
 
     $st->{ output } = $oldframe->[ TXframe_OUTPUT ];
     $st->{ pc }     = $oldframe->[ TXframe_RETADDR ];

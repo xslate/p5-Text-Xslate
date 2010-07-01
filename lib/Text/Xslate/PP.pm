@@ -425,7 +425,6 @@ sub tx_execute {
         return $st->{ booster_code }->( $st );
     }
     else {
-        local $st->{targ};
         local $st->{sa};
         local $st->{sb};
         local $st->{SP} = [];
