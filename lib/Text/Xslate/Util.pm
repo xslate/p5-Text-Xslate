@@ -191,7 +191,7 @@ END_IMPORT
             defined($c) ? ($_ => $c) : ();
         } keys %Text::Xslate::Util::_import::;
 
-    return @funcs;
+    return {@funcs};
 }
 
 sub make_error {

@@ -84,10 +84,9 @@ my %builtin = (
     dump       => \&Text::Xslate::Util::p,
 );
 
-sub compiler_class() { 'Text::Xslate::Compiler' }
+sub default_functions { +{} } # overridable
 
-sub options {
-    my($class) = @_;
+sub options { # overridable
     return {
         # name       => default
         suffix       => '.tx',
@@ -97,7 +96,7 @@ sub options {
         cache_dir    => _DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
-        compiler     => $class->compiler_class,
+        compiler     => 'Text::Xslate::Compiler',
 
         verbose      => 1,
         warn_handler => undef,
@@ -136,16 +135,15 @@ sub new {
     # function
 
     my %funcs;
+    $class->_merge_hash(\%funcs, $class->default_functions());
+
+    # 'module' overrides default functions
     if(defined $args{module}) {
-        %funcs = import_from(@{$args{module}});
+        $class->_merge_hash(\%funcs, import_from(@{$args{module}}));
     }
 
-    # function => { ... } overrides imported functions
-    if(defined(my $funcs_ref = $args{function})) {
-        while(my($name, $body) = each %{$funcs_ref}) {
-            $funcs{$name} = $body;
-        }
-    }
+    # 'function' overrides imported functons
+    $class->_merge_hash(\%funcs, $args{function});
 
     # the following functions are not overridable
     foreach my $name(keys %builtin) {
@@ -165,15 +163,14 @@ sub new {
     return bless \%args, $class;
 }
 
-sub register_function {
-    my $self = shift;
-    my $function = $self->{function};
-    while(my($name, $body) = splice @_, 0, 2) {
-        $function->{$name} = $body;
+sub _merge_hash {
+    my($self, $base, $add) = @_;
+    while(my($name, $body) = each %{$add}) {
+        $base->{$name} = $body;
     }
-    $self->flush_memory_cache();
     return;
 }
+
 
 sub flush_memory_cache {
     my($self) = @_;

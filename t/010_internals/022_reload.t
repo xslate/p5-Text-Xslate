@@ -19,7 +19,12 @@ my $tx = Text::Xslate->new(
 is $tx->render('func.tx', { lang => 'Xslate' }),
     "Hello, [Xslate] world!\n";
 
-$tx->register_function( f => sub { "{@_}" } );
+$tx = Text::Xslate->new(
+    cache     => 1,
+    cache_dir => path,
+    path      => path,
+    function  => { f => sub{ "{@_}" } },
+);
 
 is $tx->render('func.tx', { lang => 'Xslate' }),
     "Hello, {Xslate} world!\n";
