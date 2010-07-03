@@ -163,8 +163,8 @@ eval {
 T
 };
 is $warn, '';
-like $@, qr{\Qmyapp/bad_redefine.tx:3}xms;
-like $@, qr{\Qmyapp/base.tx};
+like $@, qr{myapp.bad_redefine.tx:3}xms;
+like $@, qr{myapp.base.tx};
 like $@, qr/Redefinition/, 'block redefinition';
 
 $warn = '';
@@ -173,7 +173,7 @@ eval {
 };
 is $warn, '';
 like $@, qr/\b Xslate \b/xms, 'error/bad_include.tx';
-like $@, qr{\b error/bad_include.tx:2 \b}xms;
+like $@, qr{\b error.bad_include.tx:2 \b}xms;
 like $@, qr{               'no_such_file' }xms;
 like $@, qr{\b include \s+ "no_such_file" }xms;
 
@@ -183,7 +183,7 @@ eval {
 };
 is $warn, '';
 like $@, qr/\b Xslate \b/xms, 'error/bad_syntax.tx';
-like $@, qr{\b error/bad_syntax.tx:4 \b}xms;
+like $@, qr{\b error.bad_syntax.tx:4 \b}xms;
 like $@, qr/\b dump \b/xms;
 
 $warn = '';
@@ -192,7 +192,7 @@ eval {
 };
 is $warn, '';
 like $@, qr/\b Xslate \b/xms, 'error/bad_tags.tx';
-like $@, qr{\b error/bad_tags.tx:7 \b}xms;
+like $@, qr{\b error.bad_tags.tx:7 \b}xms;
 like $@, qr/\b Malformed \b/xms;
 
 $warn = '';
@@ -201,7 +201,7 @@ eval {
 };
 is $@, '';
 like $warn, qr/\b Xslate \b/xms, 'error/bad_method.tx';
-like $warn, qr{\b error/bad_method.tx:5 \b}xms;
+like $warn, qr{\b error.bad_method.tx:5 \b}xms;
 like $warn, qr{\b foobar \b}xms;
 
 done_testing;
