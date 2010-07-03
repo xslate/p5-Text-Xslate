@@ -1,5 +1,17 @@
 Revision history for Perl extension Text::Xslate
 
+0.1041 Sat Jul  3 14:52:00 2010
+    [BUG FIXES]
+    - Tests for filenames did not work on Win32
+
+    [CHANGES]
+    - Refactor internal function registration APIs
+
+    [NEW FEATURES]
+    - For App::xslate
+        + New option --version to show versions
+        + New option --engine (or -E) to change the engine class
+
 0.1040 Thu Jul  1 15:33:14 2010
     [BUG FIXES]
     - UTF8 flags was not respected in some cases
