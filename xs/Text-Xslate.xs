@@ -393,6 +393,8 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
         const char* parts;
         STRLEN      parts_len;
 
+        (void)SvGROW(dest, SvCUR(dest) + 8 /* at least parts_len + 1 */);
+
         switch(*cur) {
         case '<':
             parts     =        "&lt;";
@@ -415,23 +417,14 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
             parts_len = sizeof("&apos;") - 1;
             break;
         default:
-            parts     = cur;
-            parts_len = 1;
-            len       = SvCUR(dest) + 2; /* parts_len + 1 */
-            SvGROW(dest, len);
-            *SvEND(dest) = *parts;
+            /* copy a normal character */
+            *SvEND(dest) = *cur;
             SvCUR_set(dest, SvCUR(dest) + 1);
             goto loop_continue;
-            break;
         }
 
-        /* copy special characters */
-
-        len = SvCUR(dest) + parts_len + 1;
-        (void)SvGROW(dest, len);
-
+        /* copy an escaped token */
         Copy(parts, SvEND(dest), parts_len, char);
-
         SvCUR_set(dest, SvCUR(dest) + parts_len);
 
         loop_continue:
