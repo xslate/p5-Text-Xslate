@@ -1,7 +1,13 @@
 # for developers: "make more_test" does all the extra tests
 use strict;
 use warnings;
-BEGIN{ $INC{'Module/Install/ExtraTests.pm'} = 1 } # M::I::ExtraTests considered harmful!
+BEGIN{
+    require Carp;
+    $INC{'Module/Install/ExtraTests.pm'} = 1;# M::I::ExtraTests considered harmful!
+    # make messages verbose to detect configure problems
+    $SIG{__DIE__}  = \&Carp::confess;
+    $SIG{__WARN__} = \&Carp::cluck;
+}
 use inc::Module::Install;
 use Module::Install::XSUtil 0.24;
 use Module::Install::AuthorTests;
