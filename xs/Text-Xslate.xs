@@ -383,8 +383,9 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
     const char* const end = cur + len;
+    STRLEN dest_cur       = SvCUR(dest);
 
-    (void)SvGROW(dest, SvCUR(dest) + len);
+    (void)SvGROW(dest, dest_cur + len);
     if(!SvUTF8(dest) && SvUTF8(src)) {
         sv_utf8_upgrade(dest);
     }
@@ -393,7 +394,7 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
         const char* parts;
         STRLEN      parts_len;
 
-        (void)SvGROW(dest, SvCUR(dest) + 8 /* at least parts_len + 1 */);
+        (void)SvGROW(dest, dest_cur + 8 /* at least parts_len + 1 */);
 
         switch(*cur) {
         case '<':
@@ -418,18 +419,19 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
             break;
         default:
             /* copy a normal character */
-            *SvEND(dest) = *cur;
-            SvCUR_set(dest, SvCUR(dest) + 1);
+            SvPVX(dest)[dest_cur] = *cur;
+            dest_cur++;
             goto loop_continue;
         }
 
         /* copy an escaped token */
-        Copy(parts, SvEND(dest), parts_len, char);
-        SvCUR_set(dest, SvCUR(dest) + parts_len);
+        Copy(parts, SvPVX(dest) + dest_cur, parts_len, char);
+        dest_cur += parts_len;
 
         loop_continue:
         cur++;
     }
+    SvCUR_set(dest, dest_cur);
     *SvEND(dest) = '\0';
 }
 
