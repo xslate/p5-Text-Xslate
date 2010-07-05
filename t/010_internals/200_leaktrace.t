@@ -119,33 +119,50 @@ T
     Hello, Xslate world!
 X
 
-    [<<'T', <<'X', 'builtin method for array'],
+    [<<'T', <<'X', 'builtin method for $array.join()'],
+    Hello, <: ['A', 'B', 'C'].join(" ") :> world!
+T
+    Hello, A B C world!
+X
+
+    [<<'T', <<'X', 'builtin method for $array.reverse()'],
     Hello, <: ['C', 'B', 'A'].reverse().join(" ") :> world!
 T
     Hello, A B C world!
 X
 
-    [<<'T', <<'X', 'builtin method for array'],
+    [<<'T', <<'X', 'builtin method for $array.sort()'],
     Hello, <: ['C', 'B', 'A'].sort().join(" ") :> world!
 T
     Hello, A B C world!
 X
 
-    [<<'T', <<'X', 'builtin method for array'],
-    Hello, <: ['C', 'B', 'A'].sort(-> $a, $b { $b cmp $a }).join(" ") :> world!
+    [<<'T', <<'X', 'builtin method for $array.sort()'],
+    Hello, <: ['C', 'B', 'A'].sort(-> $a, $b { $a cmp $b }).join(" ") :> world!
 T
-    Hello, C B A world!
+    Hello, A B C world!
 X
 
+    [<<'T', <<'X', 'builtin method for $array.map()'],
+    Hello, <: ['A', 'B', 'C'].map(-> $x { "[" ~ $x ~ "]" }).join(" ") :> world!
+T
+    Hello, [A] [B] [C] world!
+X
 
-    [<<'T', <<'X', 'builtin method for hash'],
+    [<<'T', <<'X', 'builtin method for $hash.values()'],
     Hello, <: ({ lang => "Xslate" }).values().join(",") :> world!
 T
     Hello, Xslate world!
 X
 
-    [<<'T', <<'X', 'builtin method for hash'],
+    [<<'T', <<'X', 'builtin method for $hash.keys()'],
     Hello, <: ({ "Xslate" => 42 }).keys().join(",") :> world!
+T
+    Hello, Xslate world!
+X
+
+    [<<'T', <<'X', 'builtin method for $hash.kv()'],
+    Hello, <: ({ "Xslate" => 42 }).kv().map( -> $x { $x.key }).join(",") :> world!
 T
     Hello, Xslate world!
 X
