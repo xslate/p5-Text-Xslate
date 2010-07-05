@@ -688,19 +688,19 @@ Possible escape modes are B<html> and B<none>.
 
 This option is passed to the compiler directly.
 
-=item C<< line_start => $token // $parser_defined >>
+=item C<< line_start => $token // $parser_defined_str >>
 
 Specify the token to start line code as a string, which C<quotemeta> will be applied to.
 
 This option is passed to the parser via the compiler.
 
-=item C<< tag_start => $str // $parser_defined >>
+=item C<< tag_start => $str // $parser_defined_str >>
 
 Specify the token to start inline code as a string, which C<quotemeta> will be applied to.
 
 This option is passed to the parser via the compiler.
 
-=item C<< line_start => $str // $parser_defined >>
+=item C<< line_start => $str // $parser_defined_str >>
 
 Specify the token to end inline code as a string, which C<quotemeta> will be applied to.
 
@@ -741,14 +741,31 @@ This method is significant when it is called by template functions and methods.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
-Loads I<$file> for following C<render($file, \%vars)>. Compiles and saves it
-as caches if needed.
+Loads I<$file> into memory for following C<render($file, \%vars)>.
+Compiles and saves it as caches if needed.
 
-This method can be used for pre-compiling template files.
+It is a good idea to load templates before applications fork.
+Here is an example to to load all the tmeplates which is in a given path:
+
+    my $path = ...;
+    my $tx = Text::Xslate->new(
+        path      => [$path],
+        cache_dir =>  $path,
+    );
+
+    find sub {
+        if(/\.tx$/) {
+            my $file = $File::Find::name;
+            $file =~ s/\Q$path\E .//xsm;
+            $tx->load_file($file);
+        }
+    }, $path;
+
+    # fork and render ...
 
 =head2 Exportable functions
 
-=head3 C<< mark_raw($str :Str) -> RawString >>
+=head3 C<< mark_raw($str :Str) :RawString >>
 
 Marks I<$str> as raw, so that the content of I<$str> will be rendered as is,
 so you have to escape these strings by yourself.
@@ -763,44 +780,39 @@ For example:
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
-This function is available in templates as the C<mark_raw> filter:
+This function is available in templates as the C<mark_raw> filter, although
+the use of it is discouraged.
 
-    <: $var | mark_raw :>
-    <: $var | raw # alias :>
-
-=head3 C<< unmark_raw($str :Str) -> Str >>
+=head3 C<< unmark_raw($str :Str) :Str >>
 
 Clears the raw marker from I<$str>, so that the content of I<$str> will
 be escaped before rendered.
 
-This function is available in templates as the C<unmark_raw> filter:
+This function is available in templates as the C<unmark_raw> filter.
 
-    <: $var | unmark_raw :>
+=head3 C<< html_escape($str :Str) :RawString >>
 
-=head3 C<< html_escape($str :Str) -> RawString >>
-
-Escapes html special characters in I<$str>, and returns a raw string (see above).
+Escapes html meta characters in I<$str>, and returns a raw string (see above).
 If I<$str> is already a raw string, it returns I<$str> as is.
 
-You need not call this function explicitly, because all the values
-will be escaped automatically.
+By default, this function will be automatically applied to all the template
+expressions.
 
-This function is available in templates as the C<html> filter, but keep
-in mind that it will do nothing if the argument is already escaped.
-Consider C<< <: $var | unmark_raw | html :> >>, which forces to escape
-the argument.
+This function is available in templates as the C<html> filter, but you'd better
+to use C<unmark_raw> to ensure expressions to be html-escaped.
 
 =head2 Application
 
-C<xslate(1)> is provided as an interface to the Text::Xslate module, which
-is used to process directory trees or evaluate one liners. For example:
+C<App::xslate> is provided as a CLI to the Text::Xslate module, which is
+used to process directory trees or evaluate one liners.
+For example:
 
     $ xslate -D name=value -o dest_path src_path
 
     $ xslate -e 'Hello, <: $ARGV[0] :> wolrd!' Xslate
     $ xslate -s TTerse -e 'Hello, [% ARGV.0 %] world!' TTerse
 
-See L<xslate> for details.
+See L<xslate(1)> for details.
 
 =head1 TEMPLATE SYNTAX
 
@@ -840,7 +852,7 @@ Basically it does nothing, but C<< verbose => 2 >> will produce warnings on it.
 
 Prints nothing.
 
-=item to access fields.
+=item to access fields
 
 Returns nil. That is, C<< nil.foo.bar.baz >> produces nil.
 

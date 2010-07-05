@@ -288,10 +288,10 @@ There are several builtin functions, which you cannot redefine:
     : $var | html       # does html-escape to it and marks it as raw
     : $var | dump       # dumps it with Data::Dumper
 
-Note that you should not use C<mark_raw> in templates because of its security
-risks just like as type casts in C. If you want to generate HTML source
+Note that you should not use C<mark_raw> in templates because it can make security
+hole easily just like as type casts in C. If you want to generate HTML components
 dynamically, e.g. by HTML form builders, application code should be responsible
-for marking strings as C<raw>.
+to make strings as marked C<raw>.
 
 =head2 Methods
 
@@ -307,6 +307,8 @@ methods.
 
 For any primitive types:
 
+    # note that if $any is an object, defined() will return nil
+    # unless the object has defined() method.
     <: $any.defined() :>
 
 For arrays:
@@ -314,14 +316,16 @@ For arrays:
     <: $array.size() :>
     <: $array.join(",") :>
     <: $array.reverse() :>
+    <: $array.map(-> $x { $x + 1 }) :>
+    <: $array.sort(-> $x, $y { $x <=> $y }) :>
 
 For hashes:
 
     <: $hash.size() :>
-    <: $hash.keys().join(", ")   # sorted by keys :>
-    <: $hash.values().join(", ") # sorted by keys :>
+    <: $hash.keys()   # sorted by keys :>
+    <: $hash.values() # sorted by keys :>
     <: for $hash.kv() -> $pair { # sorted by keys :>
-        <: # $pair is a pair type with key and value fields -:>
+        <: # $pair is a pair type with 'key' and 'value' fields -:>
         <: $pair.key :> = <: $pair.value :>
     <: } :>
 
@@ -499,17 +503,17 @@ Macros are first-class objects, so you can bind them to symbols.
        }; -:>
     : $dispatcher{$key}()
 
-Anonymous macros are also supported, although they returns
+Anonymous macros are also supported, although they can return
 only strings.
 
     <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
 
-The C<block> keyword is also used to make a group of template code,
+The C<block> keyword is used to make a group of template code,
 and you can apply filters to that block with C<< infix:<|> >>.
 Here is an example to embed HTML source code into templates.
 
 Template:
-    : block source | html -> {
+    : block source | unmark_raw -> {
         <em>Hello, world!</em>
     : }
 
@@ -517,7 +521,7 @@ Output:
         &lt;em&gt;Hello, world!&lt;/em&gt;
 
 See also L<Text::Xslate::Cookbook/"How to use FillInForm with Xslate"> for
-another example to use C<FillInForm> with this block filter syntax.
+another example to use this block filter syntax.
 
 =head2 Comments
 

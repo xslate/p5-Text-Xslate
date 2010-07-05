@@ -13,17 +13,18 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 Managing HTML forms is an important issue on web applications.
 you'd better to use modules that manage HTML forms, rather than do something
-with templates by yourself. Basically there are two basic solutions in
-Xslate: use of FillInForm or HTML form builders.
+with templates by yourself. This section propose two basic solutions:
+FillInForm and HTML form builders.
 
 In both solutions, one should not use the C<mark_raw> filter in templates
-because of its B<security risks>. Instead, application code should be
-responsible for it.
+because of its B<security risks>. It is easy to make security hole by using
+the C<mark_raw> filter. Instead, application code should be responsible to
+call the C<mark_raw> function that C<Text::Xslate> can export.
 
 =head3 Using FillInForm
 
 One solution to manage HTML forms is to use FillInForm modules with
-the block filter syntax and the C<raw> filter.
+the block filter syntax.
 
 Example code using C<HTML::FillInForm>:
 
@@ -72,10 +73,11 @@ See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 
 Another solution to manage HTML forms is to use form builders.
 
-Example code using C<HTML::Shakan>:
+Here is a PSGI application that uses C<HTML::Shakan>:
 
     #!psgi
     use strict;
+    use warnings;
     use Text::Xslate qw(mark_raw);
     use HTML::Shakan;
     use Plack::Request;
