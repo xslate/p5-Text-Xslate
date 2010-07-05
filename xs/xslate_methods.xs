@@ -66,6 +66,7 @@ tx_kv(pTHX_ SV* const hvref) {
     AV* const av    = newAV();
     SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
     HE* he;
+    I32 i;
 
     assert(SvROK(hvref));
     assert(SvTYPE(hv) == SVt_PVHV);
@@ -75,15 +76,16 @@ tx_kv(pTHX_ SV* const hvref) {
     }
 
     hv_iterinit(hv);
+    i = 0;
     while((he = hv_iternext(hv))) {
         SV* const pair = tx_make_pair(aTHX_ MY_CXT.pair_stash,
             hv_iterkeysv(he),
             hv_iterval(hv, he));
 
-        av_push(av, pair);
+        (void)av_store(av, i++, pair);
         SvREFCNT_inc_simple_void_NN(pair);
     }
-    sortsv(AvARRAY(av), AvFILLp(av)+1, tx_pair_cmp);
+    sortsv(AvARRAY(av), i, tx_pair_cmp);
     return avref;
 }
 
@@ -93,6 +95,7 @@ tx_keys(pTHX_ SV* const hvref) {
     AV* const av    = newAV();
     SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
     HE* he;
+    I32 i;
 
     assert(SvROK(hvref));
     assert(SvTYPE(hv) == SVt_PVHV);
@@ -102,12 +105,13 @@ tx_keys(pTHX_ SV* const hvref) {
     }
 
     hv_iterinit(hv);
+    i = 0;
     while((he = hv_iternext(hv))) {
         SV* const key = hv_iterkeysv(he);
-        av_push(av, key);
+        (void)av_store(av, i++, key);
         SvREFCNT_inc_simple_void_NN(key);
     }
-    sortsv(AvARRAY(av), AvFILLp(av)+1, Perl_sv_cmp);
+    sortsv(AvARRAY(av), i, Perl_sv_cmp);
     return avref;
 }
 
@@ -161,7 +165,7 @@ TXBM(array, reverse) {
     av_fill(result, len - 1);
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
-        av_store(result, -(i+1), newSVsv(svp ? *svp : &PL_sv_undef));
+        (void)av_store(result, -(i+1), newSVsv(svp ? *svp : &PL_sv_undef));
     }
 
     sv_setsv(retval, resultref);
@@ -220,10 +224,10 @@ TXBM(array, sort) {
 
     cmpfunc = tx_prepare_compare_func(aTHX_ st, items, MARK);
 
-    av_fill(result, len - 1);
+    av_extend(result, len - 1);
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
-        av_store(result, i, newSVsv(svp ? *svp : &PL_sv_undef));
+        (void)av_store(result, i, newSVsv(svp ? *svp : &PL_sv_undef));
     }
     sortsv(AvARRAY(result), len, cmpfunc);
 
@@ -244,7 +248,7 @@ TXBM(array, map) {
     ENTER;
     SAVETMPS;
     sv_2mortal(resultref);
-    av_fill(result, len - 1);
+    av_extend(result, len - 1);
     for(i = 0; i < len; i++) {
         dSP;
         SV** const svp = av_fetch(av, i, FALSE);
@@ -255,7 +259,7 @@ TXBM(array, map) {
         PUSHs(svp ? *svp : &PL_sv_undef);
         PUTBACK;
         sv = tx_proccall(aTHX_ st, proc, "map callback");
-        av_store(result, i, newSVsv(sv));
+        (void)av_store(result, i, newSVsv(sv));
     }
     sv_setsv(retval, resultref);
     FREETMPS;
