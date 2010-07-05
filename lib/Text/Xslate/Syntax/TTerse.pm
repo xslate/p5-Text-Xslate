@@ -533,15 +533,17 @@ sub std_filter {
     $parser->advance();
 
     my $proc = $parser->lambda($symbol);
-    $proc->id('block'); # to return values without marking as raw
 
     $proc->second([]);
     $proc->third( $parser->statements() );
     $parser->advance("END");
 
-    # _immediate_block() | filter
-
     my $callmacro  = $parser->call($proc->first);
+
+    if($filter eq 'html') {
+        # for compatibility with TT2
+        $filter = 'unmark_raw';
+    }
     my $callfilter = $parser->call($filter, $callmacro);
 
     my $print = $parser->symbol('print')->clone(

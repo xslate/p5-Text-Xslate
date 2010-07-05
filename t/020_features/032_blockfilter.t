@@ -62,15 +62,15 @@ T
 </p>
 X
 
-    [<<'T', undef, <<'X'],
+    [<<'T', undef, <<'X', 'html filter does nothing'],
 : block main | html -> {
     <em>Hello, world!</em>
 : }
 T
-    &lt;em&gt;Hello, world!&lt;/em&gt;
+    <em>Hello, world!</em>
 X
 
-    [<<'T', undef, <<'X'],
+    [<<'T', undef, <<'X', 'use unmark_raw to apply html-escape'],
 : block main | unmark_raw -> {
     <em>Hello, world!</em>
 : }

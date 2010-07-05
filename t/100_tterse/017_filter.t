@@ -50,6 +50,31 @@ Hello, &lt;Xslate&gt; world!
 </p>
 X
 
+
+    [<<'T', <<'X'],
+<p>
+[% filter mark_raw -%]
+Hello, <Xslate> world!
+[% END -%]
+</p>
+T
+<p>
+Hello, <Xslate> world!
+</p>
+X
+
+    [<<'T', <<'X'],
+<p>
+[% filter unmark_raw -%]
+Hello, <Xslate> world!
+[% END -%]
+</p>
+T
+<p>
+Hello, &lt;Xslate&gt; world!
+</p>
+X
+
 );
 
 my %vars = (lang => 'Xslate', foo => { bar => 43 });

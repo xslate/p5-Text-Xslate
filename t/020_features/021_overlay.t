@@ -85,7 +85,7 @@ X
 : baz()
 : cascade with common
 T
-    This is &lt;baz&gt;!
+    This is <baz>!
 X
 
     [<<'T', { lang => 'Xslate' }, <<'X'],

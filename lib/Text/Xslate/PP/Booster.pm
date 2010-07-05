@@ -578,8 +578,7 @@ $CODE_MANIP{ 'macro_end' } = sub {
     $self->write_lines( sprintf( '$depth--;' ) );
     $self->write_lines( sprintf( 'pop( @$pad );' ) );
     $self->write_code( "\n" );
-    # immediate macros?
-    $self->write_lines( $arg ? sprintf( '$output;' ) : sprintf( '_mark_raw($output);' ) );
+    $self->write_lines( sprintf( 'mark_raw($output);' ) );
 
     $self->indent_depth( $self->indent_depth - 1 );
 

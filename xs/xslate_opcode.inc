@@ -433,19 +433,18 @@ TXC_w_key(fetch_symbol) { /* functions, macros, constants */
 
 TXC(funcall) { /* call a function or a macro */
     /* PUSHMARK must be done */
-    SV* const func = TX_st_sa;
+    SV* const proc = TX_st_sa;
 
-    if(tx_sv_is_macro(aTHX_ func)) {
-        AV* const macro = (AV*)SvRV(func);
-        tx_macro_enter(aTHX_ TX_st, macro, TX_st->pc + 1 /* retaddr */);
+    if(tx_sv_is_macro(aTHX_ proc)) {
+        tx_macro_enter(aTHX_ TX_st, (AV*)SvRV(proc), TX_st->pc + 1 /* retaddr  */);
     }
     else {
-        TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
+        TX_st_sa = tx_funcall(aTHX_ TX_st, proc, "function call");
         TX_RETURN_NEXT();
     }
 }
 
-TXC_w_int(macro_end) {
+TXC(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
@@ -453,12 +452,7 @@ TXC_w_int(macro_end) {
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    if(TX_op_arg_iv > 0) { /* immediate macros; skip to mark as raw */
-        sv_setsv(TX_st->targ, TX_st->output);
-    }
-    else { /* normal macros */
-        sv_setsv(TX_st->targ, tx_mark_raw(aTHX_ TX_st->output));
-    }
+    sv_setsv(TX_st->targ, tx_mark_raw(aTHX_ TX_st->output));
     TX_st_sa = TX_st->targ;
 
     tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];

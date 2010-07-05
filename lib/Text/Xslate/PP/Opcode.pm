@@ -440,12 +440,7 @@ sub op_macro_end {
     my $oldframe = $frames->[ $st->current_frame ];
     my $cframe   = $frames->[ $st->current_frame( $st->current_frame - 1 ) ]; # pop frame
 
-    if($st->op_arg) { # immediate macros
-        $st->{sa} = $st->{ output };
-    }
-    else {
-        $st->{sa} = mark_raw( $st->{ output } );
-    }
+    $st->{sa}       = mark_raw( $st->{ output } );
 
     $st->{ output } = $oldframe->[ TXframe_OUTPUT ];
     $st->{ pc }     = $oldframe->[ TXframe_RETADDR ];

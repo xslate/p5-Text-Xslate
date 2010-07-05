@@ -187,8 +187,8 @@ tx_sv_cmp(pTHX_ SV* const x, SV* const y) {
     PUSHs(x);
     PUSHs(y);
     PUTBACK;
-    result = tx_proccall(aTHX_ st, proc, "sort callback");
-    return SvIVx(tx_unmark_raw(aTHX_ result));
+    result = tx_unmark_raw(aTHX_ tx_proccall(aTHX_ st, proc, "sort callback"));
+    return SvIV(result);
 }
 
 static SVCOMPARE_t
