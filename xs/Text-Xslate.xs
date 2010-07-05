@@ -1185,7 +1185,7 @@ CODE:
     } /* end for each code */
 }
 
-SV*
+void
 render(SV* self, SV* source, SV* vars = &PL_sv_undef)
 ALIAS:
     render        = 0
@@ -1194,6 +1194,7 @@ CODE:
 {
     dMY_CXT;
     tx_state_t* st;
+    SV* result;
 
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
         croak("Xslate: Invalid xslate instance: %s",
@@ -1239,14 +1240,13 @@ CODE:
     MY_CXT.orig_die_handler = PL_diehook;
     PL_diehook              = MY_CXT.die_handler;
 
-    RETVAL = sv_newmortal();
-    sv_grow(RETVAL, st->hint_size + TX_HINT_SIZE);
-    SvPOK_on(RETVAL);
+    result = sv_newmortal();
+    sv_grow(result, st->hint_size + TX_HINT_SIZE);
+    SvPOK_on(result);
 
-    tx_execute(aTHX_ st, RETVAL, (HV*)SvRV(vars));
+    tx_execute(aTHX_ st, result, (HV*)SvRV(vars));
 
-    ST(0) = RETVAL;
-    XSRETURN(1);
+    ST(0) = result;
 }
 
 void
@@ -1256,7 +1256,6 @@ CODE:
     dMY_CXT;
     tx_state_t* const st = MY_CXT.current_st;
     ST(0) = st ? st->engine : &PL_sv_undef;
-    XSRETURN(1);
 }
 
 void
@@ -1378,7 +1377,6 @@ mark_raw(SV* str)
 CODE:
 {
     ST(0) = tx_mark_raw(aTHX_ str);
-    XSRETURN(1);
 }
 
 void
@@ -1386,7 +1384,6 @@ unmark_raw(SV* str)
 CODE:
 {
     ST(0) = tx_unmark_raw(aTHX_ str);
-    XSRETURN(1);
 }
 
 
@@ -1395,7 +1392,6 @@ html_escape(SV* str)
 CODE:
 {
     ST(0) = tx_html_escape(aTHX_ str);
-    XSRETURN(1);
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
@@ -1430,7 +1426,6 @@ CODE:
         croak("You cannot extend %s", TX_RAW_CLASS);
     }
     ST(0) = tx_mark_raw(aTHX_ tx_unmark_raw(aTHX_ str));
-    XSRETURN(1);
 }
 
 void
@@ -1441,5 +1436,4 @@ CODE:
         croak("You cannot call %s->as_string() as a class method", TX_RAW_CLASS);
     }
     ST(0) = tx_unmark_raw(aTHX_ self);
-    XSRETURN(1);
 }

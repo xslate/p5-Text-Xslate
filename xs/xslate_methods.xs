@@ -471,5 +471,4 @@ ALIAS:
 CODE:
 {
     ST(0) = *av_fetch(pair, ix, TRUE);
-    XSRETURN(1);
 }
