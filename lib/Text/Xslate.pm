@@ -505,9 +505,11 @@ This document describes Text::Xslate version 0.1041.
     print $tx->render_string($template, \%vars);
 
     # you can tell the engine that some strings are already escaped.
-    use Text::Xslate qw(mark_raw);
+    use Text::Xslate qw(mark_raw html_escape);
 
     $vars{email} = mark_raw('gfx &lt;gfuji at cpan.org&gt;');
+    # or
+    # $vars{email} = html_escape('gfx <gfuji at cpan.org>');
 
     # if you want Template-Toolkit syntx:
     $tx = Text::Xslate->new(syntax => 'TTerse');
