@@ -76,6 +76,13 @@ T
 [[FOO]]
 X
 
+    [ <<'T', { }, <<'X', "nested (arithmatic)" ],
+: macro add ->($x, $y) { $x + $y }
+<: add(1, 2) + add(10, 20) :>
+T
+33
+X
+
     [ <<'T', { }, <<'X', "multi call" ],
 : macro foo ->($x) {
 :   "[" ~ $x  ~ "]"
@@ -94,14 +101,11 @@ T
 [[FOO][BAR]]
 X
 
-    [ <<'T', { }, <<'X', "nested multi call" ],
-: macro foo ->($x) {
-:   "[" ~ $x  ~ "]"
-: }
-<: foo(foo("FOO") ~ foo("BAR")) ~ "\n" ~ foo(foo("foo") ~ foo("bar")) :>
+    [ <<'T', { }, <<'X', "nested multi call (arithmatic)" ],
+: macro add ->($x, $y) { $x + $y }
+<: add(add(1, 2) + add(10, 20) + add(100, 200), 1000) :>
 T
-[[FOO][BAR]]
-[[foo][bar]]
+1333
 X
 
     [ <<'T', { }, <<'X', "recursion" ],

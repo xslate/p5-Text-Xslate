@@ -452,8 +452,7 @@ TXC(macro_end) {
 
     TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
 
-    sv_setsv(TX_st->targ, tx_mark_raw(aTHX_ TX_st->output));
-    TX_st_sa = TX_st->targ;
+    TX_st_sa = tx_mark_raw(aTHX_ TX_st->output);
 
     tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];
     AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
