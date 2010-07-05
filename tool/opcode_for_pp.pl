@@ -90,13 +90,16 @@ use constant TXARGf_SV      => 0x01;
 use constant TXARGf_INT     => 0x02;
 use constant TXARGf_KEY     => 0x04;
 use constant TXARGf_VAR     => 0x08;
-use constant TXARGf_GOTO    => 0x10;
+use constant TXARGf_PC      => 0x10;
 
+# note that these flags are different form XS's because
+# of the difference of data structure
 use constant TXCODE_W_SV    => TXARGf_SV;
+use constant TXCODE_W_SVIV  => (TXARGf_SV | TXARGf_INT) ;
+use constant TXCODE_W_KEY   => (TXARGf_SV | TXARGf_KEY);
 use constant TXCODE_W_INT   => (TXARGf_SV | TXARGf_INT);
 use constant TXCODE_W_VAR   => (TXARGf_SV | TXARGf_INT | TXARGf_VAR);
-use constant TXCODE_W_KEY   => (TXARGf_SV | TXARGf_KEY);
-use constant TXCODE_GOTO    => (TXARGf_SV | TXARGf_INT | TXARGf_GOTO);
+use constant TXCODE_GOTO    => (TXARGf_SV | TXARGf_INT | TXARGf_PC);
 
 # template representation, stored in $self->{template}{$file}
 use constant TXo_MTIME          => 0;

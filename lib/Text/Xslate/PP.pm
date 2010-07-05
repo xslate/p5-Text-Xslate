@@ -194,7 +194,7 @@ sub _assemble {
             elsif ( $oparg & TXARGf_INT ) {
                 $code->[ $i ]->{ arg } = int($arg);
 
-                if( $oparg & TXARGf_GOTO ) {
+                if( $oparg & TXARGf_PC ) {
                     my $abs_addr = $i + $arg;
 
                     if( $abs_addr >= $len ) {

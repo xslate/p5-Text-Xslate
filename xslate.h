@@ -46,23 +46,25 @@
 
 #define TXC(name) static void CAT2(TXCODE_, name)(pTHX_ tx_state_t* const txst PERL_UNUSED_DECL)
 /* TXC_xxx macros provide the information of arguments, interpreted by tool/opcode.pl */
-#define TXC_w_sv(n)  TXC(n) /* has TX_op_arg as a SV */
-#define TXC_w_int(n) TXC(n) /* has TX_op_arg as an integer (i.e. can SvIVX(arg)) */
-#define TXC_w_key(n) TXC(n) /* has TX_op_arg as a keyword */
-#define TXC_w_var(n) TXC(n) /* has TX_op_arg as a local variable */
-#define TXC_goto(n)  TXC(n) /* does goto */
+#define TXC_w_sv(n)   TXC(n) /* has TX_op_arg_sv as a SV */
+#define TXC_w_key(n)  TXC(n) /* has TX_op_arg_sv as a keyword */
+#define TXC_w_sviv(n) TXC(n) /* has TX_op_arg_sv able to SvIVX */
+#define TXC_w_int(n)  TXC(n) /* has TX_op_arg_iv */
+#define TXC_w_var(n)  TXC(n) /* has TX_op_arg_iv as a local variable index */
+#define TXC_goto(n)   TXC(n) /* has TX_op_arg_pc for goto */
 
 #define TXARGf_SV   ((U8)(0x01))
 #define TXARGf_INT  ((U8)(0x02))
 #define TXARGf_KEY  ((U8)(0x04))
 #define TXARGf_VAR  ((U8)(0x08))
-#define TXARGf_GOTO ((U8)(0x10))
+#define TXARGf_PC   ((U8)(0x10))
 
-#define TXCODE_W_SV  (TXARGf_SV)
-#define TXCODE_W_INT (TXARGf_SV | TXARGf_INT)
-#define TXCODE_W_VAR (TXARGf_SV | TXARGf_INT | TXARGf_VAR)
-#define TXCODE_W_KEY (TXARGf_SV | TXARGf_KEY)
-#define TXCODE_GOTO  (TXARGf_SV | TXARGf_INT | TXARGf_GOTO)
+#define TXCODE_W_SV   (TXARGf_SV)
+#define TXCODE_W_SVIV (TXARGf_SV | TXARGf_INT)
+#define TXCODE_W_KEY  (TXARGf_SV | TXARGf_KEY)
+#define TXCODE_W_INT  (TXARGf_INT)
+#define TXCODE_W_VAR  (TXARGf_INT | TXARGf_VAR)
+#define TXCODE_GOTO   (TXARGf_PC)
 
 /* TX_st and TX_op are valid only in opcodes */
 #define TX_st (txst)
@@ -117,8 +119,8 @@ typedef struct tx_info_s   tx_info_t;
 
 typedef tx_code_t* tx_pc_t;
 
-#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;                     return; } STMT_END
-#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = INT2PTR(tx_pc_t, x); return; } STMT_END
+#define TX_RETURN_NEXT() STMT_START { TX_st->pc++;     return; } STMT_END
+#define TX_RETURN_PC(x)  STMT_START { TX_st->pc = (x); return; } STMT_END
 
 #ifdef TX_DIRECT_THREADED_CODE
 
@@ -173,7 +175,11 @@ struct tx_state_s {
 struct tx_code_s {
     tx_exec_t exec_code;
 
-    SV* arg;
+    union {
+        SV*     sv;
+        IV      iv;
+        tx_pc_t pc;
+    } u_arg;
 };
 
 /* opcode information */
