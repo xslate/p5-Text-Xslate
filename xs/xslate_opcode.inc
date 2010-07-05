@@ -401,6 +401,7 @@ TXC(ncmp) {
         value =  1;
     }
     else {
+        /* compares NaN with something */
         TX_st_sa = &PL_sv_undef;
         TX_RETURN_NEXT();
     }
