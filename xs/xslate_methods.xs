@@ -184,6 +184,25 @@ tx_sv_cmp(pTHX_ SV* const x, SV* const y) {
     return SvIVx(tx_unmark_raw(aTHX_ result));
 }
 
+static SVCOMPARE_t
+tx_prepare_compare_func(pTHX_ tx_state_t* const st, I32 const items, SV** const MARK) {
+    if(items == 0) {
+        return Perl_sv_cmp;
+    }
+    else if(items == 1) {
+        dMY_CXT;
+        SAVEVPTR(MY_CXT.cmparg_st);
+        SAVESPTR(MY_CXT.cmparg_proc);
+
+        MY_CXT.cmparg_st   = st;
+        MY_CXT.cmparg_proc = *(MARK + 1);
+        return tx_sv_cmp;
+    }
+    else {
+        return NULL;
+    }
+}
+
 TXBM(array, sort) {
     dSP;
     I32 const items     = SP - MARK;
@@ -198,25 +217,12 @@ TXBM(array, sort) {
     SAVETMPS;
     sv_2mortal(resultref);
 
-    if(items == 0) {
-        cmpfunc = Perl_sv_cmp;
-    }
-    else if(items == 1) {
-        dMY_CXT;
-        cmpfunc = tx_sv_cmp;
-
-        SAVEVPTR(MY_CXT.cmparg_st);
-        SAVESPTR(MY_CXT.cmparg_proc);
-
-        MY_CXT.cmparg_st   = st;
-        MY_CXT.cmparg_proc = *(++MARK);
-    }
-    else {
-        tx_error(aTHX_ st, "Wrong number of arguments for sort");
+    cmpfunc = tx_prepare_compare_func(aTHX_ st, items, MARK);
+    if(!cmpfunc) {
+        tx_error(aTHX_ st, "Wrong number of arguments for %s", "sort");
         sv_setsv(retval, &PL_sv_undef);
         goto finish;
     }
-
 
     av_fill(result, len - 1);
     for(i = 0; i < len; i++) {
