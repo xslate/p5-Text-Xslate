@@ -508,10 +508,6 @@ This document describes Text::Xslate version 0.1041.
     use Text::Xslate qw(mark_raw);
 
     $vars{email} = mark_raw('gfx &lt;gfuji at cpan.org&gt;');
-    # or if you don't want to pollute your namespace:
-    $vars{email} = Text::Xslate::Type::Raw->new(
-        'gfx &lt;gfuji at cpan.org&gt;',
-    );
 
     # if you want Template-Toolkit syntx:
     $tx = Text::Xslate->new(syntax => 'TTerse');
