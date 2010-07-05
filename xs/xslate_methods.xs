@@ -14,15 +14,16 @@
 #define TXBM_NAME(t, n) CAT2( CAT2(tx_bm, _), CAT2(t, CAT2(_, n)))
 #define TXBM(t, moniker) static TXBM_DECL( TXBM_NAME(t, moniker))
 
-#define TXBM_SETUP(t, name, nargs) \
-    { STRINGIFY(t) "::" STRINGIFY(name), TXBM_NAME(t, name), nargs }
+#define TXBM_SETUP(t, name, nargs_min, nargs_max) \
+    { STRINGIFY(t) "::" STRINGIFY(name), TXBM_NAME(t, name), nargs_min, nargs_max }
 
 typedef struct {
     const char* const name;
 
     TXBM_DECL( (*body) );
 
-    I16 nargs;
+    U8 nargs_min;
+    U8 nargs_max;
 } tx_builtin_method_t;
 
 #define MY_CXT_KEY "Text::Xslate::Methods::_guts" XS_VERSION
@@ -186,10 +187,11 @@ tx_sv_cmp(pTHX_ SV* const x, SV* const y) {
 
 static SVCOMPARE_t
 tx_prepare_compare_func(pTHX_ tx_state_t* const st, I32 const items, SV** const MARK) {
+    assert(items == 0 || items == 1);
     if(items == 0) {
         return Perl_sv_cmp;
     }
-    else if(items == 1) {
+    else {
         dMY_CXT;
         SAVEVPTR(MY_CXT.cmparg_st);
         SAVESPTR(MY_CXT.cmparg_proc);
@@ -197,9 +199,6 @@ tx_prepare_compare_func(pTHX_ tx_state_t* const st, I32 const items, SV** const 
         MY_CXT.cmparg_st   = st;
         MY_CXT.cmparg_proc = *(MARK + 1);
         return tx_sv_cmp;
-    }
-    else {
-        return NULL;
     }
 }
 
@@ -218,11 +217,6 @@ TXBM(array, sort) {
     sv_2mortal(resultref);
 
     cmpfunc = tx_prepare_compare_func(aTHX_ st, items, MARK);
-    if(!cmpfunc) {
-        tx_error(aTHX_ st, "Wrong number of arguments for %s", "sort");
-        sv_setsv(retval, &PL_sv_undef);
-        goto finish;
-    }
 
     av_fill(result, len - 1);
     for(i = 0; i < len; i++) {
@@ -233,7 +227,6 @@ TXBM(array, sort) {
 
     sv_setsv(retval, resultref);
 
-    finish:
     FREETMPS;
     LEAVE;
 }
@@ -311,22 +304,22 @@ TXBM(hash, kv) {
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
-    TXBM_SETUP(nil,    defined, 0),
+    TXBM_SETUP(nil,    defined, 0, 0),
 
-    TXBM_SETUP(scalar, defined, 0),
+    TXBM_SETUP(scalar, defined, 0, 0),
 
-    TXBM_SETUP(array, defined, 0),
-    TXBM_SETUP(array, size,    0),
-    TXBM_SETUP(array, join,    1),
-    TXBM_SETUP(array, reverse, 0),
-    TXBM_SETUP(array, sort,   -1),
-    TXBM_SETUP(array, map,     1),
+    TXBM_SETUP(array, defined, 0, 0),
+    TXBM_SETUP(array, size,    0, 0),
+    TXBM_SETUP(array, join,    1, 1),
+    TXBM_SETUP(array, reverse, 0, 0),
+    TXBM_SETUP(array, sort,    0, 1), /* can take a compare function */
+    TXBM_SETUP(array, map,     1, 1),
 
-    TXBM_SETUP(hash, defined,  0),
-    TXBM_SETUP(hash, size,     0),
-    TXBM_SETUP(hash, keys,     0),
-    TXBM_SETUP(hash, values,   0),
-    TXBM_SETUP(hash, kv,       0),
+    TXBM_SETUP(hash, defined,  0, 0),
+    TXBM_SETUP(hash, size,     0, 0),
+    TXBM_SETUP(hash, keys,     0, 1), /* can take a compare function */
+    TXBM_SETUP(hash, values,   0, 1), /* can take a compare function */
+    TXBM_SETUP(hash, kv,       0, 1), /* can take a compare function */
 };
 
 static const size_t tx_num_builtin_method
@@ -400,9 +393,8 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
 
             bm = &tx_builtin_method[SvUVX(entity)];
 
-            if(bm->nargs != -1 && bm->nargs != items) {
-                tx_error(aTHX_ st, "Wrong number of arguments for %"SVf" (%d %c %d)",
-                    method, (int)items, items > bm->nargs ? '>' : '<', (int)bm->nargs);
+            if(!(items >= bm->nargs_min && items <= bm->nargs_max)) {
+                tx_error(aTHX_ st, "Wrong number of arguments for %"SVf, method);
                 goto finish;
             }
 
