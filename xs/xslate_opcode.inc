@@ -116,19 +116,20 @@ TXC_w_key(fetch_field_s) { /* fetch a field from a variable (for literal) */
 }
 
 TXC(print) {
+    dMY_CXT;
     SV* const sv          = TX_st_sa;
     SV* const output      = TX_st->output;
 
-    if(tx_str_is_marked_raw(aTHX_ sv)) {
+    if(tx_str_is_raw(aTHX_ aMY_CXT_ sv)) {
         if(SvOK(SvRV(sv))) {
-            sv_catsv_nomg(output, SvRV(sv));
+            sv_catsv_nomg(output, TX_UNMARK_RAW(sv));
         }
         else {
             tx_warn(aTHX_ TX_st, "Use of nil to print");
         }
     }
     else if(SvOK(sv)) {
-        tx_force_html_escape(aTHX_ sv, output);
+        tx_sv_cat_with_html_escape_force(aTHX_ output, sv);
     }
     else {
         tx_warn(aTHX_ TX_st, "Use of nil to print");

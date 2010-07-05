@@ -71,6 +71,8 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 #define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
 #define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
 
+#define TX_UNMARK_RAW(sv) SvRV(sv)
+
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
     U32 depth;
@@ -106,10 +108,10 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
 static inline bool
-tx_str_is_marked_raw(pTHX_ SV* const sv);
+tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv);
 
-static inline void
-tx_force_html_escape(pTHX_ SV* const src, SV* const dest);
+static void
+tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src);
 
 static SV*
 tx_html_escape(pTHX_ SV* const str);
@@ -297,7 +299,6 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     SV* sv = NULL;
-    PERL_UNUSED_ARG(st);
     SvGETMAGIC(var);
     if(SvROK(var) && SvOBJECT(SvRV(var))) {
         dSP;
@@ -350,9 +351,8 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
 }
 
 static inline bool
-tx_str_is_marked_raw(pTHX_ SV* const sv) {
+tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
-        dMY_CXT;
         return SvTYPE(SvRV(sv)) <= SVt_PVMG
             && SvSTASH(SvRV(sv)) == MY_CXT.raw_stash;
     }
@@ -361,11 +361,11 @@ tx_str_is_marked_raw(pTHX_ SV* const sv) {
 
 SV*
 tx_mark_raw(pTHX_ SV* const str) {
-    if(tx_str_is_marked_raw(aTHX_ str)) {
+    dMY_CXT;
+    if(tx_str_is_raw(aTHX_ aMY_CXT_ str)) {
         return str;
     }
     else {
-        dMY_CXT;
         SV* const sv = newSV_type(SVt_PVMG);
         sv_setsv(sv, str);
         return sv_2mortal(sv_bless(newRV_noinc(sv), MY_CXT.raw_stash));
@@ -374,16 +374,17 @@ tx_mark_raw(pTHX_ SV* const str) {
 
 SV*
 tx_unmark_raw(pTHX_ SV* const str) {
-    if(tx_str_is_marked_raw(aTHX_ str)) {
-        return SvRV(str);
+    dMY_CXT;
+    if(tx_str_is_raw(aTHX_ aMY_CXT_ str)) {
+        return TX_UNMARK_RAW(str);
     }
     else {
         return str;
     }
 }
 
-static inline void /* doesn't care about raw-ness */
-tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
+static void /* doesn't care about raw-ness */
+tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
     const char* const end = cur + len;
@@ -441,9 +442,10 @@ tx_force_html_escape(pTHX_ SV* const src, SV* const dest) {
 
 static SV*
 tx_html_escape(pTHX_ SV* const str) {
-    if(!( tx_str_is_marked_raw(aTHX_ str) || !SvOK(str) )) {
+    dMY_CXT;
+    if(!( !SvOK(str) || tx_str_is_raw(aTHX_ aMY_CXT_ str) )) {
         SV* const dest = newSVpvs_flags("", SVs_TEMP);
-        tx_force_html_escape(aTHX_ str, dest);
+        tx_sv_cat_with_html_escape_force(aTHX_ dest, str);
         return tx_mark_raw(aTHX_ dest);
     }
     else {
@@ -1436,9 +1438,9 @@ void
 as_string(SV* self, ...)
 CODE:
 {
-    if(! tx_str_is_marked_raw(aTHX_ self) ) {
+    if(!SvROK(self)) {
         croak("You cannot call %s->as_string() as a class method", TX_RAW_CLASS);
     }
-    ST(0) = SvRV(self);
+    ST(0) = tx_unmark_raw(aTHX_ self);
     XSRETURN(1);
 }
