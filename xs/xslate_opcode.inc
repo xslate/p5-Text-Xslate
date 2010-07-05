@@ -431,6 +431,20 @@ TXC_w_key(fetch_symbol) { /* functions, macros, constants */
     TX_RETURN_NEXT();
 }
 
+TXC(funcall) { /* call a function or a macro */
+    /* PUSHMARK must be done */
+    SV* const func = TX_st_sa;
+
+    if(tx_sv_is_macro(aTHX_ func)) {
+        AV* const macro = (AV*)SvRV(func);
+        tx_macro_enter(aTHX_ TX_st, macro, TX_st->pc + 1 /* retaddr */);
+    }
+    else {
+        TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
+        TX_RETURN_NEXT();
+    }
+}
+
 TXC_w_int(macro_end) {
     AV* const oldframe  = TX_current_frame();
     AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
@@ -453,20 +467,6 @@ TXC_w_int(macro_end) {
 
     LEAVE; /* to retrieve saved current_frame */
     TX_RETURN_PC( INT2PTR(tx_pc_t, SvUVX(retaddr)) );
-}
-
-TXC(funcall) { /* call a function or a macro */
-    /* PUSHMARK must be done */
-    SV* const func = TX_st_sa;
-
-    if(tx_sv_is_macro(aTHX_ func)) {
-        AV* const macro = (AV*)SvRV(func);
-        tx_macro_enter(aTHX_ TX_st, macro, TX_st->pc + 1 /* retaddr */);
-    }
-    else {
-        TX_st_sa = tx_funcall(aTHX_ TX_st, TX_st_sa, "function call");
-        TX_RETURN_NEXT();
-    }
 }
 
 TXC_w_key(methodcall_s) {
