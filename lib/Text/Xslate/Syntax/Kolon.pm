@@ -520,7 +520,7 @@ Template:
 Output:
         &lt;em&gt;Hello, world!&lt;/em&gt;
 
-See also L<Text::Xslate::Cookbook/"How to use FillInForm with Xslate"> for
+See also L<Text::Xslate::Cookbook/"Using FillInForm"> for
 another example to use this block filter syntax.
 
 =head2 Comments

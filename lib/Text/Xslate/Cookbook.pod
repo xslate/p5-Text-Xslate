@@ -16,9 +16,8 @@ you'd better to use modules that manage HTML forms, rather than do something
 with templates by yourself. This section propose two basic solutions:
 FillInForm and HTML form builders.
 
-In both solutions, one should not use the C<mark_raw> filter in templates
-because of its B<security risks>. It is easy to make security hole by using
-the C<mark_raw> filter. Instead, application code should be responsible to
+In both solutions, one should not use the C<mark_raw> filter, which easily
+makes B<security holes>. Instead, application code should be responsible to
 call the C<mark_raw> function that C<Text::Xslate> can export.
 
 =head3 Using FillInForm
@@ -38,6 +37,7 @@ Example code using C<HTML::FillInForm>:
 
         return sub {
             my($html) = @_;
+            # do mark_raw() here, not in templates
             return mark_raw(HTML::FillInForm->fill(\$html, $q));
         };
     }
@@ -95,6 +95,7 @@ Here is a PSGI application that uses C<HTML::Shakan>:
 
         my $res = $req->new_response(200);
 
+        # do mark_raw here, not in templates
         my $form = mark_raw($shakan->render());
         $res->body( $tx->render_string(<<'T', { form => $form }) );
     <!doctype html>
@@ -180,6 +181,8 @@ Output:
     <div class="wrapper">
         Hello, world!
     </div>
+
+See L<Text::Xslate/"Template cascading"> for details.
 
 =head1 SEE ALSO
 
