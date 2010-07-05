@@ -23,7 +23,6 @@
 #ifdef DEBUGGING
 #define TX_st_sa  *tx_sv_safe(aTHX_ &(TX_st->sa),  "TX_st->sa",  __FILE__, __LINE__)
 #define TX_st_sb  *tx_sv_safe(aTHX_ &(TX_st->sb),  "TX_st->sb",  __FILE__, __LINE__)
-#define TX_op_arg *tx_sv_safe(aTHX_ &(TX_op->arg), "TX_st->arg", __FILE__, __LINE__)
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
     if(*svp == NULL) {
@@ -57,11 +56,11 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 #else /* DEBUGGING */
 #define TX_st_sa        (TX_st->sa)
 #define TX_st_sb        (TX_st->sb)
-#define TX_op_arg       (TX_op->u_arg)
 
 #define TX_lvarx_get(st, ix) ((st)->pad[ix])
 #endif /* DEBUGGING */
 
+#define TX_op_arg    (TX_op->u_arg)
 #define TX_op_arg_sv (TX_op_arg.sv)
 #define TX_op_arg_iv (TX_op_arg.iv)
 #define TX_op_arg_pc (TX_op_arg.pc)
@@ -741,7 +740,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
             st->code[i].u_arg.sv = tx_sv_dup_inc(aTHX_ proto_code[i].u_arg.sv, param);
         }
         else if ( oparg & TXARGf_INT ) {
-            st->code[i].u_arg.iv = proto_code[i].u_arg.iv.
+            st->code[i].u_arg.iv = proto_code[i].u_arg.iv;
         }
         else if( oparg & TXARGf_PC ) {
             st->code[i].u_arg.pc = proto_code[i].u_arg.pc;
