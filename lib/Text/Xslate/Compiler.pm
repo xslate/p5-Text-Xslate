@@ -237,7 +237,7 @@ sub compile {
         my $ast = $parser->parse($input, %args);
         print STDERR p($ast) if _DUMP_AST;
         @code = (
-            $self->opcode(set_opinfo => undef, file => $args{file}, line => 1),
+            $self->opcode(set_opinfo => undef, file => $self->current_file, line => 1),
             $self->_compile_ast($ast),
             $self->opcode('end'),
         );

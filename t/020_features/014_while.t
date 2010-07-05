@@ -112,6 +112,23 @@ T
     [3]
 X
 
+    [ <<'T', <<'X', "while-if" ],
+: macro ok -> $x { defined $x }
+: while defined $baz.fetch -> $x {
+    : if ok($x) {
+        [<:$x:>]
+    : }
+    : else {
+        UNLIKELY
+    : }
+: }
+T
+        [0]
+        [1]
+        [2]
+        [3]
+X
+
 );
 
 foreach my $d(@data) {
