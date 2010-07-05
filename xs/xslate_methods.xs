@@ -30,6 +30,8 @@ typedef struct {
 typedef struct {
     tx_state_t* cmparg_st;
     SV*         cmparg_proc;
+
+    HV* pair_stash;
 } my_cxt_t;
 START_MY_CXT;
 
@@ -59,7 +61,7 @@ tx_pair_cmp(pTHX_ SV* const a, SV* const b) {
 
 static SV*
 tx_kv(pTHX_ SV* const hvref) {
-    HV* const stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
+    dMY_CXT;
     HV* const hv    = (HV*)SvRV(hvref);
     AV* const av    = newAV();
     SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
@@ -74,7 +76,7 @@ tx_kv(pTHX_ SV* const hvref) {
 
     hv_iterinit(hv);
     while((he = hv_iternext(hv))) {
-        SV* const pair = tx_make_pair(aTHX_ stash,
+        SV* const pair = tx_make_pair(aTHX_ MY_CXT.pair_stash,
             hv_iterkeysv(he),
             hv_iterval(hv, he));
 
@@ -441,7 +443,7 @@ VERSIONCHECK: DISABLE
 BOOT:
 {
     MY_CXT_INIT;
-    PERL_UNUSED_VAR(MY_CXT);
+    MY_CXT.pair_stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
 }
 
 #ifdef USE_ITHREADS
@@ -451,7 +453,7 @@ CLONE(...)
 CODE:
 {
     MY_CXT_CLONE;
-    PERL_UNUSED_VAR(MY_CXT);
+    MY_CXT.pair_stash = gv_stashpvs(TX_PAIR_CLASS, GV_ADDMULTI);
     PERL_UNUSED_VAR(items);
 }
 
