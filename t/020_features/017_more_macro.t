@@ -80,18 +80,28 @@ X
 : macro foo ->($x) {
 :   "[" ~ $x  ~ "]"
 : }
-<: foo("FOO") ~ foo("BAR") :>
+<: foo("FOO") ~ foo("BAR") ~ foo("BAZ") :>
 T
-[FOO][BAR]
+[FOO][BAR][BAZ]
 X
 
-    [ <<'T', { }, <<'X', "nexted multi call" ],
+    [ <<'T', { }, <<'X', "nested multi call" ],
 : macro foo ->($x) {
 :   "[" ~ $x  ~ "]"
 : }
 <: foo(foo("FOO") ~ foo("BAR")) :>
 T
 [[FOO][BAR]]
+X
+
+    [ <<'T', { }, <<'X', "nested multi call" ],
+: macro foo ->($x) {
+:   "[" ~ $x  ~ "]"
+: }
+<: foo(foo("FOO") ~ foo("BAR")) ~ "\n" ~ foo(foo("foo") ~ foo("bar")) :>
+T
+[[FOO][BAR]]
+[[foo][bar]]
 X
 
     [ <<'T', { }, <<'X', "recursion" ],
