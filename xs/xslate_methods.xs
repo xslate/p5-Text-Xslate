@@ -317,9 +317,9 @@ static const tx_builtin_method_t tx_builtin_method[] = {
 
     TXBM_SETUP(hash, defined,  0, 0),
     TXBM_SETUP(hash, size,     0, 0),
-    TXBM_SETUP(hash, keys,     0, 1), /* can take a compare function */
-    TXBM_SETUP(hash, values,   0, 1), /* can take a compare function */
-    TXBM_SETUP(hash, kv,       0, 1), /* can take a compare function */
+    TXBM_SETUP(hash, keys,     0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash, values,   0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash, kv,       0, 0), /* TODO: can take a compare function */
 };
 
 static const size_t tx_num_builtin_method
