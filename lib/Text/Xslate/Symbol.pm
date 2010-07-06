@@ -238,7 +238,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Symbol - The symbol representation used by parsers
+Text::Xslate::Symbol - The symbol representation used by parsers and compilers
 
 =cut
 

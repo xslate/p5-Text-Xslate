@@ -94,7 +94,7 @@ Text::Xslate::Bridge - The interface base class to import methods
 
     use parent qw(Text::Xslate::Bridge);
 
-    __PACKAGE__->bride(
+    __PACKAGE__->bridge(
         nil    => \%nil_methods,
         scalar => \%scalar_methods,
         array  => \%array_methods,
@@ -117,6 +117,12 @@ Text::Xslate::Bridge - The interface base class to import methods
 =head1 DESCRIPTION
 
 This module is the base class for adaptor classes.
+
+=head1 INTERFACE
+
+=head2 C<< __PACKAGE__->bridge(@mapping) :Void >>
+
+Install a bridge module that has method I<@mapping>.
 
 =head1 SEE ALSO
 

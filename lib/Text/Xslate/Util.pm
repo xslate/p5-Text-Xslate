@@ -9,13 +9,14 @@ use parent qw(Exporter);
 our @EXPORT_OK = qw(
     mark_raw unmark_raw
     html_escape escaped_string
+    p
+
     literal_to_value value_to_literal
     import_from
     neat
     is_int any_in
     read_around
     make_error
-    p
     $STRING $NUMBER $DEBUG
 );
 
@@ -293,6 +294,8 @@ This is the entity of the C<unmark_raw> filter.
 This is the entity of the C<html_escape> filter.
 
 =head3 C<p($any)>
+
+Displays the contents of I<$any> using C<Data::Dumper>.
 
 This is the entity of the C<dump> filter, useful for debugging.
 

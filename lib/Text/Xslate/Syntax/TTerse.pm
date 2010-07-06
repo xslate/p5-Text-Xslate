@@ -788,17 +788,16 @@ CALL evaluates expressions, but does not print it.
 
     [% CALL expr %]
 
-SET and assignments are supported, although the use of them are strongly
-discouraged.
+SET and assignments, although the use of them are strongly discouraged.
 
     [% SET var1 = expr1, var2 = expr2 %]
     [% var = expr %]
 
-DEFAULT statements are supported as a syntactic sugar to C<< SET var = var // expr >>:
+DEFAULT statements as a syntactic sugar to C<< SET var = var // expr >>:
 
     [% DEFAULT lang = "TTerse" %]
 
-FILTER blocks are supported:
+FILTER blocks:
 
     [% FILTER html -%]
     Hello, <Xslate> world!

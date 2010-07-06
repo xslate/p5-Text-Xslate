@@ -790,7 +790,7 @@ This function is available in templates as the C<unmark_raw> filter.
 
 =head3 C<< html_escape($str :Str) :RawString >>
 
-Escapes html meta characters in I<$str>, and returns a raw string (see above).
+Escapes html meta characters in I<$str>, and returns it as a raw string (see above).
 If I<$str> is already a raw string, it returns I<$str> as is.
 
 By default, this function will be automatically applied to all the template
