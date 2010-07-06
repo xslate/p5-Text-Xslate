@@ -10,7 +10,8 @@ use Carp       ();
 use File::Spec ();
 use Exporter   ();
 
-use Text::Xslate::Util qw($DEBUG
+use Text::Xslate::Util qw(
+    $DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
 );
