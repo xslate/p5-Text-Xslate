@@ -43,6 +43,8 @@ inline
 Toolkit's
 FillInForm
 uri
+CLI
+PSGI
 
 # personal name
 lestrrat

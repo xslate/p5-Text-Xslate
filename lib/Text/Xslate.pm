@@ -743,7 +743,7 @@ Loads I<$file> into memory for following C<render($file, \%vars)>.
 Compiles and saves it as caches if needed.
 
 It is a good idea to load templates before applications fork.
-Here is an example to to load all the tmeplates which is in a given path:
+Here is an example to to load all the templates which is in a given path:
 
     my $path = ...;
     my $tx = Text::Xslate->new(
