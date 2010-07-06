@@ -88,4 +88,6 @@ foreach my $d(@set) {
     is $tx->render_string($in, $vars), $out or diag $in;
 }
 
+is(Text::Xslate->engine, undef);
+
 done_testing;
