@@ -57,7 +57,7 @@ M
 
 sub more_test;
 
-if(eval q{ use Moose 1.05 }) {
+if(eval q{ use Moose 1.05 (); 1}) {
     more_test test_moose => (
         ANY_MOOSE => 'Moose',
     );
