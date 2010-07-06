@@ -63,11 +63,11 @@ has symbol_table => ( # the global symbol table
 );
 
 has iterator_element => (
-    is  => 'rw',
+    is  => 'ro',
     isa => 'HashRef',
 
     lazy     => 1,
-    default  => sub { {} },
+    builder  => '_build_iterator_element',
 
     init_arg => undef,
 );
@@ -349,7 +349,6 @@ sub BUILD {
     my($parser) = @_;
     $parser->_init_basic_symbols();
     $parser->init_symbols();
-    $parser->init_iterator_elements();
     return;
 }
 
@@ -510,10 +509,8 @@ sub init_symbols {
     return;
 }
 
-sub init_iterator_elements {
-    my($parser) = @_;
-
-    $parser->iterator_element({
+sub _build_iterator_element {
+    return {
         index     => \&iterator_index,
         count     => \&iterator_count,
         is_first  => \&iterator_is_first,
@@ -524,9 +521,7 @@ sub init_iterator_elements {
         peek_next => \&iterator_peek_next,
         peek_prev => \&iterator_peek_prev,
         cycle     => \&iterator_cycle,
-    });
-
-    return;
+    };
 }
 
 

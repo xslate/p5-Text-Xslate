@@ -94,18 +94,19 @@ sub init_symbols {
     return;
 }
 
-after init_iterator_elements => sub {
-    my($parser) = @_;
+around _build_iterator_element => sub {
+    my($super, $parser) = @_;
 
-    my $tab = $parser->iterator_element;
+    my $table = $super->($parser);
 
-    $tab->{first} = $tab->{is_first};
-    $tab->{last}  = $tab->{is_last};
-    $tab->{next}  = $tab->{peek_next};
-    $tab->{prev}  = $tab->{peek_prev};
-    $tab->{max}   = $tab->{max_index};
+    # make aliases
+    $table->{first} = $table->{is_first};
+    $table->{last}  = $table->{is_last};
+    $table->{next}  = $table->{peek_next};
+    $table->{prev}  = $table->{peek_prev};
+    $table->{max}   = $table->{max_index};
 
-    return;
+    return $table;
 };
 
 around advance => sub {

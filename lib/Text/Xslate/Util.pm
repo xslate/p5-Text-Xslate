@@ -1,5 +1,4 @@
 package Text::Xslate::Util;
-# utilities for internals, not for users
 use strict;
 use warnings;
 
