@@ -1,9 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1043
+    [DOC FIXES]
+    - Fix typos for Changes: s/ware/were/g (thanks to @ryochin)
+
 0.1042 Tue Jul  6 13:28:43 2010
     [BUG FIXES]
     - Makefile.PL does not work on some environments
-    - block -> {} and FILTER BLOCK ware not consistent with normal macros
+    - block -> {} and FILTER BLOCK were not consistent with normal macros
 
     [CHANGES]
     - Internal refactoring
@@ -36,8 +40,8 @@ Revision history for Perl extension Text::Xslate
     [BUG FIXES]
     - Extra white spaces caused syntax errors in given blocks
     - Original error handlers (i.e. $SIG{__WARN__} and $SIG{__DIE__})
-      ware ignored. This problem affected PSGI applications with the
-      StackTrace middleware.
+      were ignored. This problem affected PSGI applications with the
+      StackTrace middlewere.
 
     [NEW FEATURES]
     - New document Text::Xslate::Cookbook
@@ -179,8 +183,8 @@ Revision history for Perl extension Text::Xslate
     - Error messages are improved
 
     [BUG FIXES]
-    - Empty hash/array literals ware not allowed
-    - There ware several edge-case issues in string literals
+    - Empty hash/array literals were not allowed
+    - There were several edge-case issues in string literals
     - The precedence of the ternary operator was wrong
     - Resolve issue #5: [% "foo' %] was silently accepted
     - Ternary operators could cause problems in PP::Booster (makamaka)
@@ -204,7 +208,7 @@ Revision history for Perl extension Text::Xslate
 0.1024 Sun May 30 19:00:56 2010
     [BUG FIXES]
     - 'module' option wiped away builtin functions
-    - Array/hash literals ware invalid in TTerse
+    - Array/hash literals were invalid in TTerse
     - Calling undefined functions produced unreadable messages in TTerse
     - The parser could not parse <: f({ not => 42 }) :>
 
@@ -309,7 +313,7 @@ Revision history for Perl extension Text::Xslate
 
 0.1012 Mon May 10 13:56:28 2010
     [BUG FIXES]
-    - Cascaded templates ware not reloaded correctly (thanks to tokuhirom)
+    - Cascaded templates were not reloaded correctly (thanks to tokuhirom)
 
 0.1011 Fri May  7 12:29:45 2010
     [NEW FEATURES]
@@ -317,7 +321,7 @@ Revision history for Perl extension Text::Xslate
 
 0.1010 Thu May  6 13:25:47 2010
     [BUG FIXES]
-    - There ware various parsing issues
+    - There were various parsing issues
 
     [NEW FEATURES]
     - Switch statement like Perl6
@@ -348,7 +352,7 @@ Revision history for Perl extension Text::Xslate
 0.1007 Sun May  2 22:26:09 2010
     [BUG FIXES]
     - Nested function call could cause problems.
-    - Blessed references ware not printable.
+    - Blessed references were not printable.
     - The "file" option to new() was confusing. Now it has been removed.
 
     [NEW FEATURES]
