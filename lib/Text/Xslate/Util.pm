@@ -24,7 +24,7 @@ my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
 
-our $NUMBER  = qr/ [+-]? (?:
+our $NUMBER  = qr/ (?:
         (?: [0-9][0-9_]* (?: \. [0-9_]+)? \b) # decimal
         |
         (?: 0 (?:

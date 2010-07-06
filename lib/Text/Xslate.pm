@@ -350,7 +350,7 @@ sub _load_compiled {
                 ($IDENT)                        # an opname
 
                 # the following components are optional
-                (?: [ \t]+ ($STRING|$NUMBER) )? # operand
+                (?: [ \t]+ ($STRING|[+-]?$NUMBER) )? # operand
                 (?: [ \t]+ \#($NUMBER)          # line number
                     (?: [:] ($STRING))?         # file name
                 )?

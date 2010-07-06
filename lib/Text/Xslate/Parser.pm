@@ -18,9 +18,11 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $ID      = qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
+my $IDENT = qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
 
-my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
+# Operator tokens that the parser recognizes.
+# All the single characters are tokanized as an operator.
+my $OPERATOR_TOKEN = sprintf '(?:%s|[^ \t\r\n])', join('|', map{ quotemeta } qw(
     ...
     ..
     == != <=> <= >=
@@ -33,20 +35,6 @@ my $OPERATOR_TOKEN = sprintf '(?:%s)', join('|', map{ quotemeta } qw(
     -> =>
     ::
     ++ --
-
-    < >
-    =
-    + - * / %
-    & | ^ 
-    !
-    .
-    ~
-    ? :
-    ( )
-    { }
-    [ ]
-    ;
-    `
 ), ',');
 
 my %shortcut_table = (
@@ -575,11 +563,8 @@ sub look_ahead {
         $parser->following_newline(0);
     }
 
-    if(s/\A ($ID)//xmso){
+    if(s/\A ($IDENT)//xmso){
         return [ name => $1 ];
-    }
-    elsif(s/\A ($OPERATOR_TOKEN)//xmso){
-        return [ operator => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
         goto &look_ahead; # tail recursion
@@ -589,6 +574,9 @@ sub look_ahead {
     }
     elsif(s/\A ($STRING)//xmso){
         return [ string => $1 ];
+    }
+    elsif(s/\A ($OPERATOR_TOKEN)//xmso){
+        return [ operator => $1 ];
     }
     elsif(s/\A (\S+)//xms) {
         $parser->_error("Oops: Unexpected lex symbol '$1'");
