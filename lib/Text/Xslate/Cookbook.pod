@@ -184,18 +184,20 @@ Output:
 
 See L<Text::Xslate/"Template cascading"> for details.
 
-=head2 How to cooperate with Data::Section::Simple
+=head2 How to map __DATA__ sections to the path
 
-The C<path> option of C<new()> accepts HASH references which contain
-C<< $file_name => $content >> mapping, which is compatible with
-Data::Section::Simple.
+Use Data::Section::Simple, and the C<path> option of C<new()>, which accepts
+HASH references which contain C<< $file_name => $content >> mapping.
 
     use Text::Xslate;
-    use Data::Section;
+    use Data::Section::Simple;
+
     my $tx = Text::Xslate->new(
-        path => [ Data::Section->new()->get_data_section() ],
+        path => [ Data::Section::Simple->new()->get_data_section() ],
     );
+
     print $tx->render('child.tx');
+
     __DATA__
     @@ base.tx
     <html>
@@ -207,7 +209,9 @@ Data::Section::Simple.
     child body
     : } # endblock body
 
-See also L<Data::Section> and L<Text::MicroTemplate::DataSection>.
+This feature is inspired by Text::MicroTemplate::DataSection.
+
+See also L<Data::Section::Simple> and L<Text::MicroTemplate::DataSection>.
 
 =head1 SEE ALSO
 
