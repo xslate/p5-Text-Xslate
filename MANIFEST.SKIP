@@ -68,6 +68,7 @@ ppport\.h$
 \.c$
 
 \.stackdump$
+\.testenv\b
 
 t/600_app/out
 
