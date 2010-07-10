@@ -31,7 +31,7 @@ sub perl {
 
 unlink <example/*.txc>;
 
-while(defined(my $example = <example/*.pl>)) {
+EXAMPLE: while(defined(my $example = <example/*.pl>)) {
     my $expect = do {
         my $gold = $example;
         $gold =~ s/\.pl$/.gold/;
@@ -46,9 +46,16 @@ while(defined(my $example = <example/*.pl>)) {
     foreach(1 .. 2) {
         my($out, $err) = perl($example);
 
+        if($err =~ /Can't locate /) { # ' for poor editors
+            note("skip $example because: $err");
+            next EXAMPLE;
+        }
+
         is $out, $expect, $example . " ($_)";
         is $err, '', 'no errors';
     }
 }
+
+unlink <example/*.txc>;
 
 done_testing;

@@ -1,0 +1,4 @@
+FillInForm:
+<form>
+<input type="text" name="foo" value="&lt;filled value&gt;" />
+</form>
