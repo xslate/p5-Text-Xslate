@@ -184,6 +184,31 @@ Output:
 
 See L<Text::Xslate/"Template cascading"> for details.
 
+=head2 How to cooperate with Data::Section::Simple
+
+The C<path> option of C<new()> accepts HASH references which contain
+C<< $file_name => $content >> mapping, which is compatible with
+Data::Section::Simple.
+
+    use Text::Xslate;
+    use Data::Section;
+    my $tx = Text::Xslate->new(
+        path => [ Data::Section->new()->get_data_section() ],
+    );
+    print $tx->render('child.tx');
+    __DATA__
+    @@ base.tx
+    <html>
+    <body><: block body -> { :>default body<: } :></body>
+    </html>
+    @@ child.tx
+    : cascade base;
+    : override body -> {
+    child body
+    : } # endblock body
+
+See also L<Data::Section> and L<Text::MicroTemplate::DataSection>.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
