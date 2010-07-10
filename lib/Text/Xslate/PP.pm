@@ -402,6 +402,9 @@ sub tx_all_deps_are_fresh {
         next unless defined $deppath;
 
         my $mtime = ( stat( $deppath ) )[9];
+
+        next unless defined $mtime;
+
         if ( $mtime > $cache_mtime ) {
             my $main_cache = $tmpl->[ TXo_CACHEPATH ];
             if ( $i != TXo_FULLPATH and $main_cache ) {
