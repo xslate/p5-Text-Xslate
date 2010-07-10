@@ -199,9 +199,16 @@ sub find_file {
     my $cache_mtime;
 
     foreach my $p(@{$self->{path}}) {
-        $fullpath = File::Spec->catfile($p, $file);
-        defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
-            or next;
+        if(ref $p eq 'HASH') {
+            defined(my $content = $p->{$file}) or next;
+            $fullpath   = \$content;
+            $orig_mtime = '+inf'; # always fresh
+        }
+        else {
+            $fullpath = File::Spec->catfile($p, $file);
+            defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
+                or next;
+        }
 
         # $file is found
 
@@ -404,6 +411,13 @@ sub _magic_token {
         (map { ref $_ ? "[@{$_}]" : $_ } $self->_extract_options(\%compiler_option)),
         $self->_extract_options(\%parser_option),
     );
+
+    if(ref $fullpath) { # ref to content string
+        require 'Digest/MD5.pm'; # we don't want to create its namespace
+        my $md5 = Digest::MD5->new();
+        $md5->add(${$fullpath});
+        $fullpath = 'SCALAR:' . $md5->hexdigest();
+    }
 
     return sprintf $XSLATE_MAGIC,
         $VERSION, $fullpath, $opt;
