@@ -8,13 +8,15 @@ use File::Path ();
 
 with any_moose 'X::Getopt';
 
+my $getopt_traits = [any_moose('X::Getopt::Meta::Attribute::Trait')];
+
 has cache_dir => (
     documentation => 'Directory the cache files will be saved in',
     cmd_aliases   => [qw(c)],
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_cache_dir',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has cache => (
@@ -23,7 +25,7 @@ has cache => (
     is            => 'ro',
     isa           => 'Int',
     predicate     => 'has_cache',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has module => (
@@ -32,7 +34,7 @@ has module => (
     is            => 'ro',
     isa           => 'ArrayRef[Str]',
     predicate     => 'has_module',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has input_layer => (
@@ -41,7 +43,7 @@ has input_layer => (
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_input_layer',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has path => (
@@ -50,7 +52,7 @@ has path => (
     is            => 'ro',
     isa           => 'ArrayRef[Str]',
     predicate     => 'has_path',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has syntax => (
@@ -59,7 +61,7 @@ has syntax => (
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_syntax',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has escape => (
@@ -68,7 +70,7 @@ has escape => (
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_escape',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has verbose => (
@@ -78,7 +80,7 @@ has verbose => (
     isa           => 'Str',
     default       => 2,
     predicate     => 'has_verbose',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 # --ignore=pattern
@@ -92,7 +94,7 @@ has ignore => (
     is            => 'ro',
     isa           => 'RegexpRef',
     coerce        => 1,
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 # --suffix old=new
@@ -101,7 +103,7 @@ has suffix => (
     cmd_aliases   => [qw(x)],
     is            => 'ro',
     isa           => 'HashRef',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has dest => (
@@ -110,7 +112,7 @@ has dest => (
     is            => 'ro',
     isa           => 'Str',
     default       => Cwd::cwd(),
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has define => (
@@ -119,7 +121,7 @@ has define => (
     is            => 'ro',
     isa           => 'HashRef',
     predicate     => 'has_define',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has eval => (
@@ -128,7 +130,7 @@ has eval => (
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_eval',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has engine => (
@@ -137,7 +139,7 @@ has engine => (
     is            => 'ro',
     isa           => 'Str',
     default       => 'Text::Xslate',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has debug => (
@@ -146,7 +148,7 @@ has debug => (
     is            => 'ro',
     isa           => 'Str',
     predicate     => 'has_debug',
-    traits        => ['MouseX::Getopt::Meta::Attribute::Trait'],
+    traits        => $getopt_traits,
 );
 
 has version => (
