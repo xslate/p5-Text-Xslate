@@ -6,7 +6,8 @@ use Test::More;
 use Text::Xslate;
 use t::lib::Util;
 
-END{ unlink '.test_data_section' }
+use File::Path qw(rmtree);
+END{ rmtree '.test_data_section' }
 
 my $section = {
     'foo.tx' => 'Hello, <: $lang :> world!',
