@@ -86,8 +86,8 @@ sub test_with_env {
     my $dir = '.testenv';
     if(not -e $dir) {
         mkdir $dir or die "Cannot mkdir '.testenv': $!";
-        clean_files($dir);
     }
+    clean_files($dir);
 
     {
         open my $out, '>', "$dir/$name.pl"
