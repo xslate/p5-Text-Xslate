@@ -950,6 +950,8 @@ Thanks to jjn1056 to the concept of template overlay (now implemented as C<casca
 
 Thanks to makamaka for the contribution of Text::Xslate::PP.
 
+Thanks to typester for the various inspirations.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
