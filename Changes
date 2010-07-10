@@ -1,8 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
-0.1043
+0.1043 Sat Jul 10 14:26:57 2010
+    [BUG FIXES]
+    - What Makefile.PL wrote for additional tests did not work on Win32
+      (thanks to Taro, Nishino)
+
     [DOC FIXES]
     - Fix typos for Changes: s/ware/were/g (thanks to @ryochin)
+
+    [NEW FEATURES]
+    - Extend 'path' option for in-memory file mapping, inspired by
+      Text::MicorTemplate::DataSection (@typester++), requested by @kazeburo
 
 0.1042 Tue Jul  6 13:28:43 2010
     [BUG FIXES]
