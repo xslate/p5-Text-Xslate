@@ -14,7 +14,7 @@ Revision history for Perl extension Text::Xslate
 
 0.1042 Tue Jul  6 13:28:43 2010
     [BUG FIXES]
-    - Makefile.PL does not work on some environments
+    - Makefile.PL did not work on some environments
     - block -> {} and FILTER BLOCK were not consistent with normal macros
 
     [CHANGES]
