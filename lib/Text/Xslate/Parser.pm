@@ -435,7 +435,7 @@ sub init_basic_operators {
     $parser->infix('cmp', 150);
     $parser->infix('~~',  150);
 
-    $parser->infix('|',  140, \&led_bar);
+    $parser->infix('|',  140, \&led_pipe);
 
     $parser->infix('&&', 130)->is_logical(1);
 
@@ -822,7 +822,7 @@ sub led_call {
     return $call;
 }
 
-sub led_bar { # filter
+sub led_pipe { # filter
     my($parser, $symbol, $left) = @_;
     # a | b -> b(a)
     return $parser->call($parser->expression($symbol->lbp), $left);
