@@ -127,7 +127,6 @@ TXBM(any, defined) {
 
 /* NIL */
 
-
 /* SCALAR */
 
 
@@ -261,11 +260,47 @@ TXBM(array, map) {
         sv = tx_proccall(aTHX_ st, proc, "map callback");
         (void)av_store(result, i, newSVsv(sv));
     }
+    /* setting retval must be here because retval is actually st->targ */
     sv_setsv(retval, resultref);
     FREETMPS;
     LEAVE;
+}
 
+TXBM(array, reduce) {
+    AV* const av        = (AV*)SvRV(*MARK);
+    SV* const proc      = *(++MARK);
+    I32 const len       = av_len(av) + 1;
+    SV** svp;
+    SV* a;
+    I32 i;
+
+    if(len < 2) {
+        svp = av_fetch(av, 0, FALSE);
+        sv_setsv(retval, svp ? *svp : NULL);
+        return;
+    }
+
+    ENTER;
+    SAVETMPS;
+    svp = av_fetch(av, 0, FALSE);
+    a = svp ? *svp : &PL_sv_undef;
+
+    for(i = 1; i < len; i++) {
+        dSP;
+        SV* b;
+        svp = av_fetch(av, i, FALSE);
+        b   = svp ? *svp : &PL_sv_undef;
+
+        PUSHMARK(SP);
+        PUSHs(a);
+        PUSHs(b);
+        PUTBACK;
+        a = tx_proccall(aTHX_ st, proc, "reduce callback");
+    }
     /* setting retval must be here because retval is actually st->targ */
+    sv_setsv(retval, a);
+    FREETMPS;
+    LEAVE;
 }
 
 /* HASH */
@@ -320,6 +355,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array, reverse, 0, 0),
     TXBM_SETUP(array, sort,    0, 1), /* can take a compare function */
     TXBM_SETUP(array, map,     1, 1),
+    TXBM_SETUP(array, reduce,  1, 1),
 
     TXBM_SETUP(hash, defined,  0, 0),
     TXBM_SETUP(hash, size,     0, 0),

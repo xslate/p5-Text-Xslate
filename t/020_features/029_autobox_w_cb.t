@@ -169,6 +169,43 @@ T
     [10]
 X
 
+
+    [<<'T', { data => [1 .. 10] }, <<'X', 'reduce/sum'],
+<: $data          .reduce(-> $a, $b { $a + $b }) :>
+<: $data.reverse().reduce(-> $a, $b { $a + $b }) :>
+T
+55
+55
+X
+
+    [<<'T', { data => [1..10] }, <<'X', 'reduce/min-max'],
+<: $data          .reduce(-> $a, $b { $a min $b }) :>
+<: $data.reverse().reduce(-> $a, $b { $a min $b }) :>
+<: $data          .reduce(-> $a, $b { $a max $b }) :>
+<: $data.reverse().reduce(-> $a, $b { $a max $b }) :>
+T
+1
+1
+10
+10
+X
+
+    [<<'T', { }, <<'X'],
+<: [].reduce(-> $a, $b { $a + $b }) // "nil" :>
+<: [42].reduce(-> $a, $b { $a + $b }) // "nil" :>
+<: [42, 3].reduce(-> $a, $b { $a + $b }) // "nil" :>
+T
+nil
+42
+45
+X
+
+    [<<'T', { add => sub { $_[0] + $_[1] } }, <<'X'],
+<: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce($add) // "nil" :>
+T
+55
+X
+
 );
 
 foreach my $d(@set) {

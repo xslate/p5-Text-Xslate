@@ -63,6 +63,19 @@ sub _array_map {
     } @{$array_ref} ];
 }
 
+sub _array_reduce {
+    my($array_ref, $callback) = @_;
+    return $_st->bad_arg('reduce') if @_ != 2;
+    return $array_ref->[0] if @{$array_ref} < 2;
+
+    my $x = $array_ref->[0];
+    for(my $i = 1; $i < @{$array_ref}; $i++) {
+        push @{ $_st->{ SP } }, [ $x, $array_ref->[$i] ];
+        $x = $_st->proccall($callback, $_context);
+    }
+    return $x;
+}
+
 sub _hash_size {
     my($hash_ref) = @_;
     return $_st->bad_arg('size') if @_ != 1;
@@ -101,6 +114,7 @@ our %builtin_method = (
     'array::reverse' => \&_array_reverse,
     'array::sort'    => \&_array_sort,
     'array::map'     => \&_array_map,
+    'array::reduce'  => \&_array_reduce,
 
     'hash::defined'  => \&_any_defined,
     'hash::size'     => \&_hash_size,
