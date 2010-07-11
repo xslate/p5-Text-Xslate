@@ -318,6 +318,7 @@ For arrays:
     <: $array.reverse() :>
     <: $array.map(-> $x { $x + 1 }) :>
     <: $array.sort(-> $x, $y { $x <=> $y }) :>
+    <: $array.reduce(-> $x, $y { $x min $y }) :>
 
 For hashes:
 
