@@ -609,8 +609,8 @@ Possible options are:
 
 =item C<< path => \@path // ['.'] >>
 
-Specifies the include paths, which may be directory names or HASH references
-which contain C<< $file_name => $content >> mapping.
+Specifies the include paths, which may be directory names or virtual paths,
+i.e. HASH references which contain C<< $file_name => $content >> mapping.
 
 =item C<< cache => $level // 1 >>
 
