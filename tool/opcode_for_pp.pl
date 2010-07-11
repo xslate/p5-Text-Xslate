@@ -114,6 +114,11 @@ use constant TXframe_START_LVAR => 3;
 
 use constant TX_VERBOSE_DEFAULT => 1;
 
+# for-loop variables
+use constant TXfor_ITEM  => 0;
+use constant TXfor_ITER  => 1;
+use constant TXfor_ARRAY => 2;
+
 
 <<This lines will be created by tool/opcode_for_pp.pl>>
 

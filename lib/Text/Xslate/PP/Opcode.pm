@@ -17,11 +17,9 @@ use constant TXframe_OUTPUT     => Text::Xslate::PP::TXframe_OUTPUT;
 use constant TXframe_RETADDR    => Text::Xslate::PP::TXframe_RETADDR;
 use constant TXframe_START_LVAR => Text::Xslate::PP::TXframe_START_LVAR;
 
-use constant TX_VERBOSE_DEFAULT => Text::Xslate::PP::TX_VERBOSE_DEFAULT;
-
-use constant _FOR_ITEM  => 0;
-use constant _FOR_ITER  => 1;
-use constant _FOR_ARRAY => 2;
+use constant TXfor_ITEM  => Text::Xslate::PP::TXfor_ITEM;
+use constant TXfor_ITER  => Text::Xslate::PP::TXfor_ITER;
+use constant TXfor_ARRAY => Text::Xslate::PP::TXfor_ARRAY;
 
 no warnings 'recursion';
 
@@ -192,9 +190,9 @@ sub op_for_start {
         $ar = [];
     }
 
-    #tx_access_lvar( $st, $id + _FOR_ITEM, undef );
-    tx_access_lvar( $st, $id + _FOR_ITER, -1 );
-    tx_access_lvar( $st, $id + _FOR_ARRAY, $ar );
+    #tx_access_lvar( $st, $id + TXfor_ITEM, undef );
+    tx_access_lvar( $st, $id + TXfor_ITER, -1 );
+    tx_access_lvar( $st, $id + TXfor_ARRAY, $ar );
 
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
@@ -203,20 +201,20 @@ sub op_for_start {
 sub op_for_iter {
     my($st) = @_;
     my $id = $st->{sa};
-    my $av = tx_access_lvar( $st, $id + _FOR_ARRAY );
+    my $av = tx_access_lvar( $st, $id + TXfor_ARRAY );
 
     if(defined $av) {
-        my $i = tx_access_lvar( $st, $id + _FOR_ITER );
+        my $i = tx_access_lvar( $st, $id + TXfor_ITER );
         $av = [ $av ] unless ref $av;
         if ( ++$i < scalar(@{ $av })  ) {
-            tx_access_lvar( $st, $id + _FOR_ITEM, $av->[ $i ] );
-            tx_access_lvar( $st, $id + _FOR_ITER, $i );
+            tx_access_lvar( $st, $id + TXfor_ITEM, $av->[ $i ] );
+            tx_access_lvar( $st, $id + TXfor_ITER, $i );
             goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
         }
         else {
-            tx_access_lvar( $st, $id + _FOR_ITEM,  undef );
-            tx_access_lvar( $st, $id + _FOR_ITER,  undef );
-            tx_access_lvar( $st, $id + _FOR_ARRAY, undef );
+            tx_access_lvar( $st, $id + TXfor_ITEM,  undef );
+            tx_access_lvar( $st, $id + TXfor_ITER,  undef );
+            tx_access_lvar( $st, $id + TXfor_ARRAY, undef );
         }
     }
 

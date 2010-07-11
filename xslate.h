@@ -105,6 +105,13 @@ enum tx_macro_ix {
     TXm_size,
 };
 
+/* for-loop variables */
+enum tx_for_ix {
+    TXfor_ITEM,
+    TXfor_ITER,
+    TXfor_ARRAY,
+};
+
 struct tx_state_s;
 struct tx_code_s;
 struct tx_info_s;

@@ -1,10 +1,14 @@
 #!perl -w
-BEGIN{ $ENV{XSLATE} ||= 'dump=asm;' }
+BEGIN{ $ENV{XSLATE} ||= 'pp=booster;dump=pp;' }
 
 use strict;
 use Text::Xslate;
 
 my $tx = Text::Xslate->new();
-print $tx->render_string(<<'TX', { x => shift });
-<:= $x == 42 ?   0 : 100 or 200 :>
-TX
+
+$tx->render_string( <<'CODE', {} );
+: macro foo -> $arg {
+    Hello <:= $arg :>!
+: }
+: foo($value)
+CODE

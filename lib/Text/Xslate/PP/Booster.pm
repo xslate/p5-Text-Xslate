@@ -15,9 +15,15 @@ use Text::Xslate::Util qw(
 
 use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
-use constant _FOR_ITEM  => 0;
-use constant _FOR_ITER  => 1;
-use constant _FOR_ARRAY => 2;
+use constant TXfor_ITEM  => Text::Xslate::PP::TXfor_ITEM;
+use constant TXfor_ITER  => Text::Xslate::PP::TXfor_ITER;
+use constant TXfor_ARRAY => Text::Xslate::PP::TXfor_ARRAY;
+
+our($html_metachars, %html_escape);
+BEGIN {
+    *html_metachars = \$Text::Xslate::PP::html_metachars;
+    *html_escape    = \%Text::Xslate::PP::html_escape;
+}
 
 my %CODE_MANIP = ();
 
@@ -284,7 +290,7 @@ if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
     }
 }
 elsif ( defined $sv ) {
-    $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
+    $sv =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
     $output .= $sv;
 }
 else {
@@ -333,9 +339,9 @@ $CODE_MANIP{ 'for_iter' } = sub {
         $self->stash->{ macro_args_num }->{ $self->framename }->{ $self->sa() } = 1;
     }
 
-    my $item_var = sprintf '$pad->[-1][%s+_FOR_ITEM]',  $self->sa();
-    my $iterator = sprintf '$pad->[-1][%s+_FOR_ITER]',  $self->sa();
-    my $array    = sprintf '$pad->[-1][%s+_FOR_ARRAY]', $self->sa();
+    my $item_var = sprintf '$pad->[-1][%s+TXfor_ITEM]',  $self->sa();
+    my $iterator = sprintf '$pad->[-1][%s+TXfor_ITER]',  $self->sa();
+    my $array    = sprintf '$pad->[-1][%s+TXfor_ARRAY]', $self->sa();
 
     $self->write_lines(
         sprintf( '%s = check_itr_ar( $st, %s, %s, %s );',
@@ -1351,50 +1357,79 @@ code by C<< XSLATE=dump=pp >>).
         my $output = q{};
         my $vars   = $st->{ vars };
 
-        $pad = [ [ ] ];
+        $st->{pad} = $pad = [ [ ] ];
 
         # macro
 
         $macro{"foo"} = $st->{ booster_macro }->{"foo"} ||= sub {
-            my ( $st, $pad ) = @_;
+            my ( $st, $pad, $f_l ) = @_;
             my $vars = $st->{ vars };
+            my $mobj = $st->symbol->{ "foo" };
             my $output = q{};
+
+            if ( @{$pad->[-1]} != $mobj->nargs ) {
+                $st->error( $f_l, _macro_args_error( $mobj, $pad ) );
+                return '';
+            }
+
+            if ( my $outer = $mobj->outer ) {
+                my @temp = @{$pad->[-1]};
+                @{$pad->[-1]}[ 0 .. $outer - 1 ] = @{$pad->[-2]}[ 0 .. $outer - 1 ];
+                @{$pad->[-1]}[ $outer .. $outer + $mobj->nargs ] = @temp;
+            }
 
             Carp::croak('Macro call is too deep (> 100) on "foo"') if ++$depth > 100;
 
             # print_raw_s
-            $output .= "        Hello ";
-
+            $output .= "    Hello ";
 
             # print
             $sv = $pad->[ -1 ]->[ 0 ];
-            if ( ref($sv) eq 'Text::Xslate::EscapedString' ) {
-                $output .= $sv;
+            if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
+                if(defined ${$sv}) {
+                    $output .= $sv;
+                }
+                else {
+                    $st->warn( ["foo", 13], "Use of nil to print" );
+                }
             }
             elsif ( defined $sv ) {
-                $sv =~ s/($html_unsafe_chars)/$html_escape{$1}/xmsgeo;
+                $sv =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
                 $output .= $sv;
             }
             else {
-                _warn( $st, "foo", 10, "Use of nil to print" );
+                $st->warn( ["foo", 13], "Use of nil to print" );
             }
 
             # print_raw_s
             $output .= "!\n";
 
-
             $depth--;
             pop( @$pad );
 
-            $output;
+            mark_raw($output);
         };
 
 
         # process start
 
-        # ex_print_raw
-        $output .= $macro{ "foo" }->( $st, push_pad( $pad, [ $vars->{ "value" } ] ) );
-
+        # print
+        $sv = $macro{ "foo" }->( $st, push_pad( $pad, [ $vars->{ "value" } ] ), [ "main", 5 ] );
+        if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
+            if(defined ${$sv}) {
+                $output .= $sv;
+            }
+            else {
+                $st->warn( ["main", 6], "Use of nil to print" );
+            }
+        }
+        elsif ( defined $sv ) {
+            $sv =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
+            $output .= $sv;
+        }
+        else {
+            $st->warn( ["main", 6], "Use of nil to print" );
+        }
 
         # process end
 

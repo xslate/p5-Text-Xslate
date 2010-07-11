@@ -183,9 +183,9 @@ TXC_w_var(for_start) {
         avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
 
-    (void)   TX_lvar(id+0);      /* for each item, ensure to allocate a sv */
-    sv_setiv(TX_lvar(id+1), -1); /* (re)set iterator */
-    sv_setsv(TX_lvar(id+2), avref);
+    (void)   TX_lvar(id+TXfor_ITEM); /* allocate the space */
+    sv_setiv(TX_lvar(id+TXfor_ITER), -1); /* (re)set iterator */
+    sv_setsv(TX_lvar(id+TXfor_ARRAY), avref);
 
     TX_RETURN_NEXT();
 }
@@ -193,9 +193,9 @@ TXC_w_var(for_start) {
 TXC_goto(for_iter) {
     SV* const idsv  = TX_st_sa;
     IV  const id    = SvIVX(idsv); /* by literal_i */
-    SV* const item  = TX_lvar_get(id+0);
-    SV* const i     = TX_lvar_get(id+1);
-    SV* const avref = TX_lvar_get(id+2);
+    SV* const item  = TX_lvar_get(id+TXfor_ITEM);
+    SV* const i     = TX_lvar_get(id+TXfor_ITER);
+    SV* const avref = TX_lvar_get(id+TXfor_ARRAY);
     AV* const av    = (AV*)SvRV(avref);
 
     assert(SvROK(avref));
