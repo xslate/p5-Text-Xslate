@@ -133,7 +133,7 @@ Output:
 
 See also L<HTML::Shakan> for details.
 
-=head2 How to apply uri escape to template expressions
+=head2 How to apply uri-escape to template expressions
 
 Use C<URI::Escape> or C<URI::Escape::XS>.
 
@@ -184,7 +184,7 @@ Output:
 
 See L<Text::Xslate/"Template cascading"> for details.
 
-=head2 How to map __DATA__ sections to the path
+=head2 How to map __DATA__ sections to the include path
 
 Use Data::Section::Simple, and the C<path> option of C<new()>, which accepts
 HASH references which contain C<< $file_name => $content >> mapping.
@@ -192,8 +192,9 @@ HASH references which contain C<< $file_name => $content >> mapping.
     use Text::Xslate;
     use Data::Section::Simple;
 
+    my $vpath = Data::Section::Simple->new()->get_data_section();
     my $tx = Text::Xslate->new(
-        path => [ Data::Section::Simple->new()->get_data_section() ],
+        path => [$vpath],
     );
 
     print $tx->render('child.tx');
