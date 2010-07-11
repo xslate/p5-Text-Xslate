@@ -129,7 +129,7 @@ sub new {
         warnings::warnif(misc => "$class: Unknown option(s): " . join ' ', @unknowns);
     }
 
-    if(!ref $args{path}) {
+    if(ref($args{path}) ne 'ARRAY') {
         $args{path} = [$args{path}];
     }
 
