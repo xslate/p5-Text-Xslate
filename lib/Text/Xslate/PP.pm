@@ -265,9 +265,12 @@ sub _assemble {
     sub escaped_string; *escaped_string = \&mark_raw;
     sub mark_raw {
         my($str) = @_;
-        return ref($str) eq $esc_class
-            ? $str
-            : bless \$str, $esc_class;
+        if(defined $str) {
+            return ref($str) eq $esc_class
+                ? $str
+                : bless \$str, $esc_class;
+        }
+        return $str; # undef
     }
     sub unmark_raw {
         my($str) = @_;

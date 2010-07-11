@@ -443,14 +443,14 @@ $CODE_MANIP{ 'max_index' } = sub {
 
 $CODE_MANIP{ 'builtin_mark_raw' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '_mark_raw( %s )', $self->sa ) );
+    $self->sa( sprintf( 'mark_raw( %s )', $self->sa ) );
     $self->optimize_to_print( 'raw' );
 };
 
 
 $CODE_MANIP{ 'builtin_unmark_raw' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '_unmark_raw( %s )', $self->sa ) );
+    $self->sa( sprintf( 'unmark_raw( %s )', $self->sa ) );
 };
 
 
@@ -584,7 +584,7 @@ $CODE_MANIP{ 'macro_end' } = sub {
     $self->write_lines( sprintf( '$depth--;' ) );
     $self->write_lines( sprintf( 'pop( @$pad );' ) );
     $self->write_code( "\n" );
-    $self->write_lines( sprintf( 'mark_raw($output);' ) );
+    $self->write_lines( sprintf( 'return mark_raw($output);' ) );
 
     $self->indent_depth( $self->indent_depth - 1 );
 
@@ -1211,16 +1211,6 @@ sub push_pad {
 }
 
 
-sub _mark_raw {
-    defined $_[0] ? mark_raw( $_[0] ) : undef;
-}
-
-
-sub _unmark_raw {
-    defined $_[0] ? unmark_raw( $_[0] ) : undef;
-}
-
-
 sub _macro_args_error {
     my ( $macro, $pad ) = @_;
     my $nargs = $macro->nargs;
@@ -1407,7 +1397,7 @@ code by C<< XSLATE=dump=pp >>).
             $depth--;
             pop( @$pad );
 
-            mark_raw($output);
+            return mark_raw($output);
         };
 
 

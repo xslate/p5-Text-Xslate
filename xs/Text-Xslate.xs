@@ -361,7 +361,11 @@ tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv) {
 SV*
 tx_mark_raw(pTHX_ SV* const str) {
     dMY_CXT;
-    if(tx_str_is_raw(aTHX_ aMY_CXT_ str)) {
+    SvGETMAGIC(str);
+    if(!SvOK(str)) {
+        return str;
+    }
+    else if(tx_str_is_raw(aTHX_ aMY_CXT_ str)) {
         return str;
     }
     else {
