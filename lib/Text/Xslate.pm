@@ -582,10 +582,10 @@ Here is a result of F<benchmark/others.pl> to compare various template engines.
 You can see Xslate is 36 times faster than Template-Toolkit, and 4 times faster
 than HTML::Template::Pro and Text::ClearSilver, which are implemented in XS.
 
-=head3 High extensibility
+=head3 Auto HTML escaping
 
-Xslate is highly extensible. You can add functions and methods to the template
-engine and even add a new syntax via extending the parser.
+All the template expressions the engine interpolates into templates are
+html-escaped automatically, so the output has no possibility to XSS by default.
 
 =head3 Template cascading
 
@@ -594,6 +594,11 @@ templates with block modifiers. It is like traditional template inclusion,
 but is more powerful.
 
 This mechanism is also called as template inheritance.
+
+=head3 High extensibility
+
+Xslate is highly extensible. You can add functions and methods to the template
+engine and even add a new syntax via extending the parser.
 
 =head1 INTERFACE
 
