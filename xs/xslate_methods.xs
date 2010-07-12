@@ -349,19 +349,19 @@ static const tx_builtin_method_t tx_builtin_method[] = {
 
     TXBM_SETUP(scalar, defined, 0, 0),
 
-    TXBM_SETUP(array, defined, 0, 0),
-    TXBM_SETUP(array, size,    0, 0),
-    TXBM_SETUP(array, join,    1, 1),
-    TXBM_SETUP(array, reverse, 0, 0),
-    TXBM_SETUP(array, sort,    0, 1), /* can take a compare function */
-    TXBM_SETUP(array, map,     1, 1),
-    TXBM_SETUP(array, reduce,  1, 1),
+    TXBM_SETUP(array,  defined, 0, 0),
+    TXBM_SETUP(array,  size,    0, 0),
+    TXBM_SETUP(array,  join,    1, 1),
+    TXBM_SETUP(array,  reverse, 0, 0),
+    TXBM_SETUP(array,  sort,    0, 1), /* can take a compare function */
+    TXBM_SETUP(array,  map,     1, 1),
+    TXBM_SETUP(array,  reduce,  1, 1),
 
-    TXBM_SETUP(hash, defined,  0, 0),
-    TXBM_SETUP(hash, size,     0, 0),
-    TXBM_SETUP(hash, keys,     0, 0), /* TODO: can take a compare function */
-    TXBM_SETUP(hash, values,   0, 0), /* TODO: can take a compare function */
-    TXBM_SETUP(hash, kv,       0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash,   defined, 0, 0),
+    TXBM_SETUP(hash,   size,    0, 0),
+    TXBM_SETUP(hash,   keys,    0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash,   values,  0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash,   kv,      0, 0), /* TODO: can take a compare function */
 };
 
 static const size_t tx_num_builtin_method
@@ -468,7 +468,7 @@ tx_register_builtin_methods(pTHX_ HV* const hv) {
     assert(hv);
     for(i = 0; i < tx_num_builtin_method; i++) {
         const tx_builtin_method_t* const bm = &tx_builtin_method[i];
-        SV* const sv                 = *hv_fetch(hv, bm->name, strlen(bm->name), TRUE);
+        SV* const sv = *hv_fetch(hv, bm->name, strlen(bm->name), TRUE);
         if(!SvOK(sv)) { /* users can override it */
             sv_setiv(sv, i);
         }
