@@ -85,6 +85,15 @@ b=2
 c=3
 X
 
+    [<<'T', { h => { } }, <<'X', 'kv (empty)' ],
+<:
+    for $h.kv() -> $pair {
+        print $pair.key, "=", $pair.value, "\n";
+    }
+-:>
+T
+X
+
     [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'reversed kv (pairs as struct)' ],
 <:
     for $h.kv().reverse() -> $pair {

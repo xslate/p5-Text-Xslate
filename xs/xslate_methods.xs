@@ -60,36 +60,6 @@ tx_pair_cmp(pTHX_ SV* const a, SV* const b) {
 }
 
 static SV*
-tx_kv(pTHX_ SV* const hvref) {
-    dMY_CXT;
-    HV* const hv    = (HV*)SvRV(hvref);
-    AV* const av    = newAV();
-    SV* const avref = sv_2mortal(newRV_noinc((SV*)av));
-    HE* he;
-    I32 i;
-
-    assert(SvROK(hvref));
-    assert(SvTYPE(hv) == SVt_PVHV);
-
-    if(HvKEYS(hv) > 0) {
-        av_extend(av, HvKEYS(hv) - 1);
-    }
-
-    hv_iterinit(hv);
-    i = 0;
-    while((he = hv_iternext(hv))) {
-        SV* const pair = tx_make_pair(aTHX_ MY_CXT.pair_stash,
-            hv_iterkeysv(he),
-            hv_iterval(hv, he));
-
-        (void)av_store(av, i++, pair);
-        SvREFCNT_inc_simple_void_NN(pair);
-    }
-    sortsv(AvARRAY(av), i, tx_pair_cmp);
-    return avref;
-}
-
-static SV*
 tx_keys(pTHX_ SV* const hvref) {
     HV* const hv    = (HV*)SvRV(hvref);
     AV* const av    = newAV();
@@ -341,7 +311,37 @@ TXBM(hash, values) {
 }
 
 TXBM(hash, kv) {
-    sv_setsv(retval, tx_kv(aTHX_ *MARK));
+    dMY_CXT;
+    SV* const hvref = *MARK;
+    HV* const hv    = (HV*)SvRV(hvref);
+    AV* const av    = newAV();
+    SV* const avref = newRV_noinc((SV*)av);
+    HE* he;
+    I32 i;
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(avref);
+
+    if(HvKEYS(hv) > 0) {
+        av_extend(av, HvKEYS(hv) - 1);
+    }
+
+    hv_iterinit(hv);
+    i = 0;
+    while((he = hv_iternext(hv))) {
+        SV* const pair = tx_make_pair(aTHX_ MY_CXT.pair_stash,
+            hv_iterkeysv(he),
+            hv_iterval(hv, he));
+
+        (void)av_store(av, i++, pair);
+        SvREFCNT_inc_simple_void_NN(pair);
+    }
+    sortsv(AvARRAY(av), i, tx_pair_cmp);
+    sv_setsv(retval, avref);
+
+    FREETMPS;
+    LEAVE;
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
