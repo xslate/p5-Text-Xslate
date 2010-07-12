@@ -45,6 +45,7 @@ FillInForm
 uri
 CLI
 PSGI
+XSS
 
 # personal name
 lestrrat
@@ -58,3 +59,4 @@ makamaka
 Hannyaharamitu
 Maki
 Daisuke
+typester
