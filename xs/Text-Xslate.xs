@@ -859,9 +859,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     //PerlIO_stdoutf("load_template(%"SVf")\n", name);
 
-    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Invalid xslate instance: %s", tx_neat(aTHX_ self));
-    }
+    assert( SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV );
 
     hv = (HV*)SvRV(self);
 

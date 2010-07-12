@@ -202,7 +202,7 @@ sub find_file {
         if(ref $p eq 'HASH') {
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
-            $orig_mtime = '+inf'; # always fresh
+            $orig_mtime = 0; # always fresh
         }
         else {
             $fullpath = File::Spec->catfile($p, $file);
