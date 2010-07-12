@@ -374,7 +374,7 @@ sub _load_compiled {
             my $dep_mtime = (stat $value)[_ST_MTIME];
             if(!defined $dep_mtime) {
                 $dep_mtime = '+inf'; # force reload
-                Carp::carp("Xslate: failed to stat $value (ignored): $!");
+                Carp::carp("Xslate: Failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold_mtime){
                 printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",

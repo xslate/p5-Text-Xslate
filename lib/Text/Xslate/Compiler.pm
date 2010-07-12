@@ -262,7 +262,7 @@ sub compile {
         my %uniq;
         push @code,
             map  { [ depend => $_ ] }
-            grep { !$uniq{$_}++ } @{$self->dependencies};
+            grep { !ref($_) and !$uniq{$_}++ } @{$self->dependencies};
     }
 
     return \@code;
