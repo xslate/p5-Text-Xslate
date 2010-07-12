@@ -19,7 +19,6 @@ my $tx = Text::Xslate->new(
     cache_dir => "$Bin/template",
     cache     => 2,
 );
-$tx->load_string("Hello, <:= \$lang :> world!\n" x $n);
 
 my $vars = {
      books => [(
