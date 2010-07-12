@@ -1,12 +1,12 @@
 use strict;
 use Test::More (tests => 4);
 use File::Path ();
+use FindBin  qw($Bin);
 
 sub clean {
-    File::Path::rmtree( "t/600_app/out" );
+    File::Path::rmtree( $Bin . "/out" );
     File::Path::rmtree( ".cache" );
 }
-
 clean();
 END{
     clean();
@@ -14,20 +14,20 @@ END{
 
 system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
-    '--dest=t/600_app/out',
+    sprintf('--dest=%s/out', $Bin),
     '--cache_dir=.cache',
     '--verbose=1',
     '--escape=html',
-    '--cache=0',
-    't/600_app/simple/hello.tx'
+    '--cache=2',
+    sprintf('%s/simple/hello.tx', $Bin),
 ;
 
 is $?, 0, "command executed successfully";
 
-ok -f 't/600_app/out/hello.txt', 'correct file generated';
+ok -f sprintf('%s/out/hello.txt', $Bin), 'correct file generated';
 
 my $fh;
-ok open($fh, '<', 't/600_app/out/hello.txt'), 'file opened';
+ok open($fh, '<', sprintf('%s/out/hello.txt', $Bin)), 'file opened';
 
 my $content = do { local $/; <$fh> };
 
