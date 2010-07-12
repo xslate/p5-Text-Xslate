@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Text::Xslate qw(mark_raw);
-use HTML::Shakan;
+use HTML::Shakan 0.05;
 use Plack::Request;
 
 my %vpath = (

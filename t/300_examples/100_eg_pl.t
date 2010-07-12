@@ -45,7 +45,8 @@ EXAMPLE: while(defined(my $example = <example/*.pl>)) {
     foreach(1 .. 2) {
         my($out, $err) = perl($example);
 
-        if($err =~ /Can't locate /) { # ' for poor editors
+        if($err =~ /Can't locate / # ' for poor editors
+                or $err =~ /version \S+ required--this is only version /) {
             note("skip $example because: $err");
             next EXAMPLE;
         }

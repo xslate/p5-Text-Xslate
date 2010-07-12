@@ -1,15 +1,14 @@
 #!perl -w
 use strict;
 use Text::Xslate qw(mark_raw);
-BEGIN { eval { require HTML::FillInForm::Lite::Compat } }
-use HTML::FillInForm;
+use HTML::FillInForm::Lite 1.09;
 
 sub fillinform {
     my($q) = @_;
 
     return sub {
         my($html) = @_;
-        return mark_raw(HTML::FillInForm->fill(\$html, $q));
+        return mark_raw(HTML::FillInForm::Lite->fill(\$html, $q));
     };
 }
 
