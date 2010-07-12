@@ -27,7 +27,8 @@ EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
     my $app = do $example;
 
     if($@) {
-        if($@ =~ /Can't locate /) { # ' for poor editors
+        if($@ =~ /Can't locate / # ' for poor editors
+                or $@ =~ /version \S+ required--this is only version /) {
             note("skip $example because: $@");
         }
         else {
