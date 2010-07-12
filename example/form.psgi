@@ -4,9 +4,37 @@ use Text::Xslate qw(mark_raw);
 use HTML::Shakan;
 use Plack::Request;
 
+my %vpath = (
+    'form.tx' => <<'T',
+<!doctype html>
+<html>
+<head><title>Using Form Builder</title></head>
+<body>
+<form>
+<p>
+Form:<br />
+<: $form :>
+<input type="submit" />
+</p>
+: if $errors.size() > 0 {
+<p class="error">
+Errors (<: $errors.size() :>):<br />
+: for $errors -> $e {
+    <: $e :><br />
+: }
+</p>
+: }
+</form>
+</body>
+</html>
+T
+);
+
 my $tx  = Text::Xslate->new(
+    path         => \%vpath,
     verbose      => 2,
     warn_handler => \&Carp::croak,
+    cache        => 0,
 );
 
 {
@@ -39,33 +67,17 @@ return sub {
         @errors = $shakan->get_error_messages();
     }
 
-    my $res = $req->new_response(200);
+    my $res = $req->new_response(
+        200,
+        [ content_type => 'text/html; charset=utf8' ],
+    );
 
     my $form = mark_raw( $shakan->render() );
-    $res->body( $tx->render_string(<<'T', { form => $form, errors => \@errors }) );
-<!doctype html>
-<html>
-<head><title>Using Form Builder</title></head>
-<body>
-<form>
-<p>
-Form:<br />
-<: $form :>
-<input type="submit" />
-</p>
-: if $errors.size() > 0 {
-<p class="error">
-Errors (<: $errors.size() :>):<br />
-: for $errors -> $e {
-    <: $e :><br />
-: }
-</p>
-: }
-</form>
-</body>
-</html>
-T
-
+    my $body = $tx->render('form.tx', { form => $form, errors => \@errors });
+    utf8::encode($body);
+    $res->body( $body );
     return $res->finalize();
 
-}
+};
+
+

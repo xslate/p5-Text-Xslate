@@ -8,15 +8,6 @@ use Test::More;
 use HTTP::Request;
 use Plack::Test;
 
-sub psgi {
-    my($file) = @_;
-    my $app = do $file;
-    my $err = $@;
-
-    die;
-#    return($out, $err);
-}
-
 unlink <example/*.txc>;
 
 EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
@@ -57,7 +48,5 @@ EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
         ;
     }
 }
-
-unlink <example/*.txc>;
 
 done_testing;
