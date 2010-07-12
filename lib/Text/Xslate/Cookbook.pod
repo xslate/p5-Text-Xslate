@@ -38,7 +38,7 @@ Example code using C<HTML::FillInForm>:
         return sub {
             my($html) = @_;
             # do mark_raw() here, not in templates
-            return mark_raw(HTML::FillInForm->fill(\$html, $q));
+            return mark_raw(HTML::FillInForm->fill(\unmark_raw($html), $q));
         };
     }
 

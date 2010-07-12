@@ -1,6 +1,6 @@
 #!perl -w
 use strict;
-use Text::Xslate qw(mark_raw);
+use Text::Xslate qw(mark_raw unmark_raw);
 use HTML::FillInForm::Lite 1.09;
 
 sub fillinform {
@@ -8,7 +8,7 @@ sub fillinform {
 
     return sub {
         my($html) = @_;
-        return mark_raw(HTML::FillInForm::Lite->fill(\$html, $q));
+        return mark_raw(HTML::FillInForm::Lite->fill(\unmark_raw($html), $q));
     };
 }
 
