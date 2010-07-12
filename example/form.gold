@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head><title>Using Form Builder</title></head>
+<body>
+<form>
+<p>
+Form:<br />
+<label for="id_name">name: </label><input id="id_name" name="name" type="text" value="foo" /><label for="id_email">email: </label><input id="id_email" name="email" type="text" value="bar@example.com" />
+<input type="submit" />
+</p>
+</form>
+</body>
+</html>

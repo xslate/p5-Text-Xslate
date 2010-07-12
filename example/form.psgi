@@ -27,7 +27,7 @@ my $tx  = Text::Xslate->new(
     );
 }
 
-sub app {
+return sub {
     my($env) = @_;
     my $req  = Plack::Request->new($env);
 
@@ -69,5 +69,3 @@ T
     return $res->finalize();
 
 }
-
-return \&app;

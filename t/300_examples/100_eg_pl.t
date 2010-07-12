@@ -4,7 +4,6 @@
 use strict;
 use Test::More;
 
-use Text::Xslate;
 use IPC::Open3 qw(open3);
 
 sub perl {

@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head>
+<title>hello</title>
+</head>
+<body>
+<form><p>
+<input type="text" name="lang" />
+<input type="submit" />
+</p></form>
+<p>Hello, &lt;Xslate&gt; world!</p>
+</body>
+</html>

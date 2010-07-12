@@ -4,6 +4,7 @@ use strict;
 use Test::Requires { 'Plack' => 0.99 };
 use Test::More;
 
+use HTTP::Request;
 use Plack::Test;
 use Plack::Response;
 use Plack::Builder;
@@ -17,8 +18,6 @@ my $tx = Text::Xslate->new(
     path  => path,
     cache => 0,
 );
-
-$Plack::Test::Impl = 'MockHTTP';
 
 my $n = 2;
 
