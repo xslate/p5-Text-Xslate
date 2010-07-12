@@ -158,10 +158,11 @@ TXC_w_sv(print_raw_s) {
 }
 
 TXC(include) {
+    dMY_CXT;
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa);
 
     ENTER;
-    tx_execute(aTHX_ st, TX_st->output, TX_st->vars);
+    tx_execute(aTHX_ aMY_CXT_ st, TX_st->output, TX_st->vars);
     LEAVE;
 
     TX_RETURN_NEXT();

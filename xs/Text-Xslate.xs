@@ -128,7 +128,7 @@ static void
 tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr);
 
 static void
-tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv);
+tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name);
@@ -635,8 +635,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
 /* The virtual machine code interpreter */
 /* NOTE: tx_execute() must be surrounded in ENTER and LEAVE */
 static void
-tx_execute(pTHX_ tx_state_t* const base, SV* const output, HV* const hv) {
-    dMY_CXT;
+tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv) {
     tx_state_t st;
 
     StructCopy(base, &st, tx_state_t);
@@ -1248,7 +1247,7 @@ CODE:
     sv_grow(result, st->hint_size + TX_HINT_SIZE);
     SvPOK_on(result);
 
-    tx_execute(aTHX_ st, result, (HV*)SvRV(vars));
+    tx_execute(aTHX_ aMY_CXT_ st, result, (HV*)SvRV(vars));
 
     ST(0) = result;
 }
