@@ -785,7 +785,6 @@ static MGVTBL xslate_vtbl = { /* for identity */
 static void
 tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
     dSP;
-    dMY_CXT;
     ENTER;
     SAVETMPS;
 
@@ -800,6 +799,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
 
     call_method("load_file", G_EVAL | G_VOID);
     if(sv_true(ERRSV)){
+        dMY_CXT;
         SV* const msg = PL_diehook == MY_CXT.die_handler
             ? sv_2mortal(newRV_inc(sv_mortalcopy(ERRSV)))
             : ERRSV;
