@@ -95,6 +95,15 @@ T
     not=10
 X
 
+    [<<'T', { lang => 'Xslate' }, <<"X", "underbars"],
+: for { foo_bar => 10, _baz => 20 }.kv() -> $pair {
+    <: $pair.key :>=<: $pair.value :>
+: }
+T
+    _baz=20
+    foo_bar=10
+X
+
     [<<'T', { lang => 'Xslate' }, <<"X", "nested"],
 : for [ [1], [2], [3] ] -> $i {
     <: $i[0] :>

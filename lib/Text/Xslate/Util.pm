@@ -108,7 +108,7 @@ sub literal_to_value {
     elsif($value =~ s/'(.*)'/$1/xms) {
         $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
     }
-    else { # number
+    elsif($value =~ /\A ([+-]?) $NUMBER \z/xmso) {
         if($value =~ s/\A ([+-]?) (?= 0[0-7xb])//xms) {
             $value = ($1 eq '-' ? -1 : +1)
                 * oct($value); # also grok hex and binary

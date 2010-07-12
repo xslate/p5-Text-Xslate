@@ -18,7 +18,8 @@ my @set = (
     [ q{'Hello, world\r'},  q{Hello, world\r} ],
     [ q{'Hello, world\t'},  q{Hello, world\t} ],
 
-    [ q{foobar}, q{foobar} ],
+    [ q{foobar},  q{foobar} ],
+    [ q{foo_bar}, q{foo_bar} ],
 
     [ q{010},  010 ],
     [ q{0x10}, 0x10 ],
@@ -27,6 +28,10 @@ my @set = (
     [ q{-010},  -010 ],
     [ q{-0x10}, -0x10 ],
     [ q{-0b10}, -0b10 ],
+
+    [ q{+010},  +010 ],
+    [ q{+0x10}, +0x10 ],
+    [ q{+0b10}, +0b10 ],
 
     [ q{010_10},   010_10 ],
     [ q{0x10_10}, 0x10_10 ],
