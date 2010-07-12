@@ -75,11 +75,7 @@ sub neat {
 
 sub is_int {
     my($s) = @_;
-    my $i = do {
-        no warnings;
-        int($s);
-    };
-    return $s eq $i && $i !~ /[^-0-9]/;
+    return defined($s) && $s =~ /\A [+-]? [0-9]+ \z/xms;
 }
 
 sub any_in {
@@ -108,7 +104,7 @@ sub literal_to_value {
     elsif($value =~ s/'(.*)'/$1/xms) {
         $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
     }
-    elsif($value =~ /\A ([+-]?) $NUMBER \z/xmso) {
+    elsif($value =~ /\A [+-]? $NUMBER \z/xmso) {
         if($value =~ s/\A ([+-]?) (?= 0[0-7xb])//xms) {
             $value = ($1 eq '-' ? -1 : +1)
                 * oct($value); # also grok hex and binary
@@ -135,7 +131,7 @@ sub value_to_literal {
     my($value) = @_;
     return 'undef' if not defined $value;
 
-    if(is_int($value)){
+    if($value =~ /\A [+-]? $NUMBER \z/xmso){
         return $value;
     }
     else {
