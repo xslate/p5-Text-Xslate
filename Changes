@@ -1,5 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+0.1044
+    [BUG FIXES]
+    - Underscores in bare words (i.e. left-hand side of the operator '=>')
+      were accidentally removed.
+    - path => \%vpath did not work.
+
+    [NEW FESTURES]
+    - $array.reduce(-> $x, $y { ... }) method
+
 0.1043 Sat Jul 10 14:26:57 2010
     [BUG FIXES]
     - What Makefile.PL wrote for additional tests did not work on Win32
