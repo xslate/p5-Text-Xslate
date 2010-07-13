@@ -217,13 +217,7 @@ sub split :method {
                 }
             }
             else {
-                # calculate line number
-                my $orig_src = $_[0];
-                substr $orig_src, -length($_), length($_), '';
-                my $line = ($orig_src =~ tr/\n/\n/);
-                $parser->_error("Malformed templates detected",
-                    neat((split /\n/, $_)[0]), ++$line,
-                );
+                last; # the end tag is not found
             }
         }
         # not $in_tag
@@ -244,6 +238,16 @@ sub split :method {
         else {
             confess "Oops: Unreached code, near" . p($_);
         }
+    }
+
+    if($in_tag) {
+        # calculate line number
+        my $orig_src = $_[0];
+        substr $orig_src, -length($_), length($_), '';
+        my $line = ($orig_src =~ tr/\n/\n/);
+        $parser->_error("Malformed templates detected",
+            neat((split /\n/, $_)[0]), ++$line,
+        );
     }
     #p(\@tokens);
     return \@tokens;

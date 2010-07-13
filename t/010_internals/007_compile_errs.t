@@ -91,6 +91,12 @@ like $@, qr/Malformed/;
 like $@, qr/"Xslate'/; # " for poor editors
 
 eval {
+    $tx->render_string('<:');
+}; # " for poor editors
+like $@, qr/Malformed/;
+like $@, qr/<:/;
+
+eval {
     $tx->render_string(<<'T');
 Hello, <: foo(42 :>
 T
