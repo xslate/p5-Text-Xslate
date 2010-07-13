@@ -1,5 +1,5 @@
 use strict;
-use Test::More (tests => 4);
+use Test::More (tests => 8);
 use File::Path ();
 use FindBin  qw($Bin);
 
@@ -17,12 +17,13 @@ system $^X, (map { "-I$_" } @INC), "script/xslate",
     sprintf('--dest=%s/out', $Bin),
     '--cache_dir=.cache',
     '--verbose=1',
-    '--escape=html',
     '--cache=2',
     sprintf('%s/simple/hello.tx', $Bin),
 ;
 
-is $?, 0, "command executed successfully";
+is $?, 0, "command executed successfully (1)";
+
+ok -d '.cache', 'cache directry created';
 
 ok -f sprintf('%s/out/hello.txt', $Bin), 'correct file generated';
 
@@ -32,3 +33,20 @@ ok open($fh, '<', sprintf('%s/out/hello.txt', $Bin)), 'file opened';
 my $content = do { local $/; <$fh> };
 
 like $content, qr/Hello, Perl world!/;
+
+system $^X, (map { "-I$_" } @INC), "script/xslate",
+    '--suffix', 'tx=txt',
+    sprintf('--dest=%s/out', $Bin),
+    '--cache_dir=.cache',
+    '--define=lang=Xslate',
+    '--cache=2',
+    sprintf('%s/simple/hello.tx', $Bin),
+;
+
+is $?, 0, "command executed successfully (2)";
+
+ok open($fh, '<', sprintf('%s/out/hello.txt', $Bin)), 'file opened';
+
+my $content = do { local $/; <$fh> };
+
+like $content, qr/Hello, Xslate world!/;

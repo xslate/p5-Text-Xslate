@@ -230,7 +230,7 @@ sub process_file {
     my ($self, $xslate, $file) = @_;
 
     if ( my $ignore = $self->ignore ) {
-        if ($file =~ /$ignore/) {
+        if ($file =~ $ignore) {
             return;
         }
     }

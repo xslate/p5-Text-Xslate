@@ -1,5 +1,5 @@
 use strict;
-use Test::More (tests => 7);
+use Test::More (tests => 8);
 use File::Path ();
 use FindBin qw($Bin);
 
@@ -17,6 +17,7 @@ system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
     '--cache_dir=.cache',
     '--dest=.tree_out',
+    '--ignore=dont_touch',
     "$Bin/simple",
 ;
 
@@ -37,6 +38,10 @@ if (is $?, 0, "command executed successfully") {
 
         my $content = do { local $/; <$fh> };
         like $content, qr/Goodbye, Cruel world!/;
+    }
+
+    {
+        ok  !-f '.tree_out/dont_touch.tx', '--ignore works';
     }
 }
 
