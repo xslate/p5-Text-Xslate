@@ -351,30 +351,35 @@ sub tx_load_template {
         Carp::croak( "Invalid xslate instance" );
     }
 
-    my $ttobj = $self->{ template };
+    my $ttable = $self->{ template };
     my $retried = 0;
 
-    unless ( $ttobj and  ref $ttobj eq 'HASH' ) {
+    if(ref $ttable ne 'HASH' ) {
         Carp::croak(
             sprintf( "Xslate: Cannot load template '%s': %s", $name, "template table is not a HASH reference" )
         );
     }
 
     RETRY:
-
     if( $retried > 1 ) {
         Carp::croak(
             sprintf( "Xslate: Cannot load template '%s': %s", $name, "retried reloading, but failed" )
         );
     }
 
-    unless ( $ttobj->{ $name } ) {
+    if ( not exists $ttable->{ $name } ) {
         $self->load_file( $name );
         $retried++;
         goto RETRY;
     }
 
-    my $tmpl = $ttobj->{ $name };
+    my $tmpl = $ttable->{ $name };
+
+    if(ref($tmpl) ne 'ARRAY' or not exists $self->{tmpl_st}{name}) {
+        Carp::croak(
+            sprintf( "Xslate: Cannot load template '%s': template entry is invalid", $name ),
+        );
+    }
 
     my $cache_mtime = $tmpl->[ TXo_MTIME ];
 
@@ -391,7 +396,7 @@ sub tx_load_template {
         goto RETRY;
     }
 
-    Carp::croak("Xslate: Cannot load template");
+    Carp::croak("Oops: Not reached");
 }
 
 
@@ -463,7 +468,7 @@ sub _error_handler {
         $str = Carp::shortmess($str);
     }
 
-    Carp::croak( $str ) unless $st;
+    Carp::croak( $str ) unless defined $st;
 
     my $engine = $st->engine;
 
