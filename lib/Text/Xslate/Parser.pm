@@ -18,17 +18,6 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-has identity_pattern => (
-    is  => 'ro',
-    isa => 'RegexpRef',
-
-    builder => '_build_identity_pattern',
-);
-
-sub _build_identity_pattern {
-    return qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
-}
-
 # Operator tokens that the parser recognizes.
 # All the single characters are tokanized as an operator.
 my $OPERATOR_TOKEN = sprintf '(?:%s|[^ \t\r\n])', join('|', map{ quotemeta } qw(
@@ -55,6 +44,18 @@ my $CHOMP_FLAGS = qr/-/xms; # should support [-=~+] like Template-Toolkit?
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
+
+has identity_pattern => (
+    is  => 'ro',
+    isa => 'RegexpRef',
+
+    builder  => '_build_identity_pattern',
+    init_arg => undef,
+);
+
+sub _build_identity_pattern {
+    return qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
+}
 
 has [qw(compiler engine)] => (
     is       => 'rw',
