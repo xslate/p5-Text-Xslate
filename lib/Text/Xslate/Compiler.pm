@@ -1328,10 +1328,13 @@ Text::Xslate::Compiler - The Xslate compiler
 
 =head1 DESCRIPTION
 
-This is the Xslate compiler to generate the virtual machine code from the abstract syntax tree.
+This is the Xslate compiler to generate the intermediate code from the
+abstract syntax tree that parsers build from templates.
 
 =head1 SEE ALSO
 
 L<Text::Xslate>
+
+L<Text::Xslate::Parser>
 
 =cut
