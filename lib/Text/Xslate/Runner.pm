@@ -1,7 +1,7 @@
 package Text::Xslate::Runner;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
-use Cwd ();
+
 use File::Spec     ();
 use File::Basename ();
 
@@ -110,7 +110,8 @@ has dest => (
     cmd_aliases   => [qw(o)],
     is            => 'ro',
     isa           => 'Str',
-    default       => Cwd::cwd(),
+    lazy          => 1,
+    default       => sub { require Cwd; Cwd::cwd() },
     traits        => $getopt_traits,
 );
 
