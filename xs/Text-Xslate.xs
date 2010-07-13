@@ -901,12 +901,12 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     }
 
     tmpl = (AV*)SvRV(sv);
-    mg   = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
-
     if(AvFILLp(tmpl) < (TXo_least_size-1)) {
-        why = form("template entry is broken (size:%d < %d)", AvFILLp(tmpl)+1, TXo_least_size);
+        why = form("template entry is broken (size: %d < %d)", AvFILLp(tmpl)+1, TXo_least_size);
         goto err;
     }
+
+    mg  = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
 
     /* check mtime */
 

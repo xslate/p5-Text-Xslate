@@ -24,7 +24,7 @@ for my $builtin qw(raw html dump) {
     like $@, qr/\b $builtin \b/xms;
 }
 
-my $tx = Text::Xslate->new();
+my $tx = Text::Xslate->new(cache => 0);
 
 eval {
     $tx->render(undef, []);
@@ -46,6 +46,28 @@ eval {
 };
 ok $@, '$txinstance->new()';
 
+# break internals to ensure robustness
+
+$tx->{template} = [];
+eval {
+    $tx->render('foo.tx');
+};
+like $@, qr/Cannot load template/;
+like $@, qr/\b foo\.tx \b/xms;
+
+$tx->{template} = { 'foo.tx' => undef };
+eval {
+    $tx->render('foo.tx');
+};
+like $@, qr/Cannot load template/;
+like $@, qr/\b foo\.tx \b/xms;
+
+$tx->{template} = { 'foo.tx' => [] };
+eval {
+    $tx->render('foo.tx');
+};
+like $@, qr/Cannot load template/;
+like $@, qr/\b foo\.tx \b/xms;
 
 # Type::Raw
 
