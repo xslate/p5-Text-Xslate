@@ -200,9 +200,8 @@ sub split :method {
     while($_) {
         if($in_tag) {
             if(s/$lex_tag_end//xms) {
-                $in_tag = 0;
-
                 my($code, $chomp) = ($1, $2);
+                $in_tag = 0;
 
                 push @tokens, [ code => $code ];
                 if($chomp) {
@@ -215,7 +214,7 @@ sub split :method {
                 substr $orig_src, -length($_), length($_), '';
                 my $line = ($orig_src =~ tr/\n/\n/);
                 $parser->_error("Malformed templates detected",
-                    p((split /\n/, $_)[0]), $line + 1,
+                    neat((split /\n/, $_)[0]), ++$line,
                 );
             }
         }
