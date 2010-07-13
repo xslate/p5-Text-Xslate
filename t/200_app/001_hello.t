@@ -47,6 +47,6 @@ is $?, 0, "command executed successfully (2)";
 
 ok open($fh, '<', sprintf('%s/out/hello.txt', $Bin)), 'file opened';
 
-my $content = do { local $/; <$fh> };
+$content = do { local $/; <$fh> };
 
 like $content, qr/Hello, Xslate world!/;
