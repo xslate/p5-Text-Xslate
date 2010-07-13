@@ -257,35 +257,55 @@ sub preprocess {
         my($type, $s) = @{ $tokens_ref->[$i] };
 
         if($type eq 'text') {
+            my $p;
+            my $has_nl = 0;
+
+            # postchomp
+            if($i >= 1
+                    and ($p = $tokens_ref->[$i-1])->[0] eq 'postchomp') {
+                # [ CODE ][*][ TEXT    ]
+                # <: ...  -:>  \nfoobar
+                #            ^^^^
+                $s =~ s/\A [ \t]* \n//xms;
+            }
+
+            # prechomp
+            if(($i+1) < @{$tokens_ref}
+                    and ($p = $tokens_ref->[$i+1])->[0] eq 'prechomp') {
+                if($s !~ / [^ \t] /xms) {
+                    #   HERE
+                    # [ TEXT ][*][ CODE ]
+                    #         <:- ...  :>
+                    # ^^^^^^^^
+                    $s = '';
+                }
+                else {
+                    #   HERE
+                    # [ TEXT ][*][ CODE ]
+                    #       \n<:- ...  :>
+                    #       ^^
+                    $has_nl += chomp $s;
+                }
+            }
+            elsif(($i+2) < @{$tokens_ref}
+                    and ($p = $tokens_ref->[$i+2])->[0] eq 'prechomp'
+                    and ($p = $tokens_ref->[$i+1])->[0] eq 'text'
+                    and $p->[1] !~ / [^ \t] /xms) {
+                #   HERE
+                # [ TEXT ][ TEXT ][*][ CODE ]
+                #       \n        <:- ...  :>
+                #       ^^^^^^^^^^
+                $p->[1] = '';
+                $has_nl += chomp $s;
+            }
+
             $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
 
-            # $s may have  single new line
-            my $nl = ($s =~ s/\n/\\n/xms);
-
-            my $p = $tokens_ref->[$i-1]; # pre-token
-            if(defined($p) && $p->[0] eq 'postchomp') {
-                # <: ... -:>  \nfoobar
-                #           ^^^^
-                $s =~ s/\A [ \t]* \\n//xms;
-            }
-
-            if($nl && defined($p = $tokens_ref->[$i+1])) {
-                if($p->[0] eq 'prechomp') {
-                    # \n  <:- ... -:>
-                    # ^^^^
-                    $s =~ s/\\n [ \t]* \z//xms;
-                }
-                elsif($p->[1] =~ /\A [ \t]+ \z/xms){
-                    my $nn = $tokens_ref->[$i+2];
-                    if(defined($nn) && $nn->[0] eq 'prechomp') {
-                        $p->[1] = '';               # chomp the next
-                        $s =~ s/\\n [ \t]* \z//xms; # chomp this
-                    }
-                }
-            }
+            # $s may have single new line
+            $has_nl += ($s =~ s/\n/\\n/xms);
 
             $code .= qq{print_raw "$s";} if length($s);
-            $code .= qq{\n} if $nl;
+            $code .= qq{\n} if $has_nl;
         }
         elsif($type eq 'code') {
             # shortcut commands
