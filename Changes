@@ -1,5 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+0.1045 Tue Jul 13 20:05:10 2010
+    [BUG FIXES]
+    - prechomp/postchomp ([%- ... -%]) was not completly comptible with TT2
+    - Line numbers were wrong if templates used prechomp/postchomp
+    - TTerse could not parse dynamic filters with FILTER blocks correctly
+
+    [NEW FEATURES]
+    - Text::Xslate::Runner as the guts of xslate(1)
+    - The __FILE__ and __LINE__ keywords for testing and debugging
+    - Now parsers can has its own identity pattern
+
 0.1044 Mon Jul 12 17:50:35 2010
     [BUG FIXES]
     - Underscores in bare words (i.e. left-hand side of the operator '=>')
