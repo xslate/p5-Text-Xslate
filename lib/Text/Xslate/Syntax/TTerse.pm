@@ -526,12 +526,7 @@ sub wrap {
 sub std_filter {
     my($parser, $symbol) = @_;
 
-    my $t = $parser->token;
-    if($t->arity ne 'name') {
-        $parser->_error("Expected filter name, not $t");
-    }
-    my $filter = $t->nud($parser);
-    $parser->advance();
+    my $filter = $parser->expression(0);
 
     my $proc = $parser->lambda($symbol);
 
@@ -541,7 +536,7 @@ sub std_filter {
 
     my $callmacro  = $parser->call($proc->first);
 
-    if($filter eq 'html') {
+    if($filter->id eq 'html') {
         # for compatibility with TT2
         $filter = 'unmark_raw';
     }

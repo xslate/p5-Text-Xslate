@@ -2,8 +2,24 @@
 use strict;
 use Test::More;
 
+BEGIN {
+    %t::lib::TTSimple::Func = (
+        indent => \&mk_indent,
+    );
+}
+
 use t::lib::TTSimple;
 use Text::Xslate::Util qw(p);
+
+sub mk_indent {
+    my($prefix) = @_;
+
+    return sub {
+        my($str) = @_;
+        $str =~ s/^/$prefix/xmsg;
+        return $str;
+    }
+}
 
 my @data = (
     [<<'T', <<'X'],
@@ -73,6 +89,18 @@ T
 <p>
 Hello, &lt;Xslate&gt; world!
 </p>
+X
+
+    [ <<'T', <<'X' ],
+[% FILTER indent("| ") -%]
+foo
+bar
+baz
+[% END -%]
+T
+| foo
+| bar
+| baz
 X
 
 );

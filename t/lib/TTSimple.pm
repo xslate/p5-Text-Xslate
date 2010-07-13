@@ -24,13 +24,17 @@ if(USE_TT) {
 else {
     require Text::Xslate;
     require Text::Xslate::Syntax::TTerse;
+
+    our %Func;
     $tt = Text::Xslate->new(
-            path      => [path],
-            cache_dir =>  path,
-            cache     =>  0,
-            syntax    => 'TTerse',
-            warn_handler => \&Carp::confess,
-            die_handler  => \&Carp::confess,
+        path      => [path],
+        cache_dir =>  path,
+        cache     =>  0,
+        syntax    => 'TTerse',
+        warn_handler => \&Carp::confess,
+        die_handler  => \&Carp::confess,
+
+        function  => \%Func,
     );
 }
 
