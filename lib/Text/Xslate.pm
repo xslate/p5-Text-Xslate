@@ -822,8 +822,8 @@ to use C<unmark_raw> to ensure expressions to be html-escaped.
 
 =head2 Application
 
-C<App::xslate> is provided as a CLI to the Text::Xslate module, which is
-used to process directory trees or evaluate one liners.
+The C<xslate(1)> command is provided as a CLI to the Text::Xslate module,
+which is used to process directory trees or to evaluate one liners.
 For example:
 
     $ xslate -D name=value -o dest_path src_path
