@@ -209,4 +209,14 @@ eval {
 };
 like $@, qr/\b foobar \b/xms;
 
+$tx = Text::Xslate->new(
+    syntax => 'TTerse',
+    cache  => 0,
+);
+
+eval {
+    $tx->render_string('[% $~foo %]');
+};
+like $@, qr/Expected a name/;
+
 done_testing;

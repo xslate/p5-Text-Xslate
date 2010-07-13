@@ -138,7 +138,7 @@ has arity => (
     lazy    => 1,
     default => 'name',
 
-    required => 0.
+    required => 0,
 );
 
 has assignment => (

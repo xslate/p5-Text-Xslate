@@ -18,7 +18,16 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $IDENT = qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
+has identity_pattern => (
+    is  => 'ro',
+    isa => 'RegexpRef',
+
+    builder => '_build_identity_pattern',
+);
+
+sub _build_identity_pattern {
+    return qr/(?: (?:[A-Za-z_]|\$\~?) [A-Za-z0-9_]* )/xms;
+}
 
 # Operator tokens that the parser recognizes.
 # All the single characters are tokanized as an operator.
@@ -394,18 +403,12 @@ sub _init_basic_symbols {
     $parser->symbol('(end)')->is_block_end(1); # EOF
 
     # prototypes of value symbols
-    my $s;
-    $s = $parser->symbol('(name)');
-    $s->arity('name');
-    $s->is_value(1);
-
-    $s = $parser->symbol('(variable)');
-    $s->arity('variable');
-    $s->is_value(1);
-
-    $s = $parser->symbol('(literal)');
-    $s->arity('literal');
-    $s->is_value(1);
+    foreach my $type qw(name variable literal) {
+        my $s = $parser->symbol("($type)");
+        $s->arity($type);
+        $s->set_nud( $parser->can("nud_$type") );
+        $s->is_value(1);
+    }
 
     # common separators
     $parser->symbol(';');
@@ -590,7 +593,8 @@ sub look_ahead {
     s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
     $parser->following_newline($i);
 
-    if(s/\A ($IDENT)//xmso){
+    my $id_rx = $parser->identity_pattern;
+    if(s/\A ($id_rx)//xms){
         return [ name => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
@@ -673,6 +677,25 @@ sub advance {
 sub parse_literal {
     my($parser, $literal) = @_;
     return literal_to_value($literal);
+}
+
+sub nud_name {
+    my($parser, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'name',
+    );
+}
+sub nud_variable {
+    my($parser, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'variable',
+    );
+}
+sub nud_literal {
+    my($parser, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'literal',
+    );
 }
 
 sub default_nud {
@@ -997,17 +1020,11 @@ sub binary {
     );
 }
 
-sub nud_name {
-    my($parser, $s) = @_;
-    return $s->clone(arity => 'name');
-}
-
 sub define_function {
     my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        my $s = $parser->symbol($name);
-        $s->set_nud(\&nud_name);
+        $parser->symbol($name)->set_nud(\&nud_name);
     }
     return;
 }

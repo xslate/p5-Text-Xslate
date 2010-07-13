@@ -375,7 +375,7 @@ sub tx_load_template {
 
     my $tmpl = $ttable->{ $name };
 
-    if(ref($tmpl) ne 'ARRAY' or not exists $self->{tmpl_st}{name}) {
+    if(ref($tmpl) ne 'ARRAY' or not exists $self->{tmpl_st}{$name}) {
         Carp::croak(
             sprintf( "Xslate: Cannot load template '%s': template entry is invalid", $name ),
         );
