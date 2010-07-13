@@ -98,10 +98,18 @@ has next_token => ( # to peek the next token
     init_arg => undef,
 );
 
-has [qw(following_newline statement_is_finished)] => (
+has statement_is_finished => (
     is  => 'rw',
     isa => 'Bool',
 
+    init_arg => undef,
+);
+
+has following_newline => (
+    is  => 'rw',
+    isa => 'Int',
+
+    default  => 0,
     init_arg => undef,
 );
 
@@ -266,7 +274,10 @@ sub preprocess {
                 # [ CODE ][*][ TEXT    ]
                 # <: ...  -:>  \nfoobar
                 #            ^^^^
-                $s =~ s/\A [ \t]* \n//xms;
+                $s =~ s/\A [ \t]* (\n)//xms;
+                if($1) {
+                    $has_nl++;
+                }
             }
 
             # prechomp
@@ -342,7 +353,7 @@ sub parse {
     my($parser, $input, %args) = @_;
 
     $parser->file( $args{file} || \$input );
-    $parser->line( $args{line} || 1 );
+    $parser->line(1);
     $parser->init_scope();
     $parser->in_given(0);
 
@@ -411,6 +422,10 @@ sub _init_basic_symbols {
     $parser->define_literal(nil   => undef);
     $parser->define_literal(true  => 1);
     $parser->define_literal(false => 0);
+
+    # special tokens
+    $parser->symbol('__FILE__')->set_nud(\&nud_current_file);
+    $parser->symbol('__LINE__')->set_nud(\&nud_current_line);
 
     return;
 }
@@ -569,13 +584,7 @@ sub look_ahead {
 
     my $i = 0;
     s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
-    if($i) {
-        $parser->following_newline(1);
-        $parser->line( $parser->line + $i );
-    }
-    else {
-        $parser->following_newline(0);
-    }
+    $parser->following_newline($i);
 
     if(s/\A ($IDENT)//xmso){
         return [ name => $1 ];
@@ -614,7 +623,8 @@ sub advance {
     if($t->[0] eq 'special') {
         return $parser->token( $symtab->{ $t->[1] } );
     }
-    $parser->statement_is_finished( $parser->following_newline );
+    $parser->statement_is_finished( $parser->following_newline != 0 );
+    $parser->line( $parser->line + $parser->following_newline );
 
     $parser->next_token( $parser->look_ahead() );
 
@@ -1202,6 +1212,23 @@ sub nud_lambda {
     return $symbol->clone(
         arity => 'lambda',
         first => $pointy,
+    );
+}
+
+sub nud_current_file {
+    my($self, $symbol) = @_;
+    my $file = $self->file;
+    return $symbol->clone(
+        arity => 'literal',
+        value => ref($file) ? '<string>' : $file,
+    );
+}
+
+sub nud_current_line {
+    my($self, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'literal',
+        value => $self->line,
     );
 }
 

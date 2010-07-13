@@ -204,4 +204,52 @@ like $warn, qr/\b Xslate \b/xms, 'error/bad_method.tx';
 like $warn, qr{\b error.bad_method.tx:5 \b}xms;
 like $warn, qr{\b foobar \b}xms;
 
+# __FILE__ and __LINE__ with TTerse
+$tx = Text::Xslate->new(syntax => 'TTerse');
+is $tx->render_string(<<'T'), <<'X', '__FILE__';
+    [% __FILE__ %]
+T
+    &lt;string&gt;
+X
+
+is $tx->render_string(<<'T'), <<'X', '__LINE__';
+    .
+    .
+    [% __LINE__ %]
+    .
+    .
+T
+    .
+    .
+    3
+    .
+    .
+X
+
+is $tx->render_string(<<'T'), <<'X', '__LINE__ with prechomp/postchomp';
+[% __LINE__ %]
+[% IF 1 -%]
+    [% __LINE__ %]
+[% END -%]
+[% __LINE__ %]
+T
+1
+    3
+5
+X
+
+is $tx->render_string(<<'T'), '123', '__LINE__ with prechomp/postchomp';
+[%- __LINE__ -%]
+[%- __LINE__ -%]
+[%- __LINE__ -%]
+T
+
+is $tx->render_string(<<'T'), '135', '__LINE__ with prechomp/postchomp';
+[%- __LINE__ -%]
+
+[%- __LINE__ -%]
+
+[%- __LINE__ -%]
+T
+
 done_testing;
