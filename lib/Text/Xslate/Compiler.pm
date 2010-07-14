@@ -56,6 +56,7 @@ my %binary = (
 
     '+|' => 'bitor',
     '+&' => 'bitand',
+    '+^' => 'bitxor',
 
     'min' => 'lt', # a < b ? a : b
     'max' => 'gt', # a > b ? a : b
@@ -75,6 +76,7 @@ my %unary = (
     'not' => 'not',
     '+'   => 'noop',
     '-'   => 'minus',
+    '+^'  => 'bitneg',
 
     'max_index' => 'max_index', # for loop context vars
 );

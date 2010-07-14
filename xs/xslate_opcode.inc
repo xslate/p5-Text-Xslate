@@ -276,16 +276,29 @@ TXC_w_sv(concat) {
 }
 
 TXC(bitor) {
-    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) | SvIVx(TX_st_sa));
+    sv_setuv(TX_st->targ, SvUVx(TX_st_sb) | SvUVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_RETURN_NEXT();
 }
 
 TXC(bitand) {
-    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) & SvIVx(TX_st_sa));
+    sv_setuv(TX_st->targ, SvUVx(TX_st_sb) & SvUVx(TX_st_sa));
     TX_st_sa = TX_st->targ;
     TX_RETURN_NEXT();
 }
+
+TXC(bitxor) {
+    sv_setuv(TX_st->targ, SvUVx(TX_st_sb) ^ SvUVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_RETURN_NEXT();
+}
+
+TXC(bitneg) {
+    sv_setuv(TX_st->targ, ~SvUVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_RETURN_NEXT();
+}
+
 
 
 TXC_goto(and) {
