@@ -33,6 +33,7 @@ my $OPERATOR_TOKEN = sprintf '(?:%s|[^ \t\r\n])', join('|', map{ quotemeta } qw(
     -> =>
     ::
     ++ --
+    +| +&
 ), ',');
 
 my %shortcut_table = (
@@ -476,6 +477,9 @@ sub init_basic_operators {
     $parser->infix('<=>', 150);
     $parser->infix('cmp', 150);
     $parser->infix('~~',  150);
+
+    $parser->infix('+&', 145);
+    $parser->infix('+|', 140);
 
     $parser->infix('|',  140, \&led_pipe);
 

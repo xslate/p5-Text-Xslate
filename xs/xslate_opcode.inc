@@ -275,6 +275,19 @@ TXC_w_sv(concat) {
     TX_RETURN_NEXT();
 }
 
+TXC(bitor) {
+    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) | SvIVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_RETURN_NEXT();
+}
+
+TXC(bitand) {
+    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) & SvIVx(TX_st_sa));
+    TX_st_sa = TX_st->targ;
+    TX_RETURN_NEXT();
+}
+
+
 TXC_goto(and) {
     if(sv_true(TX_st_sa)) {
         TX_RETURN_NEXT();

@@ -261,6 +261,17 @@ sub op_concat {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_bitor {
+    $_[0]->{sa} = $_[0]->{sb} | $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_bitand {
+    $_[0]->{sa} = $_[0]->{sb} & $_[0]->{sa};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+
 sub op_and {
     if ( $_[0]->{sa} ) {
         goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

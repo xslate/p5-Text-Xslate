@@ -67,6 +67,10 @@ my @data = (
     ['<: 30 min ($value0 != 0 ? 10 : 20) :>', 20 ],
     ['<: 30 max ($value0 == 0 ? 10 : 20) :>', 30 ],
     ['<: 30 max ($value0 != 0 ? 10 : 20) :>', 30 ],
+
+    # bitwise operators
+    ['<: 0x011 +| 0x100 :>', 0x111 ],
+    ['<: 0x011 +& 0x010 :>', 0x010 ],
 );
 
 foreach my $pair(@data) {

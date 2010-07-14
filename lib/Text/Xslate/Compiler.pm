@@ -54,6 +54,9 @@ my %binary = (
 
     '~'  => 'concat',
 
+    '+|' => 'bitor',
+    '+&' => 'bitand',
+
     'min' => 'lt', # a < b ? a : b
     'max' => 'gt', # a > b ? a : b
 
