@@ -400,6 +400,18 @@ $CODE_MANIP{ 'concat' } = sub {
 };
 
 
+$CODE_MANIP{ 'bitor' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s | %s )', $self->sb(), $self->sa() ) );
+};
+
+
+$CODE_MANIP{ 'bitand' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( %s & %s )', $self->sb(), $self->sa() ) );
+};
+
+
 $CODE_MANIP{ 'and' } = sub {
     my ( $self, $arg, $line ) = @_;
     return $self->_check_logic( and => $arg, $line );
