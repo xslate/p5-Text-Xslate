@@ -411,6 +411,17 @@ $CODE_MANIP{ 'bitand' } = sub {
     $self->sa( sprintf( '( int(%s) & int(%s) )', $self->sb(), $self->sa() ) );
 };
 
+$CODE_MANIP{ 'bitxor' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( int(%s) ^ int(%s) )', $self->sb(), $self->sa() ) );
+};
+
+
+$CODE_MANIP{ 'bitneg' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( '( ~int(%s) )', $self->sa() ) );
+};
+
 
 $CODE_MANIP{ 'and' } = sub {
     my ( $self, $arg, $line ) = @_;
