@@ -402,13 +402,13 @@ $CODE_MANIP{ 'concat' } = sub {
 
 $CODE_MANIP{ 'bitor' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s | %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( int(%s) | int(%s) )', $self->sb(), $self->sa() ) );
 };
 
 
 $CODE_MANIP{ 'bitand' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s & %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( '( int(%s) & int(%s) )', $self->sb(), $self->sa() ) );
 };
 
 
