@@ -105,6 +105,13 @@ Arithmetic operators (C<< + - * / % min max >>):
     : 10 min 20 min 30 # 10
     : 10 max 20 max 30 # 30
 
+Bitwise operators (C<< prefix:<+^> +& +| +^ >>)
+
+    : 0x1010 +| 0x3200 # bitwise or:  0x3210
+    : 0x1010 +& 0x3200 # bitwise and: 0x1000
+    : 0x1010 +^ 0x3200 # bitwise xor: 0x0210
+    : +~ 0x1010        # bitwise neg: 0xFFFFEFEF (on 32 bit system)
+
 Logical operators (C<< ! && || // not and or >>)
 
     : $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
@@ -114,13 +121,13 @@ String operators (C<< ~ >>)
 
     : "[" ~ $var ~ "]" # concatination
 
-Operator precedence is the same as Perl's:
+The operator precedence is very like Perl's:
 
     . () []
-    ! prefix<+> prefix<->
-    * / %
-    + - ~
-    prefix<defined>
+    ! prefix:<+> prefix:<-> prefix:<+^>
+    * / % +&
+    + - ~ +| +^
+    prefix:<defined>
     < <= > >=
     == !=
     |

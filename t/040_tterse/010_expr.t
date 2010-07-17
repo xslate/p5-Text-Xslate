@@ -12,6 +12,8 @@ my @data = (
 
     ['[% lang.defined()        ? "d" : "!d" %]' => 'd'],
     ['[% no_such_var.defined() ? "d" : "!d" %]' => '!d'],
+
+    ['[% 0x110 +& 0x101 %]', 0x100 ],
 );
 
 foreach my $pair(@data) {
