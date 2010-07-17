@@ -121,6 +121,7 @@ clean_files qw(
     Text-Xslate-*
     nytprof *.out
     cover_db
+    .xslate_cache
 );
 
 WriteAll(check_nmake => 0);
