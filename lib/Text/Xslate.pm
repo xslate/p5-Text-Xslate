@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1045';
+our $VERSION = '0.1046';
 
 use Carp       ();
 use File::Spec ();
@@ -481,7 +481,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1045.
+This document describes Text::Xslate version 0.1046.
 
 =head1 SYNOPSIS
 

@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1046 Sat Jul 17 18:48:14 2010
+    [NEW FEATURES]
+    - Add Perl6-like bitwise operators:
+        infix:<+|> for bitwise or
+        infix:<+&> for bitwise and
+        infix:<+^> for bitwise xor
+        prefix:<+^> for bitwise negate
+
 0.1045 Tue Jul 13 20:05:10 2010
     [BUG FIXES]
     - prechomp/postchomp ([%- ... -%]) was not completly comptible with TT2
