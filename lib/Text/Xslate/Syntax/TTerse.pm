@@ -821,6 +821,26 @@ FILTER blocks:
     Hello, <Xslate> world!
     [% END -%]
 
+=head1 CAVEAT
+
+There are some differences between TTerse and Template-Toolkit.
+
+=over
+
+=item *
+
+C<INCLUDE> of TTerse requires an expression for the file name, while
+that of Template-Toolkit allows a bare token:
+
+    [% INCLUDE  foo.tt  # doesn't work! %]
+    [% INCLUDE "foo.tt" # OK %]
+
+=item *
+
+C<FOREACH item = list> is forbidden in TTerse. It must be C<FOREACH item IN list>.
+
+=back
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
