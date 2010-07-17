@@ -168,14 +168,22 @@ sub led_dot {
 
     if($rhs_starts_dollar) { # var.$foo, var.${foo}
         $rhs = $parser->expression( $symbol->lbp );
-        return $parser->binary("[", $left, $rhs);
+        return $symbol->clone(
+            arity  => "field",
+            first  => $left,
+            second => $rhs,
+        );
     }
     else { # var.foo
         $rhs = $parser->token->clone( arity => 'literal' );
         $parser->advance();
     }
 
-    my $dot = $parser->binary($symbol, $left, $rhs);
+    my $dot = $symbol->clone(
+        arity  => "field",
+        first  => $left,
+        second => $rhs,
+    );
 
     my $t = $parser->token();
     if($t->id eq "(") { # foo.method()

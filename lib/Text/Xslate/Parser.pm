@@ -832,7 +832,11 @@ sub led_dot {
         $parser->_unexpected("a field name", $t);
     }
 
-    my $dot = $parser->binary($symbol, $left, $t->clone(arity => 'literal'));
+    my $dot = $symbol->clone(
+        arity  => "field",
+        first  => $left,
+        second => $t->clone(arity => 'literal'),
+    );
 
     $t = $parser->advance();
     if($t->id eq "(") {
@@ -845,10 +849,14 @@ sub led_dot {
     return $dot;
 }
 
-sub led_fetch {
+sub led_fetch { # $h[$field]
     my($parser, $symbol, $left) = @_;
 
-    my $fetch = $parser->binary($symbol, $left, $parser->expression(0));
+    my $fetch = $symbol->clone(
+        arity  => "field",
+        first  => $left,
+        second => $parser->expression(0),
+    );
     $parser->advance("]");
     return $fetch;
 }

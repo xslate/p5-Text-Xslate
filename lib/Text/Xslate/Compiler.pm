@@ -936,27 +936,40 @@ sub _generate_unary {
     }
 }
 
+sub _generate_field {
+    my($self, $node) = @_;
+
+    my @lhs   = $self->_expr($node->first);
+    my $field = $node->second;
+
+    if($field->arity eq "literal" && $field->id ne "nil") {
+        # $foo[literal]
+        return
+            @lhs,
+            $self->opcode( fetch_field_s => $field->value );
+    }
+    else {
+        # $foo[expression]
+        local $self->{lvar_id} = $self->lvar_use(1);
+        my @rhs = $self->_expr($field);
+        return
+            @lhs,
+            $self->opcode( save_to_lvar => $self->lvar_id ),
+            @rhs,
+            $self->opcode( load_lvar_to_sb => $self->lvar_id ),
+            $self->opcode( 'fetch_field' ),
+        ;
+    }
+
+}
+
 sub _generate_binary {
     my($self, $node) = @_;
 
     my @lhs = $self->_expr($node->first);
 
     my $id = $node->id;
-    if($id eq '.') {
-        return
-            @lhs,
-            $self->opcode( fetch_field_s => $node->second->id );
-    }
-    elsif(exists $binary{$id}) {
-        if($id eq "["
-                and $node->second->arity eq "literal"
-                and $node->second->id    ne "nil") {
-            # $foo[literal]
-            return
-                @lhs,
-                $self->opcode( fetch_field_s => $node->second->value );
-        }
-
+    if(exists $binary{$id}) {
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($node->second);
         my @code = (
