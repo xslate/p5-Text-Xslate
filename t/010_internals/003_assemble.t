@@ -1,5 +1,5 @@
 #!perl -w
-# The purpose of this test is to detect whether _assemble() ends successfully.
+# The purpose of this test is to ensure that _assemble() ends successfully.
 
 use strict;
 use Test::More tests => 4;
