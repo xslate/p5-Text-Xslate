@@ -209,6 +209,14 @@ eval {
 };
 like $@, qr/\b foobar \b/xms;
 
+
+eval {
+    $tx->render_string('<: + :>');
+};
+like   $@, qr/Invalid expression/;
+unlike $@, qr/oops/i;
+
+
 $tx = Text::Xslate->new(
     syntax => 'TTerse',
     cache  => 0,
