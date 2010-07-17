@@ -1099,7 +1099,10 @@ CODE:
                     st.code[i].u_arg.sv = newSVpvn_share(pv, len, 0U);
                 }
                 else if(tx_oparg[opnum] & TXARGf_INT) { /* sviv */
-                    st.code[i].u_arg.sv = newSViv(SvIV(*arg));
+                    NV const nv = SvNV(*arg);
+                    st.code[i].u_arg.sv = nv >= 0
+                        ? newSVuv(SvUV(*arg))
+                        : newSViv(SvIV(*arg));
                 }
                 else { /* normal sv */
                     st.code[i].u_arg.sv = newSVsv(*arg);
