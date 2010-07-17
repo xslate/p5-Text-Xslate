@@ -265,16 +265,16 @@ X
 
 );
 
+my %vars = (
+    lang => 'Xslate',
+    void => '',
+
+    value => 10,
+);
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
 
-    my %vars = (
-        lang => 'Xslate',
-        void => '',
-
-        value => 10,
-    );
-    is $tx->render_string($in, \%vars), $out, $msg or diag($in);
+    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 
 done_testing;

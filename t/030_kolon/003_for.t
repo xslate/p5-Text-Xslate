@@ -305,21 +305,28 @@ X
 
 );
 
+my %vars = (
+    lang => 'Xslate',
+
+    types => [qw(Str Int Object)],
+
+    Types => [{ name => 'Void' }, { name => 'Bool' }],
+
+    empty => [],
+
+    data => [[qw(Perl)]],
+);
+
 foreach my $pair(@data) {
     my($in, $out, $msg) = @$pair;
 
-    my %vars = (
-        lang => 'Xslate',
+    is $tx->render_string($in, \%vars), $out, $msg or do {
+        diag($in);
 
-        types => [qw(Str Int Object)],
-
-        Types => [{ name => 'Void' }, { name => 'Bool' }],
-
-        empty => [],
-
-        data => [[qw(Perl)]],
-    );
-    is $tx->render_string($in, \%vars), $out, $msg or diag $in;
+        my $code = $tx->compile($in);
+        diag("// assembly");
+        diag($tx->_compiler->as_assembly($code));
+    };
 }
 
 done_testing;
