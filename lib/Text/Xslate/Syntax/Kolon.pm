@@ -110,7 +110,7 @@ Bitwise operators (C<< prefix:<+^> +& +| +^ >>)
     : 0x1010 +| 0x3200 # bitwise or:  0x3210
     : 0x1010 +& 0x3200 # bitwise and: 0x1000
     : 0x1010 +^ 0x3200 # bitwise xor: 0x0210
-    : +~ 0x1010        # bitwise neg: 0xFFFFEFEF (on 32 bit system)
+    : +^0x1010         # bitwise neg: 0xFFFFEFEF (on 32 bit system)
 
 Logical operators (C<< ! && || // not and or >>)
 
