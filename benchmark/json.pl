@@ -13,14 +13,21 @@ foreach my $mod(qw(Text::Xslate JSON::XS)){
 
 my $n = shift(@ARGV) || 10;
 
-my $tx = Text::Xslate->new();
-$tx->load_string(<<'TX_END');
+my %vpath = (
+    json => <<'TX',
 <ul>
 : for $books ->($item) {
     <li><:= $item.title :> (<: $item.author :>)</li>
 : }
 </ul>
-TX_END
+TX
+);
+
+my $tx = Text::Xslate->new(
+    path      => \%vpath,
+    cache_dir => '.xslate_cache',
+    cache     => 2,
+);
 
 my $json = JSON::XS->new();
 
@@ -40,13 +47,13 @@ my %vars = (
 );
 
 if(0) {
-    print $tx->render(undef, \%vars);
+    print $tx->render(json => \%vars);
     print $json->encode(\%vars);
 }
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = $tx->render(undef, \%vars);
+        my $body = $tx->render(json => \%vars);
         return;
     },
     json => sub {

@@ -13,13 +13,20 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 }
 my $n = shift(@ARGV) || 10;
 
-my $tx = Text::Xslate->new();
-$tx->load_string(<<'TX');
+my %vpath = (
+    fib => <<'TX',
 : macro fib -> $n {
 :     $n <= 1 ? 1 : fib($n - 1) + fib($n - 2);
 : }
 : fib($x);
 TX
+);
+
+my $tx = Text::Xslate->new(
+    path      => \%vpath,
+    cache_dir => '.xslate_cache',
+    cache     => 2,
+);
 
 my $mt = build_mt(<<'MT');
 ? sub fib {
@@ -37,14 +44,14 @@ my $vars = {
     plan tests => 1;
     my $out = $mt->($vars);
     chomp $out;
-    is $out, $tx->render(undef, $vars), 'MT'
+    is $out, $tx->render(fib => $vars), 'MT'
         or die;
 }
 # suppose PSGI response body
-print "fib($n) = ", $tx->render(undef, $vars), "\n";
+print "fib($n) = ", $tx->render(fib => $vars), "\n";
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$tx->render(undef, $vars)];
+        my $body = [$tx->render(fib => $vars)];
         return;
     },
     mt => sub {

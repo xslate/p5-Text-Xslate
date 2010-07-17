@@ -14,8 +14,15 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 100;
 
-my $tx = Text::Xslate->new();
-$tx->load_string("Hello, <:=  \$value == 42 ? 'Xslate' : 'unlikely' :> world!\n" x $n);
+my %vpath = (
+    expr_eq => "Hello, <:=  \$value == 42 ? 'Xslate' : 'unlikely' :> world!\n" x $n,
+);
+
+my $tx = Text::Xslate->new(
+    path      => \%vpath,
+    cache_dir => '.xslate_cache',
+    cache     => 2,
+);
 
 my $mt = build_mt(qq{Hello, <?= \$_[0]->{value} == 42 ? 'Xslate' : 'unlikely' ?> world!\n} x $n);
 
@@ -27,17 +34,18 @@ my $vars = {
 
 {
     plan tests => 2;
-    is $mt->($vars), $tx->render(undef, $vars), 'MT';
+    my $expected = $tx->render(expr_eq => $vars);
+    is $mt->($vars), $expected, 'MT';
 
     my $body = [$subst_tmpl];
     $body->[0] =~ s/%(\w+)%/ $vars->{$1} == 42 ? 'Xslate' : 'unlikely' /eg;
-    is $body->[0], $tx->render(undef, $vars), 's///g';
+    is $body->[0], $expected, 's///g';
 }
 # suppose PSGI response body
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$tx->render(undef, $vars)];
+        my $body = [$tx->render(expr_eq => $vars)];
         return;
     },
     mt => sub {

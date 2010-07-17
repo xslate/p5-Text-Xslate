@@ -14,12 +14,19 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 10;
 
-my $tx = Text::Xslate->new();
-$tx->load_string(<<'T' x $n);
+my %vpath = (
+    keys => <<'TX' x $n,
 : for $h.keys() -> $k {
 [<: $k :>]
 : }
-T
+TX
+);
+
+my $tx = Text::Xslate->new(
+    path      => \%vpath,
+    cache_dir => '.xslate_cache',
+    cache     => 2,
+);
 
 my $mt = build_mt(<<'T' x $n);
 ? for my $k(sort keys %{ $_[0]->{h} }) {
@@ -35,14 +42,14 @@ my $vars = {
 
 {
     plan tests => 1;
-    is $mt->($vars), $tx->render(undef, $vars), 'MT'
+    is $mt->($vars), $tx->render(keys => $vars), 'MT'
         or exit(1);
 }
-# suppose PSGI response body
 
+# suppose PSGI response body
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$tx->render(undef, $vars)];
+        my $body = [$tx->render(keys => $vars)];
         return;
     },
     mt => sub {

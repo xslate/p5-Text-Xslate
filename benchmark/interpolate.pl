@@ -13,8 +13,17 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
 
 my $n = shift(@ARGV) || 100;
 
-my $tx = Text::Xslate->new();
-$tx->load_string("Hello, <:= \$lang :> world!\n" x $n);
+my %vpath = (
+    interpolate => <<'TX' x $n,
+Hello, <:= $lang :> world!
+TX
+);
+
+my $tx = Text::Xslate->new(
+    path      => \%vpath,
+    cache_dir => '.xslate_cache',
+    cache     => 2,
+);
 
 my $mt = build_mt("Hello, <?= \$_[0]->{lang} ?> world!\n" x $n);
 
@@ -29,7 +38,7 @@ my $vars = {
 {
     use Test::More;
     plan tests => 3;
-    my $x = $tx->render(undef, $vars);
+    my $x = $tx->render(interpolate => $vars);
     is $mt->($vars), $x, 'Text::MicroTemplate';
     (my $o = $subst_tmpl) =~ s/%(\w+)%/$vars->{$1}/g;
     is $o, $x, 's///g';
@@ -40,7 +49,7 @@ my $vars = {
 
 cmpthese -1 => {
     xslate => sub {
-        my $body = [$tx->render(undef, $vars)];
+        my $body = [$tx->render(interpolate => $vars)];
         return;
     },
     TMT => sub {
