@@ -156,10 +156,16 @@ has parser => (
     is  => 'rw',
     isa => 'Object', # Text::Xslate::Parser
 
-    handles => [qw(file line define_function)],
+    handles => [qw(define_function)],
 
     lazy     => 1,
     builder  => '_build_parser',
+    init_arg => undef,
+);
+
+has file => (
+    is  => 'rw',
+
     init_arg => undef,
 );
 
@@ -206,7 +212,7 @@ sub lvar_use {
 
 sub filename {
     my($self) = @_;
-    my $file = $self->parser->file;
+    my $file = $self->file;
     return ref($file) ? '<string>' : $file;
 }
 
@@ -223,9 +229,9 @@ sub compile {
     local $self->{header}       = $self->{header};
     local $self->{footer}       = $self->{footer};
     local $self->{current_file} = '<string>'; # for opinfo
+    local $self->{file}         = $args{file} || \$input;
 
     my $parser = $self->parser;
-    local $parser->{file};
 
     my $header = delete $self->{header};
     my $footer = delete $self->{footer};

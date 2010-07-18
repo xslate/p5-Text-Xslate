@@ -367,15 +367,15 @@ sub preprocess {
 sub parse {
     my($parser, $input, %args) = @_;
 
-    $parser->file( $args{file} || \$input );
-    $parser->line(1);
-    $parser->init_scope();
-    $parser->in_given(0);
-
+    local $parser->{file}     = $args{file} || \$input;
+    local $parser->{line}     = $args{line} || 1;
+    local $parser->{in_given} = 0;
+    local $parser->{scope}        = [ map { +{ %{$_} } } @{ $parser->scope } ];
     local $parser->{symbol_table} = { %{ $parser->symbol_table } };
     local $parser->{near_token};
     local $parser->{next_token};
     local $parser->{token};
+    local $parser->{input};
 
     $parser->input( $parser->preprocess($input) );
 
