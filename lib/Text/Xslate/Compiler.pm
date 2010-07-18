@@ -958,6 +958,11 @@ sub _generate_field {
     else {
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($field);
+        if($OPTIMIZE and $self->_code_is_literal(@rhs)) {
+            return
+                @lhs,
+                $self->opcode( fetch_field_s => $rhs[0][1] );
+        }
         return
             @lhs,
             $self->opcode( save_to_lvar => $self->lvar_id ),
