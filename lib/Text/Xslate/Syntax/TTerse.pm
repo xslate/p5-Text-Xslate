@@ -162,41 +162,16 @@ sub is_valid_field {
 sub led_dot {
     my($parser, $symbol, $left) = @_;
 
-    my $rhs;
-
-    # var.foo
-    my $t = $parser->token;
-    if($t->id eq '$') {
-        $rhs = $parser->expression( $symbol->lbp );
+    # special case: foo.$field, foo.${expr}
+    if($parser->token->id eq '$') {
         return $symbol->clone(
             arity  => "field",
             first  => $left,
-            second => $rhs,
+            second => $parser->expression( $symbol->lbp ),
         );
     }
-    elsif($parser->is_valid_field($t)) {
-        $rhs = $t->clone( arity => 'literal' );
-        $parser->advance();
-    }
-    # # var.$foo, var.${foo}
-    else {
-        $parser->_unexpected("a name or variable", $t);
-    }
 
-    my $dot = $symbol->clone(
-        arity  => "field",
-        first  => $left,
-        second => $rhs,
-    );
-
-    $t = $parser->token();
-    if($t->id eq "(") { # foo.method()
-        $parser->advance(); # "("
-        $dot->third( $parser->expression_list() );
-        $parser->advance(")");
-        $dot->arity("methodcall");
-    }
-    return $dot;
+    return $parser->SUPER::led_dot($symbol, $left);
 }
 
 sub led_concat {

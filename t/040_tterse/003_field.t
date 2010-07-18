@@ -17,6 +17,7 @@ my @data = (
 
     ['[% var.$xyz %]',           'value'],
     ['[% var.${xyz} %]',         'value'],
+    ['[% var.${ xyz } %]',       'value'],
     ['[% var.${"attr"} %]',      'value'],
 
     # tterse specific features
