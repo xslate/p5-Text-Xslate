@@ -67,7 +67,8 @@ sub neat {
 
 sub is_int {
     my($s) = @_;
-    return defined($s) && $s =~ /\A [+-]? [0-9]+ \z/xms;
+    # XXX: '+1' must be interpreted as a string
+    return defined($s) && $s =~ /\A -? [0-9]+ \z/xms;
 }
 
 sub any_in {
@@ -123,7 +124,8 @@ sub value_to_literal {
     my($value) = @_;
     return 'undef' if not defined $value;
 
-    if($value =~ /\A [+-]? $NUMBER \z/xmso){
+    # XXX: '+1' must be interpreted as a string
+    if($value =~ /\A -? $NUMBER \z/xmso){
         return $value;
     }
     else {

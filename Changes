@@ -2,7 +2,8 @@ Revision history for Perl extension Text::Xslate
 
 0.1047
     [BUG FIXES]
-    - $foo.nil did not work
+    - $foo.nil did not work.
+    - "+10" was wongly converted into 10.
 
     [CHANGES]
     - Rename Text::Xslate->engine to Text::Xslate->current_engine
