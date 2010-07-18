@@ -50,14 +50,6 @@ sub unmark_raw;  # XS
 sub html_escape; # XS
 sub escaped_string; *escaped_string = \&mark_raw;
 
-sub Text::Xslate::EscapedString::new {
-    my($class, $str) = @_;
-    warnings::warnif(deprecated
-        => 'Text::Xslate::EscapedString->new has been deprecated. '
-         . 'Use Text::Xslate::Type::Raw->new instead.');
-    return Text::Xslate::Type::Raw->new($str);
-}
-
 sub neat {
     my($s) = @_;
     if ( defined $s ) {
