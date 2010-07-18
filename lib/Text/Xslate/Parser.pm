@@ -815,6 +815,7 @@ sub led_ternary {
 sub is_valid_field {
     my($parser, $token) = @_;
     my $arity = $token->arity;
+
     if($arity eq "name") {
         return 1;
     }
@@ -835,7 +836,7 @@ sub led_dot {
     my $dot = $symbol->clone(
         arity  => "field",
         first  => $left,
-        second => $t->clone(arity => 'literal'),
+        second => $t->clone(arity => 'word'),
     );
 
     $t = $parser->advance();
@@ -913,13 +914,18 @@ sub nud_prefix {
     return $un;
 }
 
+sub nil {
+    my($parser) = @_;
+    return $parser->symbol('nil')->nud($parser);
+}
+
 sub nud_defined {
     my($parser, $symbol) = @_;
     $parser->reserve( $symbol->clone() );
     return $parser->binary(
         '!=',
         $parser->expression($symbol->ubp),
-        $parser->symbol('nil'),
+        $parser->nil,
    );
 }
 
@@ -927,7 +933,8 @@ sub define_literal{
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
-    $symbol->arity('literal');
+    $symbol->arity('name');
+    $symbol->set_nud(\&nud_literal);
     $symbol->value($value);
     return $symbol;
 }
@@ -1560,7 +1567,7 @@ sub build_given_body {
             }
         }
         else { # default
-            $when->first( $parser->symbol('true') );
+            $when->first( $parser->symbol('true')->nud($parser) );
             $else = $when;
             next;
         }
@@ -1784,7 +1791,7 @@ sub iterator_peek_prev {
     return $parser->symbol('?')->clone(
         arity  => 'if',
         first  => $parser->iterator_is_first($iterator),
-        second => [$parser->symbol('nil')],
+        second => [$parser->nil],
         third  => [$parser->_iterator_peek($iterator, -1)],
     );
 }

@@ -948,14 +948,14 @@ sub _generate_field {
     my @lhs   = $self->_expr($node->first);
     my $field = $node->second;
 
-    if($field->arity eq "literal" && $field->id ne "nil") {
-        # $foo[literal]
+    # $foo.field
+    if($field->arity eq "word") {
         return
             @lhs,
-            $self->opcode( fetch_field_s => $field->value );
+            $self->opcode( fetch_field_s => $field->id );
     }
+    # $foo[expression]
     else {
-        # $foo[expression]
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->_expr($field);
         return

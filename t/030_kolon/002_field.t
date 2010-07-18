@@ -33,6 +33,12 @@ my @data = (
     ['<: constant foo   = "xxx"; $var[foo]   :>', "yyy"],
     ['<: constant field = "xxx"; $var[field] :>', "yyy"],
 
+    ['<: constant foo   = "xxx"; $var.foo   :>', "FOO"],
+    ['<: constant field = "xxx"; $var.field :>', "value"],
+
+    ['<: $var.if :>',  'IF'],
+    ['<: $var.nil :>', 'NIL'],
+
     ['<: $a :>', 'as_string'],
 );
 
@@ -47,7 +53,13 @@ my @data = (
 }
 
 my %vars = (
-    var => { field => 'value', xxx => 'yyy' },
+    var => {
+        foo   => 'FOO',
+        field => 'value',
+        xxx   => 'yyy',
+        if    => 'IF',
+        nil   => 'NIL',
+    },
 
     g => { f => { x => 'gfx' } },
     x => { f => { g => 'xfg' } },
