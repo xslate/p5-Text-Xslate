@@ -330,7 +330,7 @@ sub preprocess {
             # $s may have single new line
             $has_nl += ($s =~ s/\n/\\n/xms);
 
-            $code .= qq{print_raw "$s";} if length($s);
+            $code .= qq{print_raw "$s";}; # must set even if $s is empty
             $code .= qq{\n} if $has_nl;
         }
         elsif($type eq 'code') {
