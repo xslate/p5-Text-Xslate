@@ -753,11 +753,6 @@ I<\%vars> is optional.
 
 Note that I<$string> is never cached.
 
-=head3 B<< Text::Xslate->engine :XslateEngine >>
-
-Returns the Xslate engine while executing. Otherwise, returns C<undef>.
-This method is significant when it is called by template functions and methods.
-
 =head3 B<< $tx->load_file($file) :Void >>
 
 Loads I<$file> into memory for following C<render($file, \%vars)>.
@@ -781,6 +776,22 @@ Here is an example to to load all the templates which is in a given path:
     }, $path;
 
     # fork and render ...
+
+
+=head3 B<< Text::Xslate->current_engine :XslateEngine >>
+
+Returns the current Xslate engine while executing. Otherwise, returns C<undef>.
+This method is significant when it is called by template functions and methods.
+
+=head3 B<< Text::Xslate->current_file :XslateEngine >>
+
+Returns the current file name while executing. Otherwise, returns C<undef>.
+This method is significant when it is called by template functions and methods.
+
+=head3 B<< Text::Xslate->current_line :XslateEngine >>
+
+Returns the current line number while executing. Otherwise, returns C<undef>.
+This method is significant when it is called by template functions and methods.
 
 =head2 Exportable functions
 

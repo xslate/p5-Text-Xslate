@@ -95,8 +95,20 @@ sub render {
     return tx_execute( $st, $vars );
 }
 
-sub engine {
+sub current_engine {
     return defined($_current_st) ? $_current_st->engine : undef;
+}
+
+sub current_file {
+    return defined($_current_st)
+        ? $_current_st->code->[ $_current_st->{ pc } ]->{file}
+        : undef;
+}
+
+sub current_line {
+    return defined($_current_st)
+        ? $_current_st->code->[ $_current_st->{ pc } ]->{line}
+        : undef;
 }
 
 sub _assemble {

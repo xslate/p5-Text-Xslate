@@ -11,7 +11,9 @@ my %funcs = (
     foo     => sub{ "<foo>" },
     em      => sub{ mark_raw("<em>@_</em>") },
 
-    engine  => sub{ ref(Text::Xslate->engine) },
+    engine  => sub{ ref(Text::Xslate->current_engine) },
+    file    => sub{ Text::Xslate->current_file },
+    line    => sub{ Text::Xslate->current_line },
 );
 my $tx = Text::Xslate->new(
     function => \%funcs,
@@ -81,6 +83,22 @@ my @set = (
         {  },
         "Hello, Text::Xslate world!",
     ],
+
+    [
+        q{<: file() :>},
+        {},
+        '&lt;string&gt;',
+    ],
+    [
+        q{<: line() :>},
+        {},
+        '1',
+    ],
+    [
+        qq{\n\n<: line() :>\n\n<: line() :>},
+        {},
+        qq{\n\n3\n\n5},
+    ],
 );
 
 foreach my $d(@set) {
@@ -88,6 +106,8 @@ foreach my $d(@set) {
     is $tx->render_string($in, $vars), $out or diag $in;
 }
 
-is(Text::Xslate->engine, undef);
+is(Text::Xslate->current_engine, undef);
+is(Text::Xslate->current_file,   undef);
+is(Text::Xslate->current_line,   undef);
 
 done_testing;

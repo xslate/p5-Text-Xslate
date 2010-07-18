@@ -1254,13 +1254,32 @@ CODE:
 }
 
 void
-engine(klass)
+current_engine(klass)
 CODE:
 {
     dMY_CXT;
     tx_state_t* const st = MY_CXT.current_st;
-    ST(0) = st ? st->engine : &PL_sv_undef;
+    SV* retval;
+    if(st) {
+        if(ix == 0) {
+            retval = st->engine;
+        }
+        else {
+            const tx_info_t* const info = &(st->info[ TX_PC2POS(st, st->pc) ]);
+            retval = (ix == 1)
+                ? info->file
+                : sv_2mortal(newSViv(info->line));
+        }
+    }
+    else {
+        retval = &PL_sv_undef;
+    }
+    ST(0) = retval;
 }
+ALIAS:
+    current_engine = 0
+    current_file   = 1
+    current_line   = 2
 
 void
 _warn(SV* msg)

@@ -1127,6 +1127,8 @@ sub call {
     my ( $st, $frame, $line, $method_call, $proc, @args ) = @_;
     my $ret;
 
+    $st->{ pc } = $line; # update the program counter
+
     if ( $method_call ) { # XXX: fetch() doesn't use methodcall for speed
         my $obj = shift @args;
 
