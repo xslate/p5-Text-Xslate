@@ -1,5 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+0.1047
+    [BUG FIXES]
+    - $foo.nil did not work
+
+    [CHANGES]
+    - Rename Text::Xslate->engine to Text::Xslate->current_engine
+    - Remove deprecated Text::Xslate::EscapedString->new
+
+    [NEW FEATURES]
+    - New methods: Text::Xslate->current_file and current_line
+
 0.1046 Sat Jul 17 18:48:14 2010
     [NEW FEATURES]
     - Add Perl6-like bitwise operators:
