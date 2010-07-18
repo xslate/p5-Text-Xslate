@@ -162,11 +162,11 @@ sub is_valid_field {
 sub led_dot {
     my($parser, $symbol, $left) = @_;
 
-    my $rhs_starts_dollar = ($parser->token->id =~ qr/\A \$/xms);
-
     my $rhs;
 
-    if($rhs_starts_dollar) { # var.$foo, var.${foo}
+    # var.foo
+    my $t = $parser->token;
+    if($t->id eq '$') {
         $rhs = $parser->expression( $symbol->lbp );
         return $symbol->clone(
             arity  => "field",
@@ -174,9 +174,13 @@ sub led_dot {
             second => $rhs,
         );
     }
-    else { # var.foo
-        $rhs = $parser->token->clone( arity => 'literal' );
+    elsif($parser->is_valid_field($t)) {
+        $rhs = $t->clone( arity => 'literal' );
         $parser->advance();
+    }
+    # # var.$foo, var.${foo}
+    else {
+        $parser->_unexpected("a name or variable", $t);
     }
 
     my $dot = $symbol->clone(
@@ -185,7 +189,7 @@ sub led_dot {
         second => $rhs,
     );
 
-    my $t = $parser->token();
+    $t = $parser->token();
     if($t->id eq "(") { # foo.method()
         $parser->advance(); # "("
         $dot->third( $parser->expression_list() );
