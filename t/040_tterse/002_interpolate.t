@@ -19,6 +19,10 @@ my @data = (
 
     ['[% $IF %]', 'This is IF' ],
     ['[% +IF %]', 'This is IF' ],
+
+    ['[% GET lang %]', 'Xslate'],
+    ['[% get lang %]', 'Xslate'],
+    ['[% get IF   %]', 'This is IF'],
 );
 
 my %vars = (

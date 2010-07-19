@@ -73,6 +73,8 @@ sub init_symbols {
     $parser->symbol('WITH');
     $parser->symbol('with');
 
+    $parser->symbol('GET')     ->set_std(\&std_get);
+    $parser->symbol('get')     ->set_std(\&std_get);
     $parser->symbol('SET')     ->set_std(\&std_set);
     $parser->symbol('set')     ->set_std(\&std_set);
     $parser->symbol('DEFAULT') ->set_std(\&std_set);
@@ -379,6 +381,16 @@ sub set_list {
     return \@args;
 }
 
+sub std_get {
+    my($parser, $symbol) = @_;
+
+    return $symbol->clone(
+        id    => 'print',
+        arity => 'command',
+        first => [ $parser->expression(0) ],
+   );
+}
+
 sub std_set {
     my($parser, $symbol) = @_;
 
@@ -592,6 +604,10 @@ Text::Xslate::Syntax::TTerse - An alternative syntax compatible with Template To
 TTerse is a subset of the Template-Toolkit 2 (and partially  3) syntax,
 using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
+Note that TTerse itself has few methods and filters while Template-Toolkit 2
+has a lot. See C<Text::Xslate::Bridge::*> modules which provide extra methods
+and filters if you want to use those features.
+
 (TODO: I should concentrate on the difference between Template-Toolkit 2 and
 TTerse)
 
@@ -608,6 +624,7 @@ Scalar access:
 
     [%  var %]
     [% $var %]
+    [% GET var # 'GET' is optional %]
 
 Field access:
 
