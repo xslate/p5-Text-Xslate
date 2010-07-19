@@ -605,8 +605,8 @@ TTerse is a subset of the Template-Toolkit 2 (and partially  3) syntax,
 using C<< [% ... %] >> tags and C<< %% ... >> line code.
 
 Note that TTerse itself has few methods and filters while Template-Toolkit 2
-has a lot. See C<Text::Xslate::Bridge::*> modules which provide extra methods
-and filters if you want to use those features.
+has a lot. See C<Text::Xslate::Bridge::*> modules on CPAN which provide extra
+methods and filters if you want to use those features.
 
 (TODO: I should concentrate on the difference between Template-Toolkit 2 and
 TTerse)
@@ -789,10 +789,9 @@ A few methods are supported in the Xslate core.
     %% h.values();
     %% h.kv();
 
-However, there is a bridge mechanism that allows you to use more methods.
-For example, Text::Xslate::Bridge::TT2 provides the TT2 pseudo
-methods (a.k.a virtual methods) for Xslate, which uses Template::VMethods
-implementation.
+However, there is a bridge mechanism that allows you to use external methods.
+For example, Text::Xslate::Bridge::TT2 provides the TT2 virtual methods for
+Xslate, which bridges Template::VMethods implementation.
 
     use Text::Xslate::Bridge::TT2;
 
@@ -819,7 +818,7 @@ DEFAULT statements as a syntactic sugar to C<< SET var = var // expr >>:
 
     [% DEFAULT lang = "TTerse" %]
 
-FILTER blocks:
+FILTER blocks to apply filters to text sections:
 
     [% FILTER html -%]
     Hello, <Xslate> world!
@@ -842,6 +841,15 @@ that of Template-Toolkit allows a bare token:
 =item *
 
 C<FOREACH item = list> is forbidden in TTerse. It must be C<FOREACH item IN list>.
+
+=item *
+
+The following directives are not supported:
+C<INSERT>, C<PROCESS>, C<BLOCK> as a named blocks, C<USE>,
+C<PERL>, C<RAWPERL>, C<TRY>, C<THROW>, C<NEXT>, C<LAST>,
+C<RETURN>, C<STOP>, C<CLEAR>, C<META>, C<TAGS>, and C<DEBUG>.
+
+Some might be supported in a future.
 
 =back
 
