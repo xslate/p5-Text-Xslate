@@ -130,7 +130,7 @@ L<Text::Xslate>
 
 L<Text::Xslate::Bridge::TT2>
 
-L<Text::Xslate::Bridge::TT2::Like>
+L<Text::Xslate::Bridge::TT2Like>
 
 L<Text::Xslate::Bridge::Alloy>
 

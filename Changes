@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.1047
+0.1047 Mon Jul 19 17:04:51 2010
     [BUG FIXES]
     - $foo.nil did not work.
     - "+10" was wongly converted into 10.
