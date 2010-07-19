@@ -24,6 +24,9 @@ my @data = (
 
     ['[% g["f"]["x"] %]', 'gfx', 'var["field"]', 1],
     ['[% var.${"at" _ "tr"} %]', 'value'],
+
+    ['[% var.nil %]',      'This is nil', 'keyword as a field'],
+    ['[% var.GET %]',      'This is GET', 'keyword as a field'],
 );
 
 {
@@ -41,7 +44,7 @@ foreach my $pair(@data) {
     last if $ENV{USE_TT} && $is_tterse_specific;
 
     my %vars = (
-        var => { attr => 'value' },
+        var => { attr => 'value', nil => 'This is nil', GET => 'This is GET' },
 
         g => { f => { x => 'gfx' } },
         x => { f => { g => 'xfg' } },
