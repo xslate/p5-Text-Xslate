@@ -266,7 +266,8 @@ C<< infix:<|> >> is also supported as a syntactic sugar to C<()>.
     : f(1, 2, 3) # with args
     : 42 | f     # the same as f(42)
 
-Functions are Perl's subroutines, so you can define dynamic functions:
+Functions are just Perl's subroutines, so you can define dynamic functions
+(a.k.a. dynamic filters), which is a subroutine that returns another subroutine:
 
     # code
     sub mk_indent {
@@ -284,8 +285,8 @@ Functions are Perl's subroutines, so you can define dynamic functions:
     );
 
     :# template
-    : $value | indent("> ")
-    : indent("> ")($value)
+    : $value | indent("> ") # Template-Toolkit like
+    : indent("> ")($value)  # This is also valid
 
 There are several builtin functions, which you cannot redefine:
 
