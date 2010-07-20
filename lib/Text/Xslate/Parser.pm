@@ -1132,7 +1132,7 @@ sub nud_brace {
     my $end = $symbol->id eq '{' ? '}' : ']';
     $parser->advance($end);
     return $symbol->clone(
-        arity => 'objectliteral',
+        arity => 'composer',
         first => $list,
     );
 }

@@ -910,7 +910,7 @@ sub _generate_literal {
     }
 }
 
-sub _generate_objectliteral {
+sub _generate_composer {
     my($self, $node) = @_;
 
     my $list = $node->first;
