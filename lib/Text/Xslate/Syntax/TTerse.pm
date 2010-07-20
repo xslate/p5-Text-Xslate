@@ -349,7 +349,7 @@ sub set_list {
         my $key = $parser->token;
 
         if(!(any_in($key->arity, qw(variable name))
-                && $parser->next_token->[1] eq "=")) {
+                && $parser->next_token_is("="))) {
             last;
         }
         $parser->advance();

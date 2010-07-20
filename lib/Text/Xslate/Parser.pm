@@ -623,6 +623,11 @@ sub look_ahead {
     }
 }
 
+sub next_token_is {
+    my($parser, $token) = @_;
+    return $parser->next_token->[1] eq $token;
+}
+
 sub advance {
     my($parser, $expect) = @_;
 
@@ -646,7 +651,7 @@ sub advance {
     $parser->next_token( $parser->look_ahead() );
 
     my($arity, $id) = @{$t};
-    if( $arity eq "name" && $parser->next_token->[1] eq "=>" ) {
+    if( $arity eq "name" && $parser->next_token_is("=>") ) {
         $arity = "literal";
     }
 
