@@ -665,7 +665,11 @@ sub advance {
         );
     }
     elsif($arity eq "operator") {
-        $symbol = $parser->symbol($id)->clone(
+        $symbol = $stash->{$id};
+        if(not defined $symbol) {
+            $parser->_error("Unknown operator '$id'");
+        }
+        $symbol = $symbol->clone(
             arity => $arity, # to make error messages clearer
         );
     }

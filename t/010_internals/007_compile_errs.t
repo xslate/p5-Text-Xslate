@@ -216,6 +216,10 @@ eval {
 like   $@, qr/Invalid expression/;
 unlike $@, qr/oops/i;
 
+eval {
+    $tx->render_string('<: \\ :>');
+};
+like   $@, qr/Unknown operator '\\'/;
 
 $tx = Text::Xslate->new(
     syntax => 'TTerse',
