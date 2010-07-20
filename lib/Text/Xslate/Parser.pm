@@ -504,7 +504,7 @@ sub init_basic_operators {
 
     $parser->make_alias('!'  => 'not')->ubp(70);
     $parser->make_alias('&&' => 'and')->lbp(60);
-    $parser->make_alias('||' => 'or') ->lbp(60);
+    $parser->make_alias('||' => 'or') ->lbp(50);
     return;
 }
 

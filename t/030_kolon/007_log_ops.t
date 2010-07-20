@@ -32,6 +32,36 @@ my @data = (
     ['<:= ($value10 != 10 || $value20 != 20) && 5 :>',  ''],
     ['<:= ($value10 != 10 || $value20 != 20) || 5 :>',  5],
 
+    # no parens
+    ['<:= $value10 == 10 && $value20 == 20 && 5 :>',  5],
+    ['<:= $value10 == 10 && $value20 != 20 && 5 :>',  ''],
+    ['<:= $value10 == 10 && $value20 == 20 || 5 :>',  1],
+    ['<:= $value10 == 10 && $value20 != 20 || 5 :>',  5],
+    ['<:= $value10 != 10 && $value20 != 20 && 5 :>',  ''],
+    ['<:= $value10 != 10 && $value20 != 20 || 5 :>',  5],
+
+    ['<:= $value10 == 10 || $value20 == 20 && 5 :>',  1],
+    ['<:= $value10 == 10 || $value20 != 20 && 5 :>',  1],
+    ['<:= $value10 == 10 || $value20 == 20 || 5 :>',  1],
+    ['<:= $value10 == 10 || $value20 != 20 || 5 :>',  1],
+    ['<:= $value10 != 10 || $value20 != 20 && 5 :>',  ''],
+    ['<:= $value10 != 10 || $value20 != 20 || 5 :>',  5],
+
+    ['<:= $value10 == 10 and $value20 == 20 and 5 :>',  5],
+    ['<:= $value10 == 10 and $value20 != 20 and 5 :>',  ''],
+    ['<:= $value10 == 10 and $value20 == 20 or  5 :>',  1],
+    ['<:= $value10 == 10 and $value20 != 20 or  5 :>',  5],
+    ['<:= $value10 != 10 and $value20 != 20 and 5 :>',  ''],
+    ['<:= $value10 != 10 and $value20 != 20 or  5 :>',  5],
+
+    ['<:= $value10 == 10 or  $value20 == 20 and 5 :>',  1],
+    ['<:= $value10 == 10 or  $value20 != 20 and 5 :>',  1],
+    ['<:= $value10 == 10 or  $value20 == 20 or  5 :>',  1],
+    ['<:= $value10 == 10 or  $value20 != 20 or  5 :>',  1],
+    ['<:= $value10 != 10 or  $value20 != 20 and 5 :>',  ''],
+    ['<:= $value10 != 10 or  $value20 != 20 or  5 :>',  5],
+
+
     ['<:= $value0  && 20 :>',  0 ],
     ['<:= $value10 && 20 :>', 20 ],
     ['<:= ""       && 20 :>', "" ],
@@ -87,14 +117,6 @@ my @data = (
          : $value0  == 30 ? 300
          :                  400 :>', 400 ],
 
-    [': macro foo ->($x) { $x.foo }
-    : foo( { foo => $value10 == 10 ? 100 : $value10 == 20 ? 200 : 300 } )',
-    '100'],
-
-    [': macro foo ->($x) { $x.foo }
-    : foo( { foo => $value20 == 10 ? 100 : $value20 == 20 ? 200 : 300 } )',
-    '200'],
-
     [': defined($value0)      ? 1 : 0', 1],
     [': defined($no_such_var) ? 1 : 0', 0],
     [': defined $value0       ? 1 : 0', 1],
@@ -119,6 +141,17 @@ foreach my $pair(@data) {
         value20 => 20,
     );
     is $tx->render_string($in, \%vars), $out or diag $in;
+
+    if(0) {
+        my $value0  = $vars{value0};
+        my $value10 = $vars{value10};
+        my $value20 = $vars{value20};
+        $in =~ s/\A <:=? (.+) :> \z/$1/xms;
+        $in =~ s/\A ://xms;
+        $in =~ s/\b nil \b/undef/xmsg;
+        no strict 'vars';
+        is eval($in), $out or diag $@, $in;
+    }
 }
 
 done_testing;

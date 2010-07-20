@@ -156,6 +156,16 @@ T
     <em>foo</em>
 X
 
+
+    [<<'T', { value10 => 10 }, '100'],
+: macro foo ->($x) { $x.foo }
+: foo( { foo => $value10 == 10 ? 100 : $value10 == 20 ? 200 : 300 } )
+T
+
+    [<<'T', { value20 => 20 }, '200'],
+: macro foo ->($x) { $x.foo }
+: foo( { foo => $value20 == 10 ? 100 : $value20 == 20 ? 200 : 300 } )
+T
 );
 
 foreach my $d(@set) {

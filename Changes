@@ -2,7 +2,7 @@ Revision history for Perl extension Text::Xslate
 
 0.1048
     [CHANGES]
-    - Internal refactoring
+    - Internal refactoring to make parsers faster
 
 0.1047 Mon Jul 19 17:04:51 2010
     [BUG FIXES]
