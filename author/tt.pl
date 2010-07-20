@@ -5,9 +5,9 @@ use Smart::Comments;
 
 my $t = Template->new();
 
-$t->process(\<<'T', {}, \my $x);
+$t->process(\<<'T', {}, \my $x) or die $t->error, "\n";
     A
-    [%- "[foo]" -%]
+    [%- component -%]
     B
 T
 ### $x

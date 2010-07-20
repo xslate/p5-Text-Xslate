@@ -97,6 +97,19 @@ sub init_symbols {
     $parser->symbol('FILTER')->set_std(\&std_filter);
     $parser->symbol('filter')->set_std(\&std_filter);
 
+    # not supported
+    my $nos = $parser->can('not_supported');
+    # directives
+    foreach my $keyword qw(
+            INSERT PROCESS PERL RAWPERL TRY THROW NEXT LAST RETURN
+            STOP CLEAR META TAGS DEBUG VIEW) {
+        $parser->symbol(   $keyword)->set_std($nos);
+        $parser->symbol(lc $keyword)->set_std($nos);
+    }
+
+    # not supported, but ignored (synonym to CALL)
+    $parser->symbol('USE')->set_std(\&std_call);
+    $parser->symbol('use')->set_std(\&std_call);
     return;
 }
 
@@ -824,7 +837,7 @@ FILTER blocks to apply filters to text sections:
     Hello, <Xslate> world!
     [% END -%]
 
-=head1 CAVEAT
+=head1 COMPATIBILITY
 
 There are some differences between TTerse and Template-Toolkit.
 
@@ -844,10 +857,31 @@ C<FOREACH item = list> is forbidden in TTerse. It must be C<FOREACH item IN list
 
 =item *
 
+TTerse does not support plugins (i.e. C<USE> directive), but grokes
+the C<USE> keyword as an alias to C<CALL>, so you could use some simple
+plugins which do not depend on the context object of Template-Toolkit.
+
+    use Template::Plugin::Math;
+    use Template::Plugin::String;
+
+    my $tt = Text::Xslate->new(...);
+
+    mt %vars = (
+        Math   => Template::Plugin::Math->new(),   # as a namespace
+        String => Template::Plugin::String->new(), # as a prototype
+    );
+    print $tt->render_string(<<'T', \%vars);
+    [% USE Math # does nothing actually, only for compatibility %]
+    [% USE String %]
+    [% Math.abs(-100)          # => 100 %]
+    [% String.new("foo").upper # => FOO %]
+
+=item *
+
 The following directives are not supported:
-C<INSERT>, C<PROCESS>, C<BLOCK> as a named blocks, C<USE>,
+C<INSERT>, C<PROCESS>, C<BLOCK> as a named blocks, C<USE> (but see above),
 C<PERL>, C<RAWPERL>, C<TRY>, C<THROW>, C<NEXT>, C<LAST>,
-C<RETURN>, C<STOP>, C<CLEAR>, C<META>, C<TAGS>, and C<DEBUG>.
+C<RETURN>, C<STOP>, C<CLEAR>, C<META>, C<TAGS>, C<DEBUG>, and C<VIEW>.
 
 Some might be supported in a future.
 

@@ -1844,6 +1844,11 @@ sub iterator_cycle {
 
 # utils
 
+sub not_supported {
+    my($parser, $symbol) = @_;
+    $parser->_error("'$symbol' is not supported");
+}
+
 sub _unexpected {
     my($parser, $expected, $got) = @_;
     if(defined($got) && $got ne ";") {
@@ -1858,10 +1863,10 @@ sub _error {
     my($parser, $message, $near, $line) = @_;
 
     $near ||= $parser->near_token || ";";
-    if($near ne ";") {
+    if($near ne ";" && $message !~ /\b \Q$near\E \b/xms) {
         $message .= ", near $near";
     }
-    die make_error($parser, $message . " while parsing templates",
+    die make_error($parser, $message . ", while parsing templates",
         $parser->file, $line || $parser->line);
 }
 
