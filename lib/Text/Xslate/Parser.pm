@@ -574,17 +574,16 @@ sub _build_iterator_element {
 
 
 sub symbol {
-    my($parser, $id, $bp) = @_;
+    my($parser, $id, $lbp) = @_;
 
     my $s = $parser->symbol_table->{$id};
     if(defined $s) {
-        if($bp && $bp >= $s->lbp) {
-            $s->lbp($bp);
+        if(defined $lbp) {
+            $s->lbp($lbp);
         }
     }
-    else {
-        $s = $parser->symbol_class->new(id => $id);
-        $s->lbp($bp) if $bp;
+    else { # create a new symbol
+        $s = $parser->symbol_class->new(id => $id, lbp => $lbp || 0);
         $parser->symbol_table->{$id} = $s;
     }
 
