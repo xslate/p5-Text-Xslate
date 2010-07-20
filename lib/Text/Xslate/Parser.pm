@@ -945,6 +945,7 @@ sub define_literal { # special literals
         value => $value,
     ) );
     $symbol->set_nud(\&nud_special);
+    $symbol->is_defined(1);
     return $symbol;
 }
 
