@@ -666,7 +666,7 @@ sub advance {
     }
     elsif($arity eq "operator") {
         $symbol = $parser->symbol($id)->clone(
-            arity => $arity,
+            arity => $arity, # to make error messages clearer
         );
     }
     else { # name
