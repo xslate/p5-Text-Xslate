@@ -33,7 +33,7 @@ sub init_symbols {
 
     $parser->init_basic_operators();
     $parser->symbol('$')->set_nud(\&nud_dollar);
-    $parser->infix('_', $parser->symbol('~')->lbp, \&led_concat);
+    $parser->make_alias('~' => '_');
     $parser->symbol('.')->set_led(\&led_dot); # redefine
 
     # defines both upper cased and lower cased
@@ -140,7 +140,6 @@ around advance => sub {
     return $super->($parser, $id);
 };
 
-
 sub default_nud {
     my($parser, $symbol) = @_;
     return $symbol->clone(
@@ -168,9 +167,11 @@ sub nud_dollar {
 }
 
 sub undefined_name {
-    my($parser) = @_;
+    my($parser, $name) = @_;
     # undefined names are always variables
-    return $parser->symbol_table->{'(variable)'};
+    return $parser->symbol_table->{'(variable)'}->clone(
+        id => $name,
+    );
 }
 
 sub is_valid_field {
@@ -208,7 +209,7 @@ sub led_assignment {
     $assign->is_statement(1);
 
     my $name = $assign->first;
-    if(not $parser->find($name->id)->is_defined) {
+    if(not $parser->find_or_create($name->id)->is_defined) {
         $parser->define($name);
         $assign->third('declare');
     }
@@ -433,7 +434,7 @@ sub std_set {
             second => $value,
         );
 
-        if(not $parser->find($name->id)->is_defined) {
+        if(not $parser->find_or_create($name->id)->is_defined) {
             $parser->define($name);
             $assign->third('declare');
         }

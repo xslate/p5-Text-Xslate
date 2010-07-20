@@ -576,7 +576,8 @@ sub _build_iterator_element {
 sub symbol {
     my($parser, $id, $lbp) = @_;
 
-    my $s = $parser->symbol_table->{$id};
+    my $stash = $parser->symbol_table;
+    my $s     = $stash->{$id};
     if(defined $s) {
         if(defined $lbp) {
             $s->lbp($lbp);
@@ -584,7 +585,7 @@ sub symbol {
     }
     else { # create a new symbol
         $s = $parser->symbol_class->new(id => $id, lbp => $lbp || 0);
-        $parser->symbol_table->{$id} = $s;
+        $stash->{$id} = $s;
     }
 
     return $s;
@@ -621,63 +622,54 @@ sub look_ahead {
 }
 
 sub advance {
-    my($parser, $id) = @_;
+    my($parser, $expect) = @_;
 
     my $t = $parser->token;
-    if(defined($id) && $t->id ne $id) {
-        $parser->_unexpected(neat($id), $t);
+    if(defined($expect) && $t->id ne $expect) {
+        $parser->_unexpected(neat($expect), $t);
     }
 
     $parser->near_token($t);
 
-    my $symtab = $parser->symbol_table;
+    my $stash = $parser->symbol_table;
 
     $t = $parser->next_token;
 
     if($t->[0] eq 'special') {
-        return $parser->token( $symtab->{ $t->[1] } );
+        return $parser->token( $stash->{ $t->[1] } );
     }
     $parser->statement_is_finished( $parser->following_newline != 0 );
-    $parser->line( $parser->line + $parser->following_newline );
+    my $line = $parser->line( $parser->line + $parser->following_newline );
 
     $parser->next_token( $parser->look_ahead() );
 
-    my($arity, $value) = @{$t};
-    my $proto;
-
+    my($arity, $id) = @{$t};
     if( $arity eq "name" && $parser->next_token->[1] eq "=>" ) {
         $arity = "literal";
     }
 
-    print STDOUT "[$arity => $value]\n" if _DUMP_TOKEN;
+    print STDOUT "[$arity => $id]\n" if _DUMP_TOKEN;
 
-    my @extra;
-
-    if($arity eq "name") {
-        $proto = $parser->find($value);
-        $arity = $proto->arity;
+    my $symbol;
+    if($arity eq "literal") {
+        $symbol = $parser->symbol('(literal)')->clone(
+            id    => $id,
+            value => $parser->parse_literal($id)
+        );
     }
     elsif($arity eq "operator") {
-        $proto = $symtab->{$value};
-        if(not defined $proto) {
-            $parser->_error("Unknown operator '$value'");
-        }
+        $symbol = $parser->symbol($id)->clone(
+            arity => $arity,
+        );
     }
-    elsif($arity eq "literal") {
-        $proto = $symtab->{"(literal)"};
-        push @extra, value => $parser->parse_literal($value);
-    }
-
-    if(not defined $proto) {
-        Carp::confess("Oops: Unexpected token: $value ($arity)");
+    else { # name
+        # find_or_create() returns a cloned symbol,
+        # so there's not need to clone() here
+        $symbol = $parser->find_or_create($id);
     }
 
-    return $parser->token( $proto->clone(
-        id    => $value,
-        arity => $arity,
-        line  => $parser->line,
-        @extra,
-     ) );
+    $symbol->line($line);
+    return $parser->token($symbol);
 }
 
 sub parse_literal {
@@ -953,20 +945,24 @@ sub pop_scope {
 sub undefined_name {
     my($parser, $name) = @_;
     if($name =~ /\A \$/xms) {
-        return $parser->symbol_table->{'(variable)'};
+        return $parser->symbol_table->{'(variable)'}->clone(
+            id => $name,
+        );
     }
     else {
-        return $parser->symbol_table->{'(name)'};
+        return $parser->symbol_table->{'(name)'}->clone(
+            id => $name,
+        );
     }
 }
 
-sub find { # find a name from all the scopes
+sub find_or_create { # find a name from all the scopes
     my($parser, $name) = @_;
     my $s;
     foreach my $scope(reverse @{$parser->scope}){
         $s = $scope->{$name};
         if(defined $s) {
-            return $s;
+            return $s->clone();
         }
     }
     $s = $parser->symbol_table->{$name};
@@ -1842,6 +1838,18 @@ sub iterator_cycle {
 }
 
 # utils
+
+sub make_alias { # alas(from => to)
+    my($parser, $from, $to) = @_;
+
+    my $stash = $parser->symbol_table;
+    if(exists $parser->symbol_table->{$to}) {
+        Carp::croak("Cannot override an existing symbol with make_alias ($from => $to)");
+    }
+
+    $stash->{$to} = $parser->symbol($from);
+    return;
+}
 
 sub not_supported {
     my($parser, $symbol) = @_;

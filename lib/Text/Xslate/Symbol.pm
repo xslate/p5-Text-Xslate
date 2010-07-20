@@ -156,7 +156,7 @@ has assignment => (
 #);
 
 has line => (
-    is  => 'ro',
+    is  => 'rw',
     isa => 'Int',
 
     lazy    => 1,
