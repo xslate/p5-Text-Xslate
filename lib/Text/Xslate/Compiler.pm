@@ -775,7 +775,7 @@ sub _prepare_cond_expr {
 
     if($expr->is_logical and any_in($expr->id, qw(== !=))) {
         my $rhs = $expr->second;
-        if($rhs->arity eq "literal" and $rhs->id eq "nil") {
+        if($rhs->arity eq "nil") {
             # add prefix 'd' (i.e. "and" to "dand", "or" to "dor")
             substr $t, 0, 0, 'd';
             substr $f, 0, 0, 'd';
@@ -880,7 +880,7 @@ sub _generate_given {
 sub _generate_variable {
     my($self, $node) = @_;
 
-    if(defined(my $lvar_id = $self->lvar->{$node->id})) {
+    if(defined(my $lvar_id = $self->lvar->{$node->value})) {
         return $self->opcode( load_lvar => $lvar_id, symbol => $node );
     }
     else {
@@ -900,14 +900,12 @@ sub _generate_marker {
 
 sub _generate_literal {
     my($self, $node) = @_;
+    return $self->opcode( literal => $node->value );
+}
 
-    my $value = $node->value;
-    if(defined $value){
-        return $self->opcode( literal => $value );
-    }
-    else {
-        return $self->opcode( 'nil' );
-    }
+sub _generate_nil {
+    my($self) = @_;
+    return $self->opcode('nil');
 }
 
 sub _generate_composer {
@@ -949,10 +947,11 @@ sub _generate_field {
     my $field = $node->second;
 
     # $foo.field
-    if($field->arity eq "word") {
+    # $foo["field"]
+    if($field->arity eq "literal") {
         return
             @lhs,
-            $self->opcode( fetch_field_s => $field->id );
+            $self->opcode( fetch_field_s => $field->value );
     }
     # $foo[expression]
     else {
@@ -1155,7 +1154,7 @@ sub _localize_vars {
 sub _variable_to_value {
     my($self, $arg) = @_;
 
-    my $name = $arg->id;
+    my $name = $arg->value;
     $name =~ s/\$//;
     return $name;
 }

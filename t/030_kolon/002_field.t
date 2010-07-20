@@ -38,6 +38,11 @@ my @data = (
 
     ['<: $var.if :>',  'IF'],
     ['<: $var.nil :>', 'NIL'],
+    ['<: $var.true :>', 'TRUE'],
+    ['<: $var[true] :>', 'one'],
+
+    ['<: $ary[false] :>', '10'],
+    ['<: $ary[true]  :>', '20'],
 
     ['<: $a :>', 'as_string'],
 );
@@ -59,6 +64,8 @@ my %vars = (
         xxx   => 'yyy',
         if    => 'IF',
         nil   => 'NIL',
+        true  => 'TRUE',
+        1     => 'one',
     },
 
     g => { f => { x => 'gfx' } },

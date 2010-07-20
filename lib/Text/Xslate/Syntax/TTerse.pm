@@ -26,94 +26,60 @@ around trim_code => sub {
 
 sub init_symbols {
     my($parser) = @_;
-    my $s;
-
-    $parser->symbol(']');
-    $parser->symbol('}');
 
     $parser->init_basic_operators();
+
     $parser->symbol('$')->set_nud(\&nud_dollar);
     $parser->make_alias('~' => '_');
+    $parser->make_alias('|' => 'FILTER');
     $parser->symbol('.')->set_led(\&led_dot); # redefine
 
-    # defines both upper cased and lower cased
-
     $parser->symbol('END')  ->is_block_end(1);
-    $parser->symbol('end')  ->is_block_end(1);
     $parser->symbol('ELSE') ->is_block_end(1);
-    $parser->symbol('else') ->is_block_end(1);
     $parser->symbol('ELSIF')->is_block_end(1);
-    $parser->symbol('elsif')->is_block_end(1);
+    $parser->symbol('CASE') ->is_block_end(1);
 
     $parser->symbol('IN');
-    $parser->symbol('in');
 
     $parser->symbol('IF')      ->set_std(\&std_if);
-    $parser->symbol('if')      ->set_std(\&std_if);
     $parser->symbol('UNLESS')  ->set_std(\&std_if);
-    $parser->symbol('unless')  ->set_std(\&std_if);
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
-    $parser->symbol('foreach') ->set_std(\&std_foreach);
     $parser->symbol('FOR')     ->set_std(\&std_foreach);
-    $parser->symbol('for')     ->set_std(\&std_foreach);
     $parser->symbol('WHILE')   ->set_std(\&std_while);
-    $parser->symbol('while')   ->set_std(\&std_while);
-
-    $parser->symbol('SWITCH')   ->set_std(\&std_switch);
-    $parser->symbol('switch')   ->set_std(\&std_switch);
-    $s = $parser->symbol('CASE');
-    $s->set_std(\&std_case);
-    $s->is_block_end(1);
-    $s = $parser->symbol('case');
-    $s->set_std(\&std_case);
-    $s->is_block_end(1);
+    $parser->symbol('SWITCH')  ->set_std(\&std_switch);
+    $parser->symbol('CASE')    ->set_std(\&std_case);
 
     $parser->symbol('INCLUDE') ->set_std(\&std_include);
-    $parser->symbol('include') ->set_std(\&std_include);
     $parser->symbol('WITH');
-    $parser->symbol('with');
 
     $parser->symbol('GET')     ->set_std(\&std_get);
-    $parser->symbol('get')     ->set_std(\&std_get);
     $parser->symbol('SET')     ->set_std(\&std_set);
-    $parser->symbol('set')     ->set_std(\&std_set);
     $parser->symbol('DEFAULT') ->set_std(\&std_set);
-    $parser->symbol('default') ->set_std(\&std_set);
     $parser->symbol('CALL')    ->set_std(\&std_call);
-    $parser->symbol('call')    ->set_std(\&std_call);
-
-    # macros
 
     $parser->symbol('MACRO') ->set_std(\&std_macro);
-    $parser->symbol('macro') ->set_std(\&std_macro);
     $parser->symbol('BLOCK');
-    $parser->symbol('block');
-
     $parser->symbol('WRAPPER')->set_std(\&std_wrapper);
-    $parser->symbol('wrapper')->set_std(\&std_wrapper);
     $parser->symbol('INTO');
-    $parser->symbol('into');
 
-    my $pipe = $parser->symbol('|');
-    foreach my $keyword qw(FILTER filter) {
-        $s = $parser->symbol($keyword, $pipe->lbp);
-        $s->set_std(\&std_filter);
-        $s->set_led($pipe->get_led);
-    }
+    $parser->symbol('FILTER')->set_std(\&std_filter);
 
-    # not supported
+    # unsupported directives
     my $nos = $parser->can('not_supported');
-    # directives
     foreach my $keyword qw(
             INSERT PROCESS PERL RAWPERL TRY THROW NEXT LAST RETURN
             STOP CLEAR META TAGS DEBUG VIEW) {
         $parser->symbol(   $keyword)->set_std($nos);
-        $parser->symbol(lc $keyword)->set_std($nos);
     }
 
     # not supported, but ignored (synonym to CALL)
     $parser->symbol('USE')->set_std(\&std_call);
-    $parser->symbol('use')->set_std(\&std_call);
+
+    foreach my $id(keys %{$parser->symbol_table}) {
+        if($id =~ /\A [A-Z]+ \z/xms) { # upper-cased keywords
+            $parser->make_alias($id => lc $id);
+        }
+    }
     return;
 }
 

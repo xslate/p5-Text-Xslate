@@ -427,7 +427,7 @@ sub _init_basic_symbols {
     $parser->symbol('print')    ->set_std(\&std_command);
     $parser->symbol('print_raw')->set_std(\&std_command);
 
-    # common literals
+    # special literals
     $parser->define_literal(nil   => undef);
     $parser->define_literal(true  => 1);
     $parser->define_literal(false => 0);
@@ -614,7 +614,7 @@ sub look_ahead {
         return [ operator => $1 ];
     }
     elsif(s/\A (\S+)//xms) {
-        Carp::confess("Oops: Unexpected lex symbol '$1'");
+        Carp::confess("Oops: Unexpected token '$1'");
     }
     else { # empty
         return [ special => '(end)' ];
@@ -827,7 +827,7 @@ sub led_dot {
     my $dot = $symbol->clone(
         arity  => "field",
         first  => $left,
-        second => $t->clone(arity => 'word'),
+        second => $t->clone(arity => 'literal'),
     );
 
     $t = $parser->advance();
@@ -920,13 +920,20 @@ sub nud_defined {
    );
 }
 
-sub define_literal{
+sub nud_special {
+    my($parser, $symbol) = @_;
+    return $symbol->first;
+}
+
+sub define_literal { # special literals
     my($parser, $id, $value) = @_;
 
     my $symbol = $parser->symbol($id);
-    $symbol->arity('name');
-    $symbol->set_nud(\&nud_literal);
-    $symbol->value($value);
+    $symbol->first( $symbol->clone(
+        arity => defined($value) ? 'literal' : 'nil',
+        value => $value,
+    ) );
+    $symbol->set_nud(\&nud_special);
     return $symbol;
 }
 
@@ -1151,7 +1158,7 @@ sub nud_iterator {
             $parser->_unexpected("a field name", $t);
         }
 
-        my $generator = $parser->iterator_element->{$t->id};
+        my $generator = $parser->iterator_element->{$t->value};
         if(!$generator) {
             $parser->_error("Undefined iterator element: $t");
         }
@@ -1847,7 +1854,10 @@ sub make_alias { # alas(from => to)
         Carp::croak("Cannot override an existing symbol with make_alias ($from => $to)");
     }
 
-    $stash->{$to} = $parser->symbol($from);
+    # make a snapshot
+    $stash->{$to} = $parser->symbol($from)->clone(
+        value => $to, # real id
+    );
     return;
 }
 
