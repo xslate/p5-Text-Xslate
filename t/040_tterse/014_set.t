@@ -148,6 +148,7 @@ T
 Hello, TTerse world!
 Hello, TTerse world!
 X
+
 );
 
 my %vars = (lang => 'Xslate', foo => '<bar>', '$lang' => 'XXX');
