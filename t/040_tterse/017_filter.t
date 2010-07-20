@@ -103,6 +103,14 @@ T
 | baz
 X
 
+    [ <<'T', <<'X' ],
+[% "foo\n" FILTER indent("| ") -%]
+[% "bar\n" filter indent("| ") -%]
+T
+| foo
+| bar
+X
+
 );
 
 my %vars = (lang => 'Xslate', foo => { bar => 43 });

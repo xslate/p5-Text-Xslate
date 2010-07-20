@@ -94,8 +94,12 @@ sub init_symbols {
     $parser->symbol('INTO');
     $parser->symbol('into');
 
-    $parser->symbol('FILTER')->set_std(\&std_filter);
-    $parser->symbol('filter')->set_std(\&std_filter);
+    my $pipe = $parser->symbol('|');
+    foreach my $keyword qw(FILTER filter) {
+        $s = $parser->symbol($keyword, $pipe->lbp);
+        $s->set_std(\&std_filter);
+        $s->set_led($pipe->get_led);
+    }
 
     # not supported
     my $nos = $parser->can('not_supported');
