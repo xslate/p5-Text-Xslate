@@ -25,14 +25,29 @@ T
     3
 X
 
-    [<<'T', <<'X', 'with keywords'],
-    [% { if  => 42 }.if  %]
-    [% { not => 42 }.not %]
-    [% { for => 42 }.for %]
+    [<<'T', <<'X', 'with literals'],
+    [% { "if"  => 42 }.if  %]
+    [% { "not" => 43 }.not %]
+    [% { "for" => 44 }.for %]
+    [% { "FOR" => 45 }.FOR %]
 T
     42
+    43
+    44
+    45
+X
+
+
+    [<<'T', <<'X', 'with keywords'],
+    [% { if  => 42 }.if  %]
+    [% { not => 43 }.not %]
+    [% { for => 44 }.for %]
+    [% { FOR => 45 }.FOR %]
+T
     42
-    42
+    43
+    44
+    45
 X
 
 );

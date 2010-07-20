@@ -28,6 +28,7 @@ my @data = (
     ['[% var.nil %]',      'This is nil', 'keyword as a field (nil)'],
     ['[% var.GET %]',      'This is GET', 'keyword as a field (GET)'],
     ['[% var.if %]',       'This is if',  'keyword as a field (if)'],
+    ['[% var.not %]',      'This is not', 'keyword as a field (not)'],
 );
 
 {
@@ -45,6 +46,7 @@ my %vars = (
         nil => 'This is nil',
         GET => 'This is GET',
         if  => 'This is if',
+        not => 'This is not',
     },
 
     g => { f => { x => 'gfx' } },

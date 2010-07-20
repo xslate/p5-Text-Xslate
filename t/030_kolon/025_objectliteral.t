@@ -23,11 +23,13 @@ X
 : foo(bar => "b")
 : foo(raw => "b")
 : foo(if  => "b")
+: foo(not => "b")
 T
 foo
 bar
 raw
 if
+not
 X
 
     # array

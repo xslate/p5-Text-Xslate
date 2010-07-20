@@ -65,15 +65,12 @@ my %binary = (
 );
 my %logical_binary = (
     '&&'  => 'and',
-    'and' => 'and',
     '||'  => 'or',
-    'or'  => 'or',
     '//'  => 'dor',
 );
 
 my %unary = (
     '!'   => 'not',
-    'not' => 'not',
     '+'   => 'noop',
     '-'   => 'minus',
     '+^'  => 'bitneg',
@@ -768,7 +765,7 @@ sub _prepare_cond_expr {
     my $t = "and";
     my $f = "or";
 
-    while(any_in($expr->id, "!", "not")) {
+    while($expr->id eq '!') {
         $expr    = $expr->first;
         ($t, $f) = ($f, $t);
     }

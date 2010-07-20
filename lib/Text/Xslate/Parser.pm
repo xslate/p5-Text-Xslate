@@ -409,17 +409,13 @@ sub _init_basic_symbols {
         my $s = $parser->symbol("($type)");
         $s->arity($type);
         $s->set_nud( $parser->can("nud_$type") );
-        $s->is_value(1);
     }
 
     # common separators
     $parser->symbol(';');
-    $parser->symbol('(');
-    $parser->symbol(')');
-    $parser->symbol('{');
-    $parser->symbol('}');
-    $parser->symbol('[');
-    $parser->symbol(']');
+    $parser->define_pair('(' => ')');
+    $parser->define_pair('{' => '}');
+    $parser->define_pair('[' => ']');
     $parser->symbol(',')  ->is_comma(1);
     $parser->symbol('=>') ->is_comma(1);
 
@@ -506,10 +502,9 @@ sub init_basic_operators {
     $parser->assignment('||=', 100);
     $parser->assignment('//=', 100);
 
-    $parser->prefix('not', 70)->is_logical(1);
-    $parser->infix('and',  60)->is_logical(1);
-    $parser->infix('or',   50)->is_logical(1);
-
+    $parser->make_alias('!'  => 'not')->ubp(70);
+    $parser->make_alias('&&' => 'and')->lbp(60);
+    $parser->make_alias('||' => 'or') ->lbp(60);
     return;
 }
 
@@ -589,6 +584,13 @@ sub symbol {
     }
 
     return $s;
+}
+
+sub define_pair {
+    my($parser, $left, $right) = @_;
+    $parser->symbol($left) ->counterpart($right);
+    $parser->symbol($right)->counterpart($left);
+    return;
 }
 
 sub look_ahead {
@@ -1118,7 +1120,7 @@ sub block {
     $parser->new_scope();
     $parser->advance("{");
     my $a = $parser->statements();
-    $parser->advance('}');
+    $parser->advance("}");
     $parser->pop_scope();
     return $a;
 }
@@ -1126,7 +1128,7 @@ sub block {
 sub nud_paren {
     my($parser, $symbol) = @_;
     my $expr = $parser->expression(0);
-    $parser->advance(')');
+    $parser->advance( $symbol->counterpart );
     return $expr;
 }
 
@@ -1136,8 +1138,7 @@ sub nud_brace {
 
     my $list = $parser->expression_list();
 
-    my $end = $symbol->id eq '{' ? '}' : ']';
-    $parser->advance($end);
+    $parser->advance($symbol->counterpart);
     return $symbol->clone(
         arity => 'composer',
         first => $list,
@@ -1851,14 +1852,13 @@ sub make_alias { # alas(from => to)
 
     my $stash = $parser->symbol_table;
     if(exists $parser->symbol_table->{$to}) {
-        Carp::croak("Cannot override an existing symbol with make_alias ($from => $to)");
+        Carp::croak("Cannot make an alias to an existing symbol ($from => $to)");
     }
 
     # make a snapshot
-    $stash->{$to} = $parser->symbol($from)->clone(
+    return $stash->{$to} = $parser->symbol($from)->clone(
         value => $to, # real id
     );
-    return;
 }
 
 sub not_supported {

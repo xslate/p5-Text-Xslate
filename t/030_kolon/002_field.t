@@ -38,6 +38,7 @@ my @data = (
 
     ['<: $var.if :>',  'IF'],
     ['<: $var.nil :>', 'NIL'],
+    ['<: $var.not :>', 'NOT'],
     ['<: $var.true :>', 'TRUE'],
     ['<: $var[true] :>', 'one'],
 
@@ -65,6 +66,7 @@ my %vars = (
         if    => 'IF',
         nil   => 'NIL',
         true  => 'TRUE',
+        not   => 'NOT',
         1     => 'one',
     },
 
