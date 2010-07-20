@@ -98,14 +98,6 @@ around _build_iterator_element => sub {
     return $table;
 };
 
-around advance => sub {
-    my($super, $parser, $id) = @_;
-    if(defined $id and $parser->token->id eq lc($id)) {
-        $id = lc($id);
-    }
-    return $super->($parser, $id);
-};
-
 sub default_nud {
     my($parser, $symbol) = @_;
     return $symbol->clone(
@@ -195,7 +187,7 @@ sub std_if {
     my $if = $symbol->clone(arity => "if");
 
     $if->first(  $parser->expression(0) );
-    if(uc($symbol->id) eq 'UNLESS') {
+    if($symbol->id eq 'UNLESS') {
         my $not_expr = $parser->symbol('not')->clone(
             arity  => 'unary',
             first  => $if->first,
@@ -208,7 +200,7 @@ sub std_if {
 
     my $top_if = $if;
 
-    while(uc($t->id) eq "ELSIF") {
+    while($t->id eq "ELSIF") {
         $parser->reserve($t);
         $parser->advance(); # "ELSIF"
 
@@ -220,11 +212,11 @@ sub std_if {
         $t  = $parser->token;
     }
 
-    if(uc($t->id) eq "ELSE") {
+    if($t->id eq "ELSE") {
         $parser->reserve($t);
         $t = $parser->advance(); # "ELSE"
 
-        $if->third( uc($t->id) eq "IF"
+        $if->third( $t->id eq "IF"
             ? [$parser->statement()]
             :  $parser->statements());
     }
@@ -249,7 +241,7 @@ sub std_switch {
     local $parser->{in_given} = 1;
 
     my @cases;
-    while(uc($parser->token->id) ne "END") {
+    while($parser->token->id ne "END") {
         push @cases, $parser->statement();
     }
     $switch->third( \@cases );
@@ -268,7 +260,7 @@ sub std_case {
     }
     my $case = $symbol->clone(arity => "case");
 
-    if(uc($parser->token->id) ne "DEFAULT") {
+    if($parser->token->id ne "DEFAULT") {
         $case->first( $parser->expression(0) );
     }
     else {
@@ -317,22 +309,21 @@ sub std_while {
     return $while;
 }
 
-sub std_include {
-    my($parser, $symbol) = @_;
-
-    my $command = $parser->SUPER::std_include($symbol);
-    $command->id( lc $command->id );
+around std_include => sub {
+    my($super, $self, $symbol) = @_;
+    my $command = $self->$super($symbol);
+    $command->id(lc $command->id); # the case is significant
     return $command;
-}
+};
 
 sub localize_vars {
     my($parser, $symbol) = @_;
 
 # should make 'WITH' optional?
 #    my $t = $parser->token;
-#    if(uc($t->id) eq "WITH" or $t->arity eq "variable") {
-#        $parser->advance() if uc($t->id) eq "WITH";
-    if(uc($parser->token->id) eq "WITH") {
+#    if($t->id eq "WITH" or $t->arity eq "variable") {
+#        $parser->advance() if $t->id eq "WITH";
+    if($parser->token->id eq "WITH") {
         $parser->advance();
         $parser->new_scope();
         my $vars = $parser->set_list();
@@ -380,7 +371,7 @@ sub std_get {
 sub std_set {
     my($parser, $symbol) = @_;
 
-    my $is_default = (uc($symbol->id) eq 'DEFAULT');
+    my $is_default = ($symbol->id eq 'DEFAULT');
 
     my $set_list = $parser->set_list();
     my @assigns;
@@ -474,7 +465,7 @@ sub std_wrapper {
 
     my $base  = $parser->barename();
     my $into;
-    if(uc($parser->token->id) eq "INTO") {
+    if($parser->token->id eq "INTO") {
         my $t = $parser->advance();
         if(!any_in($t->arity, qw(name variable))) {
             $parser->_unexpected("a variable name", $t);
