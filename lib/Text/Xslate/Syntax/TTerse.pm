@@ -821,7 +821,7 @@ C<FOREACH item = list> is forbidden in TTerse. It must be C<FOREACH item IN list
 
 =item *
 
-TTerse does not support plugins (i.e. C<USE> directive), but grokes
+TTerse does not support plugins (i.e. C<USE> directive), but understands
 the C<USE> keyword as an alias to C<CALL>, so you could use some simple
 plugins which do not depend on the context object of Template-Toolkit.
 
