@@ -19,12 +19,46 @@ Xslate
 END
 X
 
+    [<<'T', <<'X', 'once-='],
+[% lang %]
+[% FOREACH type = types -%]
+* [% type %]
+[% END -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
+
     [<<'T', <<'X', 'twice'],
 [% lang %]
 [% FOREACH type IN types -%]
     * [% type %]
 [% END -%]
 [% FOREACH type IN types -%]
+    + [% type %]
+[% END -%]
+END
+T
+Xslate
+    * Str
+    * Int
+    * Object
+    + Str
+    + Int
+    + Object
+END
+X
+
+    [<<'T', <<'X', 'twice-='],
+[% lang %]
+[% FOREACH type = types -%]
+    * [% type %]
+[% END -%]
+[% FOREACH type = types -%]
     + [% type %]
 [% END -%]
 END
@@ -61,6 +95,27 @@ BEGIN
 END
 X
 
+    [<<'T', <<'X', 'nested-='],
+BEGIN
+[% FOREACH x = types -%]
+[% FOREACH y = types -%]
+    * [[% x %]][[% y %]]
+[% END -%]
+[%- END -%]
+END
+T
+BEGIN
+    * [Str][Str]
+    * [Str][Int]
+    * [Str][Object]
+    * [Int][Str]
+    * [Int][Int]
+    * [Int][Object]
+    * [Object][Str]
+    * [Object][Int]
+    * [Object][Object]
+END
+X
 
     [<<'T', <<'X', 'FOR-IN'],
 [% lang %]
@@ -76,6 +131,19 @@ Xslate
 END
 X
 
+    [<<'T', <<'X', 'FOR-='],
+[% lang %]
+[% FOR type = types -%]
+* [% type %]
+[% END -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
 
     [<<'T', <<'X', 'loop.index'],
 [% FOR type IN types -%]
@@ -208,7 +276,35 @@ Xslate
 END
 X
 
+    [<<'T', <<'X', 'lower cased='],
+[% lang %]
+[% foreach type = types -%]
+* [% type %]
+[% end -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
+
     [<<'T', <<'X', 'for-in'],
+[% lang %]
+[% for type in types -%]
+* [% type %]
+[% end -%]
+END
+T
+Xslate
+* Str
+* Int
+* Object
+END
+X
+
+    [<<'T', <<'X', 'for-='],
 [% lang %]
 [% for type in types -%]
 * [% type %]
