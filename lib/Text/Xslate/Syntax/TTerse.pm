@@ -80,10 +80,6 @@ sub init_symbols {
             $parser->make_alias($id => lc $id);
         }
     }
-
-    $parser->make_alias('&&', 'AND');
-    $parser->make_alias('||', 'OR');
-
     return;
 }
 
@@ -288,12 +284,7 @@ sub std_foreach {
         $parser->_unexpected("a variable name", $var);
     }
     $parser->advance();
-    if ( uc $parser->token->id eq "IN" ) {
-        $parser->advance("IN");
-    }
-    else {
-        $parser->advance();
-    }
+    $parser->advance("IN");
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
     $parser->new_scope();
