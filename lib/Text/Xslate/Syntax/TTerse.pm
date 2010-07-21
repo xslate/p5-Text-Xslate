@@ -80,6 +80,10 @@ sub init_symbols {
             $parser->make_alias($id => lc $id);
         }
     }
+
+    $parser->make_alias('&&' => 'AND');
+    $parser->make_alias('||' => 'OR');
+
     return;
 }
 

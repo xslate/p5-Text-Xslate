@@ -150,6 +150,60 @@ T
     ok
 X
 
+    [<<'T', <<'X', "AND expression 1"],
+[% IF lang == "Xslate" AND 1 -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
+    [<<'T', <<'X', "AND expression 2"],
+[% IF lang == "Xslate" AND 0 -%]
+    ok
+[% END -%]
+T
+X
+
+    [<<'T', <<'X', "OR expression 1"],
+[% IF lang == "Xslate" OR 1 -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
+    [<<'T', <<'X', "OR expression 2"],
+[% IF lang == "Xslate" OR 0 -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
+    [<<'T', <<'X', "AND and OR expression 1"],
+[% IF 1 OR (lang == "Xslate" AND 0) -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
+    [<<'T', <<'X', "AND and OR expression 2"],
+[% IF 0 OR (lang == "Xslate" AND 0) -%]
+    ok
+[% END -%]
+T
+X
+
+    [<<'T', <<'X', "AND and OR expression 3"],
+[% IF 0 OR (lang == "Xslate" AND 1) -%]
+    ok
+[% END -%]
+T
+    ok
+X
+
 );
 
 foreach my $d(@data) {
