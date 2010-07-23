@@ -330,9 +330,15 @@ For arrays:
 
 For hashes:
 
-    <: $hash.size() :>
-    <: $hash.keys()   # sorted by keys :>
-    <: $hash.values() # sorted by keys :>
+    <: $hash.size() # correspond to "scalar keys %{$hash}" in Perl :>
+
+    <: # iterate HASH references by keys, values and key-value pairs :>
+    <: for $hash.keys() -> $key {  # sorted by keys :>
+        <: $key :>
+    <: } :>
+    <: for $hash.values() -> $value { # sorted by keys :>
+        <: $value :>
+    <: } :>
     <: for $hash.kv() -> $pair { # sorted by keys :>
         <: # $pair is a pair type with 'key' and 'value' fields -:>
         <: $pair.key :> = <: $pair.value :>
