@@ -73,7 +73,7 @@ sub init_symbols {
     foreach my $keyword qw(
             INSERT PROCESS PERL RAWPERL TRY THROW NEXT LAST RETURN
             STOP CLEAR META TAGS DEBUG VIEW) {
-        $parser->symbol(   $keyword)->set_std($nos);
+        $parser->symbol($keyword)->set_std($nos);
     }
 
     # not supported, but ignored (synonym to CALL)
