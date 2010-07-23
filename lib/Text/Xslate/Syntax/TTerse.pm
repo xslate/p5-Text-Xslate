@@ -34,6 +34,10 @@ sub init_symbols {
     $parser->make_alias('|' => 'FILTER');
     $parser->symbol('.')->set_led(\&led_dot); # redefine
 
+    $parser->make_alias('&&' => 'AND');
+    $parser->make_alias('||' => 'OR');
+
+
     $parser->symbol('END')  ->is_block_end(1);
     $parser->symbol('ELSE') ->is_block_end(1);
     $parser->symbol('ELSIF')->is_block_end(1);
@@ -80,10 +84,6 @@ sub init_symbols {
             $parser->make_alias($id => lc $id);
         }
     }
-
-    $parser->make_alias('&&' => 'AND');
-    $parser->make_alias('||' => 'OR');
-
     return;
 }
 
