@@ -154,9 +154,14 @@ These two statements has the same semantics, so you cannot modify C<$foo>.
 
 There is C<for> loops that are like Perl's C<foreach>.
 
-    : # $data must be an ARRAY reference
+    : # iterate an ARRAY reference
     : for $data -> $item {
         [<: $item.field :>]
+    : }
+
+    : # iterate an HASH reference
+    : for $data.keys() -> $key { # or .values(), .kv()
+        <: $key :>=<: $data[$key] :>
     : }
 
 You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
@@ -170,7 +175,7 @@ You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
         : }
     : }
 
-C<$~item> is a pseudo object, so you can access its elements
+C<$~ITERATOR_VAR> is a pseudo object, so you can access its elements
 via the dot-name syntax.
 
     : for $data -> $i {
