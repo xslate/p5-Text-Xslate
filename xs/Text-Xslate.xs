@@ -1071,9 +1071,9 @@ CODE:
     oi_file = name;
 
     for(i = 0; i < len; i++) {
-        SV* const pair = *av_fetch(proto, i, TRUE);
-        if(SvROK(pair) && SvTYPE(SvRV(pair)) == SVt_PVAV) {
-            AV* const av     = (AV*)SvRV(pair);
+        SV* const code = *av_fetch(proto, i, TRUE);
+        if(SvROK(code) && SvTYPE(SvRV(code)) == SVt_PVAV) {
+            AV* const av     = (AV*)SvRV(code);
             SV* const opname = *av_fetch(av, 0, TRUE);
             SV** const arg   =  av_fetch(av, 1, FALSE);
             SV** const line  =  av_fetch(av, 2, FALSE);
