@@ -573,7 +573,7 @@ Here is a result of F<benchmark/others.pl> to compare various template engines.
 You can see Xslate is 36 times faster than Template-Toolkit, and 4 times faster
 than HTML::Template::Pro and Text::ClearSilver, which are implemented in XS.
 
-=head3 Auto HTML escaping
+=head3 Auto escaping to HTML meta characters
 
 All the template expressions the engine interpolates into templates are
 html-escaped automatically, so the output has no possibility to XSS by default.
@@ -825,7 +825,7 @@ expressions.
 This function is available in templates as the C<html> filter, but you'd better
 to use C<unmark_raw> to ensure expressions to be html-escaped.
 
-=head2 Application
+=head2 Command line interface
 
 The C<xslate(1)> command is provided as a CLI to the Text::Xslate module,
 which is used to process directory trees or to evaluate one liners.
