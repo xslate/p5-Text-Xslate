@@ -140,11 +140,13 @@ X
 
     [ <<'T', { }, <<'X', "a macro returns escaped string" ],
 <: macro em ->($x) { :><em><: $x :></em><: } -:>
-    <: "foo" | em | raw  :>
-    <: "bar" | em | html :>
+    <: "foo" | em        :>
+    <: "bar" | em | raw  :>
+    <: "baz" | em | html :>
 T
     <em>foo</em>
     <em>bar</em>
+    <em>baz</em>
 X
 
     [ <<'T', { }, <<'X', "save macro" ],
