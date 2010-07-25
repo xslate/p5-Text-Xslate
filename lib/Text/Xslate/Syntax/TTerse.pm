@@ -81,8 +81,9 @@ sub init_symbols {
         }
     }
 
-    $parser->make_alias('&&' => 'AND');
-    $parser->make_alias('||' => 'OR');
+    $parser->make_alias('not' => 'NOT');
+    $parser->make_alias('and' => 'AND');
+    $parser->make_alias('or'  => 'OR');
 
     return;
 }
