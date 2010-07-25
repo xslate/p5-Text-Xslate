@@ -521,16 +521,23 @@ This document describes Text::Xslate version 0.1047.
 
     print $tx->render_string($template, \%vars);
 
-    # you can tell the engine that some strings are already escaped.
+    # you can tell the engine that strings are already escaped.
     use Text::Xslate qw(mark_raw html_escape);
 
     $vars{email} = mark_raw('gfx &lt;gfuji at cpan.org&gt;');
     # or
     # $vars{email} = html_escape('gfx <gfuji at cpan.org>');
 
-    # if you want Template-Toolkit syntx:
+    # use Template Toolkit compatible syntax:
     $tx = Text::Xslate->new(syntax => 'TTerse');
     # ...
+
+    # use non-default tags
+    $tx = Text::Xslate->new(
+        tag_start  => '<%',
+        tag_end    => '%>',
+        line_start => undef, # not to use line code
+    );
 
 =head1 DESCRIPTION
 
@@ -707,6 +714,9 @@ Specifies the escape mode, which is automatically applied to template expression
 
 Possible escape modes are B<html> and B<none>.
 
+Note that C<none> mode is provided for non-HTML templates, e.g. mail generators,
+so you must not to use it for web applications because it is unsafe.
+
 This option is passed to the compiler directly.
 
 =item C<< line_start => $token // $parser_defined_str >>
@@ -753,7 +763,7 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached.
+Note that I<$string> is never cached, so this may be not sutable for web applications.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
@@ -772,7 +782,7 @@ Here is an example to to load all the templates which is in a given path:
     find sub {
         if(/\.tx$/) {
             my $file = $File::Find::name;
-            $file =~ s/\Q$path\E .//xsm;
+            $file =~ s/\Q$path\E .//xsm; # fix path names
             $tx->load_file($file);
         }
     }, $path;
@@ -782,17 +792,17 @@ Here is an example to to load all the templates which is in a given path:
 
 =head3 B<< Text::Xslate->current_engine :XslateEngine >>
 
-Returns the current Xslate engine while executing. Otherwise, returns C<undef>.
+Returns the current Xslate engine while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
 =head3 B<< Text::Xslate->current_file :Str >>
 
-Returns the current file name while executing. Otherwise, returns C<undef>.
+Returns the current file name while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
 =head3 B<< Text::Xslate->current_line :Int >>
 
-Returns the current line number while executing. Otherwise, returns C<undef>.
+Returns the current line number while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
 =head2 Exportable functions
