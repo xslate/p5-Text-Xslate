@@ -61,6 +61,25 @@ my @data = (
     ['<:= $value10 != 10 or  $value20 != 20 and 5 :>',  ''],
     ['<:= $value10 != 10 or  $value20 != 20 or  5 :>',  5],
 
+    ['<:= $value10 == 10 or  $value20 == 20 and $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 or  $value20 != 20 and $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 or  $value20 == 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 or  $value20 != 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 != 10 or  $value20 != 20 and $value10 == 10 :>',  ''],
+    ['<:= $value10 != 10 or  $value20 != 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 or  $value20 == 20 or  $value10 != 10 :>',  1],
+
+    ['<:= $value10 == 10 and $value20 == 20 and $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 and $value20 != 20 and $value10 == 10 :>',  ''],
+    ['<:= $value10 == 10 and $value20 == 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 and $value20 != 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 != 10 and $value20 != 20 and $value10 == 10 :>',  ''],
+    ['<:= $value10 != 10 and $value20 != 20 or  $value10 == 10 :>',  1],
+    ['<:= $value10 == 10 and $value20 == 20 or  $value10 != 10 :>',  1],
+
+    ['<: $value10 == 10 and $value10 == 10 and $value10 == 10 or $value10 != 10 :>', 1 ],
+    ['<: $value10 == 10 and $value10 == 10 and $value10 == 10 or $value10 == 10 :>', 1 ],
+    ['<: $value10 != 10 and $value10 == 10 and $value10 == 10 or $value10 == 10 :>', 1 ],
 
     ['<:= $value0  && 20 :>',  0 ],
     ['<:= $value10 && 20 :>', 20 ],
@@ -131,6 +150,10 @@ my @data = (
 
     [': $undefined1 // $undefined2 // 10', 10],
     [': $undefined1 // ( $undefined2 // 10 )', 10],
+
+
+    ['<:= $value10 == 10 and $value20 == 20 ? "true" : "false":>',  "true"],
+    ['<:= $value10 == 10 and $value20 == 20 or  $value10 != 10 ? "true" : "false":>',  "true"],
 );
 
 foreach my $pair(@data) {
