@@ -82,6 +82,15 @@ T
     Hello, &lt;Xslate&gt;, world!
 X
 
+    [<<'T', {lang => mark_raw('<Xslate>'), l => '<', g => '>'}, <<'X', 'smart concat'],
+    Hello, <:      $l ~ $lang ~ $g :>, world!
+    Hello, <: html($l ~ $lang ~ $g) :>, world!
+    Hello, <: html($l) ~ $lang ~ html($g) :>, world!
+T
+    Hello, &lt;<Xslate>&gt;, world!
+    Hello, &lt;<Xslate>&gt;, world!
+    Hello, &lt;<Xslate>&gt;, world!
+X
 );
 
 foreach my $d(@set) {

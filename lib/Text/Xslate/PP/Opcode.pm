@@ -21,6 +21,8 @@ use constant TXfor_ITEM  => Text::Xslate::PP::TXfor_ITEM;
 use constant TXfor_ITER  => Text::Xslate::PP::TXfor_ITER;
 use constant TXfor_ARRAY => Text::Xslate::PP::TXfor_ARRAY;
 
+use constant RAW => Text::Xslate::PP::_RAW();
+
 no warnings 'recursion';
 
 our @CARP_NOT = qw(Text::Xslate);
@@ -128,7 +130,7 @@ sub op_print {
     my($st) = @_;
     my $sv = $st->{sa};
 
-    if ( ref( $sv ) eq 'Text::Xslate::Type::Raw' ) {
+    if ( ref( $sv ) eq RAW ) {
         if(defined ${$sv}) {
             $st->{ output } .= ${$sv};
         }
@@ -255,10 +257,9 @@ sub op_mod {
 
 
 sub op_concat {
-    my $sv = $_[0]->op_arg;
-    $sv .= $_[0]->{sb} . $_[0]->{sa};
-    $_[0]->{sa} = $sv;
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    my($st) = @_;
+    $st->{sa} = Text::Xslate::PP::tx_concat($st->{sb}, $st->{sa});
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 sub op_bitor {

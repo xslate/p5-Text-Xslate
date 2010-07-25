@@ -9,6 +9,7 @@ Revision history for Perl extension Text::Xslate
     [CHANGES]
     - Internal refactoring to make parsers more robust
     - Rename Text::Xslate::Cookbook to Text::Xslate::Manual::Cookbook
+    - Now string concatination (infix:<~>) respects raw strings
 
     [NEW FEATURES]
    - Add GET statement to TTerse

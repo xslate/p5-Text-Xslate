@@ -396,7 +396,7 @@ $CODE_MANIP{ 'mod' } = sub {
 
 $CODE_MANIP{ 'concat' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s . %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf( 'Text::Xslate::PP::tx_concat( %s, %s )', $self->sb(), $self->sa() ) );
 };
 
 

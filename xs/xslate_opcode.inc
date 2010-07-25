@@ -266,9 +266,34 @@ TXC(mod) {
 }
 
 TXC_w_sv(concat) {
-    SV* const sv = TX_op_arg_sv;
-    sv_setsv_nomg(sv, TX_st_sb);
-    sv_catsv_nomg(sv, TX_st_sa);
+    dMY_CXT;
+    SV*       sv  = TX_op_arg_sv;
+    SV* const lhs = TX_st_sb;
+    SV* const rhs = TX_st_sa;
+
+    if(tx_str_is_raw(aTHX_ aMY_CXT_ lhs)) {
+        sv_setsv_nomg(sv, TX_UNMARK_RAW(lhs));
+
+        if(tx_str_is_raw(aTHX_ aMY_CXT_ rhs)) {
+            sv_catsv_nomg(sv, TX_UNMARK_RAW(rhs));
+        }
+        else {
+            tx_sv_cat_with_html_escape_force(aTHX_ sv, rhs);
+        }
+        sv = tx_mark_raw(aTHX_ sv);
+    }
+    else {
+        if(tx_str_is_raw(aTHX_ aMY_CXT_ rhs)) {
+            sv_setpvs(sv, "");
+            tx_sv_cat_with_html_escape_force(aTHX_ sv, lhs);
+            sv_catsv_nomg(sv, TX_UNMARK_RAW(rhs));
+            sv = tx_mark_raw(aTHX_ sv);
+        }
+        else {
+            sv_setsv_nomg(sv, lhs);
+            sv_catsv_nomg(sv, rhs);
+        }
+    }
 
     TX_st_sa = sv;
 

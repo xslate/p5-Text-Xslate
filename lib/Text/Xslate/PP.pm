@@ -26,6 +26,7 @@ use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
 
 use constant _DUMP_LOAD_TEMPLATE => scalar($DEBUG =~ /\b dump=load_file \b/xms);
 
+use constant _RAW => 'Text::Xslate::Type::Raw';
 
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
@@ -273,20 +274,19 @@ sub _assemble {
     package
         Text::Xslate::Util;
 
-    my $esc_class = 'Text::Xslate::Type::Raw';
     sub escaped_string; *escaped_string = \&mark_raw;
     sub mark_raw {
         my($str) = @_;
         if(defined $str) {
-            return ref($str) eq $esc_class
+            return ref($str) eq Text::Xslate::PP::_RAW()
                 ? $str
-                : bless \$str, $esc_class;
+                : bless \$str, Text::Xslate::PP::_RAW();
         }
         return $str; # undef
     }
     sub unmark_raw {
         my($str) = @_;
-        return ref($str) eq $esc_class
+        return ref($str) eq Text::Xslate::PP::_RAW()
             ? ${$str}
             : $str;
     }
@@ -294,11 +294,11 @@ sub _assemble {
     sub html_escape {
         my($s) = @_;
         return $s if
-            ref($s) eq $esc_class
+            ref($s) eq Text::Xslate::PP::_RAW()
             or !defined($s);
 
         $s =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
-        return bless \$s, $esc_class;
+        return bless \$s, Text::Xslate::PP::_RAW();
     }
 }
 
@@ -342,6 +342,26 @@ sub tx_match { # simple smart matching
     }
     else {
         return !defined($x);
+    }
+}
+
+sub tx_concat {
+    my($lhs, $rhs) = @_;
+    if(ref($lhs) eq _RAW) {
+        if(ref($rhs) eq _RAW) {
+            return Text::Xslate::Util::mark_raw(${ $lhs } . ${ $rhs });
+        }
+        else {
+            return Text::Xslate::Util::mark_raw(${ $lhs } . Text::Xslate::Util::html_escape($rhs));
+        }
+    }
+    else {
+        if(ref($rhs) eq _RAW) {
+            return Text::Xslate::Util::mark_raw(Text::Xslate::Util::html_escape($lhs) . ${ $rhs });
+        }
+        else {
+            return $lhs . $rhs;
+        }
     }
 }
 
