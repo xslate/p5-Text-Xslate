@@ -266,11 +266,24 @@ TXC(mod) {
 }
 
 TXC_w_sv(concat) {
-    SV* const sv = TX_op_arg_sv;
-    sv_setsv_nomg(sv, TX_st_sb);
-    sv_catsv_nomg(sv, TX_st_sa);
+    SV* const lhs = TX_op_arg_sv;
+    SV* const rhs = TX_st_sa;
+    sv_setsv_nomg(lhs, TX_st_sb);
 
-    TX_st_sa = sv;
+    /* tryAMAGICbin */
+    if ((SvAMAGIC(lhs) || SvAMAGIC(rhs))) {
+        SV * const tmpsv = amagic_call(lhs, rhs,
+                           concat_amg,
+                           AMGf_assign);
+        if (tmpsv) {
+            (void)TX_pop();
+            TX_st_sa = tmpsv;
+            TX_RETURN_NEXT();
+        }
+    }
+
+    sv_catsv_nomg(lhs, TX_st_sa);
+    TX_st_sa = lhs;
 
     TX_RETURN_NEXT();
 }

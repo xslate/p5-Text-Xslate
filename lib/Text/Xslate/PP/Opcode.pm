@@ -255,9 +255,7 @@ sub op_mod {
 
 
 sub op_concat {
-    my $sv = $_[0]->op_arg;
-    $sv .= $_[0]->{sb} . $_[0]->{sa};
-    $_[0]->{sa} = $sv;
+    $_[0]->{sa} = $_[0]->{sb} . $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
