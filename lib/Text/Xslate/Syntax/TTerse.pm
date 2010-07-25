@@ -383,12 +383,12 @@ sub std_set {
     for(my $i = 0; $i < @{$set_list}; $i += 2) {
         my($name, $value) = @{$set_list}[$i, $i+1];
 
-        if($is_default) {
+        if($is_default) { # DEFAULT a = b -> a = a || b
             my $var = $parser->symbol('(variable)')->clone(
                 id => $name->id,
             );
 
-            $value = $parser->binary('//', $var, $value);
+            $value = $parser->binary('||', $var, $value);
         }
         my $assign = $symbol->clone(
             id     => '=',
