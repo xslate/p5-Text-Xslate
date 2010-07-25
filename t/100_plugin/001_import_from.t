@@ -23,6 +23,13 @@ for(1 .. 2) {
             croak    => \&Carp::croak,
             confess  => \&Carp::confess,
     };
+
+    $f = import_from(
+           "Fcntl" => [qw(:flock)],
+    );
+
+    is $f->{LOCK_EX}->(), Fcntl::LOCK_EX(), 'constant';
+    is $f->{LOCK_SH}->(), Fcntl::LOCK_SH(), 'constant';
 }
 
 

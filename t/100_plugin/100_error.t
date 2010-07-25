@@ -29,5 +29,12 @@ eval {
 like $@, qr/Failed to import/;
 like $@, qr{Can't locate Text/Xslate/No/Such/Module.pm};
 
+eval {
+    Text::Xslate->new(
+        module => [ '(^_^)' ],
+    );
+};
+
+like $@, qr/Invalid module name/;
 
 done_testing;

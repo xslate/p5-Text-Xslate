@@ -144,7 +144,7 @@ sub import_from {
         my $module = $_[$i];
 
         if($module =~ /[^a-zA-Z0-9_:]/) {
-            Carp::croak("Invalid module name: $module");
+            Carp::confess("Xslate: Invalid module name: $module");
         }
 
         my $commands;
