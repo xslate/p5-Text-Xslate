@@ -15,12 +15,12 @@ Revision history for Perl extension Text::Xslate
    - Add infix:<AND> and infix:<OR> to TTerse (clouder)
 
     [NEW DOCUMENTS]
-    - Text::Xslate::Manual::FAQ
+    - Text::Xslate::Manual::FAQ to answer a few questions
 
 0.1047 Mon Jul 19 17:04:51 2010
     [BUG FIXES]
     - $foo.nil did not work.
-    - "+10" was wongly converted into "10".
+    - "+10" was wongly converted into "10"
 
     [CHANGES]
     - Rename Text::Xslate->engine to Text::Xslate->current_engine
@@ -374,7 +374,7 @@ Revision history for Perl extension Text::Xslate
 0.1013 Thu May 13 15:00:41 2010
     [CHANGES]
     - The warning policy has been changed. See the document for details.
-    - Allow Allow calling render without any variables (lestrrat)
+    - Allow calling render without any variables (lestrrat)
 
 0.1012 Mon May 10 13:56:28 2010
     [BUG FIXES]
