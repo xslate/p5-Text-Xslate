@@ -26,7 +26,7 @@ Text::Xslate::Syntax::Kolon - The default template syntax
 
 =head1 DESCRIPTION
 
-Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line code.
+Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line code. In this syntax all the futures in Xslate are available.
 
 =head1 SYNTAX
 
@@ -53,7 +53,7 @@ C<< $obj["accessor"] >> syntax may be call object methods.
 
 Special:
 
-    : nil   # indicates "nothing"
+    : nil   # as undef, indicating "nothing"
     : true  # as the integer 1
     : false # as the integer 0
 
@@ -66,8 +66,9 @@ Number:
 
     : 42
     : 3.14
-    : 0xFF
-    : 0b1010
+    : 0xFF   # hex
+    : 0777   # octal
+    : 0b1010 # binary
 
 Array:
 
@@ -77,8 +78,8 @@ Hash:
 
     : foo({ foo => "bar" })
 
-C<{ ... }> is always parsed as hash literals, so you need not to use prefix C<+>
-as Perl sometimes requires:
+Note that C<{ ... }> is always parsed as hash literals, so you need not
+to use prefix:<+> as Perl sometimes requires:
 
     :  {}.kv(); # ok
     : +{}.kv(); # also ok
@@ -160,7 +161,8 @@ There is C<for> loops that are like Perl's C<foreach>.
     : }
 
     : # iterate an HASH reference
-    : for $data.keys() -> $key { # or .values(), .kv()
+    : # You must specify how to iterate it (.keys(), .values() or .kv())
+    : for $data.keys() -> $key {
         <: $key :>=<: $data[$key] :>
     : }
 
@@ -206,8 +208,8 @@ C<while> loops are also supported in the same semantics as Perl's:
 C<< while defined expr -> $item >> is interpreted as
 C<< while defined(my $item = expr) >> for convenience.
 
-    : while defined $obj.fetch() -> $item {
-        [<: $item # $item can be false-but-defined:>]
+    : while defined $dbh.fetch() -> $item {
+        [<: $item # $item can be false-but-defined :>]
     : }
 
 =head2 Conditional statements

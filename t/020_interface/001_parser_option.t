@@ -28,6 +28,17 @@ is $tx->render_string(<<'T', { foo => "Xslate"}), q{<: $foo :>Xslate<: $foo :>} 
 <: $foo :>[% $foo %]<: $foo :>
 T
 
+
+$tx = Text::Xslate->new(
+    syntax    => 'TTerse',
+    tag_start => '<%',
+    tag_end   => '%>',
+);
+
+is $tx->render_string(<<'T', { foo => "Xslate"}), q{[% $foo %]Xslate[% $foo %]} . "\n", 'tag_start & tag_end';
+[% $foo %]<% $foo %>[% $foo %]
+T
+
 my $myparser = Text::Xslate::Parser->new(
     line_start => undef,
     tag_start  => '[%',

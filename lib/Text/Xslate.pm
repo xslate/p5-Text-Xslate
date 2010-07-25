@@ -64,12 +64,14 @@ my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 # version-path-{compiler options}
 my $XSLATE_MAGIC    = qq{.xslate "%s-%s-{%s}"\n};
 
+# the real defaults are dfined in the parser
 my %parser_option = (
     line_start => undef,
     tag_start  => undef,
     tag_end    => undef,
 );
 
+# the real defaults are defined in the compiler
 my %compiler_option = (
     syntax     => undef,
     escape     => undef,
@@ -93,7 +95,7 @@ sub options { # overridable
         suffix       => '.tx',
         path         => ['.'],
         input_layer  => ':utf8',
-        cache        => 1,
+        cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
         cache_dir    => _DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
@@ -719,7 +721,7 @@ Specify the token to start inline code as a string, which C<quotemeta> will be a
 
 This option is passed to the parser via the compiler.
 
-=item C<< line_start => $str // $parser_defined_str >>
+=item C<< tag_end => $str // $parser_defined_str >>
 
 Specify the token to end inline code as a string, which C<quotemeta> will be applied to.
 
