@@ -377,13 +377,14 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
     const char* type_name;
     SV* fq_name;
     HE* he;
-    SV* retval = NULL;
+    SV* retval;
 
     if(sv_isobject(invocant)) {
         PUSHMARK(ORIGMARK); /* re-pushmark */
         return tx_call_sv(aTHX_ st, method, G_METHOD, "method call");
     }
 
+    retval = NULL;
     if(SvROK(invocant)) {
         SV* const referent = SvRV(invocant);
         if(SvTYPE(referent) == SVt_PVAV) {

@@ -297,7 +297,7 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
 
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
-    SV* sv = NULL;
+    SV* retval;
     SvGETMAGIC(var);
     if(SvROK(var) && SvOBJECT(SvRV(var))) {
         dSP;
@@ -305,16 +305,18 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
         XPUSHs(var);
         PUTBACK;
 
-        sv = tx_call_sv(aTHX_ st, key, G_METHOD, "accessor");
+        return tx_call_sv(aTHX_ st, key, G_METHOD, "accessor");
     }
-    else if(SvROK(var)){
+
+    retval = NULL;
+    if(SvROK(var)){
         SV* const rv = SvRV(var);
         SvGETMAGIC(key);
         if(SvTYPE(rv) == SVt_PVHV) {
             if(SvOK(key)) {
                 HE* const he = hv_fetch_ent((HV*)rv, key, FALSE, 0U);
                 if(he) {
-                    sv = hv_iterval((HV*)rv, he);
+                    retval = hv_iterval((HV*)rv, he);
                 }
             }
             else {
@@ -325,7 +327,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
             if(LooksLikeNumber(key)) {
                 SV** const svp = av_fetch((AV*)rv, SvIV(key), FALSE);
                 if(svp) {
-                    sv = *svp;
+                    retval = *svp;
                 }
             }
             else {
@@ -346,7 +348,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
         tx_warn(aTHX_ st, "Use of nil to access %s", tx_neat(aTHX_ key));
     }
 
-    return sv ? sv : &PL_sv_undef;
+    return retval ? retval : &PL_sv_undef;
 }
 
 static inline bool
