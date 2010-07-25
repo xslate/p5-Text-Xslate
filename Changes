@@ -13,7 +13,7 @@ Revision history for Perl extension Text::Xslate
 
     [NEW FEATURES]
    - Add GET statement to TTerse
-   - Add infix:<AND> and infix:<OR> to TTerse (clouder)
+   - Add prefix:<NOT>, infix:<AND> and infix:<OR> to TTerse (clouder)
 
     [NEW DOCUMENTS]
     - Text::Xslate::Manual::FAQ to answer a few questions
