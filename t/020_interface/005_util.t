@@ -4,6 +4,7 @@ use Test::More;
 
 use Text::Xslate::Util qw(
     literal_to_value
+    value_to_literal
     read_around
 );
 
@@ -38,11 +39,19 @@ my @set = (
     [ q{0b10_10}, 0b10_10 ],
 
     [ q{0xDeadBeef}, 0xDeadBeef ],
+
+    [ q{"+10"},   "+10" ],
+    [ q{"+10.0"}, "+10.0" ],
+    [ q{"-10"},   "-10" ],
+    [ q{"-10.0"}, "-10.0" ],
+
 );
 
 foreach my $d(@set) {
     my($in, $out) = @{$d};
-    is literal_to_value($in), $out, "literal: $in";
+    my $v = literal_to_value($in);
+    is $v, $out, "literal: $in";
+    is literal_to_value(value_to_literal($v)), $out;
 }
 
 is read_around(__FILE__, 1), <<'X', 'read_around';

@@ -124,8 +124,8 @@ sub value_to_literal {
     my($value) = @_;
     return 'undef' if not defined $value;
 
-    # XXX: '+1' must be interpreted as a string
-    if($value =~ /\A -? $NUMBER \z/xmso){
+    # XXX: '+1', '1.0' must be interpreted as a string
+    if($value =~ /\A -? [0-9]+ \z/xmso){
         return $value;
     }
     else {
