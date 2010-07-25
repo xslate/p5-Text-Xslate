@@ -9,7 +9,7 @@ use t::lib::Util;
 use File::Path qw(rmtree);
 END{ rmtree '.test_data_section' }
 
-my $data = {
+my %vpath = (
     'foo.tx' => 'Hello, <: $lang :> world!',
 
     'base.tx'  => <<'T',
@@ -24,17 +24,18 @@ T
 child body
 : } # endblock body
 T
-};
+);
 
 for my $cache(0 .. 2) {
+    note "cache => $cache";
     my $tx = Text::Xslate->new(
-        path      => [ $data, path ],
+        path      => [ \%vpath, path ],
         cache_dir => '.test_data_section',
         cache     => $cache,
     );
 
-    is $tx->render('foo.tx', { lang => 'Xslate' }), 'Hello, Xslate world!', "cache => $cache (1)";
-    is $tx->render('foo.tx', { lang => 'Perl' }),   'Hello, Perl world!',   "cache => $cache (2)";
+    is $tx->render('foo.tx', { lang => 'Xslate' }), 'Hello, Xslate world!', "(1)";
+    is $tx->render('foo.tx', { lang => 'Perl' }),   'Hello, Perl world!',   "(2)";
 
     is $tx->render('child.tx'), <<'X' for 1 .. 2;
 <html>
@@ -43,7 +44,16 @@ for my $cache(0 .. 2) {
 </html>
 X
 
-    is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "for files";
+    is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "for real files";
+
+
+    # reload
+    local $vpath{'foo.tx'} = 'Modified';
+    $tx = Text::Xslate->new(
+        path  => \%vpath,
+        cache => $cache,
+    );
+    is $tx->render('foo.tx', { lang => 'Xslate' }), 'Modified', 'reloaded';
 }
 
 done_testing;

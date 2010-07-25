@@ -14,11 +14,18 @@ foreach my $mod(qw(Text::Xslate)){
 
 my $n = shift(@ARGV) || 10;
 
-my $tx = Text::Xslate->new(
+my $tx1 = Text::Xslate->new(
+    path       => [ get_data_section(), "$Bin/template" ],
+    cache_dir => "$Bin/template",
+    cache     => 1,
+);
+
+my $tx2 = Text::Xslate->new(
     path       => [ get_data_section(), "$Bin/template" ],
     cache_dir => "$Bin/template",
     cache     => 2,
 );
+
 
 my $vars = {
      books => [(
@@ -32,20 +39,29 @@ my $vars = {
 
 {
     use Test::More;
-    plan tests => 1;
-    is $tx->render('list_ds.tx', $vars), $tx->render('list.tx', $vars)
+    plan tests => 2;
+    is $tx1->render('list_ds.tx', $vars), $tx1->render('list.tx', $vars)
+        or die;
+    is $tx2->render('list_ds.tx', $vars), $tx2->render('list.tx', $vars)
         or die;
 }
 
-# suppose PSGI response body
-
+print "Files v.s. __DATA__ with cache => 1 or 2\n";
 cmpthese -1 => {
-    file => sub {
-        my $body = [$tx->render('list.tx', $vars)];
+    'file/1' => sub {
+        my $body = [$tx1->render('list.tx', $vars)];
         return;
     },
-    data => sub {
-        my $body = [$tx->render('list_ds.tx', $vars)];
+    'file/2' => sub {
+        my $body = [$tx2->render('list.tx', $vars)];
+        return;
+    },
+    'vpath/1' => sub {
+        my $body = [$tx1->render('list_ds.tx', $vars)];
+        return;
+    },
+    'vpath/2' => sub {
+        my $body = [$tx2->render('list_ds.tx', $vars)];
         return;
     },
 };

@@ -419,7 +419,7 @@ sub tx_all_deps_are_fresh {
     for ( my $i = TXo_FULLPATH; $i < $len; $i++ ) {
         my $deppath = $tmpl->[ $i ];
 
-        next unless defined $deppath;
+        next if ref $deppath;
 
         my $mtime = ( stat( $deppath ) )[9];
         if ( defined($mtime) and $mtime > $cache_mtime ) {

@@ -819,11 +819,11 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
     for(i = TXo_FULLPATH; i < len; i++) {
         SV* const deppath = AvARRAY(tmpl)[i];
 
-        if(!SvOK(deppath)) {
+        if(SvROK(deppath)) {
             continue;
         }
 
-        //PerlIO_stdoutf("check deps: %"SVf" ... ", path); // */
+        //PerlIO_stdoutf("check deps: %"SVf" ...\n", deppath); // */
         if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
                || f.st_mtime > cache_mtime) {
             SV* const main_cache = AvARRAY(tmpl)[TXo_CACHEPATH];
@@ -1009,10 +1009,9 @@ CODE:
         croak("The xslate instance has no template table");
     }
 
-    if(!SvOK(name)) { /* for strings */
-        name     = sv_2mortal(newSVpvs_share("<string>"));
-        fullpath = cachepath = &PL_sv_undef;
-        mtime    = sv_2mortal(newSViv( time(NULL) ));
+    if(!SvOK(name)) {
+        croak("Use of undefined name, which is an undocumented feature, is no longer supported.\n"
+              "Use <string> instead.");
     }
 
     /* fetch the template object from $self->{template}{$name} */

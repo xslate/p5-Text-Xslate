@@ -48,8 +48,8 @@ use Text::Xslate::Util qw(
 );
 
 BEGIN {
-    my $dump_load_file = scalar($DEBUG =~ /\b dump=load_file \b/xms);
-    *_DUMP_LOAD_FILE = sub(){ $dump_load_file };
+    my $dump_load = scalar($DEBUG =~ /\b dump=load \b/xms);
+    *_DUMP_LOAD = sub(){ $dump_load };
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
@@ -188,23 +188,22 @@ sub load_string { # for <string>
     }
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
-    $self->_assemble($asm, undef, undef, undef, undef);
+    $self->_assemble($asm, '<string>', \$string, undef, undef);
     return $asm;
 }
 
 sub find_file {
-    my($self, $file, $threshold_mtime) = @_;
+    my($self, $file) = @_;
 
     my $fullpath;
     my $cachepath;
     my $orig_mtime;
     my $cache_mtime;
-
     foreach my $p(@{$self->{path}}) {
-        if(ref $p eq 'HASH') {
+        if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
-            $orig_mtime = 0; # always fresh
+            $orig_mtime = $^T;
         }
         else {
             $fullpath = File::Spec->catfile($p, $file);
@@ -214,17 +213,8 @@ sub find_file {
 
         # $file is found
 
-        $cachepath = File::Spec->catfile($self->{cache_dir}, $file . 'c');
-
-        if(-f $cachepath) {
-            my $cmt = (stat(_))[_ST_MTIME]; # compiled
-
-            # see also tx_load_template() in xs/Text-Xslate.xs
-            if(($threshold_mtime || $cmt) >= $orig_mtime) {
-                $cache_mtime = $cmt;
-            }
-        }
-
+        $cachepath   = File::Spec->catfile($self->{cache_dir}, $file . 'c');
+        $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
         last;
     }
 
@@ -232,7 +222,7 @@ sub find_file {
         $self->_error("LoadError: Cannot find '$file' (path: @{$self->{path}})");
     }
 
-    print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD_FILE;
+    print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD;
 
     return {
         fullpath    => $fullpath,
@@ -246,13 +236,13 @@ sub find_file {
 sub load_file {
     my($self, $file, $mtime) = @_;
 
-    print STDOUT "load_file($file)\n" if _DUMP_LOAD_FILE;
+    print STDOUT "load_file($file)\n" if _DUMP_LOAD;
 
     if($file eq '<string>') { # simply reload it
         return $self->load_string($self->{string_buffer});
     }
 
-    my $fi = $self->find_file($file, $mtime);
+    my $fi = $self->find_file($file);
 
     my $asm = $self->_load_compiled($fi, $mtime) || $self->_load_source($fi, $mtime);
 
@@ -319,7 +309,7 @@ sub _load_source {
             Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
         }
     }
-    if(_DUMP_LOAD_FILE) {
+    if(_DUMP_LOAD) {
         printf STDERR "  _load_source: cache(%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
     }
@@ -327,17 +317,27 @@ sub _load_source {
     return $asm;
 }
 
+# load compiled templates if they are fresh enough
 sub _load_compiled {
-    my($self, $fi, $threshold_mtime) = @_;
+    my($self, $fi, $threshold) = @_;
 
-    $fi->{cache_mtime} = undef if $self->{cache} == 0;
-
-    return undef if !$fi->{cache_mtime};
-
-    $threshold_mtime ||= $fi->{cache_mtime};
+    if($self->{cache} >= 2) {
+        # threshold is the most latest modified time of all the related caches,
+        # so if the cache level >= 2, they seems always fresh.
+        $threshold = '+inf';
+    }
+    else {
+        $threshold ||= $fi->{cache_mtime};
+    }
+    # see also tx_load_template() in xs/Text-Xslate.xs
+    if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
+            and $threshold >= $fi->{orig_mtime} )) {
+        printf "  _load_compiled: no fresh cache: %s", Text::Xslate::Util::p($fi) if _DUMP_LOAD;
+        $fi->{cache_mtime} = undef;
+        return undef;
+    }
 
     my $cachepath = $fi->{cachepath};
-
     open my($in), '<' . $self->{input_layer}, $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
@@ -378,11 +378,11 @@ sub _load_compiled {
                 $dep_mtime = '+inf'; # force reload
                 Carp::carp("Xslate: Failed to stat $value (ignored): $!");
             }
-            if($dep_mtime > $threshold_mtime){
+            if($dep_mtime > $threshold){
                 printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
                     $value,     scalar localtime($dep_mtime),
-                    $cachepath, scalar localtime($threshold_mtime)
-                        if _DUMP_LOAD_FILE;
+                    $cachepath, scalar localtime($threshold)
+                        if _DUMP_LOAD;
 
                 return undef;
             }
@@ -391,7 +391,7 @@ sub _load_compiled {
         push @asm, [ $name, $value, $line, $file, $symbol ];
     }
 
-    if(_DUMP_LOAD_FILE) {
+    if(_DUMP_LOAD) {
         printf STDERR "  _load_compiled: cache(%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
     }
