@@ -111,6 +111,18 @@ like $warn, qr/\b MyObject \b/xms;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
+$warn = '';
+$out = eval {
+    $tx->render_string('<: $o.bar :>', { o => bless {}, 'MyObject' });
+};
+
+is $out, '', 'warn in render_string()';
+like $warn, qr/Can't locate object method/;
+like $warn, qr/\b bar \b/xms;
+like $warn, qr/\b MyObject \b/xms;
+like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+is $@,  '';
+
 note 'verbose => 2';
 
 $tx = Text::Xslate->new(
