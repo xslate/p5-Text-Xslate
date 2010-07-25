@@ -521,24 +521,6 @@ This document describes Text::Xslate version 0.1047.
 
     print $tx->render_string($template, \%vars);
 
-    # you can tell the engine that strings are already escaped.
-    use Text::Xslate qw(mark_raw html_escape);
-
-    $vars{email} = mark_raw('gfx &lt;gfuji at cpan.org&gt;');
-    # or
-    # $vars{email} = html_escape('gfx <gfuji at cpan.org>');
-
-    # use Template Toolkit compatible syntax:
-    $tx = Text::Xslate->new(syntax => 'TTerse');
-    # ...
-
-    # use non-default tags
-    $tx = Text::Xslate->new(
-        tag_start  => '<%',
-        tag_end    => '%>',
-        line_start => undef, # not to use line code
-    );
-
 =head1 DESCRIPTION
 
 B<Text::Xslate> is a high performance template engine tuned for persistent
@@ -715,7 +697,7 @@ Specifies the escape mode, which is automatically applied to template expression
 Possible escape modes are B<html> and B<none>.
 
 Note that C<none> mode is provided for non-HTML templates, e.g. mail generators,
-so you must not to use it for web applications because it is unsafe.
+so you must not to use it for HTML templates because it is unsafe.
 
 This option is passed to the compiler directly.
 
@@ -817,7 +799,7 @@ For example:
     my $tx   = Text::Xslate->new();
     my $tmpl = 'Mailaddress: <: $email :>';
     my %vars = (
-        email => mark_raw('Foo &lt;foo@example.com&gt;'),
+        email => mark_raw('Foo &lt;foo at example.com&gt;'),
     );
     print $tx->render_string($tmpl, \%email);
     # => Mailaddress: Foo &lt;foo@example.com&gt;

@@ -78,6 +78,9 @@ but it requires Templte-Toolkit itself.
 L<Text::Xslate::Bridge::TT2Like> provides the same features as C<Bridge::TT2>,
 but it does not require the Template-Toolkit distribution.
 
+These bridge modules are useful not only for TTerse users, but
+also for Kolon users.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
