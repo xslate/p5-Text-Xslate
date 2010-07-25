@@ -188,6 +188,33 @@ has line => (
 
 sub symbol_class() { 'Text::Xslate::Symbol' }
 
+# the entry point
+sub parse {
+    my($parser, $input, %args) = @_;
+
+    local $parser->{file}     = $args{file} || \$input;
+    local $parser->{line}     = $args{line} || 1;
+    local $parser->{in_given} = 0;
+    local $parser->{scope}        = [ map { +{ %{$_} } } @{ $parser->scope } ];
+    local $parser->{symbol_table} = { %{ $parser->symbol_table } };
+    local $parser->{near_token};
+    local $parser->{next_token};
+    local $parser->{token};
+    local $parser->{input};
+
+    $parser->input( $parser->preprocess($input) );
+
+    $parser->next_token( $parser->tokanize() );
+    $parser->advance();
+    my $ast = $parser->statements();
+
+    if($parser->input ne '') {
+        $parser->_error("Syntax error", $parser->token);
+    }
+
+    return $ast;
+}
+
 sub trim_code {
     my($parser, $s) = @_;
 
@@ -362,32 +389,6 @@ sub preprocess {
     }
     print STDOUT $code, "\n" if _DUMP_PROTO;
     return $code;
-}
-
-sub parse {
-    my($parser, $input, %args) = @_;
-
-    local $parser->{file}     = $args{file} || \$input;
-    local $parser->{line}     = $args{line} || 1;
-    local $parser->{in_given} = 0;
-    local $parser->{scope}        = [ map { +{ %{$_} } } @{ $parser->scope } ];
-    local $parser->{symbol_table} = { %{ $parser->symbol_table } };
-    local $parser->{near_token};
-    local $parser->{next_token};
-    local $parser->{token};
-    local $parser->{input};
-
-    $parser->input( $parser->preprocess($input) );
-
-    $parser->next_token( $parser->look_ahead() );
-    $parser->advance();
-    my $ast = $parser->statements();
-
-    if($parser->input ne '') {
-        $parser->_error("Syntax error", $parser->token);
-    }
-
-    return $ast;
 }
 
 sub BUILD {
@@ -593,7 +594,8 @@ sub define_pair {
     return;
 }
 
-sub look_ahead {
+# the low-level tokanizer. Don't use it directly, use advance() instead.
+sub tokanize {
     my($parser) = @_;
 
     local *_ = \$parser->{input};
@@ -607,7 +609,7 @@ sub look_ahead {
         return [ name => $1 ];
     }
     elsif(s/\A $COMMENT //xmso) {
-        goto &look_ahead; # tail recursion
+        goto &tokanize; # tail recursion
     }
     elsif(s/\A ($NUMBER | $STRING)//xmso){
         return [ literal => $1 ];
@@ -628,6 +630,7 @@ sub next_token_is {
     return $parser->next_token->[1] eq $token;
 }
 
+# the high-level tokanizer
 sub advance {
     my($parser, $expect) = @_;
 
@@ -648,7 +651,7 @@ sub advance {
     $parser->statement_is_finished( $parser->following_newline != 0 );
     my $line = $parser->line( $parser->line + $parser->following_newline );
 
-    $parser->next_token( $parser->look_ahead() );
+    $parser->next_token( $parser->tokanize() );
 
     my($arity, $id) = @{$t};
     if( $arity eq "name" && $parser->next_token_is("=>") ) {
@@ -763,6 +766,7 @@ sub expression_list {
     return \@list;
 }
 
+# for left associative infix operators
 sub led_infix {
     my($parser, $symbol, $left) = @_;
     return $parser->binary( $symbol, $left, $parser->expression($symbol->lbp) );
@@ -776,6 +780,7 @@ sub infix {
     return $symbol;
 }
 
+# for right associative infix operators
 sub led_infixr {
     my($parser, $symbol, $left) = @_;
     return $parser->binary( $symbol, $left, $parser->expression($symbol->lbp - 1) );
@@ -787,6 +792,24 @@ sub infixr {
     my $symbol = $parser->symbol($id, $bp);
     $symbol->set_led($led || \&led_infixr);
     return $symbol;
+}
+
+# for prefix operators
+sub prefix {
+    my($parser, $id, $bp, $nud) = @_;
+
+    my $symbol = $parser->symbol($id);
+    $symbol->ubp($bp);
+    $symbol->set_nud($nud || \&nud_prefix);
+    return $symbol;
+}
+
+sub nud_prefix {
+    my($parser, $symbol) = @_;
+    my $un = $symbol->clone(arity => 'unary');
+    $parser->reserve($un);
+    $un->first($parser->expression($symbol->ubp));
+    return $un;
 }
 
 sub led_assignment {
@@ -802,6 +825,7 @@ sub assignment {
     return;
 }
 
+# the ternary is a right associative operator
 sub led_ternary {
     my($parser, $symbol, $left) = @_;
 
@@ -898,24 +922,6 @@ sub led_pipe { # filter
     return $parser->call($parser->expression($symbol->lbp), $left);
 }
 
-
-sub prefix {
-    my($parser, $id, $bp, $nud) = @_;
-
-    my $symbol = $parser->symbol($id);
-    $symbol->ubp($bp);
-    $symbol->set_nud($nud || \&nud_prefix);
-    return $symbol;
-}
-
-sub nud_prefix {
-    my($parser, $symbol) = @_;
-    my $un = $symbol->clone(arity => 'unary');
-    $parser->reserve($un);
-    $un->first($parser->expression($symbol->ubp));
-    return $un;
-}
-
 sub nil {
     my($parser) = @_;
     return $parser->symbol('nil')->nud($parser);
@@ -924,6 +930,7 @@ sub nil {
 sub nud_defined {
     my($parser, $symbol) = @_;
     $parser->reserve( $symbol->clone() );
+    # prefix:<defined> is a syntactic sugar to $a != nil
     return $parser->binary(
         '!=',
         $parser->expression($symbol->ubp),
@@ -931,6 +938,7 @@ sub nud_defined {
    );
 }
 
+# for special literals (e.g. nil, true, false)
 sub nud_special {
     my($parser, $symbol) = @_;
     return $symbol->first;
@@ -1288,36 +1296,6 @@ sub nud_current_line {
     );
 }
 
-#sub std_var {
-#    my($parser, $symbol) = @_;
-#    my @a;
-#    while(1) {
-#        my $name = $parser->token;
-#        if($name->arity ne "variable") {
-#            confess("Expected a new variable name, but $name is not");
-#        }
-#        $parser->define($name);
-#        $parser->advance();
-#
-#        if($parser->token->id eq "=") {
-#            my $t = $parser->token;
-#            $parser->advance("=");
-#            $t->first($name);
-#            $t->second($parser->expression(0));
-#            $t->arity("binary");
-#            push @a, $t;
-#        }
-#
-#        if($parser->token->id ne ",") {
-#            last;
-#        }
-#        $parser->advance(",");
-#    }
-#
-#    $parser->advance(";");
-#    return @a;
-#}
-
 # -> VARS { STATEMENTS }
 # ->      { STATEMENTS }
 #         { STATEMENTS }
@@ -1549,7 +1527,7 @@ sub std_when {
     return $proc;
 }
 
-sub _is_literal_ws {
+sub _only_white_spaces {
     my($s) = @_;
     return  $s->arity eq "literal"
          && $s->value =~ m{\A [ \t\r\n]* \z}xms
@@ -1567,7 +1545,7 @@ sub build_given_body {
         if($when->arity ne $expect) {
             # ignore white space
             if($when->id eq "print_raw"
-                    && !grep { !_is_literal_ws($_) } @{$when->first}) {
+                    && !grep { !_only_white_spaces($_) } @{$when->first}) {
                 next;
             }
             $parser->_unexpected("$expect blocks", $when);
@@ -1670,6 +1648,7 @@ sub barename {
     return \@parts;
 }
 
+# NOTHING | { expression-list }
 sub localize_vars {
     my($parser) = @_;
     if($parser->token->id eq "{") {
