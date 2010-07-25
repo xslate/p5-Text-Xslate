@@ -46,6 +46,38 @@ together with C<syntax> optin:
     );
     print $tx->render_string('Hello, {lang} world!', { lang => 'Xslate' });
 
+=head3 How can I iterate over HASH references?
+
+Convert HASH references into ARRAY references because C<for> methods can deal
+with ARRAY references.
+
+    : # in Kolon
+    : # iterate $hash by keys
+    : for $hash.keys() -> $key {
+        <: $key :>
+    : }
+    : # by values
+    : for $hash.values() -> $value {
+        <: $value :>
+    : }
+    : # by key-value pairs
+    : for $hash.kv() -> $pair {
+        <: $pair.key :>=<: $pair.value :>
+    : }
+
+Note that the above methods return ARRAY references sorted by the keys.
+
+=head3 How can I use Template-Toolkit virtual methods and filters?
+
+Xslate itself does not support these methods and filters, but there
+are modules on CPAN that implement them.
+
+L<Text::Xslate::Bridge::TT2> provides almost all the TT methods and filters,
+but it requires Templte-Toolkit itself.
+
+L<Text::Xslate::Bridge::TT2Like> provides the same features as C<Bridge::TT2>,
+but it does not require the Template-Toolkit distribution.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
