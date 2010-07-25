@@ -4,7 +4,7 @@ use Test::More;
 
 use Text::Xslate;
 
-my $tx = Text::Xslate->new();
+my $tx = Text::Xslate->new(verbose => 2);
 
 {
     package Obj;
@@ -16,6 +16,15 @@ my $tx = Text::Xslate->new();
     }
 
     sub ok { 42 }
+
+}
+{
+    package Anything;
+    use Any::Moose;
+
+    sub AUTOLOAD {
+        our $AUTOLOAD;
+    }
 }
 
 my @data = (
@@ -43,14 +52,32 @@ T
 foo.bar.baz
 X
 
+
+    [ <<'T', <<'X', "method call" ],
+<: $obj.join(".", "foo", "bar", "baz") :>
+T
+foo.bar.baz
+X
+
+    [ <<'T', <<'X', "AUTOLOAD" ],
+    <: $any.foo :>
+    <: $any.bar :>
+    <: $any.baz() :>
+T
+    Anything::foo
+    Anything::bar
+    Anything::baz
+X
+
 );
 
+my %vars = (
+    obj => Obj->new,
+    any => Anything->new,
+);
 foreach my $d(@data) {
     my($in, $out, $msg) = @$d;
 
-    my %vars = (
-        obj => Obj->new,
-    );
     is $tx->render_string($in, \%vars), $out, $msg or diag $in;
 }
 

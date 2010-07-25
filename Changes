@@ -4,6 +4,7 @@ Revision history for Perl extension Text::Xslate
     [BUG FIXES]
     - Virtual paths were not cached when cache => 1
     - The explanation of 'tag_end' were incorrect
+    - AUTOLOAD were ignored in methodcall
 
     [CHANGES]
     - Internal refactoring to make parsers more robust
