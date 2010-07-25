@@ -155,12 +155,12 @@ These two statements has the same semantics, so you cannot modify C<$foo>.
 
 There is C<for> loops that are like Perl's C<foreach>.
 
-    : # iterate an ARRAY reference
+    : # iterate over an ARRAY reference
     : for $data -> $item {
         [<: $item.field :>]
     : }
 
-    : # iterate an HASH reference
+    : # iterate over a HASH reference
     : # You must specify how to iterate it (.keys(), .values() or .kv())
     : for $data.keys() -> $key {
         <: $key :>=<: $data[$key] :>
@@ -542,7 +542,7 @@ Template:
 Output:
         &lt;em&gt;Hello, world!&lt;/em&gt;
 
-See also L<Text::Xslate::Cookbook/"Using FillInForm"> for
+See also L<Text::Xslate::Manual::Cookbook/"Using FillInForm"> for
 another example to use this block filter syntax.
 
 =head2 Comments
@@ -561,7 +561,5 @@ Comments start from C<#> to a new line or semicolon.
 =head1 SEE ALSO
 
 L<Text::Xslate>
-
-L<Text::Xslate::Cookbook>
 
 =cut

@@ -39,6 +39,14 @@ is $tx->render_string(<<'T', { foo => "Xslate"}), q{[% $foo %]Xslate[% $foo %]} 
 [% $foo %]<% $foo %>[% $foo %]
 T
 
+$tx = Text::Xslate->new(
+    syntax     => 'TTerse',
+    tag_start  => '{',
+    tag_end    => '}',
+);
+is $tx->render_string('Hello, {lang} world!', { lang => 'Xslate' }), 'Hello, Xslate world!';
+
+
 my $myparser = Text::Xslate::Parser->new(
     line_start => undef,
     tag_start  => '[%',
@@ -64,10 +72,9 @@ my @data = (
     ["%= \$lang\n", "%= \$lang\n"],
 );
 
+my %vars = (lang => 'Xslate', foo => "<bar>");
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
-
-    my %vars = (lang => 'Xslate', foo => "<bar>");
 
     is $tx->render_string($in, \%vars), $out or diag $in;
 }

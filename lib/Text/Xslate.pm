@@ -541,8 +541,8 @@ This document describes Text::Xslate version 0.1047.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> (pronounced as /eks-leit/) is a high performance template engine
-tuned for persistent applications.
+B<Text::Xslate> is a high performance template engine tuned for persistent
+applications.
 This engine introduces the virtual machine paradigm. Templates are
 compiled into xslate intermediate code, and then executed by the xslate
 virtual machine.
@@ -763,7 +763,7 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached, so this may be not sutable for web applications.
+Note that I<$string> is never cached, so this may be not suitable for web applications.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
@@ -937,7 +937,7 @@ L<Text::Xslate::Syntax::TTerse>
 
 Cookbook:
 
-L<Text::Xslate::Cookbook>
+L<Text::Xslate::Manual::Cookbook>
 
 Xslate command:
 

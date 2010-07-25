@@ -1,0 +1,53 @@
+
+=head1 NAME
+
+Text::Xslate::Manual::FAQ - Fewquently asked questions and answers
+
+=head1 QUESTIONS
+
+=head2 General
+
+=head3 How do you pronounce Xslate?
+
+We read it C</eks-leit/>.
+
+=head3 What Xslate stands for?
+
+It stands for XS tempLATE, a template engine written in XS, although
+pure Perl implementations are also provided.
+
+=head3 What are 'Kolon', 'Metakolon', and 'TTerse' ?
+
+Xslate supports several template syntaxes. Kolon is the default syntax,
+Metakolon is suitable to output Kolon templates, and TTerse is compatible
+with Template-Toolkit. You can specify the template syntax by passing
+C<syntax> option to the Text::Xslate constructor.
+
+    my $tx = Text::Xslate->new(
+        syntax => 'TTerse', # by moniker
+    );
+
+    my $tx = Text::Xslate->new(
+        syntax => 'Text::Xslate::Syntax::TTerse', # by fully qualified name
+    );
+
+=head2 Templates
+
+=head3 How can I changes template tags?
+
+Use C<start_tag>, C<end_tag>, and C<line_start> options, which can be joined
+together with C<syntax> optin:
+
+    my $tx = Text::Xslate->new(
+        syntax     => 'TTerse',
+        tag_start  => '{',
+        tag_end    => '}',
+        line_start => undef,
+    );
+    print $tx->render_string('Hello, {lang} world!', { lang => 'Xslate' });
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+=cut
