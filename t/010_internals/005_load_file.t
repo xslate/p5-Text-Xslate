@@ -28,7 +28,7 @@ eval {
 like $@, qr/LoadError/xms,          "load_file -> LoadError";
 like $@, qr/\b no_such_file \b/xms, "include the filename";
 
-open my($out), '>', "./hello.txc";
+open my($out), '>', ".cache/hello.txc";
 print $out "This is a broken txc file\n";
 close $out;
 

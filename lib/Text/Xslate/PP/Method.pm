@@ -127,14 +127,9 @@ sub tx_methodcall {
     my($st, $context, $method, $invocant, @args) = @_;
 
     if(Scalar::Util::blessed($invocant)) {
-        if($invocant->can($method)) {
-            my $retval = eval { $invocant->$method(@args) };
-            $st->error($context, "%s", $@) if $@;
-            return $retval;
-        }
-        $st->error($context, "Undefined method %s called for %s",
-            $method, $invocant);
-        return undef;
+        my $retval = eval { $invocant->$method(@args) };
+        $st->error($context, "%s", $@) if $@;
+        return $retval;
     }
 
     my $type = ref($invocant) eq 'ARRAY' ? 'array::'

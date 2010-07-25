@@ -105,7 +105,7 @@ $out = eval {
 };
 
 is $out, '', 'warn in render_string()';
-like $warn, qr/Undefined method/;
+like $warn, qr/Can't locate object method/;
 like $warn, qr/\b foo \b/xms;
 like $warn, qr/\b MyObject \b/xms;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
