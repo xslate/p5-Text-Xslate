@@ -174,7 +174,7 @@ END_IMPORT
             . $code;
         $@;
     };
-    Carp::confess("Xslate: Failed to import:\n" . $code . $e) if $e;
+    Carp::confess("Xslate: Failed to import:\n" . $e) if $e;
     push @funcs, map {
             my $glob_ref = \$Text::Xslate::Util::_import::{$_};
             my $c = ref($glob_ref) eq 'GLOB' ? *{$glob_ref}{CODE} : undef;
