@@ -42,10 +42,13 @@ sub concat {
     unless ( ref $lhs ) {
         Carp::croak("You cannot call $the_class->concat() as a class method");
     }
-    # new() for force-wrapping
-    $rhs = $the_class->new( Text::Xslate::Util::html_escape($rhs) );
+
+    $rhs = Text::Xslate::Util::html_escape($rhs);
     ($lhs, $rhs) = ($rhs, $lhs) if $reversed;
-    return $the_class->new( ${ $lhs } . ${ $rhs } );
+    return $the_class->new(
+          (defined($lhs) ? ${ $lhs } : '')
+        . (defined($rhs) ? ${ $rhs } : '')
+    );
 }
 
 sub defined { 1 }
