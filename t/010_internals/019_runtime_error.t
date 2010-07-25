@@ -32,8 +32,6 @@ foreach my $code(
     q{ nil | html },
     q{ 1 ? raw(nil)  : "UNLIKELY" },
     q{ 1 ? html(nil) : "UNLIKELY" },
-    q{ raw("") ~ nil },
-    q{ nil ~ raw("") },
 ) {
     $warn = '';
 

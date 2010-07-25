@@ -1485,7 +1485,7 @@ CODE:
         rhs           = tmp;;
     }
 
-    sv_setsv_nomg(TARG, SvOK(lhs) ? TX_UNMARK_RAW(lhs) : &PL_sv_no);
-    sv_catsv_nomg(TARG, SvOK(rhs) ? TX_UNMARK_RAW(rhs) : &PL_sv_no);
+    sv_setsv_nomg(TARG, TX_UNMARK_RAW(lhs));
+    sv_catsv_nomg(TARG, TX_UNMARK_RAW(rhs));
     ST(0) = tx_mark_raw(aTHX_ TARG);
 }
