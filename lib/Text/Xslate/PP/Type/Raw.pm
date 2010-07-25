@@ -5,11 +5,8 @@ use warnings;
 
 use Carp ();
 
-require Text::Xslate::Util;
-
 use overload (
     '""'     => 'as_string',
-    '.'      => 'concat',
     fallback => 1,
 );
 
@@ -35,17 +32,6 @@ sub as_string {
         Carp::croak("You cannot call $the_class->as_string() as a class method");
     }
     return ${ $_[0] };
-}
-
-sub concat {
-    my($lhs, $rhs, $reversed) = @_;
-    unless ( ref $lhs ) {
-        Carp::croak("You cannot call $the_class->concat() as a class method");
-    }
-    # new() for force-wrapping
-    $rhs = $the_class->new( Text::Xslate::Util::html_escape($rhs) );
-    ($lhs, $rhs) = ($rhs, $lhs) if $reversed;
-    return $the_class->new( ${ $lhs } . ${ $rhs } );
 }
 
 sub defined { 1 }

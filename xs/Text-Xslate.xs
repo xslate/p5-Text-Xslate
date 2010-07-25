@@ -1422,7 +1422,7 @@ MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
 
 BOOT:
 {
-    SV* code_ref;
+    SV* as_string;
     /* overload stuff */
     PL_amagic_generation++;
     sv_setsv(
@@ -1433,16 +1433,10 @@ BOOT:
         XS_Text__Xslate__Type__Raw_fallback, file);
 
     /* *{'(""'} = \&as_string */
-    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
+    as_string = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
     sv_setsv_mg(
         (SV*)gv_fetchpvs( TX_RAW_CLASS "::(\"\"", GV_ADDMULTI, SVt_PVCV),
-        code_ref);
-
-    /* *{'(.'} = \&concat */
-    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::concat", GV_ADD)));
-    sv_setsv_mg(
-        (SV*)gv_fetchpvs( TX_RAW_CLASS "::(.", GV_ADDMULTI, SVt_PVCV),
-        code_ref);
+        as_string);
 }
 
 void
@@ -1463,29 +1457,7 @@ as_string(SV* self, ...)
 CODE:
 {
     if(!SvROK(self)) {
-        croak("You cannot call %s->%s() as a class method", TX_RAW_CLASS, GvNAME(CvGV(cv)));
+        croak("You cannot call %s->as_string() as a class method", TX_RAW_CLASS);
     }
     ST(0) = tx_unmark_raw(aTHX_ self);
-}
-
-void
-concat(SV* lhs, SV* rhs, SV* reversed = &PL_sv_no)
-CODE:
-{
-    dXSTARG;
-    dMY_CXT;
-    if(!tx_str_is_raw(aTHX_ aMY_CXT_ lhs)) {
-        croak("You cannot call %s->%s() as a class method", TX_RAW_CLASS, GvNAME(CvGV(cv)));
-    }
-
-    rhs = tx_html_escape(aTHX_ rhs);
-    if(sv_true(reversed)) {
-        SV* const tmp = lhs;
-        lhs           = rhs;
-        rhs           = tmp;;
-    }
-
-    sv_setsv_nomg(TARG, TX_UNMARK_RAW(lhs));
-    sv_catsv_nomg(TARG, TX_UNMARK_RAW(rhs));
-    ST(0) = tx_mark_raw(aTHX_ TARG);
 }
