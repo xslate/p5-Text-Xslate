@@ -45,6 +45,14 @@ $app = Text::Xslate::Runner->new(
 );
 is capture { $app->run() }, "Hello, &lt;Xslate&gt; world!\n";
 
+
+@ARGV = (
+    '-e<: max(10, 20, 30, 25, 15) :>/<: min(10, 20, 30, 25, 15) :>',
+    '-MList::Util=max,min',
+);
+$app = Text::Xslate::Runner->new_with_options();
+is capture { $app->run() }, "30/10\n";
+
 $app = Text::Xslate::Runner->new();
 ok $app->version_info();
 

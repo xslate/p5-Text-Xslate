@@ -28,10 +28,10 @@ has cache => (
 );
 
 has module => (
-    documentation => 'Modules templates will use',
+    documentation => 'Modules templates will use (e.g. name=sub1,sub2)',
     cmd_aliases   => [qw(M)],
     is            => 'ro',
-    isa           => 'ArrayRef[Str]',
+    isa           => 'HashRef[Str]',
     predicate     => 'has_module',
     traits        => $getopt_traits,
 );
@@ -55,7 +55,7 @@ has path => (
 );
 
 has syntax => (
-    documentation => 'Template syntax (e.g. "TTerse")',
+    documentation => 'Template syntax (e.g. TTerse)',
     cmd_aliases   => [qw(s)],
     is            => 'ro',
     isa           => 'Str',
@@ -64,7 +64,7 @@ has syntax => (
 );
 
 has escape => (
-    documentation => 'Escaping mode ("html" or "none")',
+    documentation => 'Escaping mode (html or none)',
     cmd_aliases   => [qw(p)],
     is            => 'ro',
     isa           => 'Str',
@@ -125,7 +125,7 @@ has define => (
 );
 
 has eval => (
-    documentation => 'One line of templates',
+    documentation => 'One line of template code',
     cmd_aliases   => [qw(e)],
     is            => 'ro',
     isa           => 'Str',
@@ -164,24 +164,32 @@ sub run {
 
     my %args;
     foreach my $field qw(
-        cache_dir cache module input_layer path syntax
+        cache_dir cache input_layer path syntax
         escape verbose
             ) {
         my $method = "has_$field";
         $args{ $field } = $self->$field if $self->$method;
+    }
+    if($self->has_module) { # re-mapping
+        my $mod = $self->module;
+        my @mods;
+        while(my $name = each %{$mod}) {
+            push @mods, $name, [ split /,/, $mod->{$name} ];
+        }
+        $args{module} = \@mods;
     }
 
     local $ENV{XSLATE} = $self->debug
         if $self->has_debug;
 
     require Text::Xslate;
-    Any::Moose::load_class($self->engine);
 
     if($self->version) {
         print $self->version_info(), "\n";
         return;
     }
 
+    Any::Moose::load_class($self->engine);
     my $xslate = $self->engine->new(%args);
 
     if($self->has_eval) {

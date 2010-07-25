@@ -17,7 +17,7 @@ xslate - Process Xslate Templates
         # Text::Xslate options
         [ --cache ]
         [ --cache_dir=/path/to/dir ]
-        [ --module=Module ... ]
+        [ --module=Module=subs ... ]
         [ --input_layer ... ]
         [ --path=/path/to/templates ... ]
         [ --syntax=moniker ]
@@ -33,8 +33,11 @@ xslate - Process Xslate Templates
         # Target to process
         target
 
-    # testing mode
+    # one liners
     xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
+    # => Hello, Xslate world!
+    xslate -MURI::Escape=uri_escape -e '<: uri_escape($ARGV[0]) :>' 'foo bar'
+    # => foo%20bar
 
 =head1 DESCRIPTION
 
