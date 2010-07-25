@@ -7,10 +7,14 @@ Revision history for Perl extension Text::Xslate
 
     [CHANGES]
     - Internal refactoring to make parsers more robust
+    - Rename Text::Xslate::Cookbook to Text::Xslate::Manual::Cookbook
 
     [NEW FEATURES]
    - Add GET statement to TTerse
    - Add infix:<AND> and infix:<OR> to TTerse (clouder)
+
+    [NEW DOCUMENTS]
+    - Text::Xslate::Manual::FAQ
 
 0.1047 Mon Jul 19 17:04:51 2010
     [BUG FIXES]
