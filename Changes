@@ -1,13 +1,21 @@
 Revision history for Perl extension Text::Xslate
 
 0.1048
+    [BUG FIXES]
+    - Virtual paths were not cached when cache => 1
+    - The explanation of 'tag_end' were incorrect
+
     [CHANGES]
-    - Internal refactoring to make parsers faster
+    - Internal refactoring to make parsers more robust
+
+    [NEW FEATURES]
+   - Add GET statement to TTerse
+   - Add infix:<AND> and infix:<OR> to TTerse (clouder)
 
 0.1047 Mon Jul 19 17:04:51 2010
     [BUG FIXES]
     - $foo.nil did not work.
-    - "+10" was wongly converted into 10.
+    - "+10" was wongly converted into "10".
 
     [CHANGES]
     - Rename Text::Xslate->engine to Text::Xslate->current_engine
