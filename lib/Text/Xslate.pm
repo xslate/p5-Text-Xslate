@@ -785,12 +785,12 @@ Here is an example to to load all the templates which is in a given path:
 Returns the current Xslate engine while executing. Otherwise, returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
-=head3 B<< Text::Xslate->current_file :XslateEngine >>
+=head3 B<< Text::Xslate->current_file :Str >>
 
 Returns the current file name while executing. Otherwise, returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
-=head3 B<< Text::Xslate->current_line :XslateEngine >>
+=head3 B<< Text::Xslate->current_line :Int >>
 
 Returns the current line number while executing. Otherwise, returns C<undef>.
 This method is significant when it is called by template functions and methods.
