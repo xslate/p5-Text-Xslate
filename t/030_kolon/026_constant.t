@@ -144,6 +144,25 @@ T
     foo
     bar
 X
+
+    [<<'T', { a => 'foo', b => 'bar' }, <<'X', 'constant after loop'],
+<:  constant a = format('%d')(42);
+    constant b = [format('%d')(43)];
+    constant c = { d => 44 };
+    macro foo -> $x { "    foo\n" }
+    for [1] -> $y {
+         foo($y) | format('%s');
+    } -:>
+    <: a :>
+    <: b[0] :>
+    <: c.d :>
+T
+    foo
+    42
+    43
+    44
+X
+
 );
 
 foreach my $d(@set) {

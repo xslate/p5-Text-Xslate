@@ -26,6 +26,11 @@ my @data = (
 
     ['<:= $ary[ +0 ] :>', 10],
     ['<:= $ary[ -0 ] :>', 10],
+
+    ['<:= $ary[ +0.0 ] :>', 10],
+    ['<:= $ary[ -0.0 ] :>', 10],
+
+    ['<:= $var[ $ary[3] ] :>', "FOO"],
 );
 
 foreach my $pair(@data) {
@@ -34,7 +39,7 @@ foreach my $pair(@data) {
     my %vars = (
         var => { foo => 'FOO', bar => 'BAR', baz => "BAZ" },
 
-        ary => [10, 20, 30],
+        ary => [10, 20, 30, "foo"],
 
         foo => 'foo',
     );
