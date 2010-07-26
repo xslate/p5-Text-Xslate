@@ -154,6 +154,9 @@ my @data = (
 
     ['<:= ($value10 == 10 and $value20 == 20) ? "true" : "false":>',  "true"],
     ['<:= ($value10 == 10 and $value20 == 20 or  $value10 != 10) ? "true" : "false":>',  "true"],
+
+    ['<:= ($value10 == 10 and $value20 == 20 or  $value10 != 10) ? "true" : "false":>
+      <:= ($value10 != 10 and $value20 == 20 or  $value10 != 10) ? "true" : "false":>',  "true\n      false"],
 );
 
 foreach my $pair(@data) {
