@@ -4,7 +4,7 @@ use strict;
 use constant HAS_THREADS => eval { require threads };
 use if !HAS_THREADS, 'Test::More', skip_all => 'multi-threading tests';
 
-use Test::More tests => 8;
+use Test::More tests => 13;
 
 use Text::Xslate;
 use t::lib::Util;
@@ -17,7 +17,6 @@ eval {
 
     is $tx->render('hello.tx', {lang => 'Perl'}), "Hello, Perl world!\n";
 };
-
 is $@, '';
 
 eval {
@@ -33,6 +32,25 @@ eval {
 
     is $tx->render('hello.tx', {lang => 'Perl'}), "Hello, Perl world!\n";
 };
-
 is $@, '';
 
+eval {
+    my $tx = Text::Xslate->new(
+        function => {
+            'array::count' => sub {
+                my($a, $cb) = @_;
+                return scalar grep { $cb->($_) } @{$a};
+            },
+        },
+    );
+
+    is $tx->render_string(q{<: [10, 20].count(-> $a { true }) :>}), 2, 'high level functions';
+
+    threads->create(sub{
+        is $tx->render_string(q{<: [10, 20, 30].count(-> $a { true }) :>}), 3
+                for 1 .. 2;
+    })->join();
+
+    is $tx->render_string(q{<: [10, 20, 30, 40].count(-> $a { true }) :>}), 4;
+};
+is $@, '';

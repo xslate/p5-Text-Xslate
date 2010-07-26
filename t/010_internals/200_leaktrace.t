@@ -167,6 +167,12 @@ T
     Hello, Xslate world!
 X
 
+    [<<'T', <<'X', 'high level functins'],
+    <: [10, 20].count(-> $x { $x >= 10 }) :>
+T
+    2
+X
+
 );
 
 my $tx = Text::Xslate->new(
@@ -174,6 +180,10 @@ my $tx = Text::Xslate->new(
     cache    => 0,
     function => {
         uc => sub { uc $_[0] },
+        'array::count' => sub {
+            my($a, $cb) = @_;
+            return scalar grep { $cb->($_) } @{$a};
+        },
     },
 );
 foreach my $d(@set) {
@@ -185,7 +195,7 @@ foreach my $d(@set) {
         my $result = $tx->render(undef, \%vars);
 
         $result eq $out or die <<"MSG"
-Error
+Rendering Error
 Expected: [$out]
 Got:      [$result]
 MSG

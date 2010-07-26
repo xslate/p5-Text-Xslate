@@ -6,42 +6,50 @@ use Text::Xslate;
 
 my $tx = Text::Xslate->new();
 
+my %vars = (
+    xx    => { yy => { zz => 42 } },
+    value => 10,
+    data  => [1, 2, 3],
+    a     => 10,
+    b     => 20,
+    c     => 30,
+);
 
 my @data = (
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx.yy.zz :>
 T
 42
 X
 
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx
     .yy.zz :>
 T
 42
 X
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx # comment
     .yy.zz :>
 T
 42
 X
 
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx.
     yy.zz :>
 T
 42
 X
 
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx. # comment
     yy.zz :>
 T
 42
 X
 
-    [ <<'T', { xx => { yy => { zz => 42 } } }, <<'X'],
+    [ <<'T', <<'X'],
 <: $xx
     .
     yy
@@ -51,7 +59,7 @@ T
 42
 X
 
-    [ <<'T', { a => 10, b => 20, c => 30}, <<'X'],
+    [ <<'T', <<'X'],
 <: $a
     + $b
     + $c :>
@@ -59,7 +67,7 @@ T
 60
 X
 
-    [<<'T', { value => 10 }, <<'X'],
+    [<<'T', <<'X'],
 <:
     if($value == 10) {
         print "Hello, world!";
@@ -70,7 +78,7 @@ T
 Hello, world!
 X
 
-    [<<'T', { data => [1, 2, 3] }, <<'X'],
+    [<<'T', <<'X'],
 <:
     for $data -> $item {
         print "[" ~ $item ~ "]";
@@ -82,29 +90,29 @@ T
 X
 
 
-    [<<'T', { data => 42 }, <<'X'],
+    [<<'T', <<'X'],
 <:
-    given $data -> $it {
+    given $value -> $it {
         default { print "[" ~ $it ~ "]"; }
     }
     print "\n";
 -:>
 T
-[42]
+[10]
 X
 
-    [<<'T', { data => [42] }, <<'X', 'block'],
+    [<<'T', <<'X', 'block'],
 <:
-    for $data -> $it {
+    for [$value] -> $it {
         if(1) { print "[" ~ $it ~ "]"; }
     }
     print "\n";
 -:>
 T
-[42]
+[10]
 X
 
-    [<<'T', { data => [42] }, <<'X', 'no last semicolon'],
+    [<<'T', <<'X', 'no last semicolon'],
 <:
     block foo -> { "default value\n" }
 -:>
@@ -112,13 +120,13 @@ T
 default value
 X
 
-    [<<'T', { data => [42] }, '', 'empty block'],
+    [<<'T', '', 'empty block'],
 <:
     block foo -> { }
 -:>
 T
 
-    [<<'T', { data => [42] }, <<'X', 'no last semicolon'],
+    [<<'T', <<'X', 'no last semicolon'],
 <:
     block foo -> { "default value\n" }
 -:>
@@ -126,7 +134,7 @@ T
 default value
 X
 
-    [<<'T', { data => [42] }, <<'X', 'finish statement'],
+    [<<'T', <<'X', 'finish statement'],
 <:
     block foo -> { print "bar\n" }
 -:>
@@ -134,7 +142,7 @@ T
 bar
 X
 
-    [<<'T', { data => [42] }, <<'X', 'multi blocks'],
+    [<<'T', <<'X', 'multi blocks'],
 <:
     block foo -> { print "bar\n" }
     block bar -> { print "baz\n" }
@@ -144,11 +152,45 @@ bar
 baz
 X
 
+    [<<'T', <<'X'],
+<:
+    my $a = [
+        10,
+        20,
+        30,
+    ];
+    print $a[0], "\n";
+    print $a[1], "\n";
+    print $a[2], "\n";
+-:>
+T
+10
+20
+30
+X
+
+    [<<'T', <<'X'],
+<:
+    my $h = {
+        foo => 10,
+        bar => 20,
+        baz => 30,
+    };
+    print $h.foo, "\n";
+    print $h.bar, "\n";
+    print $h.baz, "\n";
+-:>
+T
+10
+20
+30
+X
+
 );
 
 foreach my $d(@data) {
-    my($in, $vars, $out, $msg) = @$d;
-    is eval { $tx->render_string($in, $vars) }, $out, $msg
+    my($in, $out, $msg) = @$d;
+    is eval { $tx->render_string($in, \%vars) }, $out, $msg
         or diag $in;
 }
 
