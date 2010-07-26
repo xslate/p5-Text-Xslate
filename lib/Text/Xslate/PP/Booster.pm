@@ -1392,7 +1392,7 @@ code by C<< XSLATE=dump=pp >>).
 
             # print
             $sv = $pad->[ -1 ]->[ 0 ];
-            if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
+            if ( ref($sv) eq TXt_RAW ) {
                 if(defined ${$sv}) {
                     $output .= $sv;
                 }
@@ -1422,7 +1422,7 @@ code by C<< XSLATE=dump=pp >>).
 
         # print
         $sv = $macro{ "foo" }->( $st, push_pad( $pad, [ $vars->{ "value" } ] ), [ "main", 5 ] );
-        if ( ref($sv) eq 'Text::Xslate::Type::Raw' ) {
+        if ( ref($sv) eq TXt_RAW ) {
             if(defined ${$sv}) {
                 $output .= $sv;
             }
