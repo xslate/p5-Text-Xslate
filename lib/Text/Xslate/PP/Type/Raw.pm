@@ -4,13 +4,14 @@ use strict;
 use warnings;
 
 use Carp ();
+use Text::Xslate::PP::Const qw(TXt_RAW);
 
 use overload (
     '""'     => 'as_string',
     fallback => 1,
 );
 
-my $the_class = 'Text::Xslate::Type::Raw';
+my $the_class = TXt_RAW;
 
 sub new {
     my ( $class, $str ) = @_;
@@ -21,7 +22,7 @@ sub new {
         Carp::croak("You cannot call $the_class->new() as an instance method");
     }
     elsif ( $class ne $the_class ) {
-        Carp::croak("You cannot extend $the_class");
+        Carp::croak("You cannot extend $the_class ($class)");
     }
     $str = ${$str} if ref($str) eq $the_class; # unmark
     return bless \$str, $the_class;

@@ -497,3 +497,4 @@ CODE:
 {
     ST(0) = *av_fetch(pair, ix, TRUE);
 }
+

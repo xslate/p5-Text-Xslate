@@ -81,10 +81,18 @@ for my $line ( @lines ) {
 
 __DATA__
 package Text::Xslate::PP::Const;
-
-package Text::Xslate::PP;
-
 use strict;
+
+use parent qw(Exporter);
+
+{
+    no strict 'refs';
+    our @EXPORT    = ( grep { defined &{$_} } sort keys %Text::Xslate::PP::Const:: );
+    our @EXPORT_OK = (@EXPORT, qw(%OPS @OPCODE @OPARGS));
+    our %EXPORT_TAGS = (
+        all       => \@EXPORT_OK,
+    );
+}
 
 use constant TXARGf_SV      => 0x01;
 use constant TXARGf_INT     => 0x02;
@@ -119,6 +127,10 @@ use constant TXfor_ITEM  => 0;
 use constant TXfor_ITER  => 1;
 use constant TXfor_ARRAY => 2;
 
+# types
+use constant TXt_RAW   => 'Text::Xslate::Type::Raw';
+use constant TXt_MACRO => 'Text::Xslate::PP::Type::Macro';
+use constant TXt_PAIR  => 'Text::Xslate::PP::Type::Pair';
 
 <<This lines will be created by tool/opcode_for_pp.pl>>
 

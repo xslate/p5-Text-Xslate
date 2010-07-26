@@ -569,6 +569,19 @@ tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name
     }
 }
 
+XS(XS_Text__Xslate__macrocall); /* -Wmissing-prototype */
+XS(XS_Text__Xslate__macrocall){
+    dVAR; dSP; /* macrocall routine do dMARK, so we don't it here */
+    dMY_CXT;
+    SV* const macro = (SV*)CvXSUBANY(cv).any_ptr;
+    if(!(MY_CXT.current_st && macro)) {
+        croak("Macro is not callable outside of templates");
+    }
+    XPUSHs( tx_proccall(aTHX_ MY_CXT.current_st, macro, "macro") );
+    PUTBACK;
+    return;
+}
+
 static void
 tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr) {
     dSP;
@@ -682,8 +695,7 @@ mgx_find(pTHX_ SV* const sv, const MGVTBL* const vtbl){
         }
     }
 
-    croak("Xslate: Invalid template holder was passed");
-    return NULL; /* not reached */
+    return NULL;
 }
 
 static int
@@ -909,7 +921,9 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     }
 
     mg  = mgx_find(aTHX_ (SV*)tmpl, &xslate_vtbl);
-
+    if(!mg) {
+        croak("Xslate: Invalid template holder was passed");
+    }
     /* check mtime */
 
     cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
@@ -934,6 +948,31 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     croak("Xslate: Cannot load template %s: %s", tx_neat(aTHX_ name), why);
 }
 
+static int
+tx_macro_free(pTHX_ SV* const sv PERL_UNUSED_DECL, MAGIC* const mg){
+    CV* const xsub = (CV*)mg->mg_obj;
+
+    assert(SvTYPE(xsub) == SVt_PVCV);
+    assert(CvISXSUB(xsub));
+
+    CvXSUBANY(xsub).any_ptr = NULL;
+    return 0;
+}
+
+static MGVTBL macro_vtbl = { /* identity */
+    NULL, /* get */
+    NULL, /* set */
+    NULL, /* len */
+    NULL, /* clear */
+    tx_macro_free, /* free */
+    NULL, /* copy */
+    NULL, /* dup */
+#ifdef MGf_LOCAL
+    NULL,  /* local */
+#endif
+};
+
+
 static void
 tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.depth = 0;
@@ -945,8 +984,8 @@ tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
 
 /* Because overloading stuff of old xsubpp didn't work,
    we need to copy them. */
-XS(XS_Text__Xslate__Type__Raw_fallback); /* prototype to pass -Wmissing-prototypes */
-XS(XS_Text__Xslate__Type__Raw_fallback)
+XS(XS_Text__Xslate__fallback); /* prototype to pass -Wmissing-prototypes */
+XS(XS_Text__Xslate__fallback)
 {
    dXSARGS;
    PERL_UNUSED_VAR(cv);
@@ -1430,7 +1469,7 @@ BOOT:
         &PL_sv_yes
     );
     (void)newXS( TX_RAW_CLASS "::()",
-        XS_Text__Xslate__Type__Raw_fallback, file);
+        XS_Text__Xslate__fallback, file);
 
     /* *{'(""'} = \&as_string */
     as_string = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
@@ -1461,3 +1500,55 @@ CODE:
     }
     ST(0) = tx_unmark_raw(aTHX_ self);
 }
+
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Macro
+
+
+BOOT:
+{
+    SV* code_ref;
+    /* overload stuff */
+    PL_amagic_generation++;
+    sv_setsv(
+        get_sv( TX_MACRO_CLASS "::()", TRUE ),
+        &PL_sv_yes
+    );
+    (void)newXS( TX_MACRO_CLASS "::()",
+        XS_Text__Xslate__fallback, file);
+
+    /* *{'(&{}'} = \&as_code_ref */
+    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( TX_MACRO_CLASS "::as_code_ref", GV_ADD)));
+    sv_setsv_mg(
+        (SV*)gv_fetchpvs( TX_MACRO_CLASS "::(&{}", GV_ADDMULTI, SVt_PVCV),
+        code_ref);
+}
+
+CV*
+as_code_ref(SV* self, ...)
+CODE:
+{
+    /* the macro object is responsible to its xsub's refcount */
+    MAGIC* mg;
+    CV* xsub;
+
+    if(!tx_sv_is_macro(aTHX_ self)) {
+        croak("Not a macro object: %s", tx_neat(aTHX_ self));
+    }
+
+    mg = mgx_find(aTHX_ SvRV(self), &macro_vtbl);
+    if(!mg) {
+        xsub = newXS(NULL, XS_Text__Xslate__macrocall, __FILE__);
+        sv_magicext(SvRV(self), (SV*)xsub, PERL_MAGIC_ext, &macro_vtbl,
+            NULL, 0);
+        SvREFCNT_dec(xsub); /* refcnt++ in sv_magicext */
+        CvXSUBANY(xsub).any_ptr = (void*)self;
+    }
+    else {
+        xsub = (CV*)mg->mg_obj;
+        assert(xsub);
+        assert(SvTYPE(xsub) == SVt_PVCV);
+    }
+    RETVAL = xsub;
+}
+OUTPUT:
+    RETVAL

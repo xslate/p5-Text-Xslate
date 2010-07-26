@@ -1,6 +1,5 @@
-package Text::Xslate::PP::State;
-
-use Any::Moose; # we don't need Any::Moose for this module?
+package Text::Xslate::PP::State; # implement tx_state_t
+use Any::Moose;
 
 our @CARP_NOT = qw(
     Text::Xslate::PP::Opcode
@@ -9,7 +8,7 @@ our @CARP_NOT = qw(
 );
 
 use Text::Xslate::Util qw(neat);
-use Text::Xslate::PP::Const ();
+use Text::Xslate::PP::Const qw(TXframe_NAME TX_VERBOSE_DEFAULT);
 
 has vars => (
     is => 'rw',
@@ -96,7 +95,7 @@ sub fetch_symbol {
             my($frame, $line) = @{$context};
             if ( defined $line ) {
                 $st->{ pc } = $line;
-                $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
+                $st->frame->[ $st->current_frame ]->[ TXframe_NAME ] = $frame;
             }
         }
         Carp::croak( sprintf( "Undefined symbol %s", $name ) );
@@ -138,7 +137,7 @@ sub _doerror {
         my($frame, $line) = @{$context};
         if ( defined $line ) {
             $st->{ pc } = $line;
-            $st->frame->[ $st->current_frame ]->[ Text::Xslate::PP::TXframe_NAME ] = $frame;
+            $st->frame->[ $st->current_frame ]->[ TXframe_NAME ] = $frame;
         }
     }
     Carp::carp( sprintf( $fmt, @args ) );
@@ -147,7 +146,7 @@ sub _doerror {
 
 sub warn :method {
     my $st = shift;
-    if( $st->engine->{verbose} > Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} > TX_VERBOSE_DEFAULT ) {
         $st->_doerror(@_);
     }
     return;
@@ -156,7 +155,7 @@ sub warn :method {
 
 sub error :method {
     my $st = shift;
-    if( $st->engine->{verbose} >= Text::Xslate::PP::TX_VERBOSE_DEFAULT ) {
+    if( $st->engine->{verbose} >= TX_VERBOSE_DEFAULT ) {
         $st->_doerror(@_);
     }
     return;

@@ -67,19 +67,19 @@ foreach my $d(@set) {
 
 # macros over include
 
-$tx = Text::Xslate->new(
-    path => {
-        foo => <<'T',
-: macro add -> $x, $y { $x + $y }
-: include "bar" { add => add }
-T
-        bar => <<'T',
-: $add($foo, $bar)
-T
-});
-
-is $tx->render('bar', { add => sub { $_[0] + $_[1] }, foo => 10, bar => 15 }), 25;
-is $tx->render('foo', { foo => 10, bar => 20 }), 30;
-is $tx->render('foo', { foo => 20, bar => 25 }), 45;
+#$tx = Text::Xslate->new(
+#    path => {
+#        foo => <<'T',
+#: macro add -> $x, $y { $x + $y }
+#: include "bar" { add => add }
+#T
+#        bar => <<'T',
+#: $add($foo, $bar)
+#T
+#});
+#
+#is $tx->render('bar', { add => sub { $_[0] + $_[1] }, foo => 10, bar => 15 }), 25;
+#is $tx->render('foo', { foo => 10, bar => 20 }), 30;
+#is $tx->render('foo', { foo => 20, bar => 25 }), 45;
 
 done_testing;

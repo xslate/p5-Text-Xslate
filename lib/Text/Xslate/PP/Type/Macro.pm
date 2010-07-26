@@ -1,5 +1,11 @@
-package Text::Xslate::PP::Macro;
+package Text::Xslate::PP::Type::Macro;
 use Any::Moose;
+use warnings FATAL => 'recursion';
+
+use overload
+    '&{}'    => \&as_code_ref,
+    fallback => 1,
+;
 
 has name => (
     is => 'ro',
@@ -29,13 +35,31 @@ has outer => (
     default => 0,
 );
 
+has state => (
+    is  => 'rw',
+    isa => 'Object',
+
+    required => 1,
+    weak_ref => 1,
+);
+
+sub as_code_ref {
+    my($self) = @_;
+
+    return sub {
+        my $st = $self->state;
+        push @{$st->{SP}}, [@_];
+        $st->proccall($self);
+    };
+}
+
 no Any::Moose;
 __PACKAGE__->meta->make_immutable;
 __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Macro - Text::Xslate macro object in pure Perl
+Text::Xslate::PP::Type::Macro - Text::Xslate macro object in pure Perl
 
 =head1 DESCRIPTION
 

@@ -186,7 +186,7 @@ END_IMPORT
 
 sub make_error {
     my($self, $message, $file, $line, @extra) = @_;
-    if(ref $message) { # re-thrown form virtual machines
+    if(ref $message eq 'SCALAR') { # re-thrown form virtual machines
         return ${$message};
     }
 
