@@ -546,7 +546,7 @@ Output:
 See also L<Text::Xslate::Manual::Cookbook/"Using FillInForm"> for
 another example to use this block filter syntax.
 
-Note taht closures are not supported.
+Note that closures are not supported.
 
 =head2 Comments
 

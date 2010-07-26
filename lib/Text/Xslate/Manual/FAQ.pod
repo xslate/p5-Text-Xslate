@@ -1,7 +1,7 @@
 
 =head1 NAME
 
-Text::Xslate::Manual::FAQ - Fewquently asked questions and answers
+Text::Xslate::Manual::FAQ - Frequently asked questions and answers
 
 =head1 QUESTIONS
 
@@ -13,7 +13,7 @@ We read it C</eks-leit/>.
 
 =head3 What Xslate stands for?
 
-It stands for XS tempLATE, a template engine written in XS, although
+It stands for I<XS template>, a template engine written in XS, although
 pure Perl implementations are also provided.
 
 =head3 What are 'Kolon', 'Metakolon', and 'TTerse' ?
@@ -36,7 +36,7 @@ C<syntax> option to the Text::Xslate constructor.
 =head3 How can I changes template tags?
 
 Use C<start_tag>, C<end_tag>, and C<line_start> options, which can be joined
-together with C<syntax> optin:
+together with C<syntax> option:
 
     my $tx = Text::Xslate->new(
         syntax     => 'TTerse',
@@ -73,7 +73,7 @@ Xslate itself does not support these methods and filters, but there
 are modules on CPAN that implement them.
 
 L<Text::Xslate::Bridge::TT2> provides almost all the TT methods and filters,
-but it requires Templte-Toolkit itself.
+but it requires Template-Toolkit itself.
 
 L<Text::Xslate::Bridge::TT2Like> provides the same features as C<Bridge::TT2>,
 but it does not require the Template-Toolkit distribution.
