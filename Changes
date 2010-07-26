@@ -1,10 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
-0.1048
+0.1048 Mon Jul 26 16:17:43 2010
     [BUG FIXES]
     - Virtual paths were not cached when cache => 1
     - The explanation of 'tag_end' were incorrect
     - AUTOLOAD were ignored in methodcall
+    - Complex expression problems in PP::Booster (@maka2_donzoko)
 
     [CHANGES]
     - Internal refactoring to make parsers more robust
@@ -13,7 +14,7 @@ Revision history for Perl extension Text::Xslate
 
     [NEW FEATURES]
    - Add GET statement to TTerse
-   - Add prefix:<NOT>, infix:<AND> and infix:<OR> to TTerse (clouder)
+   - Add prefix:<NOT>, infix:<AND> and infix:<OR> to TTerse (@clouder)
 
     [NEW DOCUMENTS]
     - Text::Xslate::Manual::FAQ to answer a few questions
