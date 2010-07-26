@@ -830,7 +830,11 @@ sub _check_logic {
                 : $type eq 'or'   ? '%s || %%s '
                 : $type eq 'dor'  ? $] < 5.010 ? 'cond_dor( %s, sub { %%s } )'  : '%s // %%s'
                 : die $type;
-        $self->exprs( sprintf( $fmt, $self->sa() ) ); # store
+
+        my $expr = sprintf( $fmt, $self->sa() );
+
+        $self->exprs( sprintf( defined $self->exprs ? $self->exprs : '%s', $expr ) ); # store
+
         return;
     }
 
@@ -882,9 +886,10 @@ sub _check_logic {
             my $st_2nd = $self->_spawn_child->_convert_opcode( $nested_ops );
 
             if ( $last_op->[0] eq 'print' ) { # optimization
+                my $expr = sprintf( $fmt, $self->sa );
                 return $self->sa(
                         sprintf( '( %s ? %s : %s )',
-                        sprintf( $fmt, $self->sa ),
+                        sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ),
                         _rm_tailed_lf( $st_1st->sa ),
                         _rm_tailed_lf( $st_2nd->sa ),
                     )
