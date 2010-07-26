@@ -488,7 +488,7 @@ because template cascading is statically processed.
 
 Macros are supported, which are called in the same way as functions and
 return a C<raw> string. Macros returns what their bodies render, so
-macros cannot returns references nor objects including other macros.
+they cannot return references nor objects including other macros.
 
     : macro add ->($x, $y) {
     :   $x + $y;
@@ -515,7 +515,7 @@ C<unmark_raw> to remove C<raw-ness> from the values.
     : em("foo")               # renders "<em>foo</em>"
     : em("foo") | unmark_raw  # renders "&lt;em&gt;foo&lt;em&gt;"
 
-Macros are first-class objects, so you can bind them to symbols.
+Because macros are first-class objects, you can bind them to symbols.
 
     <: macro foo -> { "foo" }
        macro bar -> { "bar" }
@@ -526,7 +526,8 @@ Macros are first-class objects, so you can bind them to symbols.
     : $dispatcher{$key}()
 
 Anonymous macros are also supported, although they can return
-only strings.
+only strings. They might be useful for callbacks to high-level
+functions or methods.
 
     <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
 
@@ -544,6 +545,8 @@ Output:
 
 See also L<Text::Xslate::Manual::Cookbook/"Using FillInForm"> for
 another example to use this block filter syntax.
+
+Note taht closures are not supported.
 
 =head2 Comments
 

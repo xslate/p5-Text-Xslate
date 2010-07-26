@@ -917,15 +917,17 @@ L<Text::Xslate::Syntax::Metakolon>
 
 L<Text::Xslate::Syntax::TTerse>
 
-Cookbook:
+Documents:
 
 L<Text::Xslate::Manual::Cookbook>
+
+L<Text::Xslate::Manual::FAQ>
 
 Xslate command:
 
 L<xlsate>
 
-Other template modules:
+Other template modules that Xslate is influenced by:
 
 L<Text::MicroTemplate>
 

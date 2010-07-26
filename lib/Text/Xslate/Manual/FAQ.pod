@@ -81,6 +81,28 @@ but it does not require the Template-Toolkit distribution.
 These bridge modules are useful not only for TTerse users, but
 also for Kolon users.
 
+=head2 Functions, filters and macros
+
+=head3 How can I use macros as a callback to high-level functions?
+
+Macros are objects that overload C<&{}>, the CODE dereference operator, so
+all you have to do is to call them, but don't check their types because
+they are not a I<real> CODE reference.
+
+    my $tx = Text::Xslate->new(
+        function => {
+            'count' => sub {
+                my($a, $cb) = @_;
+                # Don't check the type of $cb!
+                return scalar grep { $cb->($_) } @{$a};
+            },
+        },
+    );
+
+    print $tx->render_string('<: count($a, -> $x { $x >= 50 }) :>',
+        { a => [ 0 .. 100 ] },
+    ); # => 50
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
