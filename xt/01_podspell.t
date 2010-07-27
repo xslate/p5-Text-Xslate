@@ -46,6 +46,7 @@ uri
 CLI
 PSGI
 XSS
+Mojo
 
 # personal name
 lestrrat
