@@ -5,9 +5,11 @@ use Test::More;
 use Text::Xslate;
 
 my %funcs = (
-    uc      => sub{ uc $_[0] },
-    sprintf => sub{ sprintf shift, @_ },
-    pi      => sub{ 3.14 },
+    uc      => sub { uc $_[0] },
+    sprintf => sub { sprintf shift, @_ },
+    pi      => sub { 3.14 },
+    last    => sub { 'last' }, # lower cased keyword
+    IF      => sub { 'IF'  },  # upper cased keyword
 );
 my $tx = Text::Xslate->new(
     syntax   => 'TTerse',
@@ -16,55 +18,59 @@ my $tx = Text::Xslate->new(
 
 my @set = (
     [
-        q{Hello, [% value | uc %] world!},
-        { value => 'Xslate' },
+        q{Hello, [% $a | uc %] world!},
         "Hello, XSLATE world!",
     ],
     [
-        q{Hello, [% uc($value) %] world!},
-        { value => 'Xslate' },
+        q{Hello, [% uc($a) %] world!},
         "Hello, XSLATE world!",
     ],
     [
-        q{Hello, [% uc($value) %] world!},
-        { value => '<Xslate>' },
+        q{Hello, [% uc($b) %] world!},
         "Hello, &lt;XSLATE&gt; world!",
     ],
     [
-        q{Hello, [% sprintf('<%s>', $value) %] world!},
-        { value => 'Xslate' },
+        q{Hello, [% sprintf('<%s>', $a) %] world!},
         "Hello, &lt;Xslate&gt; world!",
     ],
     [
-        q{Hello, [% sprintf('<%s>', $value | uc) %] world!},
-        { value => 'Xslate' },
+        q{Hello, [% sprintf('<%s>', $a | uc) %] world!},
         "Hello, &lt;XSLATE&gt; world!",
     ],
     [
-        q{Hello, [% sprintf('<%s>', uc($value)) %] world!},
-        { value => 'Xslate' },
+        q{Hello, [% sprintf('<%s>', uc($a)) %] world!},
         "Hello, &lt;XSLATE&gt; world!",
     ],
     [
         q{Hello, [% sprintf('%s and %s', $a, $b) %] world!},
-        { a => 'Xslate', b => 'Perl' },
-        "Hello, Xslate and Perl world!",
+        "Hello, Xslate and &lt;Xslate&gt; world!",
     ],
     [
         q{Hello, [% sprintf('%s and %s', uc($a), uc($b)) %] world!},
-        { a => 'Xslate', b => 'Perl' },
-        "Hello, XSLATE and PERL world!",
+        "Hello, XSLATE and &lt;XSLATE&gt; world!",
     ],
     [
         q{Hello, [% pi() %] world!},
-        { value => 'Xslate' },
         "Hello, 3.14 world!",
     ],
-);
 
+    [
+        q{Hello, [% GET last() %] world!},
+        "Hello, last world!",
+    ],
+
+    [
+        q{Hello, [% GET IF() %] world!},
+        "Hello, IF world!",
+    ],
+);
+my %vars = (
+    a =>  'Xslate',
+    b => '<Xslate>',
+);
 foreach my $d(@set) {
-    my($in, $vars, $out) = @$d;
-    is $tx->render_string($in, $vars), $out or diag $in;
+    my($in, $out) = @$d;
+    is $tx->render_string($in, \%vars), $out or diag $in;
 }
 
 eval {

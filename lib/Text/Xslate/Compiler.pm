@@ -522,7 +522,8 @@ sub _flush_macro_table {
 sub _generate_name {
     my($self, $node) = @_;
 
-    if(defined(my $lvar_id = $self->lvar->{$node->id})) { # constants
+    my $id = $node->value; # may be aliased
+    if(defined(my $lvar_id = $self->lvar->{$id})) { # constants
         my $code = $self->const->[$lvar_id];
         if(defined $code) {
             # because the constant value is very simple,
@@ -535,7 +536,7 @@ sub _generate_name {
         }
     }
 
-    return $self->opcode( fetch_symbol => $node->id, line => $node->line );
+    return $self->opcode( fetch_symbol => $id, line => $node->line );
 }
 
 sub _generate_operator {

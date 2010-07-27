@@ -1221,16 +1221,15 @@ sub nud_constant {
 my $lambda_id = 0;
 sub lambda {
     my($parser, $proto) = @_;
-    $proto ||= $parser->symbol('(lambda)');
-    my $name = $proto->clone(
+    my $name = $parser->symbol('(name)')->clone(
         id   => sprintf('lambda@%d', $lambda_id++),
     );
 
-    return $proto->clone(
+    return $parser->symbol('(name)')->clone(
         arity => 'proc',
         id    => 'macro',
         first => $name,
-        line  => $parser->line,
+        line  => $proto->line,
     );
 }
 
