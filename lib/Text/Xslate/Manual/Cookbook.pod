@@ -12,13 +12,13 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 =head2 How to manage HTML forms
 
 Managing HTML forms is an important issue on web applications.
-you'd better to use modules that manage HTML forms, rather than do something
-with templates by yourself. This section propose two basic solutions:
-FillInForm and HTML form builders.
+You'd better to use modules that manage HTML forms, rather than do something
+with templates by yourself. This section proposes two basic solutions:
+using FillInForm and HTML form builders.
 
-In both solutions, one should not use the C<mark_raw> filter, which easily
-makes B<security holes>. Instead, application code should be responsible to
-call the C<mark_raw> function that C<Text::Xslate> can export.
+In both solutions, one should not use the C<mark_raw filter> in templates,
+which easily makes B<security holes>. Instead, application code should be
+responsible to call the C<mark_raw function> that C<Text::Xslate> can export.
 
 =head3 Using FillInForm
 
@@ -37,12 +37,13 @@ Example code using C<HTML::FillInForm>:
 
         return sub {
             my($html) = @_;
+            $html = unmark_raw($html); # NOTE: Not required by H::FIF::Lite
             # do mark_raw() here, not in templates
-            return mark_raw(HTML::FillInForm->fill(\unmark_raw($html), $q));
+            return mark_raw(HTML::FillInForm->fill(\$html, $q));
         };
     }
 
-    my $tx  = Text::Xslate->new(
+    my $tx = Text::Xslate->new(
         function => {
             fillinform => \&fillinform,
         },
@@ -210,9 +211,11 @@ HASH references which contain C<< $file_name => $content >> mapping.
     child body
     : } # endblock body
 
-This feature is inspired by Text::MicroTemplate::DataSection.
+This feature is directly inspired by Text::MicroTemplate::DataSection,
+and originated from Mojo.
 
-See also L<Data::Section::Simple> and L<Text::MicroTemplate::DataSection>.
+See also L<Data::Section::Simple>, L<Text::MicroTemplate::DataSection>,
+and L<Mojo>.
 
 =head1 SEE ALSO
 
