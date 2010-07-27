@@ -16,6 +16,9 @@ my $tx = Text::Xslate->new(syntax => 'TTerse');
     }
 
     sub ok { 42 }
+
+    sub switch { 'switch' }
+    sub CASE   { 'CASE' }
 }
 
 my @data = (
@@ -41,6 +44,18 @@ X
 [% obj.join(".", "foo", "bar", "baz") %]
 T
 foo.bar.baz
+X
+
+    [ <<'T', <<'X', "keywords as fields/methods" ],
+    [% obj.switch %]
+    [% obj.switch() %]
+    [% obj.CASE %]
+    [% obj.CASE() %]
+T
+    switch
+    switch
+    CASE
+    CASE
 X
 
 );

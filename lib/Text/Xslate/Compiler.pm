@@ -1021,7 +1021,7 @@ sub _generate_methodcall {
     my($self, $node) = @_;
 
     my $args   = $node->third;
-    my $method = $node->second->id;
+    my $method = $node->second->value;
     return (
         $self->opcode( pushmark => undef, comment => $method ),
         $self->_expr($node->first),

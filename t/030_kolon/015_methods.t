@@ -17,6 +17,9 @@ my $tx = Text::Xslate->new(verbose => 2);
 
     sub ok { 42 }
 
+    sub nil   { 'nil' }
+    sub true  { 'true' }
+    sub false { 'false' }
 }
 {
     package Anything;
@@ -67,6 +70,16 @@ T
     Anything::foo
     Anything::bar
     Anything::baz
+X
+
+    [ <<'T', <<'X', "keywords" ],
+    <: $obj.nil() :>
+    <: $obj.true() :>
+    <: $obj.false() :>
+T
+    nil
+    true
+    false
 X
 
 );
