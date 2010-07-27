@@ -972,6 +972,8 @@ Thanks to makamaka for the contribution of Text::Xslate::PP.
 
 Thanks to typester for the various inspirations.
 
+Thanks to clouder for the patch of adding C<AND> and C<OR> to TTerse.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
