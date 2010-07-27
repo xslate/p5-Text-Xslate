@@ -134,7 +134,6 @@ has input => (
 has line_start => (
     is      => 'ro',
     isa     => 'Maybe[Str]',
-    coerce  => 1,
     builder => '_build_line_start',
 );
 sub _build_line_start { ':' }
@@ -142,7 +141,6 @@ sub _build_line_start { ':' }
 has tag_start => (
     is      => 'ro',
     isa     => 'Str',
-    coerce  => 1,
     builder => '_build_tag_start',
 );
 sub _build_tag_start { '<:' }
@@ -150,7 +148,6 @@ sub _build_tag_start { '<:' }
 has tag_end => (
     is      => 'ro',
     isa     => 'Str',
-    coerce  => 1,
     builder => '_build_tag_end',
 );
 sub _build_tag_end { ':>' }

@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1049
+    [BUG FIXES]
+    - Compliant with Moose 1.09 (warns about coerce => 1 without coercion)
+
 0.1048 Mon Jul 26 16:17:43 2010
     [BUG FIXES]
     - Virtual paths were not cached when cache => 1
