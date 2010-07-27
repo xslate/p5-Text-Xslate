@@ -53,9 +53,13 @@ BEGIN {
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
-    my $cache_dir = File::Spec->catfile(
-        $ENV{HOME} || File::Spec->tmpdir,
-        '.xslate_cache');
+    my $cache_dir = '.xslate_cache';
+    foreach my $d($ENV{HOME}, File::Spec->tmpdir) {
+        if(-d $d && -w _) {
+            $cache_dir = File::Spec->catfile($d, '.xslate_cache');
+            last;
+        }
+    }
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
@@ -131,12 +135,12 @@ sub new {
         warnings::warnif(misc => "$class: Unknown option(s): " . join ' ', @unknowns);
     }
 
-    if(ref($args{path}) ne 'ARRAY') {
-        $args{path} = [$args{path}];
-    }
+    $args{path} = [
+        map { ref($_) ? $_ : File::Spec->rel2abs($_) }
+            ref($args{path}) eq 'ARRAY' ? @{$args{path}} : $args{path}
+    ];
 
     # function
-
     my %funcs;
     $class->_merge_hash(\%funcs, $class->default_functions());
 
