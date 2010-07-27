@@ -24,7 +24,7 @@ my @blog_entries = map{ BlogEntry->new($_) } (
 my $path = $Bin;
 my $tx = Text::Xslate->new(
     path      => [$path],
-    cache_dir =>  $path,
+    cache_dir =>  '.eg_cache',
 );
 
 print $tx->render('cascade.tx', { blog_entries => \@blog_entries });

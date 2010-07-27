@@ -7,7 +7,7 @@ use File::Find;
 my $path = $Bin;
 my $tx = Text::Xslate->new(
     path      => [$path],
-    cache_dir =>  $path,
+    cache_dir => '.eg_cache',
 );
 
 # preload templates

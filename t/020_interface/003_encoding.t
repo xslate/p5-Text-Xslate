@@ -6,17 +6,14 @@ use Text::Xslate;
 use utf8;
 
 use t::lib::Util;
+use File::Path qw(rmtree);
 
-END {
-    unlink path . "/$_" for
-        "hello_sjis.txc",
-        "hello_utf8.txc",
-    ;
-}
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 my $tx = Text::Xslate->new(
     path      => [path],
-    cache_dir =>  path,
+    cache_dir =>  cache_dir,
 );
 
 note 'for strings';
@@ -55,7 +52,7 @@ is $tx->render("hello_utf8.tx", { name => "エクスレート" }),
 for(1 .. 2) {
     $tx = Text::Xslate->new(
         path        => [path],
-        cache_dir   =>  path,
+        cache_dir   =>  cache_dir,
         input_layer => ":encoding(utf-8)",
     );
 
@@ -66,7 +63,7 @@ for(1 .. 2) {
 for(1 .. 2) {
     $tx = Text::Xslate->new(
         path        => [path],
-        cache_dir   =>  path,
+        cache_dir   =>  cache_dir,
         input_layer => ":encoding(Shift_JIS)",
     );
 
@@ -79,7 +76,7 @@ for(1 .. 2) {
     no utf8;
     $tx = Text::Xslate->new(
         path        => [path],
-        cache_dir   =>  path,
+        cache_dir   =>  cache_dir,
         input_layer => ":bytes",
     );
     #use Devel::Peek; Dump($tx->render("hello_utf8.tx", { name => "エクスレート" }));

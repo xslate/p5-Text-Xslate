@@ -6,23 +6,22 @@ use Test::More;
 use Text::Xslate;
 use FindBin qw($Bin);
 use File::Copy qw(copy move);
+use File::Path qw(rmtree);
 
 use t::lib::Util;
 
 my $base    = path . "/myapp/base.tx";
-#my $derived = path . "/myapp/derived.tx";
 END{
     move "$base.save" => $base if -e "$base.save";
 
-    unlink $base    . "c";
-#    unlink $derived . "c";
+    rmtree cache_dir;
 }
 
 note 'for strings';
 
 utime $^T-120, $^T-120, $base;
 
-my $tx = Text::Xslate->new(path => [path], cache_dir => path);
+my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
 #use Data::Dumper; print Dumper $tx;
 

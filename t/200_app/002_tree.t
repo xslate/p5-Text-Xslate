@@ -4,7 +4,7 @@ use File::Path ();
 use FindBin qw($Bin);
 
 sub clean {
-    File::Path::rmtree( ".cache" );
+    File::Path::rmtree( ".app_cache2" );
     File::Path::rmtree( ".tree_out" );
 }
 
@@ -15,7 +15,7 @@ END{
 
 system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
-    '--cache_dir=.cache',
+    '--cache_dir=.app_cache2',
     '--dest=.tree_out',
     '--ignore=dont_touch',
     "$Bin/simple",

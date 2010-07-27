@@ -7,7 +7,9 @@ use Text::Xslate;
 use t::lib::Util;
 
 use File::Path qw(rmtree);
-END{ rmtree '.test_data_section' }
+
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 my %vpath = (
     'foo.tx' => 'Hello, <: $lang :> world!',
@@ -30,7 +32,7 @@ for my $cache(0 .. 2) {
     note "cache => $cache";
     my $tx = Text::Xslate->new(
         path      => [ \%vpath, path ],
-        cache_dir => '.test_data_section',
+        cache_dir => cache_dir,
         cache     => $cache,
     );
 
@@ -50,8 +52,9 @@ X
     # reload
     local $vpath{'foo.tx'} = 'Modified';
     $tx = Text::Xslate->new(
-        path  => \%vpath,
-        cache => $cache,
+        path      => \%vpath,
+        cache_dir => cache_dir,
+        cache     => $cache,
     );
     is $tx->render('foo.tx', { lang => 'Xslate' }), 'Modified', 'reloaded';
 }

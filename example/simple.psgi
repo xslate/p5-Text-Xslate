@@ -22,8 +22,8 @@ TX
 );
 
 my $tx = Text::Xslate->new(
-    path  => \%vpath,
-    cache => 0,
+    path      => \%vpath,
+    cache_dir => '.eg_cache',
 );
 
 sub app {

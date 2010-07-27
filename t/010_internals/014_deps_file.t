@@ -5,26 +5,24 @@ use Test::More;
 
 use Text::Xslate;
 use File::Copy qw(copy move);
+use File::Path qw(rmtree);
 
 use t::lib::Util;
 
 my $base    = path . "/myapp/base.tx";
 my $derived = path . "/myapp/derived.tx";
+rmtree cache_dir;
 END{
     move "$base.save" => $base if -e "$base.save";
 
-    unlink $base    . "c";
-    unlink $derived . "c";
+    rmtree cache_dir;
 }
-
-unlink $base    . "c";
-unlink $derived . "c";
 
 note 'for files';
 
 utime $^T - 120, $^T - 120, $base, $derived;
 
-my $tx = Text::Xslate->new(path => [path], cache_dir => path);
+my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
 #use Data::Dumper; print Dumper $tx;
 
@@ -61,6 +59,5 @@ HEAD
     D-AFTER
 FOOT
 T
-
 
 done_testing;

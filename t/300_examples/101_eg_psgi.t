@@ -8,7 +8,10 @@ use Test::More;
 use HTTP::Request;
 use Plack::Test;
 
-unlink <example/*.txc>;
+use File::Path qw(rmtree);
+
+rmtree '.eg_cache';
+END{ rmtree '.eg_cache' }
 
 EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
     note $example;

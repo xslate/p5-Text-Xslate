@@ -5,10 +5,14 @@ use Test::More;
 
 use Text::Xslate;
 use t::lib::Util;
+use File::Path qw(rmtree);
+
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 my $tx = Text::Xslate->new(
     path      =>  path,
-    cache_dir =>  path,
+    cache_dir =>  cache_dir,
     escape    => 'none',
 );
 
@@ -30,12 +34,10 @@ is $tx->render('hello.tx', { lang => '<Xslate>' }),
 
 $tx = Text::Xslate->new(
     path      =>  path,
-    cache_dir =>  path,
+    cache_dir =>  cache_dir,
     escape    => 'html',
 );
 is $tx->render('hello.tx', { lang => '<Xslate>' }),
     "Hello, &lt;Xslate&gt; world!\n", "magic number has the escape mode the cache compiled with";
-
-unlink path . "/hello.txc";
 
 done_testing;

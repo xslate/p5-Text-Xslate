@@ -204,6 +204,7 @@ sub find_file {
     my $orig_mtime;
     my $cache_mtime;
     foreach my $p(@{$self->{path}}) {
+        print STDOUT "  find_file: $p / $file\n" if _DUMP_LOAD;
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
@@ -217,7 +218,10 @@ sub find_file {
 
         # $file is found
 
-        $cachepath   = File::Spec->catfile($self->{cache_dir}, $file . 'c');
+        $cachepath   = File::Spec->catfile(
+            $self->{cache_dir},
+            (ref($p) ? 'VPATH' : $p),
+            $file . 'c');
         $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
         last;
     }
@@ -422,7 +426,7 @@ sub _magic_token {
         require 'Digest/MD5.pm'; # we don't want to create its namespace
         my $md5 = Digest::MD5->new();
         $md5->add(${$fullpath});
-        $fullpath = 'SCALAR:' . $md5->hexdigest();
+        $fullpath = 'VPATH:' . $md5->hexdigest();
     }
 
     return sprintf $XSLATE_MAGIC,

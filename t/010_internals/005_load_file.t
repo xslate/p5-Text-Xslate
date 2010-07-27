@@ -10,10 +10,10 @@ use File::Path qw(rmtree);
 
 use t::lib::Util;
 
-my $tx = Text::Xslate->new(path => [path], cache_dir => '.cache');
+my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
-rmtree '.cache';
-END{ rmtree '.cache' }
+rmtree cache_dir;
+END{ rmtree cache_dir }
 
 eval {
     $tx->load_file("hello.tx");
@@ -28,7 +28,9 @@ eval {
 like $@, qr/LoadError/xms,          "load_file -> LoadError";
 like $@, qr/\b no_such_file \b/xms, "include the filename";
 
-open my($out), '>', ".cache/hello.txc";
+my $cache = $tx->find_file('hello.tx')->{cachepath};
+ok -e $cache, "$cache exists";
+open my($out), '>', $cache;
 print $out "This is a broken txc file\n";
 close $out;
 
@@ -47,7 +49,7 @@ my %vpath = (
 );
 $tx = Text::Xslate->new(
     path      => \%vpath,
-    cache_dir => '.cache',
+    cache_dir => cache_dir,
     cache     => 1,
 );
 

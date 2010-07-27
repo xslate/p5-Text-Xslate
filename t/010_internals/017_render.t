@@ -5,13 +5,14 @@ use Test::More;
 
 use Text::Xslate;
 use t::lib::Util;
+use File::Path qw(rmtree);
 
-unlink path . '/func.txc';
-END{ unlink path . '/func.txc' }
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 my $tx = Text::Xslate->new(
     cache     => 1,
-    cache_dir => path,
+    cache_dir => cache_dir,
     path      => path,
     function  => { f => sub{ "[@_]" } },
 );
@@ -21,7 +22,7 @@ is $tx->render('func.tx', { lang => 'Xslate' }),
 
 $tx = Text::Xslate->new(
     cache     => 1,
-    cache_dir => path,
+    cache_dir => cache_dir,
     path      => path,
     function  => { f => sub{ "{@_}" } },
 );

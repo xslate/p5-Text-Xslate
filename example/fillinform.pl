@@ -16,6 +16,7 @@ my $tx  = Text::Xslate->new(
     function => {
         fillinform => \&fillinform,
     },
+    cache_dir => '.eg_cache',
 );
 
 my %vars = (

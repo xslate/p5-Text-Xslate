@@ -6,16 +6,32 @@ use Text::Xslate;
 use FindBin qw($Bin);
 use t::lib::Util;
 use File::Copy qw(copy move);
+use File::Path qw(rmtree);
 
 my @files  = (path."/hello.tx",  path."/for.tx");
-my @caches = (path."/hello.txc", path."/for.txc");
+my @caches;
 
-unlink @caches; # ensure not to exist
+rmtree cache_dir;
+my $x = path."/hello.tx";
+END{
+    move "$x.save" => $x if $x && -f "$x.save";
+    rmtree cache_dir;
+}
+
+{
+    my $tx = Text::Xslate->new(
+        path      => [path],
+        cache_dir => cache_dir,
+    );
+
+    push @caches, $tx->find_file($_)->{cachepath}
+        for qw(hello.tx for.tx);
+}
 
 for(1 .. 10) {
     my $tx = Text::Xslate->new(
         path      => [path],
-        cache_dir => path,
+        cache_dir => cache_dir,
     );
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
@@ -33,7 +49,7 @@ for(1 .. 10) {
 }
 
 for(1 .. 10) {
-    my $tx = Text::Xslate->new(path => [path], cache_dir => path);
+    my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
         "Hello, Xslate world!\n", "file (on demand)";
@@ -49,11 +65,9 @@ for(1 .. 10) {
 
 unlink @caches;
 
-my $tx = Text::Xslate->new(path => [path], cache_dir => path);
+my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
 is $tx->render('hello.tx', { lang => 'Xslate' }), "Hello, Xslate world!\n", "file";
-
-my $x = path."/hello.tx";
 
 # change the content
 move  $x      => "$x.save";
@@ -70,7 +84,7 @@ unlink @caches;
 
 note 'cache => 2 (release mode)';
 
-$tx = Text::Xslate->new(cache => 2, path => [path], cache_dir => path);
+$tx = Text::Xslate->new(cache => 2, path => [path], cache_dir => cache_dir);
 
 utime $^T, $^T, $x;
 
@@ -86,8 +100,6 @@ utime $^T+10, $^T+10, $x;
 is $tx->render('hello.tx', { lang => 'Xslate' }),
     "Hello, Xslate world!\n", "second (modified, but not reloaded)" for 1 .. 2;
 
-move "$x.save" => $x;
 
-unlink(@caches) or diag "Cannot unlink: $!";
 
 done_testing;

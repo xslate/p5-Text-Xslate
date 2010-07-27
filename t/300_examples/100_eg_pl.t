@@ -5,6 +5,10 @@ use strict;
 use Test::More;
 
 use IPC::Open3 qw(open3);
+use File::Path qw(rmtree);
+
+rmtree '.eg_cache';
+END{ rmtree '.eg_cache' }
 
 sub perl {
     local(*IN, *OUT, *ERR);
@@ -27,8 +31,6 @@ sub perl {
 
     return($out, $err);
 }
-
-unlink <example/*.txc>;
 
 EXAMPLE: while(defined(my $example = <example/*.pl>)) {
     my $expect = do {
@@ -55,7 +57,5 @@ EXAMPLE: while(defined(my $example = <example/*.pl>)) {
         is $err, '', 'no errors';
     }
 }
-
-unlink <example/*.txc>;
 
 done_testing;

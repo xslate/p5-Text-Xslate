@@ -5,7 +5,8 @@ use Text::Xslate;
 use Data::Section::Simple;
 
 my $tx = Text::Xslate->new(
-    path => [ Data::Section::Simple->new()->get_data_section() ],
+    path      => [ Data::Section::Simple->new()->get_data_section() ],
+    cache_dir => '.eg_cache',
 );
 
 print $tx->render('child.tx');
