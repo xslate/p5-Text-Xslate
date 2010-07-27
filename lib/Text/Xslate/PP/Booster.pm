@@ -847,6 +847,8 @@ sub _check_logic {
             : $type eq 'dor'  ? '!(defined( %s ))'
             : die $type;
 
+    my $expr = $self->_cat_exprs; # concat $self->exprs and $self->sa, then clear $self->exprs
+
     if ( $opname eq 'goto' and $oparg > 0 ) { # if-else or ternary?
         my $if_block_start   = $i + 1;                   # open if block
         my $if_block_end     = $i + $addr - 2;           # close if block - subtract goto line
@@ -886,10 +888,9 @@ sub _check_logic {
             my $st_2nd = $self->_spawn_child->_convert_opcode( $nested_ops );
 
             if ( $last_op->[0] eq 'print' ) { # optimization
-                my $expr = sprintf( $fmt, $self->sa );
                 return $self->sa(
                         sprintf( '( %s ? %s : %s )',
-                        sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ),
+                        sprintf( $fmt, $expr ),
                         _rm_tailed_lf( $st_1st->sa ),
                         _rm_tailed_lf( $st_2nd->sa ),
                     )
@@ -898,7 +899,7 @@ sub _check_logic {
 
             return $self->sa(
                 sprintf( 'cond_ternary( %s, sub { %s; }, sub { %s; } )',
-                    sprintf( $fmt, $self->sa ),
+                    sprintf( $fmt, $expr ),
                     _rm_tailed_lf( $st_1st->sa ),
                     _rm_tailed_lf( $st_2nd->sa ),
                 )
@@ -908,10 +909,7 @@ sub _check_logic {
         my $code = $st_1st->get_code;
 
         if ( $code and $code !~ /^\n+$/ ) {
-            my $expr = $self->sa;
-            $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
             $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $fmt, $expr ) ) );
-            $self->exprs( undef );
             $self->write_lines( $code );
             $self->write_lines( sprintf( '}' ) );
         }
@@ -943,8 +941,6 @@ sub _check_logic {
         }
 
         if ( defined $sa_1st and defined $sa_2nd ) {
-            my $expr = $self->sa;
-            $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
             $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $fmt, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
@@ -966,10 +962,7 @@ sub _check_logic {
             [ @{ $ops }[ $while_block_start .. $while_block_end ] ]
         );
 
-        my $expr = $self->sa;
-        $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
         $self->write_lines( sprintf( 'while ( %s ) {' , sprintf( $fmt, $expr ) ) );
-        $self->exprs( undef );
         $self->write_lines( $st_wh->get_code );
         $self->write_lines( sprintf( '}' ) );
 
@@ -996,9 +989,6 @@ sub _check_logic {
         my $st_true  = $self->_spawn_child( $opts )->_convert_opcode(
             [ @{ $ops }[ $true_start .. $true_end ] ]
         );
-
-        my $expr = $self->sa;
-        $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
 
         if ( _logic_is_sort( $ops, $i, $addr ) ) { # series of sort ops
             return $self->sa( sprintf( '( %s %s %s )', $expr, $type, $st_true->sa ) );
@@ -1045,6 +1035,15 @@ sub _rm_tailed_lf {
     return unless defined $str;
     $str =~ s/\n+//;
     return $str;
+}
+
+
+sub _cat_exprs { # concat $self->exprs and $self->sa / clear $self->exprs
+    my ( $self ) = @_;
+    my $expr = $self->sa;
+    $expr = sprintf( ( defined $self->exprs ?  $self->exprs : '%s' ), $expr ); # adding expr if exists
+    $self->exprs( undef );
+    return $expr;
 }
 
 
