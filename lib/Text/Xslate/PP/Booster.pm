@@ -909,7 +909,6 @@ sub _check_logic {
         my $code = $st_1st->get_code;
 
         if ( $code and $code !~ /^\n+$/ ) {
-            my $expr = $self->_cat_exprs;
             $self->write_lines( sprintf( 'if ( %s ) {' , sprintf( $fmt, $expr ) ) );
             $self->write_lines( $code );
             $self->write_lines( sprintf( '}' ) );
@@ -942,7 +941,6 @@ sub _check_logic {
         }
 
         if ( defined $sa_1st and defined $sa_2nd ) {
-            my $expr = $self->_cat_exprs;
             $self->sa( sprintf( '(%s ? %s : %s)', sprintf( $fmt, $expr ), $sa_1st, $sa_2nd ) );
         }
         else {
