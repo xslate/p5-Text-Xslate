@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1050 Tue Jul 27 19:36:39 2010
+    [BUG FIXES]
+    - Fix another keyword problem
+
 0.1049 Tue Jul 27 19:03:04 2010
     [BUG FIXES]
     - Compliant with Moose 1.09 (warns about coerce => 1 without coercion)
