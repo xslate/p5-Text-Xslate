@@ -55,7 +55,7 @@ BEGIN {
 
     my $cache_dir = '.xslate_cache';
     foreach my $d($ENV{HOME}, File::Spec->tmpdir) {
-        if(-d $d && -w _) {
+        if(defined($d) and -d $d and -w _) {
             $cache_dir = File::Spec->catfile($d, '.xslate_cache');
             last;
         }
