@@ -599,7 +599,7 @@ but is more powerful.
 
 This mechanism is also called as template inheritance.
 
-=head3 High extensibility
+=head3 Easy to enhance
 
 Xslate is highly extensible. You can add functions and methods to the template
 engine and even add a new syntax via extending the parser.
@@ -939,6 +939,10 @@ L<Text::Xslate::Manual::FAQ>
 Xslate command:
 
 L<xlsate>
+
+The Xslate web site:
+
+L<http://xslate.org/>
 
 Other template modules that Xslate is influenced by:
 
