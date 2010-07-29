@@ -6,9 +6,10 @@ use warnings;
 
 our $VERSION = '0.1050';
 
-use Carp       ();
-use File::Spec ();
-use Exporter   ();
+use Carp        ();
+use File::Spec  ();
+use Exporter    ();
+use Digest::MD5 ();
 
 use Text::Xslate::Util qw(
     $DEBUG
@@ -204,7 +205,7 @@ sub find_file {
     my $orig_mtime;
     my $cache_mtime;
     foreach my $p(@{$self->{path}}) {
-        print STDOUT "  find_file: $p / $file\n" if _DUMP_LOAD;
+        print STDOUT "  find_file: $p / $file ...\n" if _DUMP_LOAD;
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
@@ -218,10 +219,7 @@ sub find_file {
 
         # $file is found
 
-        $cachepath   = File::Spec->catfile(
-            $self->{cache_dir},
-            (ref($p) ? 'VPATH' : $p),
-            $file . 'c');
+        $cachepath = $self->_cache_path($p, $file);
         $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
         last;
     }
@@ -238,6 +236,16 @@ sub find_file {
 
         orig_mtime  => $orig_mtime,
         cache_mtime => $cache_mtime,
+    };
+}
+
+sub _cache_path {
+    my($self, $path, $file) = @_;
+
+    $path = 'VPATH' if ref $path;
+    return  do {
+        my $d = Digest::MD5::md5_hex($path);
+        File::Spec->catfile($self->{cache_dir}, $d, $file . "c");
     };
 }
 
@@ -332,7 +340,7 @@ sub _load_compiled {
     if($self->{cache} >= 2) {
         # threshold is the most latest modified time of all the related caches,
         # so if the cache level >= 2, they seems always fresh.
-        $threshold = '+inf';
+        $threshold = 9**9**9;
     }
     else {
         $threshold ||= $fi->{cache_mtime};
@@ -340,7 +348,7 @@ sub _load_compiled {
     # see also tx_load_template() in xs/Text-Xslate.xs
     if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
             and $threshold >= $fi->{orig_mtime} )) {
-        printf "  _load_compiled: no fresh cache: %s", Text::Xslate::Util::p($fi) if _DUMP_LOAD;
+        printf "  _load_compiled: no fresh cache: %s, %s", $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
         $fi->{cache_mtime} = undef;
         return undef;
     }
@@ -383,7 +391,7 @@ sub _load_compiled {
         if($name eq 'depend') {
             my $dep_mtime = (stat $value)[_ST_MTIME];
             if(!defined $dep_mtime) {
-                $dep_mtime = '+inf'; # force reload
+                $dep_mtime = 9**9**9; # force reload
                 Carp::carp("Xslate: Failed to stat $value (ignored): $!");
             }
             if($dep_mtime > $threshold){
@@ -423,10 +431,7 @@ sub _magic_token {
     );
 
     if(ref $fullpath) { # ref to content string
-        require 'Digest/MD5.pm'; # we don't want to create its namespace
-        my $md5 = Digest::MD5->new();
-        $md5->add(${$fullpath});
-        $fullpath = 'VPATH:' . $md5->hexdigest();
+        $fullpath = 'VPATH:' . Digest::MD5::md5_hex(${$fullpath})
     }
 
     return sprintf $XSLATE_MAGIC,

@@ -33,12 +33,13 @@ for my $cache(1 .. 2) {
 
     for(1 .. 2) {
         like $tx->render('myapp/derived.tx', { lang => 'Xslate' }),
-            qr/Hello, Xslate world!/, "cache => $cache";
+            qr/Hello, Xslate world!/, "cache => $cache (render/path)";
 
-        is $tx->render('foo.tx'), 'Hello';
+        is $tx->render('foo.tx'), 'Hello', 'render/vpath';
 
         ok !exists $INC{'Text/Xslate/Compiler.pm'}, 'Text::Xslate::Compiler is not loaded';
     }
+    #note(explain($tx->{_cache_path}));
 }
 
 done_testing;
