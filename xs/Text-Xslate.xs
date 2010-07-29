@@ -953,7 +953,7 @@ tx_macro_free(pTHX_ SV* const sv PERL_UNUSED_DECL, MAGIC* const mg){
     CV* const xsub = (CV*)mg->mg_obj;
 
     assert(SvTYPE(xsub) == SVt_PVCV);
-    assert(CvISXSUB(xsub));
+    assert(CvXSUB(xsub) != NULL);
 
     CvXSUBANY(xsub).any_ptr = NULL;
     return 0;

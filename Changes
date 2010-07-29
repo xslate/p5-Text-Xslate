@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1051 Thu Jul 29 17:41:43 2010
+    [BUG FIXES]
+    - Fix cache issues enbugged in 0.1049
+
 0.1050 Tue Jul 27 19:36:39 2010
     [BUG FIXES]
     - Fix another keyword problem
