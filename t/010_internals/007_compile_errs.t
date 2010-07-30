@@ -221,6 +221,19 @@ eval {
 };
 like   $@, qr/Unknown operator '\\'/;
 
+eval {
+    $tx->render_string(": include '../foo.tx'");
+};
+like $@, qr/Forbidden/;
+
+eval {
+    $tx->render_string(": cascade '../foo.tx'");
+};
+like $@, qr/Forbidden/;
+
+
+# for TTerse
+
 $tx = Text::Xslate->new(
     syntax => 'TTerse',
     cache  => 0,
@@ -230,5 +243,6 @@ eval {
     $tx->render_string('[% $~foo %]');
 };
 like $@, qr/Expected a name/;
+
 
 done_testing;
