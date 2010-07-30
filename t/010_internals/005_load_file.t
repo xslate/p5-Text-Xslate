@@ -63,4 +63,17 @@ $fi = $tx->find_file('foo.tx');
 ok defined($fi->{cache_mtime})
     or diag explain($fi);
 
+eval {
+    $tx->find_file(File::Spec->catfile(File::Spec->updir, 'foo.tx'));
+};
+like $@, qr/Forbidden/, "updir ('..') is forbidden";
+like $@, qr/updir/;
+like $@, qr/foo\.tx/;
+
+eval {
+    $tx->find_file(('/..' x 10) . '/etc/passwd');
+};
+like $@, qr/Forbidden/;
+like $@, qr/updir/;
+like $@, qr{/etc/passwd};
 done_testing;

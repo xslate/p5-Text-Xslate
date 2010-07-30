@@ -197,8 +197,13 @@ sub load_string { # for <string>
     return $asm;
 }
 
+my $updir = File::Spec->updir;
 sub find_file {
     my($self, $file) = @_;
+
+    if($file =~ /\Q$updir\E/xmso) {
+        $self->_error("LoadError: Forbidden component (updir: '$updir') found in file name '$file'");
+    }
 
     my $fullpath;
     my $cachepath;
