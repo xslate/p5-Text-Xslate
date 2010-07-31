@@ -9,6 +9,7 @@
 #include "ppport.h"
 
 #include "xslate.h"
+#include "xslate_char_trait.h"
 
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal
@@ -401,44 +402,47 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
     }
 
     while(cur != end) {
-        const char* parts;
-        STRLEN      parts_len;
-
         (void)SvGROW(dest, dest_cur + 8 /* at least parts_len + 1 */);
 
-        switch(*cur) {
-        case '<':
-            parts     =        "&lt;";
-            parts_len = sizeof("&lt;") - 1;
-            break;
-        case '>':
-            parts     =        "&gt;";
-            parts_len = sizeof("&gt;") - 1;
-            break;
-        case '&':
-            parts     =        "&amp;";
-            parts_len = sizeof("&amp;") - 1;
-            break;
-        case '"':
-            parts     =        "&quot;";
-            parts_len = sizeof("&quot;") - 1;
-            break;
-        case '\'':
-            parts     =        "&apos;";
-            parts_len = sizeof("&apos;") - 1;
-            break;
-        default:
+        if(char_trait[(U8)*cur] & TXct_HTML_META) {
+            const char* parts;
+            STRLEN      parts_len;
+            switch(*cur) {
+            case '<':
+                parts     =        "&lt;";
+                parts_len = sizeof("&lt;") - 1;
+                break;
+            case '>':
+                parts     =        "&gt;";
+                parts_len = sizeof("&gt;") - 1;
+                break;
+            case '&':
+                parts     =        "&amp;";
+                parts_len = sizeof("&amp;") - 1;
+                break;
+            case '"':
+                parts     =        "&quot;";
+                parts_len = sizeof("&quot;") - 1;
+                break;
+            case '\'':
+                parts     =        "&apos;";
+                parts_len = sizeof("&apos;") - 1;
+                break;
+            default:
+                assert(!"Not reached");
+                parts     = NULL; /* -Wuninitialized */
+                parts_len = 0;    /* -Wuninitialized */
+            }
+            /* copy an escaped token */
+            Copy(parts, SvPVX(dest) + dest_cur, parts_len, char);
+            dest_cur += parts_len;
+        }
+        else {
             /* copy a normal character */
             SvPVX(dest)[dest_cur] = *cur;
             dest_cur++;
-            goto loop_continue;
         }
 
-        /* copy an escaped token */
-        Copy(parts, SvPVX(dest) + dest_cur, parts_len, char);
-        dest_cur += parts_len;
-
-        loop_continue:
         cur++;
     }
     SvCUR_set(dest, dest_cur);
