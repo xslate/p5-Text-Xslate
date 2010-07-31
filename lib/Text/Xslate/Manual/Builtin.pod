@@ -81,7 +81,7 @@ See also L<perlfunc/"map">
 
 =head3 C<$a.reduce($callback)>
 
-Reduces I<$a> by caling I<$callback> multiple times.
+Reduces I<$a> by calling I<$callback> multiple times.
 If I<$a> is empty, this method returns C<nil>.
 
 Examples:
@@ -141,7 +141,7 @@ returns I<str> as is.
 
 =head2 C<< html($str) >>
 
-Escapes html meta charaters in I<str>. If I<str> is a raw string, this
+Escapes html meta characters in I<str>. If I<str> is a raw string, this
 function returns I<str> as is.
 
 The html meta characters are C</[<>"'&]/>.
@@ -158,7 +158,7 @@ See also RFC 3986.
 
 =head2 C<< dump($value) >>
 
-Stringifies I<$value> with C<Data::Dumper>.
+Inspects I<$value> with C<Data::Dumper>.
 
 This function is provided for testing and debugging.
 

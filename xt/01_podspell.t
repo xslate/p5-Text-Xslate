@@ -47,6 +47,8 @@ CLI
 PSGI
 XSS
 Mojo
+SCALARs
+namespace
 
 # personal name
 lestrrat
