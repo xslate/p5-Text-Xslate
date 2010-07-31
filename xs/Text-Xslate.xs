@@ -470,8 +470,7 @@ tx_uri_escape(pTHX_ SV* const src) {
         const char* pv        = SvPV_const(src, len);
         const char* const end = pv + len;
         SV* const dest = sv_newmortal();
-        sv_upgrade(dest, SVt_PV);
-        sv_grow(dest, len * 3 + 1);  /* at most 3 times (%HH) */
+        sv_grow(dest, len * 2); /* just a hint; upgrading Svt_PV */
         SvPOK_on(dest);
 
         while(pv != end) {
