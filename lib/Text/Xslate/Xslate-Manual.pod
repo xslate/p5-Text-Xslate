@@ -1,0 +1,25 @@
+
+=head1 NAME
+
+Xslate::Manual - Xslate users manual
+
+=head1 TABLE OF CONTENTS
+
+L<Text::Xslate> - Perl Interface to Xslate
+
+L<Text::Xslate::Syntax::Kolon> - The default template syntax
+
+L<Text::Xslate::Syntax::TTerse> - A Template Toolkit compatible syntax
+
+L<Text::Xslate::Manual::Builtin> - Builtin methods and filters/functions
+
+L<Text::Xslate::Manual::Cookbook> - The Xslate cookbook
+
+L<Text::Xslate::Manual::FAQ> - Frequently asked questions and answers
+
+=head1 SEE ALSO
+
+L<http://xslate.org> - The Xslate web site
+
+=cut
+

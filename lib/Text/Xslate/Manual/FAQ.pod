@@ -107,4 +107,6 @@ they are not a I<real> CODE reference.
 
 L<Text::Xslate>
 
+L<Text::Xslate::Manual>
+
 =cut

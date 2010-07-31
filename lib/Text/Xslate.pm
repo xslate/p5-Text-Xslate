@@ -927,6 +927,10 @@ to cpan-RT. Patches are welcome :)
 
 =head1 SEE ALSO
 
+Documents:
+
+L<Text::Xslate::Manual>
+
 Xslate template syntaxes:
 
 L<Text::Xslate::Syntax::Kolon>
@@ -934,12 +938,6 @@ L<Text::Xslate::Syntax::Kolon>
 L<Text::Xslate::Syntax::Metakolon>
 
 L<Text::Xslate::Syntax::TTerse>
-
-Documents:
-
-L<Text::Xslate::Manual::Cookbook>
-
-L<Text::Xslate::Manual::FAQ>
 
 Xslate command:
 

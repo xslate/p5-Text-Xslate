@@ -1,0 +1,172 @@
+
+=head1 NAME
+
+Xslate::Manual::Builtin - Builtin methods and filters/functions in Xslate
+
+=head1 DESCRIPTION
+
+This document describes builtin methods and filters/functions in Xslate.
+
+Note that the xslate is not aware of B<context>, so all the
+methods and filters/functions return a single value, even when
+the equivalent of Perl's returns a list of values.
+
+=head1 METHODS
+
+The xslate engine supports auto-boxing, so you can call methods for
+primitive (non-object) values.
+The following is builtin methods.
+
+=head2 For nil
+
+The namespace of is C<nil>.
+
+=head3 C<$s.defined()>
+
+Returns false.
+
+=head2 For SCALARs
+
+The namespace of SCALARs is C<scalar>.
+
+=head3 C<$s.defined()>
+
+Returns true.
+
+=head2 For ARRAY references
+
+The namespace of ARRAY references is C<array>.
+
+=head3 C<$a.defined()>
+
+Returns true;
+
+=head3 C<$a.size()>
+
+Returns the number of elements of I<$a>.
+
+=head3 C<$a.join($separator)>
+
+Joins the elements of I<$a> into a single string separated by
+I<$separator>.
+
+=head3 C<$a.reverse()>
+
+Returns an ARRAY reference consisting of the elements of I<$a>
+in the opposite order.
+
+=head3 C<$a.sort(?$callback)>
+
+Sorts I<$a> and returns a new ARRAY reference.
+The optional I<$callback> is the same as Perl's.
+
+Examples:
+
+    : my $a = [2, 1, 10];
+    : # alphabetic sort (default)
+    : $a.sort().join(" "); # 1 10, 2
+    : # explicitly alphabetic
+    : $a.sort(-> $a, $b { $a cmp $b }).join(" "); # 1, 10, 2
+    : # numeric sort
+    : $a.sort(-> $a, $b { $a <=> $b }).join(" "); # 1, 2, 10
+
+See also L<perlfunc/"sort">.
+
+=head3 C<$a.map($callback)>
+
+Evaluates I<$callback> for each element of I<$a> and returns
+a new ARRAY reference composed of the result of each such evaluation.
+
+See also L<perlfunc/"map">
+
+=head3 C<$a.reduce($callback)>
+
+Reduces I<$a> by caling I<$callback> multiple times.
+If I<$a> is empty, this method returns C<nil>.
+
+Examples:
+
+    : my $a = [10, 20, 30];
+    : # sum
+    : $a.reduce(-> $a, $b { $a + $b }); # 60
+    : # concat
+    : $a.reduce(-> $a, $b { $a ~ $b }); # 102030
+    : # min
+    : $a.reduce(-> $a, $b { $a min $b }); # 10
+    : # max
+    : $a.reduce(-> $a, $b { $a max $b }); # 30
+
+See also L<List::Util/"reduce">.
+
+=head2 For HASH references
+
+The namespace of HASH references is C<hash>.
+
+=head3 C<$h.defined()>
+
+Returns true.
+
+=head3 C<$h.size()>
+
+Returns the number of entries of I<$h>.
+
+=head3 C<$h.keys()>
+
+Returns an ARRAY reference consisting of the keys of I<$h>.
+
+=head3 C<$h.values()>
+
+Returns an ARRAY reference consisting of the values of I<$h>.
+
+=head3 C<$h.kv()>
+
+Returns an ARRAY reference consisting of the key-value pairs of I<$h>.
+Each pair is an object that has the C<keys> and C<value> attributes.
+
+=head1 FILTERS/FUNCTIONS
+
+The xslate engine supports filter syntax as well as function call.
+The following is the builtin functions, which can be invoked as filter syntax.
+
+=head2 C<< mark_raw($str) >>
+
+Mark I<$str> as a raw string to avoid auto HTML escaping.
+
+C<raw> is an alias to C<mark_raw>.
+
+=head2 C<< unmark_raw($str) >>
+
+Remove the raw mark from I<str>. If I<str> is not a raw string, this function
+returns I<str> as is.
+
+=head2 C<< html($str) >>
+
+Escapes html meta charaters in I<str>. If I<str> is a raw string, this
+function returns I<str> as is.
+
+The html meta characters are C</[<>"'&]/>.
+
+=head2 C<< uri($str) >>
+
+Escapes unsafe URI characters in I<$str> as defined by RFC 3986.
+
+The unsafe URI characters are characters not included in
+the C<unreserved> character class defined by RFC 3986,
+i.e. C</[^A-Za-z0-9\-\._~]/>.
+
+See also RFC 3986.
+
+=head2 C<< dump($value) >>
+
+Stringifies I<$value> with C<Data::Dumper>.
+
+This function is provided for testing and debugging.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+L<Text::Xslate::Manual>
+
+=cut
+

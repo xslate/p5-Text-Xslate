@@ -221,4 +221,6 @@ and L<Mojo>.
 
 L<Text::Xslate>
 
+L<Text::Xslate::Manual>
+
 =cut
