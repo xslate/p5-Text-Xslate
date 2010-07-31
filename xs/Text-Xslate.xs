@@ -462,6 +462,34 @@ tx_html_escape(pTHX_ SV* const str) {
     }
 }
 
+static SV*
+tx_uri_escape(pTHX_ SV* const src) {
+    SvGETMAGIC(src);
+    if(SvOK(src)) {
+        STRLEN len;
+        const char* pv        = SvPV_const(src, len);
+        const char* const end = pv + len;
+        SV* const dest = sv_newmortal();
+        sv_upgrade(dest, SVt_PV);
+        sv_grow(dest, len * 3 + 1);  /* at most 3 times (%HH) */
+        SvPOK_on(dest);
+
+        while(pv != end) {
+            if(char_trait[(U8)*pv] & TXct_URI_UNSAFE) {
+                sv_catpvf(dest, "%%" "%02X", (U8)*pv);
+            }
+            else {
+                sv_catpvn(dest, pv, 1);
+            }
+            pv++;
+        }
+        return dest;
+    }
+    else {
+        return &PL_sv_undef;
+    }
+}
+
 static I32
 tx_sv_eq_nomg(pTHX_ SV* const a, SV* const b) {
     if(SvOK(a)) {
@@ -1459,6 +1487,13 @@ html_escape(SV* str)
 CODE:
 {
     ST(0) = tx_html_escape(aTHX_ str);
+}
+
+void
+uri_escape(SV* str)
+CODE:
+{
+    ST(0) = tx_uri_escape(aTHX_ str);
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw

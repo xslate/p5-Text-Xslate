@@ -299,6 +299,14 @@ sub _assemble {
         $s =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
         return bless \$s, Text::Xslate::PP::TXt_RAW();
     }
+
+    my $uri_unsafe_rfc3986 = qr/[^A-Za-z0-9\-\._~]/;
+    sub uri_escape {
+        my($s) = @_;
+        return $s if not defined $s;
+        $s =~ s/($uri_unsafe_rfc3986)/sprintf '%%' . '%02X', ord $1/xmsgeo;
+        return $s;
+    }
 }
 
 #

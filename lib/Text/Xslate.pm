@@ -15,6 +15,7 @@ use Text::Xslate::Util qw(
     $DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
+    uri_escape
 );
 
 our @ISA = qw(Text::Xslate::Engine Exporter);
@@ -22,6 +23,7 @@ our @ISA = qw(Text::Xslate::Engine Exporter);
 our @EXPORT_OK = qw(
     mark_raw unmark_raw
     escaped_string html_escape
+    uri_escape
 );
 
 # load backend (XS or PP)
@@ -89,6 +91,7 @@ my %builtin = (
     html       => \&Text::Xslate::Util::html_escape,
     mark_raw   => \&Text::Xslate::Util::mark_raw,
     unmark_raw => \&Text::Xslate::Util::unmark_raw,
+    uri        => \&Text::Xslate::Util::uri_escape,
     dump       => \&Text::Xslate::Util::p,
 );
 

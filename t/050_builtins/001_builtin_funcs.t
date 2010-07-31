@@ -23,6 +23,13 @@ my @set = (
     ['<: $value | html | raw  :>', { value => "<Xslate>" }, "&lt;Xslate&gt;", 'x | html | raw (-> html)'],
     ['<: $value | raw  | html :>', { value => "<Xslate>" }, "<Xslate>", 'x | raw | html (-> raw)'],
 
+
+    ['<: " foo " | uri :>', {}, '%20foo%20', 'x | uri'],
+    ['<: "AZaz09-._~" | uri :>', {}, 'AZaz09-._~', 'RFC 3986' ],
+    ['<: "/()\t" | uri :>', {}, '%2F%28%29%09' ],
+    ['<: (nil | uri) == nil ? "true" : "false" :>', {}, 'true' ],
+
+
     ['<: html($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'true'],
     ['<: raw($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
@@ -54,7 +61,7 @@ my @set = (
     ['<: unmark_raw :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'unmark_raw itself'],
 
-
+    # with macros
     [<<'T', {}, <<'X'],
 : macro foo -> {
     <br>
