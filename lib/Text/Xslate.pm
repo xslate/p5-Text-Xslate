@@ -807,7 +807,7 @@ This method is significant when it is called by template functions and methods.
 
 =head2 Exportable functions
 
-=head3 C<< mark_raw($str :Str) :RawString >>
+=head3 C<< mark_raw($str :Str) :RawStr >>
 
 Marks I<$str> as raw, so that the content of I<$str> will be rendered as is,
 so you have to escape these strings by yourself.
@@ -832,7 +832,7 @@ be escaped before rendered.
 
 This function is available in templates as the C<unmark_raw> filter.
 
-=head3 C<< html_escape($str :Str) :RawString >>
+=head3 C<< html_escape($str :Str) :RawStr >>
 
 Escapes html meta characters in I<$str>, and returns it as a raw string (see above).
 If I<$str> is already a raw string, it returns I<$str> as is.
@@ -842,6 +842,12 @@ expressions.
 
 This function is available in templates as the C<html> filter, but you'd better
 to use C<unmark_raw> to ensure expressions to be html-escaped.
+
+=head3 C<< uri_escape($str :Str) :Str >>
+
+Escapes URI unsafe characters in I<$str>, and returns it.
+
+This function is available in templates as the C<uri> filter.
 
 =head2 Command line interface
 

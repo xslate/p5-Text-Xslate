@@ -284,6 +284,10 @@ This is the entity of the C<unmark_raw> filter.
 
 This is the entity of the C<html_escape> filter.
 
+=head3 C<uri_escape($str)>
+
+This is the entity of the C<uri> filter.
+
 =head3 C<p($any)>
 
 Displays the contents of I<$any> using C<Data::Dumper>.

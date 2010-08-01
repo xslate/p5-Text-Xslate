@@ -134,31 +134,6 @@ Output:
 
 See also L<HTML::Shakan> for details.
 
-=head2 How to apply uri-escape to template expressions
-
-Use C<URI::Escape> or C<URI::Escape::XS>.
-
-Code using C<URI::Escape>:
-
-    #!perl -w
-    use strict;
-    use Text::Xslate;
-
-    my $tx  = Text::Xslate->new(
-        module => ['URI::Escape'],
-    );
-
-    print $tx->render_string(<<'T', { app_param => "foo & bar" });
-    <a href="http://example.com/app/<:
-        $app_param | uri_escape_utf8 :>">something</a>
-    T
-
-Output:
-
-    <a href="http://example.com/app/foo%20%26%20bar">something</a>
-
-See also L<URI::Escape> or L<URI::Escape::XS>.
-
 =head2 How to use Template Toolkit's WRAPPER feature in Kolon
 
 Use template cascading, which is a super-set of the C<WRAPPER> directive.
