@@ -7,14 +7,8 @@ Text::Xslate - High performance template engine in Perl
 SYNOPSIS
 
     use Text::Xslate;
-    use FindBin qw($Bin);
 
-    my $tx = Text::Xslate->new(
-        # the fillowing options are optional.
-        path       => ['.'],
-        cache_dir  => "$ENV{HOME}/.xslate_cache",
-        cache      => 1,
-    );
+    my $tx = Text::Xslate->new();
 
     my %vars = (
         title => 'A list of books',
@@ -25,25 +19,28 @@ SYNOPSIS
         ],
     );
 
-    # given 'hello.tx':
-    #<h1><: $title :></h1>
-    #<ul>
-    #: for $books -> $book {
-    #    <li><: $book.title :></li>
-    #: } # for
-    #</ul>
+    my $template = q{
+    <h1><: $title :></h1>
+    <ul>
+    : for $books -> $book {
+        <li><: $book.title :></li>
+    : } # for
+    </ul>
+    };
 
-    print $tx->render('hello.tx', \%vars);
+    print $tx->render_string($template, \%vars);
 
 INSTALLATION
 
-Text::Xslate installation is straightforward. If your CPAN shell is set up,
-you should just be able to do
+Install cpanm (App::cpanminus) and then run the following command to install
+Xslate.
 
-    $ cpan Text::Xslate
+    $ cpanm Text::Xslate
 
-Download it, unpack it, then build it as per the usual:
+If you get the distribution, unpack it and build it as per the usual:
 
+    $ tar xzf Text-Xslate-{version}.tar.gz
+    $ cd Text-Xslate-{version}
     $ perl Makefile.PL
     $ make && make test
 
@@ -58,6 +55,12 @@ Text::Xslate documentation is available as in POD. So you can do:
     $ perldoc Text::Xslate
 
 to read the documentation online with your favorite pager.
+
+RESOURCE
+
+    web site:     http://xslate.org
+    distribution: http://search.cpan.org/dist/Text-Xslate
+    repository:   http://github.com/gfx/p5-Text-Xslate
 
 LICENSE AND COPYRIGHT
 
