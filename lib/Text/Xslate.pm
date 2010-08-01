@@ -9,7 +9,6 @@ our $VERSION = '0.1051';
 use Carp        ();
 use File::Spec  ();
 use Exporter    ();
-use Digest::MD5 ();
 
 use Text::Xslate::Util qw(
     $DEBUG
@@ -227,7 +226,11 @@ sub find_file {
 
         # $file is found
 
-        $cachepath = $self->_cache_path($p, $file);
+        $cachepath = File::Spec->catfile(
+            $self->{cache_dir},
+            Text::Xslate::uri_escape(ref($p) ? ref $p : $p),
+            $file . 'c',
+        );
         $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
         last;
     }
@@ -247,15 +250,6 @@ sub find_file {
     };
 }
 
-sub _cache_path {
-    my($self, $path, $file) = @_;
-
-    $path = 'VPATH' if ref $path;
-    return  do {
-        my $d = Digest::MD5::md5_hex($path);
-        File::Spec->catfile($self->{cache_dir}, $d, $file . "c");
-    };
-}
 
 sub load_file {
     my($self, $file, $mtime) = @_;
@@ -439,7 +433,10 @@ sub _magic_token {
     );
 
     if(ref $fullpath) { # ref to content string
-        $fullpath = 'VPATH:' . Digest::MD5::md5_hex(${$fullpath})
+        require 'Digest/MD5.pm';
+        my $md5 = Digest::MD5->new();
+        $md5->add(${$fullpath});
+        $fullpath = ref($fullpath) . ':' . $md5->hexdigest();
     }
 
     return sprintf $XSLATE_MAGIC,
