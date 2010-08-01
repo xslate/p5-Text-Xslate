@@ -20,7 +20,7 @@ my $n = shift(@ARGV) || 10;
 my @path = ("$Bin/template");
 my $tx  = Text::Xslate->new(
     path      => \@path,
-    cache_dir => $path[0],
+    cache_dir => '.xslate_cache',
     cache     => 2,
 );
 my $mt = Text::MicroTemplate::Extended->new(

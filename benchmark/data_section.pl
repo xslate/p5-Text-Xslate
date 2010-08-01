@@ -16,13 +16,13 @@ my $n = shift(@ARGV) || 10;
 
 my $tx1 = Text::Xslate->new(
     path       => [ get_data_section(), "$Bin/template" ],
-    cache_dir => "$Bin/template",
+    cache_dir => ".xslate_cache",
     cache     => 1,
 );
 
 my $tx2 = Text::Xslate->new(
     path       => [ get_data_section(), "$Bin/template" ],
-    cache_dir => "$Bin/template",
+    cache_dir => ".xslate_cache",
     cache     => 2,
 );
 

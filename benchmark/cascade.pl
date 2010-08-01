@@ -51,7 +51,7 @@ my $path = "$Bin/template";
 
 my $tx = Text::Xslate->new(
     path      => [$path],
-    cache_dir =>  $path,
+    cache_dir =>  '.xslate_cache',
     cache     =>  $cache,
 );
 my $mt = Text::MicroTemplate::Extended->new(
