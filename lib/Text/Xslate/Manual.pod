@@ -1,7 +1,7 @@
 
 =head1 NAME
 
-Xslate::Manual - Xslate users manual
+Text::Xslate::Manual - Xslate users manual
 
 =head1 TABLE OF CONTENTS
 
