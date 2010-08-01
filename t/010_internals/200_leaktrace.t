@@ -2,14 +2,14 @@
 
 use strict;
 
-use Test::Requires { 'Test::LeakTrace' => 0.11 };
+use Test::Requires { 'Test::LeakTrace' => 0.13 };
 use Test::More;
 use Text::Xslate;
 use Text::Xslate::Compiler;
 use t::lib::Util;
 
-use if Text::Xslate->isa('Text::Xslate::PP'),
-    'Test::More' => skip_all => 'PP will be safe';
+#use if Text::Xslate->isa('Text::Xslate::PP'),
+#    'Test::More' => skip_all => 'PP will be safe';
 
 my %vars = (
     lang  => 'Perl',
@@ -18,13 +18,11 @@ my %vars = (
     value => 32,
 );
 
-if(0) { # TODO
-    no_leaks_ok {
-        my $tx  = Text::Xslate->new(path => [path], cache => 0);
-        my $out = $tx->render('hello.tx', \%vars);
-        $out eq "Hello, Perl world!\n" or die "Error: [$out]";
-    } "new() and render()" or die;
-}
+no_leaks_ok {
+    my $tx  = Text::Xslate->new(path => [path], cache => 0);
+    my $out = $tx->render('hello.tx', \%vars);
+    $out eq "Hello, Perl world!\n" or die "Error: [$out]";
+} "new() and render()" or die;
 
 my @set = (
     [<<'T', <<'X', 'interpolate'],
