@@ -125,7 +125,7 @@ String operators (C<< ~ >>)
 The operator precedence is very like Perl's:
 
     . () []
-    ! prefix:<+> prefix:<-> prefix:<+^>
+    prefix:<!> prefix:<+> prefix:<-> prefix:<+^>
     * / % +&
     + - ~ +| +^
     prefix:<defined>
@@ -320,7 +320,7 @@ operator.
 There is an autoboxing mechanism that provides primitive types with builtin
 methods. See L<Text::Xslate::Manual::Builtin> for details.
 
-You can define more privmitive methods with the C<function> option. See L<Text::Xslate>.
+You can define more primitive methods with the C<function> option. See L<Text::Xslate>.
 
 =head2 Template inclusion
 
