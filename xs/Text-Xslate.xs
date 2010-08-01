@@ -1170,8 +1170,8 @@ CODE:
                     st.code[i].u_arg.sv = newSVpvn_share(pv, len, 0U);
                 }
                 else if(tx_oparg[opnum] & TXARGf_INT) { /* sviv */
-                    NV const nv = SvNV(*arg);
-                    st.code[i].u_arg.sv = nv >= 0
+                    SvIV_please(*arg);
+                    st.code[i].u_arg.sv = SvIsUV(*arg)
                         ? newSVuv(SvUV(*arg))
                         : newSViv(SvIV(*arg));
                 }
