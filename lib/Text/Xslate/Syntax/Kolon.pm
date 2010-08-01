@@ -318,40 +318,9 @@ operator.
     <: $var.method( foo => [ 1, 2, 3 ] ) :>
 
 There is an autoboxing mechanism that provides primitive types with builtin
-methods.
+methods. See L<Text::Xslate::Manual::Builtin> for details.
 
-For any primitive types:
-
-    # note that if $any is an object, defined() will return nil
-    # unless the object has defined() method.
-    <: $any.defined() :>
-
-For arrays:
-
-    <: $array.size() :>
-    <: $array.join(",") :>
-    <: $array.reverse() :>
-    <: $array.map(-> $x { $x + 1 }) :>
-    <: $array.sort(-> $x, $y { $x <=> $y }) :>
-    <: $array.reduce(-> $x, $y { $x min $y }) :>
-
-For hashes:
-
-    <: $hash.size() # correspond to "scalar keys %{$hash}" in Perl :>
-
-    <: # iterate HASH references by keys, values and key-value pairs :>
-    <: for $hash.keys() -> $key {  # sorted by keys :>
-        <: $key :>
-    <: } :>
-    <: for $hash.values() -> $value { # sorted by keys :>
-        <: $value :>
-    <: } :>
-    <: for $hash.kv() -> $pair { # sorted by keys :>
-        <: # $pair is a pair type with 'key' and 'value' fields -:>
-        <: $pair.key :> = <: $pair.value :>
-    <: } :>
-
-You can define more methods with the C<function> option. See L<Text::Xslate>.
+You can define more privmitive methods with the C<function> option. See L<Text::Xslate>.
 
 =head2 Template inclusion
 

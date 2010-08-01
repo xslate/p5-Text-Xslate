@@ -112,22 +112,30 @@ Returns the number of entries of I<$h>.
 
 =head3 C<$h.keys()>
 
-Returns an ARRAY reference consisting of the keys of I<$h>.
+Returns an ARRAY reference consisting of the keys of I<$h>, which are sorted
+by the keys.
 
 =head3 C<$h.values()>
 
-Returns an ARRAY reference consisting of the values of I<$h>.
+Returns an ARRAY reference consisting of the values of I<$h>, which are
+sorted by the keys.
 
 =head3 C<$h.kv()>
 
-Returns an ARRAY reference consisting of the key-value pairs of I<$h>.
+Returns an ARRAY reference consisting of the key-value pairs of I<$h>, which
+are sorted by the keys.
 Each pair is an object that has the C<keys> and C<value> attributes.
+
+For example:
+
+    : for $hash_ref.kv() -> $pair {
+        <: $pair.key :>=<: $pair.value :>
+    : }
 
 =head1 FILTERS/FUNCTIONS
 
 The xslate engine supports filter syntax as well as function call.
 The following is the builtin functions, which can be invoked as filter syntax.
-
 =head2 C<< mark_raw($str) >>
 
 Mark I<$str> as a raw string to avoid auto HTML escaping.
@@ -148,7 +156,7 @@ The html meta characters are C</[<>"'&]/>.
 
 =head2 C<< uri($str) >>
 
-Escapes unsafe URI characters in I<$str> as defined by RFC 3986.
+Escapes unsafe URI characters in I<$str>.
 
 The unsafe URI characters are characters not included in
 the C<unreserved> character class defined by RFC 3986,
