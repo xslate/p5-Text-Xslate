@@ -256,7 +256,9 @@ sub split :method {
             }
         }
         # not $in_tag
-        elsif($lex_line_code && s/$lex_line_code//xms) {
+        elsif($lex_line_code
+                && (@tokens == 0 || $tokens[-1][1] =~ /\n\z/xms)
+                && s/$lex_line_code//xms) {
             push @tokens, [ code => $1 ];
         }
         elsif(s/$lex_tag_start//xms) {

@@ -3,7 +3,7 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-use Data::Dumper;
+use Text::Xslate::Util qw(p);
 
 my $tx = Text::Xslate->new();
 
@@ -12,6 +12,7 @@ my @data = (
     ['Hello, <: $lang :> world!' => 'Hello, Xslate world!'],
     ['Hello, <: $foo :> world!' => 'Hello, &lt;bar&gt; world!'],
     ['<: $lang :> <: $foo :> <: $lang :> <: $foo :>' => 'Xslate &lt;bar&gt; Xslate &lt;bar&gt;'],
+    [q{<:$lang:>}, 'Xslate'],
     [q{foo <:= $lang
         :> bar} => "foo Xslate bar"],
     [q{<: print $lang :>} => "Xslate"],
@@ -21,29 +22,17 @@ my @data = (
 
     [q{<:print "<", $lang, ">":>} => "&lt;Xslate&gt;"],
     [q{<:print_raw "<", $lang, ">":>} => "<Xslate>"],
-
-    ['<: "foo\tbar\n" :>', "foo\tbar\n"],
-    [q{<: 'foo\tbar\n' :>}, 'foo\tbar\n'],
-    [q{<: ' & " \' ' :>}, ' &amp; &quot; &apos; '],
-
-    [q{foo<:# this is a comment :>bar}, "foobar"],
-    [q{<:$lang:> foo<:# this is a comment :>bar <:$lang:>}, "Xslate foobar Xslate"],
-    [q{foo<:
-        :>bar}, "foobar"],
-    [q{foo<: # this is a comment
-        $lang :>bar}, "fooXslatebar"],
 );
 
+my %vars     = (lang => 'Xslate', foo => "<bar>");
+my $vars_str = p(\%vars);
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
-    my %vars = (lang => 'Xslate', foo => "<bar>");
-
-    my $vars_str = Dumper(\%vars);
     #diag $in;
     is $tx->render_string($in, \%vars), $out or diag $in;
 
-    is Dumper(\%vars), $vars_str, 'vars are not changed';
+    is p(\%vars), $vars_str, 'vars are not changed';
 }
 
 done_testing;

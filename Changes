@@ -6,6 +6,7 @@ Revision history for Perl extension Text::Xslate
 
     [BUG FIXES]
     - Forbid '..' in file names
+    - "<: $foo :>:<: $bar :>" caused parse errors
 
     [CHANGES]
     - The algorithm of building cache paths has been changed, which requires
