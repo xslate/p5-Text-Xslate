@@ -28,7 +28,7 @@ my $has_tcs = eval q{ use Text::ClearSilver 0.10.5.4; 1 };
 warn "Text::ClearSilver is not available ($@)\n" if $@;
 
 my $has_mst = ($tmpl eq 'list' && $try_mst && eval q{ use MobaSiF::Template; 1 });
-warn "MobaSiF::Template is not available ($@)\n" if $@;
+warn "MobaSiF::Template is not available ($@)\n" if $try_mst && $@;
 
 my $has_ht = eval q{ use HTML::Template::Pro; 1 };
 warn "HTML::Template::Pro is not available ($@)\n" if $@;
