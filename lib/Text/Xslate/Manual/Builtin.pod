@@ -7,7 +7,7 @@ Text::Xslate::Manual::Builtin - Builtin methods and filters/functions in Xslate
 
 This document describes builtin methods and filters/functions in Xslate.
 
-Note that the xslate is not aware of B<context>, so all the
+Note that the xslate engine is not aware of B<context>, so all the
 methods and filters/functions return a single value, even when
 the equivalent of Perl's returns a list of values.
 
@@ -19,7 +19,7 @@ The following is builtin methods.
 
 =head2 For nil
 
-The namespace of is C<nil>.
+C<nil> has its specific namespace as C<nil>.
 
 =head3 C<$s.defined()>
 

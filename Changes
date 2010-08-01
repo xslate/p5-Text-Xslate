@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1053 Sun Aug  1 18:14:52 2010
+    [BUG FIXES]
+    - Fix incorrect titles of manuals
+
 0.1052 Sun Aug  1 15:42:16 2010
     http://xslate.org is out!
     Thanks to Shibuya.pm, esp. @tokuhirom and @lestrrat.
