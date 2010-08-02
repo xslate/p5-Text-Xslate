@@ -111,6 +111,9 @@ static inline bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv);
 
 static void
+tx_sv_cat(pTHX_ SV* const dest, SV* const src);
+
+static void
 tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src);
 
 static SV*
@@ -386,6 +389,24 @@ tx_unmark_raw(pTHX_ SV* const str) {
     }
     else {
         return str;
+    }
+}
+
+/* does sv_catsv_nomg(dest, src), but significantly faster */
+static void
+tx_sv_cat(pTHX_ SV* const dest, SV* const src) {
+    if(!SvUTF8(dest) && SvUTF8(src)) {
+        sv_utf8_upgrade(dest);
+    }
+
+    {
+        STRLEN len;
+        const char* const pv  = SvPV_const(src, len);
+        STRLEN const dest_cur = SvCUR(dest);
+
+        (void)SvGROW(dest, dest_cur + len + 1 /* count '\0' */);
+        Copy(pv, SvPVX_mutable(dest) + dest_cur, len + 1 /* copy '\0' */, char);
+        SvCUR_set(dest, dest_cur + len);
     }
 }
 
