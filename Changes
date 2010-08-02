@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.1054 Mon Aug  2 17:26:21 2010
+    [BUG FIXES]
+    - The print routine for raw stirings was significantly slower than
+      that with automatic HTML escaping
+
 0.1053 Sun Aug  1 18:14:52 2010
     [BUG FIXES]
     - Fix incorrect titles of manuals
