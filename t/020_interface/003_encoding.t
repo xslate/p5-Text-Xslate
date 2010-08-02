@@ -2,7 +2,7 @@
 use strict;
 use Test::More;
 
-use Text::Xslate;
+use Text::Xslate qw(mark_raw);
 use utf8;
 
 use t::lib::Util;
@@ -49,6 +49,17 @@ is $tx->render_string(q{<: $value :>}, { value => "エクスレート" }),
     "エクスレート";
 
 is $tx->render_string(q{<: $value :> <: $value :>}, { value => "エクスレート" }),
+    "エクスレート エクスレート";
+
+is $tx->render_string(<<'T', { value => mark_raw("エクスレート") }),
+Hello, <:= $value :> world!
+T
+    "Hello, エクスレート world!\n";
+
+is $tx->render_string(q{<: $value :>}, { value => mark_raw("エクスレート") }),
+    "エクスレート";
+
+is $tx->render_string(q{<: $value :> <: $value :>}, { value => mark_raw("エクスレート") }),
     "エクスレート エクスレート";
 
 
