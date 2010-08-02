@@ -43,9 +43,20 @@ X
 : }
 T
 
+    # from Template::Benchmark
+    [<<'T' x 10, <<'X' x 10],
+<: for $hash.keys() ->($k) { :><:= $k :><:= ":" :> <:= $hash[ $k ] :><: } :>
+T
+age: 43name: Larry Nomates
+X
+
 );
 
-my %vars = (lang => 'Xslate', foo => "<bar>");
+my %vars = (
+    lang => 'Xslate',
+    foo => "<bar>",
+    hash => { name => 'Larry Nomates', age => 43,  },
+);
 foreach my $pair(@data) {
     my($in, $out) = @$pair;
     is $tx->render_string($in, \%vars), $out
