@@ -13,10 +13,11 @@ use Benchmark qw(:all);
 use FindBin qw($Bin);
 
 my $try_mst = grep { $_ eq '--mst' } @ARGV;
+@ARGV = grep { $_ ne '--mst' } @ARGV;
 
 my $tmpl   = !Scalar::Util::looks_like_number($ARGV[0]) && shift(@ARGV);
    $tmpl ||= 'list';
-my $n      = shift(@ARGV) || ($tmpl eq 'list' ? 100 : 10);
+my $n      = shift(@ARGV) || 100;
 
 if(!($tmpl eq 'list' or $tmpl eq 'include')) {
     die "$0 [list | include] [n]\n";
