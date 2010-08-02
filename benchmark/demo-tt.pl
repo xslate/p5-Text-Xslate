@@ -19,9 +19,10 @@ my $tt = Template->new(
     COMPILE_EXT  => '.out',
 );
 my $tx = Text::Xslate->new(
-    syntax => 'TTerse',
-    path   => ["$Bin/template"],
-    cache  => 2,
+    syntax    => 'TTerse',
+    path      => ["$Bin/template"],
+    cache_dir => '.xslate_cache',
+    cache     => 2,
 );
 
 my %vars = (

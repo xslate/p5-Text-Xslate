@@ -19,7 +19,7 @@ my $mt = Text::MicroTemplate::File->new(
 );
 my $tx = Text::Xslate->new(
     path      => [$path],
-    cache_dir => $path,
+    cache_dir => '.xslate_cache',
     cache     => 2,
 );
 
