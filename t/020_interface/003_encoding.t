@@ -11,12 +11,16 @@ use File::Path qw(rmtree);
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }
 
+for my $mode qw(html none) {
+# intentionally no indents because it breaks here documents
+
 my $tx = Text::Xslate->new(
     path      => [path],
     cache_dir =>  cache_dir,
+    escape    => $mode,
 );
 
-note 'for strings';
+note "for strings (escape=$mode)";
 
 is $tx->render_string(<<'T', { value => "エクスレート" }),
 ようこそ <:= $value :> の世界へ！
@@ -36,13 +40,17 @@ T
 ようこそ エクスレート の世界へ！
 X
 
-is $tx->render_string(<<'T', { value => "<エクスレート>" }),
+is $tx->render_string(<<'T', { value => "エクスレート" }),
 Hello, <:= $value :> world!
 T
-    "Hello, &lt;エクスレート&gt; world!\n";
+    "Hello, エクスレート world!\n";
 
-is $tx->render_string(q{<: $value :>}, { value => "<エクスレート>" }),
-    "&lt;エクスレート&gt;";
+is $tx->render_string(q{<: $value :>}, { value => "エクスレート" }),
+    "エクスレート";
+
+is $tx->render_string(q{<: $value :> <: $value :>}, { value => "エクスレート" }),
+    "エクスレート エクスレート";
+
 
 note 'for files';
 
@@ -78,10 +86,11 @@ for(1 .. 2) {
         path        => [path],
         cache_dir   =>  cache_dir,
         input_layer => ":bytes",
+        escape      => $mode,
     );
     #use Devel::Peek; Dump($tx->render("hello_utf8.tx", { name => "エクスレート" }));
     is $tx->render("hello_utf8.tx", { name => "エクスレート" }),
         "こんにちは！ エクスレート！\n", ":bytes";
 }
-
+} # escape mode
 done_testing;

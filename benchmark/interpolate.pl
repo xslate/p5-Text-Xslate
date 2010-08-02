@@ -17,6 +17,11 @@ my %vpath = (
     interpolate => <<'TX' x $n,
 Hello, <:= $lang :> world!
 TX
+
+    interpolate_raw => <<'TX' x $n,
+Hello, <:= $lang | raw :> world!
+TX
+
 );
 
 my $tx = Text::Xslate->new(
@@ -37,8 +42,9 @@ my $vars = {
 
 {
     use Test::More;
-    plan tests => 3;
+    plan tests => 4;
     my $x = $tx->render(interpolate => $vars);
+    is $tx->render(interpolate_raw => $vars), $x, 'xslate/raw (w/o escaping)';
     is $mt->($vars), $x, 'Text::MicroTemplate';
     (my $o = $subst_tmpl) =~ s/%(\w+)%/$vars->{$1}/g;
     is $o, $x, 's///g';
@@ -50,6 +56,10 @@ my $vars = {
 cmpthese -1 => {
     xslate => sub {
         my $body = [$tx->render(interpolate => $vars)];
+        return;
+    },
+    'xslate/raw' => sub {
+        my $body = [$tx->render(interpolate_raw => $vars)];
         return;
     },
     TMT => sub {

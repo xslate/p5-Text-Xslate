@@ -140,10 +140,19 @@ TXC(print) {
 }
 
 TXC(print_raw) {
-    SV* const arg = TX_st_sa;
-    SvGETMAGIC(arg);
+    SV* const arg = tx_unmark_raw(aTHX_ TX_st_sa);
     if(SvOK(arg)) {
-        sv_catsv_nomg(TX_st->output, arg);
+        SV* const out = TX_st->output;
+        STRLEN len;
+        const char* const pv = SvPV_const(arg, len);
+
+        if(!SvUTF8(out) && SvUTF8(arg)) {
+            sv_utf8_upgrade(out);
+        }
+
+        (void)SvGROW(out, SvCUR(out) + len + 1 /* count '\0' */);
+        Copy(pv, SvPVX_mutable(out) + SvCUR(out), len + 1 /* copy '\0' */, char);
+        SvCUR_set(out, SvCUR(out) + len);
     }
     else {
         tx_warn(aTHX_ TX_st, "Use of nil to print");
