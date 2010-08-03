@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 BEGIN{
-    require Carp;
     $INC{'Module/Install/ExtraTests.pm'} = 1;# M::I::ExtraTests considered harmful!
     # make messages verbose to detect configure problems
+    require Carp;
     $SIG{__DIE__}  = \&Carp::confess;
     $SIG{__WARN__} = \&Carp::cluck;
 }
@@ -77,7 +77,10 @@ if($want_xs) {
         XSLATE => 'pp=booster',
     );
 
-    postamble qq{test_dynamic :: test_pp\n\n};
+}
+
+if($Module::Install::AUTHOR) {
+    postamble qq{test_dynamic :: test_pp_opcode test_pp_booster\n\n};
 }
 
 sub test_with_env {
