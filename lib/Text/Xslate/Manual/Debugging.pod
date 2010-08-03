@@ -1,0 +1,16 @@
+
+=head1 NAME
+
+Text::Xslate::Manual::Debugging - How to debug Xslate templates
+
+=head1 DESCRIPTION
+
+This document is under construction.
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+L<Text::Xslate::Manual>
+
+=cut

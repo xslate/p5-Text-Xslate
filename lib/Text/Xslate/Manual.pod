@@ -17,6 +17,8 @@ L<Text::Xslate::Manual::Cookbook> - The Xslate cookbook
 
 L<Text::Xslate::Manual::FAQ> - Frequently asked questions and answers
 
+L<Text::Xslate::Manual::Debugging> - How to debug Xslate templates
+
 =head1 SEE ALSO
 
 L<http://xslate.org> - The Xslate web site
