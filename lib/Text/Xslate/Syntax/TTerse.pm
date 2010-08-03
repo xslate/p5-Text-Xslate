@@ -737,6 +737,29 @@ the example in Kolon.
     : }
     : cascade "file.tx" { content => my_content() }
 
+Note that the WRAPPER option
+(L<http://template-toolkit.org/docs/manual/Config.html#section_WRAPPER>)
+in Template-Toolkit is not supported directly. Instead, you can emulate
+it with C<header> and C<footer> options as follows:
+
+    my %vpath = (
+        wrap_begin => '[% WRAPPER "base" %]',
+        wrap_end => '[% END %]',
+
+        base => 'Hello, [% content %] world!' . "\n",
+        content => 'Xslate',
+    );
+
+    my $tx = Text::Xslate->new(
+        syntax => 'TTerse',
+        path => \%vpath,
+
+        header => ['wrap_begin'],
+        footer => ['wrap_end'],
+    );
+
+    print $tx->render('content'); # => Hello, Xslate world!;
+
 =head2 Macro blocks
 
 Definition:

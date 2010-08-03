@@ -110,5 +110,20 @@ Hello, <em>Xslate</em> world!
 footer1
 X
 
+my %vpath = (
+    wrap_begin => '[% WRAPPER "base" %]',
+    wrap_end   => '[% END %]',
+    base       => 'Hello, [% content %] world!',
+    content    => 'Xslate',
+);
+
+my $tx = Text::Xslate->new(
+    syntax => 'TTerse',
+    path   => \%vpath,
+    header => ['wrap_begin'],
+    footer => ['wrap_end'],
+);
+
+is $tx->render('content'), 'Hello, Xslate world!';
 
 done_testing;
