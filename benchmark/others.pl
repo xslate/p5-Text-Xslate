@@ -4,16 +4,26 @@
 use strict;
 use warnings;
 
-use Text::Xslate;
 use Text::MicroTemplate::Extended;
 use Template;
+use Getopt::Long;
 
 use Test::More;
 use Benchmark qw(:all);
 use FindBin qw($Bin);
 
-my $try_mst = grep { $_ eq '--mst' } @ARGV;
-@ARGV = grep { $_ ne '--mst' } @ARGV;
+GetOptions(
+    'mst' => \my $try_mst,
+    'pp'  => \my $pp,
+);
+
+if ($pp) {
+    print "testing with PP\n";
+    $Template::Config::STASH = 'Template::Stash';
+    $ENV{XSLATE} = 'pp';
+}
+
+require Text::Xslate;
 
 my $tmpl   = !Scalar::Util::looks_like_number($ARGV[0]) && shift(@ARGV);
    $tmpl ||= 'list';
