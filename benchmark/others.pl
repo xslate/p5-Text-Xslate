@@ -15,12 +15,14 @@ use FindBin qw($Bin);
 GetOptions(
     'mst' => \my $try_mst,
     'pp'  => \my $pp,
+    'booster' => \my $pp_booster,
 );
+
 
 if ($pp) {
     print "testing with PP\n";
     $Template::Config::STASH = 'Template::Stash';
-    $ENV{XSLATE} = 'pp';
+    $ENV{XSLATE} = $pp_booster ? 'pp=booster' : 'pp';
 }
 
 require Text::Xslate;
