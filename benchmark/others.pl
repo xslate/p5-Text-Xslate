@@ -31,8 +31,11 @@ warn "Text::ClearSilver is not available ($@)\n" if $@;
 my $has_mst = ($tmpl eq 'list' && $try_mst && eval q{ use MobaSiF::Template; 1 });
 warn "MobaSiF::Template is not available ($@)\n" if $try_mst && $@;
 
-my $has_ht = eval q{ use HTML::Template::Pro; 1 };
+my $has_htp = eval q{ use HTML::Template::Pro; 1 };
 warn "HTML::Template::Pro is not available ($@)\n" if $@;
+
+my $has_ht = eval q{ use HTML::Template; 1 };
+warn "HTML::Template is not available ($@)\n" if $@;
 
 foreach my $mod(qw(
     Text::Xslate Text::MicroTemplate Template
@@ -71,12 +74,22 @@ if($has_mst) {
     MobaSiF::Template::Compiler::compile($mst_in, $mst_bin);
 }
 
-my $ht;
-if($has_ht) {
-    $ht = HTML::Template::Pro->new(
+my $htp;
+if($has_htp) {
+    $htp = HTML::Template::Pro->new(
         path           => [$path],
         filename       => "$tmpl.ht",
         case_sensitive => 1,
+    );
+}
+
+my $ht;
+if($has_ht) {
+    $ht = HTML::Template->new(
+        path           => [$path],
+        filename       => "$tmpl.ht",
+        case_sensitive => 1,
+        die_on_bad_params => 0,
     );
 }
 
@@ -96,6 +109,7 @@ my $vars = {
     my $tests = 2;
     $tests++ if $has_tcs;
     $tests++ if $has_mst;
+    $tests++ if $has_htp;
     $tests++ if $has_ht;
     plan tests => $tests;
 
@@ -117,6 +131,13 @@ my $vars = {
         $out = MobaSiF::Template::insert($mst_bin, $vars);
         $out =~ s/\n+/\n/g;
         is $out, $expected, 'MST: MobaSiF::Template';
+    }
+
+    if($has_htp) {
+        $htp->param($vars);
+        $out = $htp->output();
+        $out =~ s/\n+/\n/g;
+        is $out, $expected, 'HT: HTML::Template::Pro';
     }
 
     if($has_ht) {
@@ -153,6 +174,13 @@ cmpthese -1 => {
     $has_mst ? (
         MST => sub {
             my $body = MobaSiF::Template::insert($mst_bin, $vars);
+            return;
+        },
+    ) : (),
+    $has_htp ? (
+        HTP => sub {
+            $htp->param($vars);
+            my $body = $htp->output();
             return;
         },
     ) : (),
