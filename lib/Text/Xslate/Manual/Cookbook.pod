@@ -29,7 +29,7 @@ Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
-    use Text::Xslate qw(mark_raw);
+    use Text::Xslate qw(mark_raw unmark_raw);
     use HTML::FillInForm;
 
     sub fillinform {
