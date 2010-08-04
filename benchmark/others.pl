@@ -174,20 +174,20 @@ cmpthese -1 => {
         return;
     },
 
-    $has_tcs ? (
+    (!$pp && $has_tcs) ? (
         TCS => sub {
             my $body;
             $tcs->process("$tmpl.cs", $vars, \$body);
             return;
         },
     ) : (),
-    $has_mst ? (
+    (!$pp && $has_mst) ? (
         MST => sub {
             my $body = MobaSiF::Template::insert($mst_bin, $vars);
             return;
         },
     ) : (),
-    $has_htp ? (
+    (!$pp && $has_htp) ? (
         HTP => sub {
             $htp->param($vars);
             my $body = $htp->output();
