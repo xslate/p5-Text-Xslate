@@ -147,14 +147,14 @@ my $vars = {
         $htp->param($vars);
         $out = $htp->output();
         $out =~ s/\n+/\n/g;
-        is $out, $expected, 'HT: HTML::Template::Pro';
+        is $out, $expected, 'HTP: HTML::Template::Pro';
     }
 
     if($has_ht) {
         $ht->param($vars);
         $out = $ht->output();
         $out =~ s/\n+/\n/g;
-        is $out, $expected, 'HT: HTML::Template::Pro';
+        is $out, $expected, 'HT: HTML::Template';
     }
 }
 
