@@ -109,9 +109,8 @@ has dest => (
     documentation => 'Destination directry',
     cmd_aliases   => [qw(o)],
     is            => 'ro',
-    isa           => 'Str',
-    lazy          => 1,
-    default       => sub { require Cwd; Cwd::cwd() },
+    isa           => 'Str', # Maybe[Str]
+    required      => 0,
     traits        => $getopt_traits,
 );
 
@@ -254,29 +253,40 @@ sub process_file {
         splice @comps, 0, $base;
         $filearg = File::Spec->catfile( @comps, File::Basename::basename($file) );
     }
-    my $outfile = File::Spec->catfile( $dest, $filearg );
-    if ($suffix_map && (my $replace = $suffix_map->{ $suffix })) {
-        $outfile =~ s/$suffix$/$replace/;
-    }
 
-    my $dir = File::Basename::dirname( $outfile );
-    if (! -d $dir) {
-        require File::Path;
-        if (! File::Path::mkpath( $dir )) {
-            die "Could not create directory $dir: $!";
+    my $outfile;
+
+    if(defined $dest) {
+        $outfile= File::Spec->catfile( $dest, $filearg );
+        if ($suffix_map && (my $replace = $suffix_map->{ $suffix })) {
+            $outfile =~ s/$suffix$/$replace/;
+        }
+
+        my $dir = File::Basename::dirname( $outfile );
+        if (! -d $dir) {
+            require File::Path;
+            if (! File::Path::mkpath( $dir )) {
+                die "Could not create directory $dir: $!";
+            }
         }
     }
 
 
     my $rendered = $xslate->render( $filearg, $self->define );
+    utf8::is_utf8($rendered) && utf8::encode($rendered);
 
-    my $fh;
-    open( $fh, '>', $outfile )
-        or die "Could not open file $outfile for writing: $!";
+    if(defined $outfile) {
+        my $fh;
+        open( $fh, '>', $outfile )
+            or die "Could not open file $outfile for writing: $!";
 
-    print $fh $rendered;
+        print $fh $rendered;
 
-    close $fh or warn "Could not close file $outfile: $!";
+        close $fh or warn "Could not close file $outfile: $!";
+    }
+    else {
+        print $rendered;
+    }
 }
 
 sub version_info {
