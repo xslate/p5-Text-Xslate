@@ -102,6 +102,7 @@ has suffix => (
     cmd_aliases   => [qw(x)],
     is            => 'ro',
     isa           => 'HashRef',
+    default       => sub { +{} },
     traits        => $getopt_traits,
 );
 
@@ -256,9 +257,9 @@ sub process_file {
 
     my $outfile;
 
-    if(defined $dest) {
+    if(defined $dest or not exists $suffix_map->{$suffix}) {
         $outfile= File::Spec->catfile( $dest, $filearg );
-        if ($suffix_map && (my $replace = $suffix_map->{ $suffix })) {
+        if (my $replace = $suffix_map->{ $suffix }) {
             $outfile =~ s/$suffix$/$replace/;
         }
 
