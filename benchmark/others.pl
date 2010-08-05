@@ -23,6 +23,7 @@ if ($pp) {
     print "testing with PP\n";
     $Template::Config::STASH = 'Template::Stash';
     $ENV{XSLATE} = $pp_booster ? 'pp=booster' : 'pp';
+    $ENV{MOUSE_PUREPERL} = 1;
 }
 
 require Text::Xslate;
