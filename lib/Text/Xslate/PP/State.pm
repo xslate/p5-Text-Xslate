@@ -53,34 +53,35 @@ has local_stack => (
 );
 
 sub fetch {
-    my ( $st, $var, $key, $frame, $line ) = @_;
+    # my ( $st, $var, $key, $frame, $line ) = @_;
     my $ret;
 
-    if ( Scalar::Util::blessed($var) ) {
-        $ret = eval { $var->$key() };
-        $st->error( [$frame, $line ], "%s", $@ ) if $@;
+    if ( Scalar::Util::blessed($_[1]) ) {
+        my $key = $_[2];
+        $ret = eval { $_[1]->$key() };
+        $_[0]->error( [ $_[3], $_[4] ], "%s", $@ ) if $@;
     }
-    elsif ( ref $var eq 'HASH' ) {
-        if ( defined $key ) {
-            $ret = $var->{ $key };
+    elsif ( ref $_[1] eq 'HASH' ) {
+        if ( defined $_[2] ) {
+            $ret = $_[1]->{ $_[2] };
         }
         else {
-            $st->warn( [$frame, $line ], "Use of nil as a field key" );
+            $_[0]->warn( [ $_[3], $_[4] ], "Use of nil as a field key" );
         }
     }
-    elsif ( ref $var eq 'ARRAY' ) {
-        if ( Scalar::Util::looks_like_number($key) ) {
-            $ret = $var->[ $key ];
+    elsif ( ref $_[1] eq 'ARRAY' ) {
+        if ( Scalar::Util::looks_like_number($_[2]) ) {
+            $ret = $_[1]->[ $_[2] ];
         }
         else {
-            $st->warn( [$frame, $line ], "Use of %s as an array index", neat( $key ) );
+            $_[0]->warn( [ $_[3], $_[4] ], "Use of %s as an array index", neat( $_[2] ) );
         }
     }
-    elsif ( $var ) {
-        $st->error( [$frame, $line ], "Cannot access %s (%s is not a container)", neat($key), neat($var) );
+    elsif ( $_[1] ) {
+        $_[0]->error( [ $_[3], $_[4] ], "Cannot access %s (%s is not a container)", neat($_[2]), neat($_[1]) );
     }
     else {
-        $st->warn( [$frame, $line ], "Use of nil to access %s", neat( $key ) );
+        $_[0]->warn( [ $_[3], $_[4] ], "Use of nil to access %s", neat( $_[2] ) );
     }
 
     return $ret;
@@ -123,8 +124,7 @@ sub localize {
 
 
 sub pad {
-    my($st) = @_;
-    return $st->frame->[ $st->current_frame ];
+    return $_[0]->frame->[ $_[0]->current_frame ];
 }
 
 sub op_arg {
