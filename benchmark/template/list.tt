@@ -1,6 +1,6 @@
 List:
 [% FOREACH item IN data -%]
-    * [% item.title %]
-    * [% item.title %]
-    * [% item.title %]
+    * [% item.title | html %]
+    * [% item.title | html %]
+    * [% item.title | html %]
 [% END -%]
