@@ -1180,19 +1180,18 @@ sub proccall {
 }
 
 sub check_itr_ar {
-    my ( $st, $ar, $frame, $line ) = @_;
-
-    if ( ref($ar) ne 'ARRAY' ) {
-        if ( defined $ar ) {
-            $st->error( [$frame, $line], "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
+    # my ( $st, $ar, $frame, $line ) = @_;
+    if ( ref($_[1]) ne 'ARRAY' ) {
+        if ( defined $_[1] ) {
+            $_[0]->error( [$_[2], $_[3]], "Iterator variables must be an ARRAY reference, not %s", neat( $_[1] ) );
         }
         else {
-            $st->warn( [$frame, $line], "Use of nil to iterate" );
+            $_[0]->warn( [$_[2], $_[3]], "Use of nil to iterate" );
         }
-        $ar = [];
+        $_[1] = [];
     }
 
-    return $ar;
+    return $_[1];
 }
 
 
