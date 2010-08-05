@@ -124,7 +124,7 @@ sub localize {
 
 sub pad {
     my($st) = @_;
-    return $st->frame->[ $st->current_frame ];
+    return $st->{frame}->[ $st->{current_frame} ];
 }
 
 sub op_arg {
