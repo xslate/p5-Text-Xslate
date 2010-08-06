@@ -961,7 +961,7 @@ L<Text::MicroTemplate::Extended>
 
 L<Text::ClearSilver>
 
-L<Template-Toolkit>
+L<Template> (Template::Toolkit)
 
 L<HTML::Template>
 

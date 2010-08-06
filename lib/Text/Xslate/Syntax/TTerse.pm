@@ -883,7 +883,7 @@ Some might be supported in a future.
 
 L<Text::Xslate>
 
-L<Template::Toolkit>
+L<Template> (Template::Toolkit)
 
 L<Template::Tiny>
 
