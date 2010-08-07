@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+0.1055 Sat Aug  7 17:33:56 2010
+    [BUG FIXES]
+    - Make xslate(1) print the result to stdout when both --suffix and
+      --dest are omitted
+    - Add HTML escaping in benchmarks correctly, updating the result of
+      benchmarks in documents
+
 0.1054 Mon Aug  2 17:26:21 2010
     [BUG FIXES]
     - The print routine for raw stirings was significantly slower than

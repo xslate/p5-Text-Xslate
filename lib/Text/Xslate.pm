@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1054';
+our $VERSION = '0.1055';
 
 use Carp        ();
 use File::Spec  ();
@@ -501,7 +501,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1054.
+This document describes Text::Xslate version 0.1055.
 
 =head1 SYNOPSIS
 
@@ -979,8 +979,8 @@ L<Template::Benchmark>
 
 =head1 ACKNOWLEDGEMENT
 
-Thanks to lestrrat for the suggestion to the interface of C<render()> and
-the contribution of App::Xslate.
+Thanks to lestrrat for the suggestion to the interface of C<render()>,
+the contribution of App::Xslate, and a lot of suggestions.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug finding.
 
@@ -993,6 +993,8 @@ Thanks to makamaka for the contribution of Text::Xslate::PP.
 Thanks to typester for the various inspirations.
 
 Thanks to clouder for the patch of adding C<AND> and C<OR> to TTerse.
+
+Thanks to punytan for the documentation improvement.
 
 =head1 AUTHOR
 
