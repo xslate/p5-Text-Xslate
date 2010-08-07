@@ -570,25 +570,27 @@ Here is a result of F<benchmark/others.pl> to compare various template engines.
 
     $ perl -Mblib benchmark/others.pl include
     Perl/5.10.1 i686-linux
-    Text::Xslate/0.1054
+    Text::Xslate/0.1055
     Text::MicroTemplate/0.13
     Template/2.22
     Text::ClearSilver/0.10.5.4
     HTML::Template::Pro/0.9502
-    1..4
+    1..5
     ok 1 - TT: Template-Toolkit
     ok 2 - MT: Text::MicroTemplate
     ok 3 - TCS: Text::ClearSilver
-    ok 4 - HT: HTML::Template::Pro
+    ok 4 - HTP: HTML::Template::Pro
+    ok 5 - HT: HTML::Template
     Benchmarks with 'include' (datasize=100)
-              Rate     TT     MT    TCS     HT Xslate
-    TT       316/s     --   -54%   -87%   -88%   -98%
-    MT       687/s   118%     --   -72%   -75%   -96%
-    TCS     2443/s   673%   256%     --   -11%   -87%
-    HT      2739/s   767%   299%    12%     --   -86%
-    Xslate 19321/s  6017%  2713%   691%   605%     --
+              Rate     TT     HT     MT    TCS    HTP Xslate
+    TT       149/s     --   -37%   -78%   -94%   -94%   -99%
+    HT       237/s    59%     --   -66%   -91%   -91%   -99%
+    MT       693/s   365%   193%     --   -72%   -74%   -96%
+    TCS     2511/s  1584%   961%   262%     --    -6%   -87%
+    HTP     2666/s  1688%  1026%   285%     6%     --   -86%
+    Xslate 18963/s 12618%  7911%  2636%   655%   611%     --
 
-You can see Xslate is 61 times faster than Template-Toolkit, and 7 times faster
+You can see Xslate is 127 times faster than Template-Toolkit, and 7 times faster
 than HTML::Template::Pro and Text::ClearSilver, which are implemented in XS.
 
 =head3 Auto escaping to HTML meta characters
