@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1056
+    [BUG FIXES]
+    - The rendering methods ignored signals
+
 0.1055 Sat Aug  7 17:33:56 2010
     [BUG FIXES]
     - Make xslate(1) print the result to stdout when both --suffix and
