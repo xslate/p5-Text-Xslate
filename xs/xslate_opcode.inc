@@ -593,6 +593,8 @@ TXC(leave) {
 }
 
 TXC_goto(goto) {
+    /* To catch SIGALRM and SIGXCPU */
+    PERL_ASYNC_CHECK();
     TX_RETURN_PC( TX_op_arg_pc );
 }
 

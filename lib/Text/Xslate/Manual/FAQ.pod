@@ -81,6 +81,22 @@ but it does not require the Template-Toolkit distribution.
 These bridge modules are useful not only for TTerse users, but
 also for Kolon users.
 
+=head2 How to limit while-loop like Template-Toolkit?
+
+While Template-Toolkit has a loop counter to prevent runaway WHILE loop,
+Xslate has no arbitrary limitation.
+
+Instead, you can use C<alarm()> to limit B<any> runaway code:
+
+    eval {
+        local $SIG{ALRM} = sub { die @_ };
+        alarm(1); # set timeout
+        $tx->render('<: while true { } :>', \%vars);
+    };
+    if($@ =~ /\b ALRM \b/xms) {
+        # timeout!
+    }
+
 =head2 Functions, filters and macros
 
 =head3 How can I use macros as a callback to high-level functions?
