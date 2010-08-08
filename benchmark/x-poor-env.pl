@@ -21,7 +21,16 @@ GetOptions(
 
     'size=i'     => \my $n,
     'template=s' => \my $tmpl,
+    'help'       => \my $help,
 );
+
+die <<'HELP' if $help;
+perl -Mblib benchmark/x-poor-env.pl [--size N] [--template NAME]
+
+This is a general benchmark utility for poor environment,
+assuming CGI applications using only pure Perl modules.
+See also benchmark/x-rich-env.pl.
+HELP
 
 $tmpl = 'include' if not defined $tmpl;
 $n    = 100       if not defined $n;

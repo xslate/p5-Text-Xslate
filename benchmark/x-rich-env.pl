@@ -20,7 +20,16 @@ GetOptions(
 
     'size=i'     => \my $n,
     'template=s' => \my $tmpl,
+    'help'       => \my $help,
 );
+
+die <<'HELP' if $help;
+perl -Mblib benchmark/x-rich-env.pl [--size N] [--template NAME]
+
+This is a general benchmark utility for rich environment,
+assuming persisitent PSGI applications using XS modules.
+See also benchmark/x-poor-env.pl.
+HELP
 
 require Text::Xslate;
 
