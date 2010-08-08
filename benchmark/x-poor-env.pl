@@ -94,7 +94,7 @@ TEST: {
 
     $tt->process("$tmpl.tt", $vars, \my $out) or die $tt->error;
     $out =~ s/\n+/\n/g;
-    is $out, $expected, 'TT: Template-Toolkit (with file caching)';
+    is $out, $expected, 'TT: Template-Toolkit';
 
     $out = $mt->render_file($tmpl, $vars);
     $out =~ s/\n+/\n/g;
@@ -103,7 +103,7 @@ TEST: {
     $ht->param($vars);
     $out = $ht->output();
     $out =~ s/\n+/\n/g;
-    is $out, $expected, 'HT: HTML::Template (with file caching)';
+    is $out, $expected, 'HT: HTML::Template';
 }
 
 print "Benchmarks with '$tmpl' (datasize=$n)\n";

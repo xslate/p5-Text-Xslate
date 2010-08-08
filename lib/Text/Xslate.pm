@@ -566,29 +566,31 @@ engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
 
 There are benchmarks to compare template engines (see F<benchmark/> for details).
 
-Here is a result of F<benchmark/others.pl> to compare various template engines.
+Here is a result of F<benchmark/x-rich-env.pl> to compare various template
+engines in rich environment where applications are persistent and XS modules
+are available.
 
-    $ perl -Mblib benchmark/others.pl include
+    $ perl -Mblib benchmark/x-rich-env.pl
     Perl/5.10.1 i686-linux
     Text::Xslate/0.1055
     Text::MicroTemplate/0.13
+    Text::MicroTemplate::Extended/0.11
     Template/2.22
     Text::ClearSilver/0.10.5.4
     HTML::Template::Pro/0.9502
-    1..5
+    1..4
     ok 1 - TT: Template-Toolkit
     ok 2 - MT: Text::MicroTemplate
     ok 3 - TCS: Text::ClearSilver
     ok 4 - HTP: HTML::Template::Pro
-    ok 5 - HT: HTML::Template
     Benchmarks with 'include' (datasize=100)
-              Rate     TT     HT     MT    TCS    HTP Xslate
-    TT       149/s     --   -37%   -78%   -94%   -94%   -99%
-    HT       237/s    59%     --   -66%   -91%   -91%   -99%
-    MT       693/s   365%   193%     --   -72%   -74%   -96%
-    TCS     2511/s  1584%   961%   262%     --    -6%   -87%
-    HTP     2666/s  1688%  1026%   285%     6%     --   -86%
-    Xslate 18963/s 12618%  7911%  2636%   655%   611%     --
+              Rate     TT     MT    TCS    HTP Xslate
+    TT       150/s     --   -76%   -94%   -95%   -99%
+    MT       627/s   317%     --   -75%   -77%   -97%
+    TCS     2466/s  1539%   293%     --   -10%   -87%
+    HTP     2750/s  1727%   339%    11%     --   -86%
+    Xslate 19140/s 12618%  2953%   676%   596%     --
+
 
 You can see Xslate is 127 times faster than Template-Toolkit, and 7 times faster
 than HTML::Template::Pro and Text::ClearSilver, which are implemented in XS.

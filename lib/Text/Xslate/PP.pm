@@ -571,7 +571,7 @@ This document describes Text::Xslate::PP version 0.1055.
 =head1 DESCRIPTION
 
 This module implements Text::Xslate runtime engine in pure Perl.
-Normally it will be loaded if it fails to load XS. So you don't need
+Normally it will be loaded if it fails to load XS. So you do not need
 to use this module explicitly.
 
     # Text::Xslate loads PP if needed
@@ -586,14 +586,60 @@ If you want to use Text::Xslate::PP, however, you can use it.
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
 From 0.1024 on, there are two pure Perl engines.
-C<Text::Xslate::PP::Booster>, used with C<< $ENV{XSLATE} = 'pp=booster' >>,
+C<Text::Xslate::PP::Booster>, enabled by C<< $ENV{XSLATE} = 'pp=booster' >>,
 generates optimized Perl code from intermediate code.
-C<Text::Xlsate::PP::Opcode>, used with C<< $ENV{XSLATE = 'pp=opcode' >>,
-execute intermediate code directly, emulating the virtual machine in pure Perl.
+C<Text::Xlsate::PP::Opcode>, enabled by C<< $ENV{XSLATE = 'pp=opcode' >>,
+executes intermediate code directly, emulating the virtual machine in pure Perl.
 
 PP::Booster is much faster than PP::Opcode, but it is less stable,
-so the default pure Perl engine is B<PP::Opcode>, but PP::Booster will be
+so the default pure Perl engine is B<PP::Opcode>, but PP::Booster will become
 the default in a future if it is stable enough.
+
+=head1 NOTE
+
+=head2 Performance
+
+There might be cases where you cannot use XS modules.
+
+Here is a result of F<benchmark/x-poor-env.pl> to compare pure Perl template
+engines in poor environment where applications runs as CGI scripts and XS
+modules are not available.
+
+    $ perl -Mblib benchmark/x-poor-env.pl
+    Perl/5.10.1 i686-linux
+    Text::Xslate/0.1055
+    Template/2.22
+    HTML::Template/2.9
+    Text::MicroTemplate/0.13
+    Text::MicroTemplate::Extended/0.11
+    1..3
+    ok 1 - TT: Template-Toolkit
+    ok 2 - MT: Text::MicroTemplate
+    ok 3 - HT: HTML::Template
+    Benchmarks with 'include' (datasize=100)
+             Rate     TT Xslate     HT     MT
+    TT     82.4/s     --   -37%   -64%   -87%
+    Xslate  130/s    58%     --   -43%   -80%
+    HT      230/s   179%    77%     --   -65%
+    MT      654/s   695%   404%   185%     --
+
+
+Yes, this is slow, but somewhat faster than Template-Toolkit.
+
+Moreover, there is another pure Perl engine: PP::Booster, which
+is faster than PP::Opcode.
+
+    $ perl -Mblib benchmark/x-poor-env.pl --booster
+    (snip)
+    Benchmarks with 'include' (datasize=100)
+             Rate     TT     HT Xslate     MT
+    TT     83.0/s     --   -63%   -67%   -87%
+    HT      223/s   169%     --   -10%   -64%
+    Xslate  249/s   200%    12%     --   -60%
+    MT      627/s   655%   181%   152%     --
+
+Accodingly this result, PP::Booster is 2 times faster than PP::Opcode,
+as fast as HTML::Template, and 3 times faster than Template-Toolkit.
 
 =head1 SEE ALSO
 
