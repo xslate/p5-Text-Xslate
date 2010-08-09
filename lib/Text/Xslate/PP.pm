@@ -638,7 +638,7 @@ is faster than PP::Opcode.
     Xslate  249/s   200%    12%     --   -60%
     MT      627/s   655%   181%   152%     --
 
-Accodingly this result, PP::Booster is 2 times faster than PP::Opcode,
+According to this result, PP::Booster is 2 times faster than PP::Opcode,
 as fast as HTML::Template, and 3 times faster than Template-Toolkit.
 
 =head1 SEE ALSO
