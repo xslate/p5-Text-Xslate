@@ -18,21 +18,22 @@ sub new { bless \"$_[1]" => $_[0] }
 package main;
 
 
-    {
-        my $tx = Text::Xslate->new(
-            path      => [FooOverloadingObjectDir->new(path), { 'foo.tx' => 'Hello' } ],
-            cache_dir => cache_dir,
-            cache     => 2,
-        );
-        my $tx2 = Text::Xslate->new(
-            path      => [FooOverloadingObjectDir->new(path . '/template'), { 'foo.tx' => 'Hello' } ],
-            cache_dir => cache_dir,
-            cache     => 2,
-        );
+{
+    my $tx1 = Text::Xslate->new(
+        path      => [FooOverloadingObjectDir->new(path), { 'foo.tx' => 'Hello' } ],
+        cache_dir => cache_dir,
+        cache     => 2,
+    );
+    my $tx2 = Text::Xslate->new(
+        path      => [FooOverloadingObjectDir->new(path . '/other'), { 'foo.tx' => 'Hello' } ],
+        cache_dir => cache_dir,
+        cache     => 2,
+    );
 
-        # different path's cachepath is different too
-        isnt $tx->find_file('hello.tx')->{cachepath} => $tx2->find_file('hello.tx')->{cachepath}
-    }
+    # different path's cachepath is different too
+    isnt $tx1->find_file('hello.tx')->{cachepath},
+         $tx2->find_file('hello.tx')->{cachepath};
+}
 
 
 done_testing;
