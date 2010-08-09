@@ -99,7 +99,7 @@ if($has_htp) {
 
 my $vars = {
     data => [ ({
-            title    => "FOO",
+            title    => "<FOO>",
             author   => "BAR",
             abstract => "BAZ",
         }) x $n
