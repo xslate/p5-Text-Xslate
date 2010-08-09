@@ -213,22 +213,25 @@ sub find_file {
     my $cache_mtime;
     foreach my $p(@{$self->{path}}) {
         print STDOUT "  find_file: $p / $file ...\n" if _DUMP_LOAD;
+
+        my $path_id;
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
             $orig_mtime = $^T;
+            $path_id    = 'HASH';
         }
         else {
             $fullpath = File::Spec->catfile($p, $file);
             defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
                 or next;
+            $path_id    = Text::Xslate::uri_escape($p);
         }
 
         # $file is found
-
         $cachepath = File::Spec->catfile(
             $self->{cache_dir},
-            Text::Xslate::uri_escape(ref($p) ? ref $p : $p),
+            $path_id,
             $file . 'c',
         );
         $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
