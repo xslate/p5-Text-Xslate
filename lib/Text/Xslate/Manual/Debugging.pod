@@ -5,7 +5,24 @@ Text::Xslate::Manual::Debugging - How to debug Xslate templates
 
 =head1 DESCRIPTION
 
-This document is under construction.
+This document describes techniques for debuggign templates.
+
+=head2 File names and line numbers
+
+Xslate reports file names and line numbers, but you can access
+them via C<__FILE__> and C<__LINE__> tokens just like as Perl.
+
+If you want reports files and lines from your functions,
+C<< Text::Xslate->current_file >> and C<< Text::Xslate->current_line >>
+in callbacks are the same as C<__FILE__> and C<__LINE__> in templates
+respectively.
+
+=head2 To dump template values
+
+You can use any dumping modules via the C<function> option, but
+Xslate has a builtin C<dump> filter to dump template values.
+
+    <: $value | dump # Dump $value with Data::Dumper :>
 
 =head1 SEE ALSO
 

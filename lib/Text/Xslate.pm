@@ -570,7 +570,7 @@ engines (Template-Toolkit, HTML::Template::Pro, Text::MicroTemplate, etc.).
 There are benchmarks to compare template engines (see F<benchmark/> for details).
 
 Here is a result of F<benchmark/x-rich-env.pl> to compare various template
-engines in rich environment where applications are persistent and XS modules
+engines in "rich" environment where applications are persistent and XS modules
 are available.
 
     $ perl -Mblib benchmark/x-rich-env.pl
