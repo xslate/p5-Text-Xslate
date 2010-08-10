@@ -43,6 +43,8 @@ L<Text::Xslate>
 
 L<Text::Xslate::Parser>
 
+L<Text::Xslate::PP>
+
 L<Text::Xslate::PP::Booster>
 
 =cut
