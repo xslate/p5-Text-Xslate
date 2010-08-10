@@ -5,7 +5,7 @@ Text::Xslate::Manual::Debugging - How to debug Xslate templates
 
 =head1 DESCRIPTION
 
-This document describes techniques for debuggign templates.
+This document describes techniques for debugging templates.
 
 =head2 File names and line numbers
 
