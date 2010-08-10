@@ -1,11 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
-0.1056
+0.1056 Tue Aug 10 14:28:55 2010
     [BUG FIXES]
     - The rendering methods ignored signals
-    - Overloaded strings like Path::Class::Dir caused problems in cachepaths
-      (chiba)
+    - 'path' option could not deal with overloaded strings (e.g.
+      Path::Class::Dir) correctly (chiba)
     - Die in macros/blocks caused segfaults (reported by chiba)
+
+    [OTHERS]
+    - Benchmarks to compare other template engines have been refactored
+      and improved (lestrrat, tokuhirom).
+      See http://xslate.org/benchmark.html for details.
 
 0.1055 Sat Aug  7 17:33:56 2010
     [BUG FIXES]
