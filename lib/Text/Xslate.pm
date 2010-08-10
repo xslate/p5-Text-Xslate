@@ -1001,6 +1001,8 @@ Thanks to clouder for the patch of adding C<AND> and C<OR> to TTerse.
 
 Thanks to punytan for the documentation improvement.
 
+Thanks to chiba for the bug reports and patches.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>

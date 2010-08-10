@@ -5,6 +5,7 @@ Revision history for Perl extension Text::Xslate
     - The rendering methods ignored signals
     - Overloaded strings like Path::Class::Dir caused problems in cachepaths
       (chiba)
+    - Die in macros/blocks caused segfaults (reported by chiba)
 
 0.1055 Sat Aug  7 17:33:56 2010
     [BUG FIXES]
