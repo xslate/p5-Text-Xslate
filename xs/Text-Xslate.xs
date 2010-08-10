@@ -1,6 +1,7 @@
 #define PERL_NO_GET_CONTEXT
 #include <EXTERN.h>
 #include <perl.h>
+#define NO_XSLOCKS /* for exceptions */
 #include <XSUB.h>
 
 #define NEED_newSVpvn_flags_GLOBAL
@@ -703,8 +704,8 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
 /* NOTE: tx_execute() must be surrounded in ENTER and LEAVE */
 static void
 tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv) {
+    dXCPT;
     tx_state_t st;
-
     StructCopy(base, &st, tx_state_t);
 
     st.output = output;
@@ -721,10 +722,31 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     }
 
     /* local $depth = $depth + 1 */
-    SAVEI32(MY_CXT.depth);
     MY_CXT.depth++;
 
-    TX_RUNOPS(&st);
+    XCPT_TRY_START {
+        TX_RUNOPS(&st);
+    }
+    XCPT_TRY_END;
+
+    /* finally */
+    MY_CXT.depth--;
+
+    XCPT_CATCH {
+        /* unroll the stack frame to fix up TXframe_OUTPUT */
+        while(st.current_frame > 0) {
+            AV* const frame = (AV*)AvARRAY(st.frame)[st.current_frame];
+            SV* tmp;
+            st.current_frame--;
+
+            /* swap st->output and TXframe_OUTPUT */
+            tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
+            AvARRAY(frame)[TXframe_OUTPUT] = st.output;
+            st.output                      = tmp;
+        }
+
+        XCPT_RETHROW;
+    }
 
     /* clear temporary buffers */
     sv_setsv(st.targ, &PL_sv_undef);
@@ -1458,19 +1480,7 @@ CODE:
         }
     }
     else {
-        /* unroll the stack frame */
-        /* to fix TXframe_OUTPUT */
         /* TODO: append the stack info to msg */
-        while(st->current_frame > 0) {
-            AV* const frame = (AV*)AvARRAY(st->frame)[st->current_frame];
-            SV* tmp;
-            st->current_frame--;
-
-            /* swap st->output and TXframe_OUTPUT */
-            tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
-            AvARRAY(frame)[TXframe_OUTPUT] = st->output;
-            st->output                     = tmp;
-        }
 
         if(handler) {
             PUSHMARK(SP);
