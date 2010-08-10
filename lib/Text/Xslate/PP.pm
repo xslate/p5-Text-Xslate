@@ -117,7 +117,7 @@ sub current_line {
 # >> copied and modified from Text::Xslate
 
 use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
+    $NUMBER $STRING
     literal_to_value
 );
 
@@ -162,10 +162,28 @@ sub _load_compiled {
         next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
         chomp $s;
 
-        if ( $s =~ /^ppbooster/ ){ # pp::booster code
-            local $/;
-            package Text::Xslate::PP::Booster;
-            $self->{_loaded_subref}->{ $cachepath } = eval <$in>;
+        if ( $s eq 'ppbooster' ){ # pp::booster code
+            {
+                local $/;
+                package Text::Xslate::PP::Booster;
+                $self->{_loaded_subref}->{ $cachepath } = eval <$in>;
+            }
+            @asm = @{ $self->{_loaded_subref}->{ $cachepath }->[0] };
+            for ( @asm ) {
+                next if $_->[0] ne 'depend';
+                my $dep_mtime = (stat $_->[1])[_ST_MTIME];
+                if(!defined $dep_mtime) {
+                    $dep_mtime = 9**9**9; # force reload
+                    Carp::carp( sprintf("Xslate: Failed to stat %s (ignored): $!", $_->[1]) );
+                }
+                if($dep_mtime > $threshold){
+                    printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
+                        $_->[1],     scalar localtime($dep_mtime),
+                        $cachepath, scalar localtime($threshold)
+                            if _DUMP_LOAD;
+                    return $self->{_loaded_subref}->{ $cachepath } = undef;
+                }
+            }
             last;
         }
 
@@ -368,7 +386,7 @@ sub _assemble {
     }
 
     if ( defined $cachepath and $self->{_loaded_subref}->{ $cachepath } ) {
-        $st->{ booster_code } = $self->{_loaded_subref}->{ $cachepath };
+        $st->{ booster_code } = $self->{_loaded_subref}->{ $cachepath }->[1];
     }
     elsif ( _PP_BACKEND eq 'Booster' ) {
         require Text::Xslate::Compiler::PPBooster;
