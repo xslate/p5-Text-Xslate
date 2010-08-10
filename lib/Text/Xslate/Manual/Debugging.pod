@@ -1,7 +1,7 @@
 
 =head1 NAME
 
-Text::Xslate::Manual::Debugging - How to debug Xslate templates
+Text::Xslate::Manual::Debugging - Debugging techniques for Xslate templates
 
 =head1 DESCRIPTION
 
@@ -17,7 +17,22 @@ C<< Text::Xslate->current_file >> and C<< Text::Xslate->current_line >>
 in callbacks are the same as C<__FILE__> and C<__LINE__> in templates
 respectively.
 
-=head2 To dump template values
+    sub my_sqrt {
+        my($n) = @_;
+
+        if($n < 1) {
+            # return a message instead of warnings
+            return sprintf "!!! Can't take sqrt of $n at %s line %d !!!",
+                Text::Xslate->current_file, Text::Xslate->current_line;
+        }
+        return sqrt($n);
+    }
+
+    my $tx = Text::Xslate->new(
+        function => { sqrt => \&my_sqrt },
+    );
+
+=head2 To dump values
 
 You can use any dumping modules via the C<function> option, but
 Xslate has a builtin C<dump> filter to dump template values.
