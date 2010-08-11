@@ -12,7 +12,10 @@ rmtree(cache_dir);
 END{ rmtree(cache_dir) }
 
 package FooOverloadingObjectDir;
-use overload q{""} => sub { return ${shift()} };
+use overload
+    q{""}    => sub { return ${shift()} },
+    fallback => 1,
+;
 sub new { bless \"$_[1]" => $_[0] }
 
 package main;
