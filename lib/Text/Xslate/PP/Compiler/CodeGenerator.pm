@@ -1,4 +1,4 @@
-package Text::Xslate::Compiler::PPBooster::CodeGenerator;
+package Text::Xslate::PP::Compiler::CodeGenerator;
 
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';

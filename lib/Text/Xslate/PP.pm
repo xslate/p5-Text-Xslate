@@ -56,7 +56,7 @@ our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_esca
 
 sub options {
     my $options  = Text::Xslate::Engine->options;
-    $options->{ compiler } = 'Text::Xslate::Compiler' . (_PP_BACKEND eq 'Booster' ? '::PPBooster' : '');
+    $options->{ compiler } = 'Text::Xslate::' . (_PP_BACKEND eq 'Booster' ? 'PP::Compiler' : 'Compiler');
     return $options;
 }
 
@@ -389,9 +389,9 @@ sub _assemble {
         $st->{ booster_code } = $self->{_loaded_subref}->{ $cachepath }->[1];
     }
     elsif ( _PP_BACKEND eq 'Booster' ) {
-        require Text::Xslate::Compiler::PPBooster;
+        require Text::Xslate::PP::Compiler;
         $st->{ booster_code }
-             = Text::Xslate::Compiler::PPBooster::CodeGenerator->new()->opcode_to_perlcode( $proto );
+             = Text::Xslate::PP::Compiler::CodeGenerator->new()->opcode_to_perlcode( $proto );
     }
 
     push @{$code}, {
