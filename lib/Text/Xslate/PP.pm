@@ -54,6 +54,12 @@ our %html_escape = (
 );
 our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
+sub options {
+    my $options  = Text::Xslate::Engine->options;
+    $options->{ compiler } = 'Text::Xslate::' . (_PP_BACKEND eq 'Booster' ? 'PP::Compiler' : 'Compiler');
+    return $options;
+}
+
 #
 # public APIs
 #
@@ -107,6 +113,128 @@ sub current_line {
         ? $_current_st->code->[ $_current_st->{ pc } ]->{line}
         : undef;
 }
+
+# >> copied and modified from Text::Xslate
+
+use Text::Xslate::Util qw(
+    $NUMBER $STRING
+    literal_to_value
+);
+
+my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
+
+BEGIN {
+    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+}
+
+# load compiled templates if they are fresh enough
+sub _load_compiled {
+    my($self, $fi, $threshold) = @_;
+
+    if($self->{cache} >= 2) {
+        # threshold is the most latest modified time of all the related caches,
+        # so if the cache level >= 2, they seems always fresh.
+        $threshold = 9**9**9;
+    }
+    else {
+        $threshold ||= $fi->{cache_mtime};
+    }
+    # see also tx_load_template() in xs/Text-Xslate.xs
+    if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
+            and $threshold >= $fi->{orig_mtime} )) {
+        printf "  _load_compiled: no fresh cache: %s, %s", $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
+        $fi->{cache_mtime} = undef;
+        return undef;
+    }
+
+    my $cachepath = $fi->{cachepath};
+    open my($in), '<' . $self->{input_layer}, $cachepath
+        or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
+
+    if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
+        return undef;
+    }
+
+    $self->{_loaded_subref}->{ $cachepath } = undef;
+    # parse assembly
+    my @asm;
+    while(defined(my $s = <$in>)) {
+        next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
+        chomp $s;
+
+        if ( $s eq 'ppbooster' ){ # pp::booster code
+            {
+                local $/;
+                package Text::Xslate::PP::Booster;
+                $self->{_loaded_subref}->{ $cachepath } = eval <$in>;
+            }
+            @asm = @{ $self->{_loaded_subref}->{ $cachepath }->[0] };
+            for ( @asm ) {
+                next if $_->[0] ne 'depend';
+                my $dep_mtime = (stat $_->[1])[_ST_MTIME];
+                if(!defined $dep_mtime) {
+                    $dep_mtime = 9**9**9; # force reload
+                    Carp::carp( sprintf("Xslate: Failed to stat %s (ignored): $!", $_->[1]) );
+                }
+                if($dep_mtime > $threshold){
+                    printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
+                        $_->[1],     scalar localtime($dep_mtime),
+                        $cachepath, scalar localtime($threshold)
+                            if _DUMP_LOAD;
+                    return $self->{_loaded_subref}->{ $cachepath } = undef;
+                }
+            }
+            last;
+        }
+
+        # See ::Compiler::as_assembly()
+        # "$opname $arg #$line:$file *$symbol // $comment"
+        my($name, $value, $line, $file, $symbol) = $s =~ m{
+            \A
+                [ \t]*
+                ($IDENT)                        # an opname
+
+                # the following components are optional
+                (?: [ \t]+ ($STRING|[+-]?$NUMBER) )? # operand
+                (?: [ \t]+ \#($NUMBER)          # line number
+                    (?: [:] ($STRING))?         # file name
+                )?
+                (?: [ \t]+ \*($STRING) )?       # symbol name
+                (?: [ \t]* // [^\n]*)?          # comments (anything)
+            \z
+        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
+
+        $value = literal_to_value($value);
+
+        # checks the modified of dependencies
+        if($name eq 'depend') {
+            my $dep_mtime = (stat $value)[_ST_MTIME];
+            if(!defined $dep_mtime) {
+                $dep_mtime = 9**9**9; # force reload
+                Carp::carp("Xslate: Failed to stat $value (ignored): $!");
+            }
+            if($dep_mtime > $threshold){
+                printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
+                    $value,     scalar localtime($dep_mtime),
+                    $cachepath, scalar localtime($threshold)
+                        if _DUMP_LOAD;
+
+                return undef;
+            }
+        }
+
+        push @asm, [ $name, $value, $line, $file, $symbol ];
+    }
+
+    if(_DUMP_LOAD) {
+        printf STDERR "  _load_compiled: cache(%s)\n",
+            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
+    }
+
+    return \@asm;
+}
+
+# << copied from Text::Xslate
 
 sub _assemble {
     my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
@@ -257,8 +385,14 @@ sub _assemble {
 
     }
 
-    $st->{ booster_code } = Text::Xslate::PP::Booster->new()->opcode_to_perlcode( $proto )
-        if _PP_BACKEND eq 'Booster';
+    if ( defined $cachepath and $self->{_loaded_subref}->{ $cachepath } ) {
+        $st->{ booster_code } = $self->{_loaded_subref}->{ $cachepath }->[1];
+    }
+    elsif ( _PP_BACKEND eq 'Booster' ) {
+        require Text::Xslate::PP::Compiler;
+        $st->{ booster_code }
+             = Text::Xslate::PP::Compiler::CodeGenerator->new()->opcode_to_perlcode( $proto );
+    }
 
     push @{$code}, {
         exec_code => $OPCODE[ $OPS{end} ],
