@@ -1,10 +1,3 @@
-#define PERL_NO_GET_CONTEXT
-#include <EXTERN.h>
-#include <perl.h>
-#include <XSUB.h>
-
-#include "ppport.h"
-
 #include "xslate.h"
 
 #define TXBM_DECL(name) void name \

@@ -1,15 +1,8 @@
-#define PERL_NO_GET_CONTEXT
-#include <EXTERN.h>
-#include <perl.h>
-#define NO_XSLOCKS /* for exceptions */
-#include <XSUB.h>
-
 #define NEED_newSVpvn_flags_GLOBAL
 #define NEED_newSVpvn_share
 #define NEED_newSV_type
-#include "ppport.h"
-
 #include "xslate.h"
+
 #include "xslate_char_trait.h"
 
 /* aliases */
@@ -1059,6 +1052,8 @@ XS(XS_Text__Xslate__fallback)
    XSRETURN_EMPTY;
 }
 
+EXTERN_C XS(boot_Text__Xslate__Methods);
+
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Engine
 
 PROTOTYPES: DISABLE
@@ -1071,7 +1066,6 @@ BOOT:
     tx_init_ops(aTHX_ ops);
 
     {
-        EXTERN_C XS(boot_Text__Xslate__Methods);
         PUSHMARK(SP);
         boot_Text__Xslate__Methods(aTHX_ cv);
     }

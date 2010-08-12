@@ -1,4 +1,19 @@
 /* xslate.h */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define PERL_NO_GET_CONTEXT
+#include <EXTERN.h>
+#include <perl.h>
+#define NO_XSLOCKS /* for exceptions */
+#include <XSUB.h>
+
+#ifdef __cplusplus
+}
+#endif
+
+#include "ppport.h"
 
 /* portability stuff */
 
