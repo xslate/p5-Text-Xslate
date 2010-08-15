@@ -1,5 +1,17 @@
 Revision history for Perl extension Text::Xslate
 
+0.1057 Sun Aug 15 18:28:32 2010
+    [BUG FIXES]
+    - Subroutines that localize $SIG{__WARN__} or $SIG{__DIE__} could make
+      Perl interpreter panic (reported by tokuhirom)
+    - Invalid expressions could produce insane errors including infinite loop
+      (issue/13, reported by y)
+    - A Win32 problem in tests might be fixed
+
+    [FEATURES]
+    - Experimental support for PP::Compiler which make PP::Booster faster
+      (makamaka)
+
 0.1056 Tue Aug 10 14:28:55 2010
     [BUG FIXES]
     - The rendering methods ignored signals
