@@ -67,6 +67,9 @@ T
     Xslate    
 X
 
+
+    # http://github.com/gfx/p5-Text-Xslate/issues#issue/12
+    #['Hello, [%~ "Xslate" ~%] world!', 'Hello,Xslateworld!'],
 );
 
 my %vars = (
