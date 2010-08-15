@@ -222,6 +222,13 @@ eval {
 like   $@, qr/Unknown operator '\\'/;
 
 eval {
+    $tx->render_string('<: 1 + 1 %:>');
+};
+like   $@, qr/Invalid expression/;
+unlike $@, qr/oops/i;
+
+
+eval {
     $tx->render_string(": include '../foo.tx'");
 };
 like $@, qr/Forbidden/;
@@ -244,5 +251,10 @@ eval {
 };
 like $@, qr/Expected a name/;
 
+eval {
+    $tx->render_string('[% 1 + 1 %%]');
+};
+like   $@, qr/Invalid expression/, 'http://github.com/gfx/p5-Text-Xslate/issues/unreads#issue/13';
+unlike $@, qr/oops/i;
 
 done_testing;

@@ -412,7 +412,7 @@ sub _init_basic_symbols {
     }
 
     # common separators
-    $parser->symbol(';');
+    $parser->symbol(';')->set_nud(\&nud_separator);
     $parser->define_pair('(' => ')');
     $parser->define_pair('{' => '}');
     $parser->define_pair('[' => ']');
@@ -1294,6 +1294,11 @@ sub nud_current_line {
         arity => 'literal',
         value => $self->line,
     );
+}
+
+sub nud_separator {
+    my($self, $symbol) = @_;
+    $self->_error("Invalid expression found", $symbol);
 }
 
 # -> VARS { STATEMENTS }
