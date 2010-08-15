@@ -1335,14 +1335,14 @@ CODE:
     st = tx_load_template(aTHX_ self, source);
 
     /* local $SIG{__WARN__} = \&warn_handler */
-    SAVESPTR(PL_warnhook);
+    SAVEGENERICSV(PL_warnhook);
     MY_CXT.orig_warn_handler = PL_warnhook;
-    PL_warnhook              = MY_CXT.warn_handler;
+    PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
 
     /* local $SIG{__DIE__}  = \&die_handler */
-    SAVESPTR(PL_diehook);
+    SAVEGENERICSV(PL_diehook);
     MY_CXT.orig_die_handler = PL_diehook;
-    PL_diehook              = MY_CXT.die_handler;
+    PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
 
     result = sv_newmortal();
     sv_grow(result, st->hint_size + TX_HINT_SIZE);
