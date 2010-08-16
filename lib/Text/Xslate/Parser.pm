@@ -40,7 +40,7 @@ my %shortcut_table = (
     '=' => 'print',
 );
 
-my $CHOMP_FLAGS = qr/-/xms; # should support [-=~+] like Template-Toolkit?
+my $CHOMP_FLAGS = qr/-/xms;
 
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
@@ -221,6 +221,56 @@ sub trim_code {
     return $s;
 }
 
+sub auto_chomp {
+    my($parser, $tokens_ref, $i, $s_ref) = @_;
+
+    my $p;
+    my $nl = 0;
+
+    # postchomp
+    if($i >= 1
+            and ($p = $tokens_ref->[$i-1])->[0] eq 'postchomp') {
+        # [ CODE ][*][ TEXT    ]
+        # <: ...  -:>  \nfoobar
+        #            ^^^^
+        ${$s_ref} =~ s/\A [ \t]* (\n)//xms;
+        if($1) {
+            $nl++;
+        }
+    }
+
+    # prechomp
+    if(($i+1) < @{$tokens_ref}
+            and ($p = $tokens_ref->[$i+1])->[0] eq 'prechomp') {
+        if(${$s_ref} !~ / [^ \t] /xms) {
+            #   HERE
+            # [ TEXT ][*][ CODE ]
+            #         <:- ...  :>
+            # ^^^^^^^^
+            ${$s_ref} = '';
+        }
+        else {
+            #   HERE
+            # [ TEXT ][*][ CODE ]
+            #       \n<:- ...  :>
+            #       ^^
+            $nl += chomp ${$s_ref};
+        }
+    }
+    elsif(($i+2) < @{$tokens_ref}
+            and ($p = $tokens_ref->[$i+2])->[0] eq 'prechomp'
+            and ($p = $tokens_ref->[$i+1])->[0] eq 'text'
+            and $p->[1] !~ / [^ \t] /xms) {
+        #   HERE
+        # [ TEXT ][ TEXT ][*][ CODE ]
+        #       \n        <:- ...  :>
+        #       ^^^^^^^^^^
+        $p->[1] = '';
+        $nl += chomp ${$s_ref};
+    }
+    return $nl;
+}
+
 # split templates by tags before tokanizing
 sub split :method {
     my $parser  = shift;
@@ -306,58 +356,15 @@ sub preprocess {
         my($type, $s) = @{ $tokens_ref->[$i] };
 
         if($type eq 'text') {
-            my $p;
-            my $has_nl = 0;
-
-            # postchomp
-            if($i >= 1
-                    and ($p = $tokens_ref->[$i-1])->[0] eq 'postchomp') {
-                # [ CODE ][*][ TEXT    ]
-                # <: ...  -:>  \nfoobar
-                #            ^^^^
-                $s =~ s/\A [ \t]* (\n)//xms;
-                if($1) {
-                    $has_nl++;
-                }
-            }
-
-            # prechomp
-            if(($i+1) < @{$tokens_ref}
-                    and ($p = $tokens_ref->[$i+1])->[0] eq 'prechomp') {
-                if($s !~ / [^ \t] /xms) {
-                    #   HERE
-                    # [ TEXT ][*][ CODE ]
-                    #         <:- ...  :>
-                    # ^^^^^^^^
-                    $s = '';
-                }
-                else {
-                    #   HERE
-                    # [ TEXT ][*][ CODE ]
-                    #       \n<:- ...  :>
-                    #       ^^
-                    $has_nl += chomp $s;
-                }
-            }
-            elsif(($i+2) < @{$tokens_ref}
-                    and ($p = $tokens_ref->[$i+2])->[0] eq 'prechomp'
-                    and ($p = $tokens_ref->[$i+1])->[0] eq 'text'
-                    and $p->[1] !~ / [^ \t] /xms) {
-                #   HERE
-                # [ TEXT ][ TEXT ][*][ CODE ]
-                #       \n        <:- ...  :>
-                #       ^^^^^^^^^^
-                $p->[1] = '';
-                $has_nl += chomp $s;
-            }
+            my $nl = $parser->auto_chomp($tokens_ref, $i, \$s);
 
             $s =~ s/(["\\])/\\$1/gxms; # " for poor editors
 
             # $s may have single new line
-            $has_nl += ($s =~ s/\n/\\n/xms);
+            $nl += ($s =~ s/\n/\\n/xms);
 
             $code .= qq{print_raw "$s";}; # must set even if $s is empty
-            $code .= qq{\n} if $has_nl;
+            $code .= qq{\n} if $nl > 0;
         }
         elsif($type eq 'code') {
             # shortcut commands
