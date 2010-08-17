@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-1.058
+0.1058 Tue Aug 17 17:59:53 2010
     [CHANGES]
     - Deprecate defined() method, which is provided only for compatibility
       with TT, but the behaviour might not be exceptable. That is,
