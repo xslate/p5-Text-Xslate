@@ -3,11 +3,16 @@
 extern "C" {
 #endif
 
-#define PERL_NO_GET_CONTEXT
+#define PERL_NO_GET_CONTEXT /* we want efficiency */
 #include <EXTERN.h>
+
 #include <perl.h>
 #define NO_XSLOCKS /* for exceptions */
+/* PERL_CORE makes the interpreter variable access faster.
+   See also Class::XSAccessor. */
+#define PERL_CORE
 #include <XSUB.h>
+#undef PERL_CORE
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,10 @@ Revision history for Perl extension Text::Xslate
       defined() method. Use defined(expr) function instead, which return
       false if and only if the expr is undef (nil).
 
+    [FEATURES]
+    - Add html_builder() to make it easy to import HTML builders.
+      See Text::Xslate::Cookbook for example.
+
 0.1057 Sun Aug 15 18:28:32 2010
     [BUG FIXES]
     - Subroutines that localize $SIG{__WARN__} or $SIG{__DIE__} could make
