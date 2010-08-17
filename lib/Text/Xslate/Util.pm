@@ -160,7 +160,10 @@ sub import_from {
 
         my $commands;
         if(ref $_[$i+1]){
-            $commands = p($_[++$i]);
+            require 'Data/Dumper.pm';
+            my @args   = ($_[++$i]);
+            my @protos = ('*data');
+            $commands = Data::Dumper->new(\@args, \@protos)->Terse(1)->Dump();
         }
 
         $code .= "use $module ();\n" if !$module->can('export_into_xslate');
@@ -254,9 +257,9 @@ sub read_around { # for error messages
     return $s;
 }
 
-sub p { # for debugging
+sub p { # for debugging, the guts of dump()
     require 'Data/Dumper.pm'; # we don't want to create its namespace
-    my $dd = Data::Dumper->new([@_ == 1 ? @_ : \@_], ['*data']);
+    my $dd = Data::Dumper->new(\@_);
     $dd->Indent(1);
     $dd->Sortkeys(1);
     $dd->Quotekeys(0);
