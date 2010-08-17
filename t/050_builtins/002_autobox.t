@@ -34,13 +34,6 @@ my $tx = Text::Xslate->new(
 );
 
 my @set = (
-    # any
-    ['<: nil.defined() ? 1 : 0 :>', {}, 0],
-    ['<: 0.defined()   ? 1 : 0 :>', {}, 1],
-    ['<: "".defined()  ? 1 : 0 :>', {}, 1],
-    ['<: [].defined()  ? 1 : 0 :>', {}, 1],
-    ['<: {}.defined()  ? 1 : 0 :>', {}, 1],
-
     # array
     ['<: $a.size() :>', { a => [] },        '0', 'for array'],
     ['<: $a.size() :>', { a => [0 .. 9] }, '10'],

@@ -19,25 +19,17 @@ The following is builtin methods.
 
 =head2 For nil
 
-C<nil> has its specific namespace as C<nil>.
-
-=head3 C<$s.defined()>
-
-Returns false.
+C<nil> has its specific namespace as C<nil>, although no builtin methods are
+provided.
 
 =head2 For SCALARs
 
-The namespace of SCALARs is C<scalar>.
-
-=head3 C<$s.defined()>
-
-Returns true.
+The namespace of SCALARs is C<scalar>, although no builtin methods are
+provided.
 
 =head2 For ARRAY references
 
 The namespace of ARRAY references is C<array>.
-
-=head3 C<$a.defined()>
 
 Returns true;
 
@@ -101,10 +93,6 @@ See also L<List::Util/"reduce">.
 =head2 For HASH references
 
 The namespace of HASH references is C<hash>.
-
-=head3 C<$h.defined()>
-
-Returns true.
 
 =head3 C<$h.size()>
 

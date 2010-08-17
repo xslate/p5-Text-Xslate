@@ -19,6 +19,7 @@ our $_context;
 sub _any_defined {
     my($any) = @_;
     return $_st->bad_arg('defined') if @_ != 1;
+    $_st->error($_context, "defined() method is deprecated. Use defined(expr) function instead");
     return defined($any);
 }
 

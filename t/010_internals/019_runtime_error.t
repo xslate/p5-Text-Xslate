@@ -155,7 +155,7 @@ foreach my $code(
 
 $warn = '';
 $out = eval {
-    $tx->render_string("<: nil.defined() ? 1 : 0 :>", {});
+    $tx->render_string("<: defined(nil) ? 1 : 0 :>", {});
 };
 
 is $out,  '0';

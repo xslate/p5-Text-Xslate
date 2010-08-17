@@ -80,6 +80,7 @@ tx_keys(pTHX_ SV* const hvref) {
 
 /* ANY */
 TXBM(any, defined) {
+    tx_error(aTHX_ st, "defined() method is deprecated. Use defined(expr) function instead");
     sv_setsv(retval, SvOK(*MARK) ? &PL_sv_yes : &PL_sv_no);
 }
 

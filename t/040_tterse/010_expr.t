@@ -10,9 +10,6 @@ my @data = (
 
     ['Hello, [% "foo" _ "bar" %] world!' => 'Hello, foobar world!'],
 
-    ['[% lang.defined()        ? "d" : "!d" %]' => 'd'],
-    ['[% no_such_var.defined() ? "d" : "!d" %]' => '!d'],
-
     ['[% ( NOT value == 10 ) ? "true" : "false" %]', "false" ],
     ['[% (NOT value AND (value == 10)) ? "true" : "false" %]', "false" ],
     ['[% (NOT( value == 10 ))  ? "true" : "false" %]', "false", ],
