@@ -10,6 +10,7 @@ our @EXPORT_OK = qw(
     html_escape escaped_string
     uri_escape
     p
+    html_builder
 
     literal_to_value value_to_literal
     import_from
@@ -51,6 +52,14 @@ sub unmark_raw;  # XS
 sub html_escape; # XS
 sub uri_escape;  # XS
 sub escaped_string; *escaped_string = \&mark_raw;
+
+sub html_builder (&){
+    my($code_ref) = @_;
+    return sub {
+        my($s) = @_;
+        return mark_raw( $code_ref->(unmark_raw($s)) );
+    };
+}
 
 sub neat {
     my($s) = @_;
@@ -293,6 +302,13 @@ This is the entity of the C<uri> filter.
 Displays the contents of I<$any> using C<Data::Dumper>.
 
 This is the entity of the C<dump> filter, useful for debugging.
+
+=head3  C<< html_builder { block } | \&function :CodeRef >>
+
+Wraps I<&function> with C<mark_raw> so that the new subroutine returns
+a raw string.
+
+This function is the same as what Text::Xslate exports.
 
 =head1 SEE ALSO
 

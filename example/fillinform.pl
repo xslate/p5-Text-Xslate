@@ -1,14 +1,14 @@
 #!perl -w
 use strict;
-use Text::Xslate qw(mark_raw unmark_raw);
+use Text::Xslate qw(html_builder);
 use HTML::FillInForm::Lite 1.09;
 
 sub fillinform {
     my($q) = @_;
-
-    return sub {
+    my $fif = HTML::FillInForm::Lite->new();
+    return html_builder {
         my($html) = @_;
-        return mark_raw(HTML::FillInForm::Lite->fill(\unmark_raw($html), $q));
+        return $fif->fill(\$html, $q);
     };
 }
 

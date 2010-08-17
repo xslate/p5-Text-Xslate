@@ -14,15 +14,18 @@ use Text::Xslate::Util qw(
     $DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
-    uri_escape
+    uri_escape html_builder
 );
 
 our @ISA = qw(Text::Xslate::Engine Exporter);
 
 our @EXPORT_OK = qw(
-    mark_raw unmark_raw
-    escaped_string html_escape
+    mark_raw
+    unmark_raw
+    escaped_string
+    html_escape
     uri_escape
+    html_builder
 );
 
 # load backend (XS or PP)
@@ -856,6 +859,28 @@ to use C<unmark_raw> to ensure expressions to be html-escaped.
 Escapes URI unsafe characters in I<$str>, and returns it.
 
 This function is available in templates as the C<uri> filter.
+
+=head3 C<< html_builder { block } | \&function :CodeRef >>
+
+Wraps I<&function> with C<mark_raw> so that the new subroutine returns
+a raw string.
+
+This function is used to tell the xslate engine that I<&function> is an
+HTML builder that returns HTML sources. For example:
+
+    sub some_html_builder {
+        my $html;
+        # build HTML ...
+        return $html;
+    }
+
+    my $tx = Text::Xslate->new(
+        function => {
+            some_html_builder => html_builder(\&some_html_builder),
+        },
+    );
+
+See also L<Text::Xslate::Manual::Cookbook>.
 
 =head2 Command line interface
 

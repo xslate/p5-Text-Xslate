@@ -29,17 +29,16 @@ Example code using C<HTML::FillInForm>:
 
     #!perl -w
     use strict;
-    use Text::Xslate qw(mark_raw unmark_raw);
-    use HTML::FillInForm;
+    use Text::Xslate qw(html_builder);
+
+    use HTML::FillInForm; # HTML::FillInForm is okay
 
     sub fillinform {
         my($q) = @_;
-
-        return sub {
+        my $fif = HTML::FillInForm->new();
+        return html_builder {
             my($html) = @_;
-            $html = unmark_raw($html); # NOTE: Not required by H::FIF::Lite
-            # do mark_raw() here, not in templates
-            return mark_raw(HTML::FillInForm->fill(\$html, $q));
+            return $fif->fill(\$html, $q);
         };
     }
 

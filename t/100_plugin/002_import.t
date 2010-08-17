@@ -2,10 +2,11 @@
 use strict;
 use Test::More;
 
-use Text::Xslate qw(html_escape);
+use Text::Xslate qw(html_escape html_builder mark_raw);
 use Text::Xslate::Util qw(p);
 use Data::Dumper;
 use Time::localtime qw(localtime);
+use CGI qw(span);
 
 my $tx = Text::Xslate->new(
     module => [
@@ -15,6 +16,7 @@ my $tx = Text::Xslate->new(
     ],
     function => {
         blessed => sub{ 42 }, # override
+        span    => html_builder(\&span),
     },
 );
 
@@ -40,6 +42,13 @@ my @set = (
         { x => 42 },
         p(42),
         'builtins',
+    ],
+
+    [
+        '<: span($x) :>',
+        { x => 42 },
+        mark_raw('<span>42</span>'),
+        'html_builder',
     ],
 );
 

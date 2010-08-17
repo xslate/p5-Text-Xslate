@@ -6,6 +6,7 @@ use Text::Xslate::Util qw(
     literal_to_value
     value_to_literal
     read_around
+    html_builder
 );
 
 my @set = (
@@ -79,5 +80,9 @@ X
 
 is read_around(undef, undef), <<'X', 'read_around';
 X
+
+my $hb = html_builder { "<br />" };
+is $hb->(), "<br />";
+
 
 done_testing;
