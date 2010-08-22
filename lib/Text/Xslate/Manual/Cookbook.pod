@@ -31,7 +31,7 @@ Example code using C<HTML::FillInForm>:
     use strict;
     use Text::Xslate qw(html_builder);
 
-    use HTML::FillInForm; # HTML::FillInForm is okay
+    use HTML::FillInForm; # HTML::FillInForm::Lite is okay
 
     sub fillinform {
         my($q) = @_;
@@ -66,6 +66,15 @@ Output:
     <form>
     <input type="text" name="foo" value="&lt;filled value&gt;" />
     </form>
+
+Because L<HTML::FillInForm::Lite> provides C<fillinform> function,
+it becoms more simple:
+
+    use HTML::FillInForm qw(fillinform);
+
+    my $tx = Text::Xslate->new(
+        function => { fillinform => html_builder(\&fillinform) },
+    );
 
 See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 
