@@ -68,7 +68,7 @@ Output:
     </form>
 
 Because L<HTML::FillInForm::Lite> provides C<fillinform> function,
-it becoms more simple:
+it becomes more simple:
 
     use HTML::FillInForm qw(fillinform);
 

@@ -13,11 +13,11 @@ END{ rmtree(cache_dir) }
 my $tx = Text::Xslate->new(
     path      =>  path,
     cache_dir =>  cache_dir,
-    escape    => 'none',
+    type      => 'text',
 );
 
 my @set = (
-    [<<'T', { value => "<foo>" }, <<'X', 'escape => "none"'],
+    [<<'T', { value => "<foo>" }, <<'X', 'type => "text"'],
 Hello, <: $value :>!
 T
 Hello, <foo>!
@@ -35,9 +35,17 @@ is $tx->render('hello.tx', { lang => '<Xslate>' }),
 $tx = Text::Xslate->new(
     path      =>  path,
     cache_dir =>  cache_dir,
-    escape    => 'html',
+    type      => 'html',
 );
 is $tx->render('hello.tx', { lang => '<Xslate>' }),
-    "Hello, &lt;Xslate&gt; world!\n", "magic number has the escape mode the cache compiled with";
+    "Hello, &lt;Xslate&gt; world!\n", "type => 'html'";
+
+$tx = Text::Xslate->new(
+    path      =>  path,
+    cache_dir =>  cache_dir,
+    type      => 'xml',
+);
+is $tx->render('hello.tx', { lang => '<Xslate>' }),
+    "Hello, &lt;Xslate&gt; world!\n", "type => 'xml'";
 
 done_testing;

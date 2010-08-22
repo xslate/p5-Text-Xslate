@@ -50,6 +50,7 @@ Mojo
 SCALARs
 namespace
 CGI
+xml
 
 # personal name
 lestrrat

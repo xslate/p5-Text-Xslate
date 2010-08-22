@@ -63,12 +63,12 @@ has syntax => (
     traits        => $getopt_traits,
 );
 
-has escape => (
-    documentation => 'Escaping mode (html or none)',
-    cmd_aliases   => [qw(p)],
+has type => (
+    documentation => 'Output content type (html | xml | text)',
+    cmd_aliases   => [qw(t)],
     is            => 'ro',
     isa           => 'Str',
-    predicate     => 'has_escape',
+    predicate     => 'has_type',
     traits        => $getopt_traits,
 );
 
@@ -165,7 +165,7 @@ sub run {
     my %args;
     foreach my $field qw(
         cache_dir cache input_layer path syntax
-        escape verbose
+        type verbose
             ) {
         my $method = "has_$field";
         $args{ $field } = $self->$field if $self->$method;

@@ -128,13 +128,10 @@ has dependencies => (
     init_arg => undef,
 );
 
-has escape_mode => (
-    is  => 'rw',
-    isa => enum([qw(html none)]),
-
+has type => (
+    is      => 'rw',
+    isa     => enum([qw(html xml text)]),
     default => 'html',
-
-    init_arg => 'escape',
 );
 
 has syntax => (
@@ -565,7 +562,7 @@ sub _generate_command {
     my @code;
 
     my $proc = $node->id;
-    if($proc eq 'print' and $self->escape_mode ne 'html') {
+    if($proc eq 'print' and $self->type eq 'text') {
         $proc = 'print_raw';
     }
 

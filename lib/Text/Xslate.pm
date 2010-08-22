@@ -83,7 +83,7 @@ my %parser_option = (
 # the real defaults are defined in the compiler
 my %compiler_option = (
     syntax     => undef,
-    escape     => undef,
+    type       => undef,
     header     => undef,
     footer     => undef,
 );
@@ -719,14 +719,13 @@ I<$name> may be a short name (e.g. C<Kolon>), or a fully qualified name
 
 This option is passed to the compiler directly.
 
-=item C<< escape => $mode // 'html' >>
+=item C<< type => $type // 'html' >>
 
-Specifies the escape mode, which is automatically applied to template expressions.
+Specifies the output content type. If I<$type> is C<html> or C<xml>,
+template expressions are interpolated via the C<html-escape> filter.
+If I<$type> is C<text>, template expressions are interpolated as they are.
 
-Possible escape modes are B<html> and B<none>.
-
-Note that C<none> mode is provided for non-HTML templates, e.g. mail generators,
-so you must not to use it for HTML templates because it is unsafe.
+I<$type> may be B<html>, B<xml> (identical to C<html>), and B<text>.
 
 This option is passed to the compiler directly.
 

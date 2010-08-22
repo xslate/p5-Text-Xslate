@@ -1,5 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+0.1999_01
+    [CHANGES]
+    * The "escape" option is changed to "type", which accepts "html", "xml",
+      and "text".
+
+    [FEATURES]
+    * Repeat operator (infix:<x>) is added so that "x" is now an invalid
+      variable name in TTerse
+    * Now html_builder() can be applied to dynamic filters (e.g.
+      the HTML::FillInForm::fillinform() function)
+
 0.1058 Tue Aug 17 17:59:53 2010
     [CHANGES]
     - Deprecate defined() method, which is provided only for compatibility

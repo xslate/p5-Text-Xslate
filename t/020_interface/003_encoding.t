@@ -11,16 +11,16 @@ use File::Path qw(rmtree);
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }
 
-for my $mode qw(html none) {
+for my $type qw(html xml text) {
 # intentionally no indents because it breaks here documents
 
 my $tx = Text::Xslate->new(
     path      => [path],
     cache_dir =>  cache_dir,
-    escape    => $mode,
+    type      => $type,
 );
 
-note "for strings (escape=$mode)";
+note "for strings (type=$type)";
 
 is $tx->render_string(<<'T', { value => "エクスレート" }),
 ようこそ <:= $value :> の世界へ！
@@ -97,7 +97,7 @@ for(1 .. 2) {
         path        => [path],
         cache_dir   =>  cache_dir,
         input_layer => ":bytes",
-        escape      => $mode,
+        type        => $type,
     );
     #use Devel::Peek; Dump($tx->render("hello_utf8.tx", { name => "エクスレート" }));
     is $tx->render("hello_utf8.tx", { name => "エクスレート" }),

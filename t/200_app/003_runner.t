@@ -27,7 +27,7 @@ is capture { $app->run() }, "Hello, &lt;Xslate&gt; world!\n";
 $app = Text::Xslate::Runner->new(
     eval   => 'Hello, <: $lang :> world!',
     define => { lang => '<Xslate>' },
-    escape => 'none',
+    type   => 'text',
 );
 is capture { $app->run() }, "Hello, <Xslate> world!\n";
 
