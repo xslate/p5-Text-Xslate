@@ -401,7 +401,20 @@ $CODE_MANIP{ 'div' } = sub {
 
 $CODE_MANIP{ 'mod' } = sub {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( '( %s %% %s )', $self->sb(), $self->sa() ) );
+    $self->sa( sprintf(<<'CODE', $self->sb(), $self->sa() ) );
+    do {
+        my $lhs = %s;
+        my $rhs = %s;
+        if($rhs == 0) {
+            $st->error(undef, "Illegal modulus zero");
+            'NaN';
+        }
+        else {
+            $lhs %% $rhs;
+        }
+    }
+CODE
+
     $self->optimize_to_print( 'num' );
 };
 

@@ -260,7 +260,15 @@ TXC(div) {
     TX_RETURN_NEXT();
 }
 TXC(mod) {
-    sv_setiv(TX_st->targ, SvIVx(TX_st_sb) % SvIVx(TX_st_sa));
+    IV const lhs = SvIVx(TX_st_sb);
+    IV const rhs = SvIVx(TX_st_sa);
+    if(rhs == 0) {
+        tx_error(aTHX_ TX_st, "Illegal modulus zero");
+        sv_setpvs(TX_st->targ, "NaN");
+    }
+    else {
+        sv_setiv(TX_st->targ,  lhs % rhs);
+    }
     TX_st_sa = TX_st->targ;
     TX_RETURN_NEXT();
 }

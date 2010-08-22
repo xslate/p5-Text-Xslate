@@ -124,6 +124,15 @@ like $warn, qr/\b MyObject \b/xms;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
+$warn = '';
+$out = eval {
+    $tx->render_string('<: $x % 0 :>', {x => 42});
+};
+
+is $out,  'NaN';
+like $warn, qr/Illegal modulus zero/;
+is $@,    '';
+
 note 'verbose => 2';
 
 $tx = Text::Xslate->new(
@@ -164,7 +173,7 @@ is $out,  '0';
 is $warn, '';
 is $@,    '';
 
-
 is $perl_warnings, '', "Perl doesn't produce warnings";
+
 
 done_testing;

@@ -5,6 +5,9 @@ Revision history for Perl extension Text::Xslate
     * The "escape" option is changed to "type", which accepts "html", "xml",
       and "text".
 
+    [BUG FIXES]
+    * Modulo zero ($foo % 0) coould cause uncatchable errors
+
     [FEATURES]
     * Repeat operator (infix:<x>) is added so that "x" is now an invalid
       variable name in TTerse

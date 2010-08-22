@@ -241,8 +241,17 @@ sub op_div {
 
 
 sub op_mod {
-    $_[0]->{sa} = $_[0]->{sb} % $_[0]->{sa};
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    my($st) = @_;
+    my $lhs = int $st->{sb};
+    my $rhs = int $st->{sa};
+    if($rhs == 0) {
+        $st->error(undef, "Illegal modulus zero");
+        $st->{sa} = 'NaN';
+    }
+    else {
+        $st->{sa} = $lhs % $rhs;
+    }
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 
