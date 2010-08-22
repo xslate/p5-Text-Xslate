@@ -308,7 +308,7 @@ TXC_w_sv(repeat) {
 
     SvGETMAGIC(lhs);
     if(!SvOK(lhs)) {
-        tx_error(aTHX_ TX_st, "Use of nil for repeat operator");
+        tx_warn(aTHX_ TX_st, "Use of nil for repeat operator");
         TX_st_sa = &PL_sv_undef;
     }
     else if(!looks_like_number(rhs)) {

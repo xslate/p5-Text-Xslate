@@ -32,11 +32,12 @@ foreach my $code(
     q{ nil | html },
     q{ 1 ? raw(nil)  : "UNLIKELY" },
     q{ 1 ? html(nil) : "UNLIKELY" },
+    q{ $empty x 10 },
 ) {
     $warn = '';
 
     my $out = eval {
-        $tx->render_string("<: $code :>", { h => {'' => 'foo'}, a => [42] });
+        $tx->render_string("<: $code :>", { h => {'' => 'foo' }, a => [42] });
     };
 
     is $out,  '', $code;
@@ -141,6 +142,7 @@ foreach my $code(
     q{ nil | html },
     q{ 1 ? raw(nil)  : "UNLIKELY" },
     q{ 1 ? html(nil) : "UNLIKELY" },
+    q{ $empty x 10 },
 ) {
     $warn = '';
     my $out = eval {

@@ -508,7 +508,7 @@ sub tx_concat {
 sub tx_repeat {
     my($lhs, $rhs) = @_;
     if(!defined($lhs)) {
-        $_current_st->error(undef, "Use of nil for repeat operator");
+        $_current_st->warn(undef, "Use of nil for repeat operator");
     }
     elsif(!Scalar::Util::looks_like_number($rhs)) {
         $_current_st->error(undef, "Repeat count must be a number, not %s",
