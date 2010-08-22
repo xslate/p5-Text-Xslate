@@ -57,7 +57,10 @@ sub html_builder (&){
     my($code_ref) = @_;
     return sub {
         my($s) = @_;
-        return mark_raw( $code_ref->(unmark_raw($s)) );
+        my $ret = $code_ref->(unmark_raw($s));
+        return ref($ret) eq 'CODE'
+            ? html_builder(\&{$ret})
+            : mark_raw($ret);
     };
 }
 
