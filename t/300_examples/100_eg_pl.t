@@ -49,6 +49,7 @@ EXAMPLE: while(defined(my $example = <example/*.pl>)) {
 
         if($err =~ /Can't locate / # ' for poor editors
                 or $err =~ /version \S+ required--this is only version /) {
+            $err =~ s/ \(\@INC contains: [^\)]+\)//;
             diag("skip $example because: $err");
             next EXAMPLE;
         }
