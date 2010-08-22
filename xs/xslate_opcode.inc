@@ -300,6 +300,39 @@ TXC_w_sv(concat) {
     TX_RETURN_NEXT();
 }
 
+TXC_w_sv(repeat) {
+    dMY_CXT;
+    IV const lhs_is_raw  = tx_str_is_raw(aTHX_ aMY_CXT_ TX_st_sb);
+    SV* const lhs        = lhs_is_raw ? TX_UNMARK_RAW(TX_st_sb) : TX_st_sb;
+    SV* const rhs = TX_st_sa;
+
+    SvGETMAGIC(lhs);
+    if(!SvOK(lhs)) {
+        tx_error(aTHX_ TX_st, "Use of nil for repeat operator");
+        TX_st_sa = &PL_sv_undef;
+    }
+    else if(!looks_like_number(rhs)) {
+        tx_error(aTHX_ TX_st, "Repeat count must be a number, not %s",
+            tx_neat(aTHX_ TX_st_sa));
+        TX_st_sa = &PL_sv_undef;
+    }
+    else {
+        STRLEN const len  = sv_len(lhs);
+        UV const count    = SvUV(rhs);
+        SV* const sv      = TX_op_arg_sv;
+        UV i;
+
+        sv_setpvs(sv, "");
+        SvGROW(sv, len * count + 1);
+        for(i = 0; i < count; i++) {
+            tx_sv_cat(aTHX_ sv, lhs);
+        }
+        TX_st_sa = lhs_is_raw ? tx_mark_raw(aTHX_ sv) : sv;
+    }
+
+    TX_RETURN_NEXT();
+}
+
 TXC(bitor) {
     sv_setuv(TX_st->targ, SvUVx(TX_st_sb) | SvUVx(TX_st_sa));
     TX_st_sa = TX_st->targ;

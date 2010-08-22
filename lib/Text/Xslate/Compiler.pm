@@ -53,6 +53,7 @@ my %binary = (
     '%'  => 'mod',
 
     '~'  => 'concat',
+    'x'  => 'repeat',
 
     '+|' => 'bitor',
     '+&' => 'bitand',

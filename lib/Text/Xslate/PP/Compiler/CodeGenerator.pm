@@ -411,6 +411,10 @@ $CODE_MANIP{ 'concat' } = sub {
     $self->sa( sprintf( 'Text::Xslate::PP::tx_concat( %s, %s )', $self->sb(), $self->sa() ) );
 };
 
+$CODE_MANIP{ 'repeat' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'Text::Xslate::PP::tx_repeat( %s, %s )', $self->sb(), $self->sa() ) );
+};
 
 $CODE_MANIP{ 'bitor' } = sub {
     my ( $self, $arg, $line ) = @_;

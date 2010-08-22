@@ -12,7 +12,11 @@ BEGIN{
 use Text::Xslate::PP::Const qw(:all);
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Raw;
-use Text::Xslate::Util qw($DEBUG p make_error);
+use Text::Xslate::Util qw(
+    $DEBUG
+    $NUMBER $STRING
+    p
+);
 use Text::Xslate;
 
 use Carp ();
@@ -116,11 +120,6 @@ sub current_line {
 
 # >> copied and modified from Text::Xslate
 
-use Text::Xslate::Util qw(
-    $NUMBER $STRING
-    literal_to_value
-);
-
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 BEGIN {
@@ -204,7 +203,7 @@ sub _load_compiled {
             \z
         }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
 
-        $value = literal_to_value($value);
+        $value = Text::Xslate::Util::literal_to_value($value);
 
         # checks the modified of dependencies
         if($name eq 'depend') {
@@ -506,6 +505,26 @@ sub tx_concat {
     }
 }
 
+sub tx_repeat {
+    my($lhs, $rhs) = @_;
+    if(!defined($lhs)) {
+        $_current_st->error(undef, "Use of nil for repeat operator");
+    }
+    elsif(!Scalar::Util::looks_like_number($rhs)) {
+        $_current_st->error(undef, "Repeat count must be a number, not %s",
+            Text::Xslate::Util::neat($rhs));
+        return undef;
+    }
+    else {
+        if( ref( $lhs ) eq TXt_RAW ) {
+            return Text::Xslate::Util::mark_raw( Text::Xslate::Util::unmark_raw($lhs) x $rhs );
+        }
+        else {
+            return $lhs x $rhs;
+        }
+    }
+}
+
 sub tx_push_frame {
     my ( $st ) = @_;
 
@@ -654,7 +673,7 @@ sub _error_handler {
         $file = \$engine->{string_buffer};
     }
 
-    my $mess   = make_error($engine, $str, $file, $opcode->{line},
+    my $mess   = Text::Xslate::Util::make_error($engine, $str, $file, $opcode->{line},
         sprintf( "&%s[%d]", $name, $st->{pc} ));
 
     if ( !$die ) {

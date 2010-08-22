@@ -41,9 +41,9 @@ X
 
     [<<'T', <<'X', 'nested'],
 BEGIN
-[% FOREACH x IN types -%]
-[% FOREACH y IN types -%]
-    * [[% x %]][[% y %]]
+[% FOREACH i IN types -%]
+[% FOREACH j IN types -%]
+    * [[% i %]][[% j %]]
 [% END -%]
 [%- END -%]
 END

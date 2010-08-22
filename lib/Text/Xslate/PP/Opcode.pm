@@ -252,6 +252,12 @@ sub op_concat {
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
+sub op_repeat {
+    my($st) = @_;
+    $st->{sa} = Text::Xslate::PP::tx_repeat($st->{sb}, $st->{sa});
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
+}
+
 sub op_bitor {
     $_[0]->{sa} = int($_[0]->{sb}) | int($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

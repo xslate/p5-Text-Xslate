@@ -464,6 +464,7 @@ sub init_basic_operators {
     $parser->infix('*',  190);
     $parser->infix('/',  190);
     $parser->infix('%',  190);
+    $parser->infix('x',  190);
     $parser->infix('+&', 190); # numeric bitwise and
 
     $parser->infix('+',  180);
