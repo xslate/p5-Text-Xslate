@@ -21,9 +21,28 @@ BEGIN {
     *html_escape    = \%Text::Xslate::PP::html_escape;
 }
 
-my %CODE_MANIP = ();
+require Text::Xslate::PP;
+if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+    our @CARP_NOT = qw(
+        Text::Xslate::PP
+        Text::Xslate::PP::Method
+    );
+}
 
-our @CARP_NOT = qw(Text::Xslate Text::Xslate::PP::Method);
+sub compile {
+    my($self, $source) = @_;
+    my $coderef;
+    my $e = do {
+        local $@;
+        $coderef = eval $source;
+        $@;
+    };
+    if(ref($coderef) ne 'CODE') {
+        $e ||= "Broken source: $source";
+        Carp::confess("Oops: Failed to compile PP::Booster code: $e")
+    }
+    return $coderef;
+}
 
 #
 # functions called in booster code

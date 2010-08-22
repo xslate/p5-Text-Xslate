@@ -8,32 +8,37 @@ our $VERSION = '0.1058';
 BEGIN{
     $ENV{XSLATE} = ($ENV{XSLATE} || '') . '[pp]';
 }
-
-use Text::Xslate::PP::Const qw(:all);
-use Text::Xslate::PP::State;
-use Text::Xslate::PP::Type::Raw;
 use Text::Xslate::Util qw(
     $DEBUG
     $NUMBER $STRING
     p
 );
-use Text::Xslate;
-
-use Carp ();
 
 use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
 use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
-
 use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
                             :               'Opcode'; # default
+use constant _PP_ERROR_VERBOSE => scalar($DEBUG =~ /\b pp=verbose \b/xms);
 
 use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
+
+use Text::Xslate::PP::Const qw(:all);
+use Text::Xslate::PP::State;
+use Text::Xslate::PP::Type::Raw;
+use Text::Xslate;
+
+use Carp ();
 
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
 my $state_class = 'Text::Xslate::PP::' . _PP_BACKEND;
 
+if(_PP_ERROR_VERBOSE) {
+    Carp->import('verbose');
+}
+
+# fix up @ISA
 {
     package
         Text::Xslate;
@@ -41,7 +46,10 @@ my $state_class = 'Text::Xslate::PP::' . _PP_BACKEND;
         # the compiler use %Text::Xslate::OPS in order to optimize the code
         *OPS = \%Text::Xslate::PP::OPS;
     }
-    unshift our @ISA, 'Text::Xslate::PP';
+    our @ISA = qw(Text::Xslate::PP);
+    package
+        Text::Xslate::PP;
+    our @ISA = qw(Text::Xslate::Engine);
 }
 
 our $_depth = 0;
@@ -120,130 +128,25 @@ sub current_line {
 
 # >> copied and modified from Text::Xslate
 
-my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
-
-BEGIN {
-    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
-}
-
-# load compiled templates if they are fresh enough
-sub _load_compiled {
-    my($self, $fi, $threshold) = @_;
-
-    if($self->{cache} >= 2) {
-        # threshold is the most latest modified time of all the related caches,
-        # so if the cache level >= 2, they seems always fresh.
-        $threshold = 9**9**9;
-    }
-    else {
-        $threshold ||= $fi->{cache_mtime};
-    }
-    # see also tx_load_template() in xs/Text-Xslate.xs
-    if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
-            and $threshold >= $fi->{orig_mtime} )) {
-        printf "  _load_compiled: no fresh cache: %s, %s", $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
-        $fi->{cache_mtime} = undef;
-        return undef;
-    }
-
-    my $cachepath = $fi->{cachepath};
-    open my($in), '<' . $self->{input_layer}, $cachepath
-        or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
-
-    if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
-        return undef;
-    }
-
-    $self->{_loaded_subref}->{ $cachepath } = undef;
-    # parse assembly
-    my @asm;
-    while(defined(my $s = <$in>)) {
-        next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
-        chomp $s;
-
-        if ( $s eq 'ppbooster' ){ # pp::booster code
-            {
-                local $/;
-                package Text::Xslate::PP::Booster;
-                $self->{_loaded_subref}->{ $cachepath } = eval <$in>;
-            }
-            @asm = @{ $self->{_loaded_subref}->{ $cachepath }->[0] };
-            for ( @asm ) {
-                next if $_->[0] ne 'depend';
-                my $dep_mtime = (stat $_->[1])[_ST_MTIME];
-                if(!defined $dep_mtime) {
-                    $dep_mtime = 9**9**9; # force reload
-                    Carp::carp( sprintf("Xslate: Failed to stat %s (ignored): $!", $_->[1]) );
-                }
-                if($dep_mtime > $threshold){
-                    printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                        $_->[1],     scalar localtime($dep_mtime),
-                        $cachepath, scalar localtime($threshold)
-                            if _DUMP_LOAD;
-                    return $self->{_loaded_subref}->{ $cachepath } = undef;
-                }
-            }
-            last;
-        }
-
-        # See ::Compiler::as_assembly()
-        # "$opname $arg #$line:$file *$symbol // $comment"
-        my($name, $value, $line, $file, $symbol) = $s =~ m{
-            \A
-                [ \t]*
-                ($IDENT)                        # an opname
-
-                # the following components are optional
-                (?: [ \t]+ ($STRING|[+-]?$NUMBER) )? # operand
-                (?: [ \t]+ \#($NUMBER)          # line number
-                    (?: [:] ($STRING))?         # file name
-                )?
-                (?: [ \t]+ \*($STRING) )?       # symbol name
-                (?: [ \t]* // [^\n]*)?          # comments (anything)
-            \z
-        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
-
-        $value = Text::Xslate::Util::literal_to_value($value);
-
-        # checks the modified of dependencies
-        if($name eq 'depend') {
-            my $dep_mtime = (stat $value)[_ST_MTIME];
-            if(!defined $dep_mtime) {
-                $dep_mtime = 9**9**9; # force reload
-                Carp::carp("Xslate: Failed to stat $value (ignored): $!");
-            }
-            if($dep_mtime > $threshold){
-                printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                    $value,     scalar localtime($dep_mtime),
-                    $cachepath, scalar localtime($threshold)
-                        if _DUMP_LOAD;
-
-                return undef;
-            }
-        }
-
-        push @asm, [ $name, $value, $line, $file, $symbol ];
-    }
-
-    if(_DUMP_LOAD) {
-        printf STDERR "  _load_compiled: cache(%s)\n",
-            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef';
-    }
-
-    return \@asm;
-}
-
-# << copied from Text::Xslate
-
 sub _assemble {
-    my ( $self, $proto, $name, $fullpath, $cachepath, $mtime ) = @_;
-    my $len = scalar( @$proto );
-    my $st  = $state_class->new();
+    my ( $self, $asm, $name, $fullpath, $cachepath, $mtime ) = @_;
 
     unless ( defined $name ) { # $name ... filename
         $name = '<string>';
         $fullpath = $cachepath = undef;
         $mtime    = time();
+    }
+
+    my $st  = $state_class->new();
+
+    if(_PP_BACKEND eq 'Booster'){
+        if($asm->[0][0] eq '_ppbooster') {
+            my $ppbooster = shift @{$asm};
+            $st->{ booster_code } = Text::Xslate::PP::Booster->compile($ppbooster->[1]);
+        }
+        else {
+            Carp::croak("Oops: No booster code: ", p($asm));
+        }
     }
 
     $st->symbol({ %{$self->{ function }} });
@@ -267,8 +170,9 @@ sub _assemble {
     $st->frame( [] );
     $st->current_frame( -1 );
 
-    my $mainframe = tx_push_frame( $st );
+    my $len = scalar( @$asm );
 
+    my $mainframe = tx_push_frame( $st );
     $mainframe->[ Text::Xslate::PP::TXframe_NAME ]    = 'main';
     $mainframe->[ Text::Xslate::PP::TXframe_RETADDR ] = $len;
 
@@ -280,7 +184,7 @@ sub _assemble {
     my $oi_line = -1;
     my $oi_file = $name;
     for ( my $i = 0; $i < $len; $i++ ) {
-        my $c = $proto->[ $i ];
+        my $c = $asm->[ $i ];
 
         if ( ref $c ne 'ARRAY' ) {
             Carp::croak( sprintf( "Oops: Broken code found on [%d]",  $i ) );
@@ -382,15 +286,6 @@ sub _assemble {
             push @{ $tmpl }, $code->[ $i ]->{ arg };
         }
 
-    }
-
-    if ( defined $cachepath and $self->{_loaded_subref}->{ $cachepath } ) {
-        $st->{ booster_code } = $self->{_loaded_subref}->{ $cachepath }->[1];
-    }
-    elsif ( _PP_BACKEND eq 'Booster' ) {
-        require Text::Xslate::PP::Compiler;
-        $st->{ booster_code }
-             = Text::Xslate::PP::Compiler::CodeGenerator->new()->opcode_to_perlcode( $proto );
     }
 
     push @{$code}, {
@@ -636,10 +531,19 @@ sub tx_execute {
     local $st->{local_stack};
     local $st->{SP} = [];
 
-    if ( $st->{ booster_code } ) {
+    if ( _PP_BACKEND eq 'Booster' ) {
+        if(_PP_ERROR_VERBOSE and ref $st->{ booster_code } ne 'CODE') {
+            Carp::croak("Oops: Not a CODE reference: "
+                . Text::Xslate::Util::neat($st->{ booster_code }));
+        }
         return $st->{ booster_code }->( $st );
     }
     else {
+        if(_PP_ERROR_VERBOSE and ref $st->{code}->[0]->{ exec_code } ne 'CODE') {
+            Carp::croak("Oops: Not a CODE reference: "
+                . Text::Xslate::Util::neat($st->{code}->[0]->{ exec_code }));
+        }
+
         local $st->{sa};
         local $st->{sb};
         $st->{output} = '';

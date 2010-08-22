@@ -1,14 +1,17 @@
 package Text::Xslate::PP::State; # implement tx_state_t
 use Any::Moose;
 
-our @CARP_NOT = qw(
-    Text::Xslate::PP::Opcode
-    Text::Xslate::PP::Booter
-    Text::Xslate::PP::Method
-);
-
-use Text::Xslate::Util qw(neat);
+use Text::Xslate::Util qw(neat $DEBUG);
 use Text::Xslate::PP::Const qw(TXframe_NAME TX_VERBOSE_DEFAULT);
+
+require Text::Xslate::PP;
+if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+    our @CARP_NOT = qw(
+        Text::Xslate::PP::Opcode
+        Text::Xslate::PP::Booter
+        Text::Xslate::PP::Method
+    );
+}
 
 has vars => (
     is => 'rw',

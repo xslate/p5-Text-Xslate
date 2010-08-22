@@ -17,7 +17,7 @@ use Text::Xslate::Util qw(
     uri_escape html_builder
 );
 
-our @ISA = qw(Text::Xslate::Engine Exporter);
+our @ISA = qw(Text::Xslate::Engine);
 
 our @EXPORT_OK = qw(
     mark_raw
@@ -39,7 +39,6 @@ if(!__PACKAGE__->can('render')) { # The backend is already loaded
     }
     if(!__PACKAGE__->can('render')) { # failed to load XS, or force PP
         require 'Text/Xslate/PP.pm';
-        Text::Xslate::PP->import(':backend');
     }
 }
 
@@ -53,6 +52,8 @@ use Text::Xslate::Util qw(
 );
 
 BEGIN {
+    our @ISA = qw(Exporter);
+
     my $dump_load = scalar($DEBUG =~ /\b dump=load \b/xms);
     *_DUMP_LOAD = sub(){ $dump_load };
 

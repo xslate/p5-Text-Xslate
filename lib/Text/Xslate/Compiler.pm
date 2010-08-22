@@ -280,7 +280,7 @@ sub opcode { # build an opcode
     my $file   = $args{file};
     if(not defined $file) {
         $file = $self->filename;
-        if($file ne $self->current_file) {
+        if(defined $file and $file ne $self->current_file) {
             $self->current_file($file);
         }
         else {

@@ -16,8 +16,12 @@ use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
 no warnings 'recursion';
 
-our @CARP_NOT = qw(Text::Xslate);
-
+require Text::Xslate::PP;
+if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+    our @CARP_NOT = qw(
+        Text::Xslate
+    );
+}
 our $_current_frame;
 
 

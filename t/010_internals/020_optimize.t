@@ -10,8 +10,8 @@ use t::lib::Util;
 use File::Find;
 use File::Basename;
 
-if(!$Text::Xslate::Compiler::OPTIMIZE){
-    plan skip_all => 'optimization is disabled';
+if(!$Text::Xslate::Compiler::OPTIMIZE or exists $INC{"Text/Xslate/PP.pm"}){
+    plan skip_all => 'Full optimization is disabled';
 }
 
 my $tx = Text::Xslate->new(
