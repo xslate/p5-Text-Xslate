@@ -1,0 +1,25 @@
+# for configure
+Module::Install
+Module::Install::XSUtil
+Module::Install::AuthorTests
+Module::Install::Repository
+
+# for testing
+Test::Vars
+Test::Synopsis
+Test::Spelling
+Test::LeakTrace
+Plack
+
+# for benchmarks
+Text::MicroTemplate::Extended
+Text::ClearSilver
+HTML::Template
+HTML::Template::Pro
+# Template
+
+# for examples
+Data::Section::Simple
+HTML::FillInForm
+HTML::FillInForm::Lite
+HTML::Shakan
