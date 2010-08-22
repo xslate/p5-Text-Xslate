@@ -18,6 +18,7 @@ use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
 GetOptions(
     'booster'    => \my $pp_booster,
+    'opcode'     => \my $pp_opcode,
 
     'size=i'     => \my $n,
     'template=s' => \my $tmpl,
@@ -25,7 +26,7 @@ GetOptions(
 );
 
 die <<'HELP' if $help;
-perl -Mblib benchmark/x-poor-env.pl [--size N] [--template NAME]
+perl -Mblib benchmark/x-poor-env.pl [--size N] [--template NAME] [--opcode|booster]
 
 This is a general benchmark utility for poor environment,
 assuming CGI applications using only pure Perl modules.
@@ -35,11 +36,18 @@ HELP
 $tmpl = 'include' if not defined $tmpl;
 $n    = 100       if not defined $n;
 
-$ENV{XSLATE} = $pp_booster ? 'pp=booster' : 'pp=opcode';
+if(defined $pp_booster) {
+    $ENV{XSLATE} = 'pp=booster';
+}
+elsif(defined $pp_opcode) {
+    $ENV{XSLATE} = 'pp=opcode';
+}
+
 $ENV{MOUSE_PUREPERL} = 1;
 $Template::Config::STASH = 'Template::Stash'; # Instead of Stash::XS
 
-require Text::Xslate;
+require Text::Xslate::PP;
+print "Xslate backend: ", Text::Xslate::PP::_PP_BACKEND(), "\n";
 
 foreach my $mod(qw(
     Text::Xslate

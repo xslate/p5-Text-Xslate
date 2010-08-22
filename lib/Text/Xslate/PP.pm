@@ -18,7 +18,7 @@ use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
 use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
 use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
-                            :               'Opcode'; # default
+                            :               'Booster'; # default
 use constant _PP_ERROR_VERBOSE => scalar($DEBUG =~ /\b pp=verbose \b/xms);
 
 use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
@@ -560,7 +560,7 @@ sub _error_handler {
     local $SIG{__WARN__} = $_orig_warn_handler;
     local $SIG{__DIE__}  = $_orig_die_handler;
 
-    if($str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
+    if(!_PP_ERROR_VERBOSE && $str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
         $str = Carp::shortmess($str);
     }
 
@@ -645,12 +645,14 @@ XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 From 0.1024 on, there are two pure Perl engines.
 C<Text::Xslate::PP::Booster>, enabled by C<< $ENV{XSLATE} = 'pp=booster' >>,
 generates optimized Perl code from intermediate code.
-C<Text::Xlsate::PP::Opcode>, enabled by C<< $ENV{XSLATE = 'pp=opcode' >>,
+C<Text::Xlsate::PP::Opcode>, enabled by C<< $ENV{XSLATE} = 'pp=opcode' >>,
 executes intermediate code directly, emulating the virtual machine in pure Perl.
 
-PP::Booster is much faster than PP::Opcode, but it is less stable,
-so the default pure Perl engine is B<PP::Opcode>, but PP::Booster will become
-the default in a future if it is stable enough.
+PP::Booster is much faster than PP::Opcode, but it may be less stable.
+The default pure Perl engine is B<PP::Booster>, so if you run into problems,
+please try C<< $ENV{XSLATE} = 'pp=opcode' >>.
+
+C<< $ENV{XSLATE} = 'pp=verbose' } >> may be useful for debugging.
 
 =head1 NOTE
 
@@ -664,39 +666,25 @@ modules are not available.
 
     $ perl -Mblib benchmark/x-poor-env.pl
     Perl/5.10.1 i686-linux
-    Text::Xslate/0.1055
+    Xslate backend: Booster
+    Text::Xslate/0.1058
     Template/2.22
     HTML::Template/2.9
-    Text::MicroTemplate/0.13
+    Text::MicroTemplate/0.15
     Text::MicroTemplate::Extended/0.11
     1..3
     ok 1 - TT: Template-Toolkit
     ok 2 - MT: Text::MicroTemplate
     ok 3 - HT: HTML::Template
     Benchmarks with 'include' (datasize=100)
-             Rate     TT Xslate     HT     MT
-    TT     82.4/s     --   -37%   -64%   -87%
-    Xslate  130/s    58%     --   -43%   -80%
-    HT      230/s   179%    77%     --   -65%
-    MT      654/s   695%   404%   185%     --
-
-
-Yes, this is slow, but somewhat faster than Template-Toolkit.
-
-Moreover, there is another pure Perl engine: PP::Booster, which
-is faster than PP::Opcode.
-
-    $ perl -Mblib benchmark/x-poor-env.pl --booster
-    (snip)
-    Benchmarks with 'include' (datasize=100)
              Rate     TT     HT Xslate     MT
-    TT     83.0/s     --   -63%   -67%   -87%
-    HT      223/s   169%     --   -10%   -64%
-    Xslate  249/s   200%    12%     --   -60%
-    MT      627/s   655%   181%   152%     --
+    TT     76.1/s     --   -60%   -61%   -82%
+    HT      189/s   149%     --    -3%   -56%
+    Xslate  196/s   158%     4%     --   -54%
+    MT      429/s   463%   126%   118%     --
 
-According to this result, PP::Booster is 2 times faster than PP::Opcode,
-as fast as HTML::Template, and 3 times faster than Template-Toolkit.
+According to this result, PP::Booster is over 2 times faster than Template::Toolkit,
+and as fast as HTML::Template, but slower than Text::MicroTemplate.
 
 =head1 SEE ALSO
 

@@ -4,9 +4,11 @@ Revision history for Perl extension Text::Xslate
     [CHANGES]
     * The "escape" option is changed to "type", which accepts "html", "xml",
       and "text".
+    * The default pure Perl backend is now PP::Booster, which is about
+      2 times faster than PP::Opcode (according to benchmark/x-poor-env.pl)
 
     [BUG FIXES]
-    * Modulo zero ($foo % 0) coould cause uncatchable errors
+    * Modulo zero ($foo % 0) coould throw uncatchable errors
 
     [FEATURES]
     * Repeat operator (infix:<x>) is added so that "x" is now an invalid
