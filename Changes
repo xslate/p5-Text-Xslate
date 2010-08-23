@@ -3,18 +3,18 @@ Revision history for Perl extension Text::Xslate
 0.1999_01 Sun Aug 22 17:45:17 2010
     [CHANGES]
     * The "escape" option is changed to "type", which accepts "html", "xml",
-      and "text".
+      and "text"
     * The default pure Perl backend is now PP::Booster, which is about
       2 times faster than PP::Opcode (according to benchmark/x-poor-env.pl)
 
     [BUG FIXES]
-    * Modulo zero ($foo % 0) coould throw uncatchable errors
+    * Modulus zero ($foo % 0) could throw uncatchable errors
 
     [FEATURES]
     * Repeat operator (infix:<x>) is added (so "x" is now an invalid
       variable name in TTerse)
     * Now html_builder() can be applied to dynamic filters (e.g.
-      the HTML::FillInForm::fillinform() function)
+      to the HTML::FillInForm::fillinform() function)
 
 0.1058 Tue Aug 17 17:59:53 2010
     [CHANGES]
