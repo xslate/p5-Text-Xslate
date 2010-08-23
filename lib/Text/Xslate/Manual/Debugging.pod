@@ -9,10 +9,13 @@ This document describes techniques for debugging templates.
 
 =head2 File names and line numbers
 
-Xslate reports file names and line numbers, but you can access
-them via C<__FILE__> and C<__LINE__> tokens just like as Perl.
+Xslate messages include file names, line numbers, and, if possible, source
+code lines which seems problems.
 
-If you want reports files and lines from your functions,
+You can also access the file name and the line number in templates by
+C<__FILE__> and C<__LINE__> tokens just like as Perl.
+
+If you want reports files and lines from your registered functions,
 C<< Text::Xslate->current_file >> and C<< Text::Xslate->current_line >>
 in callbacks are the same as C<__FILE__> and C<__LINE__> in templates
 respectively.

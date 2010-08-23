@@ -126,7 +126,7 @@ The operator precedence is very like Perl's:
 
     . () []
     prefix:<!> prefix:<+> prefix:<-> prefix:<+^>
-    * / % +&
+    * / % x +&
     + - ~ +| +^
     prefix:<defined>
     < <= > >=
