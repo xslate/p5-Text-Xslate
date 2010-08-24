@@ -15,18 +15,20 @@ extern "C" {
 #undef PERL_CORE
 
 #ifdef __cplusplus
-}
+} /* extern "C" */
 #endif
 
 #include "ppport.h"
 
 /* portability stuff */
 
-#if !defined(__GNUC__)
-#    if (!defined(__cplusplus__) || !defined(__STDC_VERSION__) ||  (__STDC_VERSION__ < 199901L)) && !defined(inline)
-#        define inline
-#    endif
-#endif
+#ifndef STATIC_INLINE /* from 5.13.4 */
+#   if !(defined(__GNUC__) || defined(__cplusplus__) || (defined(__STDC_VERSION__) &&  (__STDC_VERSION__ >= 199901L)))
+#       define STATIC_INLINE static inline
+#   else
+#       define STATIC_INLINE static
+#   endif
+#endif /* STATIC_INLINE */
 
 #ifndef __attribute__format__
 #define __attribute__format__(a,b,c) /* nothing */

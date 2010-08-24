@@ -106,7 +106,7 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
-static inline bool
+STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv);
 
 static void
@@ -118,7 +118,7 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src);
 static SV*
 tx_html_escape(pTHX_ SV* const str);
 
-static inline I32
+STATIC_INLINE I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b);
 
 static I32
@@ -354,7 +354,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     return retval ? retval : &PL_sv_undef;
 }
 
-static inline bool
+STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv) {
     if(SvROK(sv) && SvOBJECT(SvRV(sv))) {
         return SvTYPE(SvRV(sv)) <= SVt_PVMG
@@ -515,7 +515,7 @@ tx_sv_eq_nomg(pTHX_ SV* const a, SV* const b) {
     }
 }
 
-static inline I32
+STATIC_INLINE I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b) {
     SvGETMAGIC(a);
     SvSETMAGIC(b);
