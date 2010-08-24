@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.1999_02';
+our $VERSION = '0.1999_03';
 
 use Carp        ();
 use File::Spec  ();
@@ -509,7 +509,7 @@ Text::Xslate - High performance template engine
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.1999_02.
+This document describes Text::Xslate version 0.1999_03.
 
 =head1 SYNOPSIS
 
@@ -552,17 +552,12 @@ This document describes Text::Xslate version 0.1999_02.
 B<Text::Xslate> is a high performance template engine tuned for persistent
 applications.
 This engine introduces the virtual machine paradigm. Templates are
-compiled into xslate intermediate code, and then executed by the xslate
-virtual machine.
+compiled into intermediate code, and then executed by the virtual machine.
 
 The concept of Xslate is strongly influenced by Text::MicroTemplate
 and Template-Toolkit, but the central philosophy of Xslate is different from them.
 That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
-
-B<This software is under development>.
-Version 0.1xxx is a developing stage, which may include radical changes.
-Version 0.2xxx and more will be somewhat stable.
 
 =head2 Features
 
@@ -695,7 +690,7 @@ specific namespaces for plugins.
 
 =item C<< input_layer => $perliolayers // ':utf8' >>
 
-Specifies PerlIO layers for reading templates.
+Specifies PerlIO layers to open template files.
 
 =item C<< verbose => $level // 1 >>
 
@@ -1009,6 +1004,8 @@ Benchmarks:
 
 L<Template::Benchmark>
 
+L<http://xslate.org/benchmark.html>
+
 =head1 ACKNOWLEDGEMENT
 
 Thanks to lestrrat for the suggestion to the interface of C<render()>,
@@ -1029,6 +1026,8 @@ Thanks to clouder for the patch of adding C<AND> and C<OR> to TTerse.
 Thanks to punytan for the documentation improvement.
 
 Thanks to chiba for the bug reports and patches.
+
+Thanks to turugina for the patch to fix Win32 problems
 
 =head1 AUTHOR
 
