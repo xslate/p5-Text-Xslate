@@ -315,7 +315,8 @@ sub _load_source {
         my $cachedir      = File::Spec->catpath($volume, $dir, '');
         if(not -e $cachedir) {
             require File::Path;
-            File::Path::mkpath($cachedir);
+            eval { File::Path::mkpath($cachedir) }
+                or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
         }
 
         # use input_layer for caches
