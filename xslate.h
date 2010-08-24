@@ -96,6 +96,8 @@ extern "C" {
 #define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
 #define TX_current_frame()    TX_current_framex(TX_st)
 
+#define TX_CATCH_ERROR() UNLIKELY(!!sv_true(ERRSV))
+
 /* template object, stored in $self->{template}{$file} */
 enum tx_tobj_ix {
     TXo_MTIME,

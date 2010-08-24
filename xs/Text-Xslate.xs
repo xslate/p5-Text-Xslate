@@ -252,7 +252,7 @@ tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char
     SV* retval;
     call_sv(sv, G_SCALAR | G_EVAL | flags);
     retval = TX_pop();
-    if(UNLIKELY(!!sv_true(ERRSV))) {
+    if(TX_CATCH_ERROR()) {
         tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
@@ -871,7 +871,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
     PUTBACK;
 
     call_method("load_file", G_EVAL | G_VOID);
-    if(sv_true(ERRSV)){
+    if(TX_CATCH_ERROR()){
         dMY_CXT;
         SV* const msg = PL_diehook == MY_CXT.die_handler
             ? sv_2mortal(newRV_inc(sv_mortalcopy(ERRSV)))
