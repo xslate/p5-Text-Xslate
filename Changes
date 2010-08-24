@@ -1,12 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
-0.1999_02
+0.1999_03
+    [BUG FIXES]
+    * t/300_examples/100_eg_pl.t could hung up on Win32 (@turugina)
+
+0.1999_02 Tue Aug 24 12:08:03 2010
     [CHANGES]
     * For Text::Xslate::Runner, remove --input_layer option, and
       add --input_encoding and --output_encoding
 
     [BUG FIXES]
-    * uri_escape() in PP was broken
+    * uri_escape() in PP didn't work for UTF-8-flagged string
 
 0.1999_01 Sun Aug 22 17:45:17 2010
     [CHANGES]
