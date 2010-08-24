@@ -2,31 +2,25 @@
 # test example/*.pl
 
 use strict;
+use Test::Requires 'IPC::Cmd';
 use Test::More;
 
-use IPC::Open3 qw(open3);
+use IPC::Cmd qw(run);
 use File::Path qw(rmtree);
 
 rmtree '.eg_cache';
 END{ rmtree '.eg_cache' }
 
 sub perl {
-    local(*IN, *OUT, *ERR);
-    my $pid = open3(\*IN, \*OUT, \*ERR, $^X,
-        (map { "-I$_" } @INC),
-        @_,
-    );
+    # We cannot use IPC::Open3 simply.
+    # See also http://d.hatena.ne.jp/kazuhooku/20100813/1281690025
+    my($success, $error_code, $full_buf, $stdout_buf, $stderr_buf)
+        = run(command => [ $^X, (map { "-I$_" } @INC), @_ ], timeout => 5 );
 
-    close IN;
-    local $/;
-    my $out = <OUT>;
-    my $err = <ERR>;
-
-    close OUT;
-    close ERR;
-
-    foreach my $s($out, $err) {
-        $s =~ s/\r\n/\n/g;
+    my $out = join '', @{$stdout_buf};
+    my $err = join '', @{$stderr_buf};
+    foreach my $s($out, $err) { # for Win32
+       $s =~ s/\r\n/\n/g;
     }
 
     return($out, $err);
