@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.1999_02
+    [CHANGES]
+    * For Text::Xslate::Runner, remove --input_layer option, and
+      add --input_encoding and --output_encoding
+
+    [BUG FIXES]
+    * uri_escape() in PP was broken
+
 0.1999_01 Sun Aug 22 17:45:17 2010
     [CHANGES]
     * The "escape" option is changed to "type", which accepts "html", "xml",
