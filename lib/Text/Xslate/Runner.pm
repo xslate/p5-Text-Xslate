@@ -4,6 +4,7 @@ use Any::Moose '::Util::TypeConstraints';
 
 use File::Spec     ();
 use File::Basename ();
+use Encode         ();
 
 with any_moose 'X::Getopt';
 
@@ -36,14 +37,26 @@ has module => (
     traits        => $getopt_traits,
 );
 
-has input_layer => (
-    documentation => 'Input layer for reading',
-    cmd_aliases   => [qw(l)],
-    is            => 'ro',
+has input_encoding => (
+    documentation => 'Input encoding (default: UTF-8)',
+    cmd_aliases   => [qw(ie)],
+    is            => 'rw',
     isa           => 'Str',
-    predicate     => 'has_input_layer',
+    default       => 'UTF-8',
+    predicate     => 'has_input_encoding',
     traits        => $getopt_traits,
 );
+
+has output_encoding => (
+    documentation => 'Output encoding (default: UTF-8)',
+    cmd_aliases   => [qw(oe)],
+    is            => 'rw',
+    isa           => 'Str',
+    default       => 'UTF-8',
+    predicate     => 'has_output_encoding',
+    traits        => $getopt_traits,
+);
+
 
 has path => (
     documentation => 'Include paths',
@@ -73,7 +86,7 @@ has type => (
 );
 
 has verbose => (
-    documentation => 'Warning level (default to 2)',
+    documentation => 'Warning level (default: 2)',
     cmd_aliases   => [qw(w)],
     is            => 'ro',
     isa           => 'Str',
@@ -158,13 +171,11 @@ has version => (
 );
 
 sub run {
-    my $self = shift;
-
-    my $targets = $self->extra_argv;
+    my($self, @targets) = @_;
 
     my %args;
     foreach my $field qw(
-        cache_dir cache input_layer path syntax
+        cache_dir cache path syntax
         type verbose
             ) {
         my $method = "has_$field";
@@ -177,6 +188,10 @@ sub run {
             push @mods, $name, [ split /,/, $mod->{$name} ];
         }
         $args{module} = \@mods;
+    }
+
+    if(my $ie = $self->input_encoding) {
+        $args{input_layer} = ":encoding($ie)";
     }
 
     local $ENV{XSLATE} = $self->debug
@@ -197,12 +212,13 @@ sub run {
         if($self->has_define){
             %vars = %{$self->define};
         }
-        $vars{ARGV} = $targets;
+        $vars{ARGV} = \@targets;
+        $vars{ENV}  = \%ENV;
         print $xslate->render_string($self->eval, \%vars), "\n";
         return;
     }
 
-    foreach my $target (@$targets) {
+    foreach my $target (@targets) {
         # XXX if you have a directory, just pushed that into the list of
         # path in the xslate object
         if ( -d $target ) {
@@ -257,7 +273,7 @@ sub process_file {
 
     my $outfile;
 
-    if(defined $dest or not exists $suffix_map->{$suffix}) {
+    if(defined $dest or exists $suffix_map->{$suffix}) {
         $outfile= File::Spec->catfile( $dest, $filearg );
         if (my $replace = $suffix_map->{ $suffix }) {
             $outfile =~ s/$suffix$/$replace/;
@@ -272,9 +288,8 @@ sub process_file {
         }
     }
 
-
     my $rendered = $xslate->render( $filearg, $self->define );
-    utf8::is_utf8($rendered) && utf8::encode($rendered);
+    $rendered = Encode::encode($self->output_encoding, $rendered);
 
     if(defined $outfile) {
         my $fh;

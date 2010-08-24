@@ -3,7 +3,7 @@ use strict;
 use Text::Xslate::Runner;
 
 my $app = Text::Xslate::Runner->new_with_options();
-$app->run();
+$app->run(@{ $app->extra_argv });
 
 __END__
 
@@ -11,29 +11,30 @@ __END__
 
 xslate - Process Xslate Templates
 
-=head1 SYNOPSIS
+=head1 USAGE
 
-    xslate
-        # Text::Xslate options
-        [ --cache ]
-        [ --cache_dir=/path/to/dir ]
-        [ --module=Module=subs ... ]
-        [ --input_layer ... ]
-        [ --path=/path/to/templates ... ]
-        [ --syntax=moniker ]
-        [ --escape=mode ]
-        [ --verbose=level ]
+    # process paths
+    $ xslate [options...] target
 
-        # Output options
-        [ --dest=/path/to/destination ]
-        [ --ignore=pattern ... ]
-        [ --suffix old=new ... ]
-        [ --define name=value ... ]
+    -a --cache               Cache level
+    -t --type                Output content type (html | xml | text)
+    -E --engine              Template engine
+    -D --define              Define template variables (e.g. foo=bar)
+    -I --path                Include paths
+    --version                Print version information
+    --oe --output_encoding   Output encoding (default: UTF-8)
+    -M --module              Modules templates will use (e.g. name=sub1,sub2)
+    -e --eval                One line of template code
+    -s --syntax              Template syntax (e.g. TTerse)
+    -d --debug               Debugging flags
+    -x --suffix              Output suffix mapping (e.g. tx=html)
+    --ie --input_encoding    Input encoding (default: UTF-8)
+    -i --ignore              Regular expression the process will ignore
+    -c --cache_dir           Directory the cache files will be saved in
+    -o --dest                Destination directry
+    -w --verbose             Warning level (default: 2)
 
-        # Target to process
-        target
-
-    # one liners
+    # one liners, with $ARGV and $ENV
     xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
     # => Hello, Xslate world!
     xslate -MURI::Escape=uri_escape -e '<: uri_escape($ARGV[0]) :>' 'foo bar'
@@ -46,11 +47,11 @@ template files.
 
 =head1 ARGUMENTS
 
-=head2 target
+=head2 targets
 
-Specifies the target to be processed by Xslate.
+Specifies the targets to be processed by Xslate.
 
-If the target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate.
+If a target is a file, the file is processed, and xslate will exit immediately. If the target is a directory, then the directory is traversed and each file found is processed via xslate.
 
 =head1 AUTHOR
 
