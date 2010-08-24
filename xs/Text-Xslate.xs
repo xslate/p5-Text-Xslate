@@ -469,8 +469,14 @@ tx_html_escape(pTHX_ SV* const str) {
     }
 }
 
+
 static SV*
 tx_uri_escape(pTHX_ SV* const src) {
+    /* TODO:
+        Currently it is encoded to UTF-8, but
+        the output encoding can be specified in a future (?).
+     */
+
     SvGETMAGIC(src);
     if(SvOK(src)) {
         STRLEN len;
@@ -482,7 +488,12 @@ tx_uri_escape(pTHX_ SV* const src) {
 
         while(pv != end) {
             if(char_trait[(U8)*pv] & TXct_URI_UNSAFE) {
-                sv_catpvf(dest, "%%" "%02X", (U8)*pv);
+                const char* const hd = PL_hexdigit + 16; /* "123456789ABCDEF" */
+                char p[4];
+                p[0] = '%';
+                p[1] = hd[((U8)*pv & 0xF0) >> 4]; /* high 4 bits */
+                p[2] = hd[((U8)*pv & 0x0F)];      /* low  4 bits */
+                sv_catpvn(dest, p, 3);
             }
             else {
                 sv_catpvn(dest, pv, 1);

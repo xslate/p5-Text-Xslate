@@ -332,6 +332,9 @@ sub _assemble {
     sub uri_escape {
         my($s) = @_;
         return $s if not defined $s;
+        # XXX: This must be the same as uri_escape() in XS.
+        #      See also tx_uri_escape() in xs/Text-Xslate.xs.
+        utf8::encode($s) if utf8::is_utf8($s);
         $s =~ s/($uri_unsafe_rfc3986)/sprintf '%%' . '%02X', ord $1/xmsgeo;
         return $s;
     }
