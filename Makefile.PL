@@ -7,6 +7,7 @@ BEGIN{
 use inc::Module::Install;
 use Module::Install::XSUtil 0.24;
 use Module::Install::AuthorTests;
+use Module::Install::Repository;
 
 all_from 'lib/Text/Xslate.pm';
 
