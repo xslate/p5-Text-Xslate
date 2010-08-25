@@ -43,7 +43,7 @@ xslate - Process Xslate Templates
 =head1 DESCRIPTION
 
 The xslate script is used to process entire directory trees containing
-template files.
+template files, or to process one liners.
 
 =head1 ARGUMENTS
 
@@ -64,3 +64,4 @@ Fuji, Goro (gfx)
 L<Text::Xslate>
 
 =cut
+

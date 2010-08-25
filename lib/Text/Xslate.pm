@@ -505,7 +505,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate - High performance template engine
+Text::Xslate - High scalable template engine for Perl5
 
 =head1 VERSION
 
@@ -549,13 +549,13 @@ This document describes Text::Xslate version 0.1999_03.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> is a high performance template engine tuned for persistent
-applications.
+B<Text::Xslate> is a template engine tuned for persistent applications.
 This engine introduces the virtual machine paradigm. Templates are
 compiled into intermediate code, and then executed by the virtual machine.
 
 The concept of Xslate is strongly influenced by Text::MicroTemplate
-and Template-Toolkit, but the central philosophy of Xslate is different from them.
+and Template-Toolkit 2, but the central philosophy of Xslate is different
+from them.
 That is, the philosophy is B<sandboxing> that the template logic should
 not have no access outside the template beyond your permission.
 
@@ -655,7 +655,8 @@ You B<should> specify this option on productions.
 
 =item C<< function => \%functions >>
 
-Specifies a function map. A function C<f> may be called as C<f($arg)> or C<$arg | f>.
+Specifies a function map which contains name-coderef pairs.
+A function C<f> may be called as C<f($arg)> or C<$arg | f> in templates.
 
 There are a few builtin filters, but they are not overridable.
 
@@ -770,7 +771,8 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached, so this may be not suitable for web applications.
+Note that I<$string> is never cached, so this may be not suitable for
+productions.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
