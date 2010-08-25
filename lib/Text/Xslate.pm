@@ -505,7 +505,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate - High scalable template engine for Perl5
+Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
@@ -771,7 +771,7 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached, so this may be not suitable for
+Note that I<$string> is never cached, so this method may not be suitable for
 productions.
 
 =head3 B<< $tx->load_file($file) :Void >>
