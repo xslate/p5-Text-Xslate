@@ -488,11 +488,12 @@ tx_uri_escape(pTHX_ SV* const src) {
 
         while(pv != end) {
             if(char_trait[(U8)*pv] & TXct_URI_UNSAFE) {
-                const char* const hd = PL_hexdigit + 16; /* "123456789ABCDEF" */
-                char p[4];
+                /* identical to PL_hexdigit + 16 */
+                static const char hexdigit[] = "0123456789ABCDEF";
+                char p[3];
                 p[0] = '%';
-                p[1] = hd[((U8)*pv & 0xF0) >> 4]; /* high 4 bits */
-                p[2] = hd[((U8)*pv & 0x0F)];      /* low  4 bits */
+                p[1] = hexdigit[((U8)*pv & 0xF0) >> 4]; /* high 4 bits */
+                p[2] = hexdigit[((U8)*pv & 0x0F)];      /* low  4 bits */
                 sv_catpvn(dest, p, 3);
             }
             else {
