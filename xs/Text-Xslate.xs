@@ -944,6 +944,11 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
 
     //PerlIO_stdoutf("load_template(%"SVf")\n", name);
 
+    if(!SvOK(name)) {
+        why = "template name is invalid";
+        goto err;
+    }
+
     assert( SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV );
 
     hv = (HV*)SvRV(self);
