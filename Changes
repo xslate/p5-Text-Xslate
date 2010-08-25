@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.1999_04 Wed Aug 25 11:34:09 2010
+    [BUG FIXES]
+    * Fix a build problem on Win32
+
 0.1999_03 Tue Aug 24 17:20:16 2010
     [BUG FIXES]
     * t/300_examples/100_eg_pl.t could hung up on Win32 (@turugina)
