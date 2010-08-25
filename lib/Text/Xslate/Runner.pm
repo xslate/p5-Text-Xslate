@@ -330,9 +330,8 @@ This is the guts of C<xslate(1)>.
 
 =head1 AUTHOR
 
-Maki, Daisuke (lestrrat)
-
-Fuji, Goro (gfx)
+This is originally written by Maki, Daisuke (lestrrat),
+and also maintained by Fuji, Goro (gfx),
 
 =head1 SEE ALSO
 

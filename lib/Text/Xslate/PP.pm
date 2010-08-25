@@ -699,9 +699,8 @@ L<Text::Xslate::PP::Booster>
 
 =head1 AUTHOR
 
-Makamaka Hannyaharamitu E<lt>makamaka at cpan.orgE<gt>
-
-Text::Xslate was written by Fuji, Goro (gfx).
+Text::Xslate::PP stuff is originally written by Makamaka Hannyaharamitu
+E<lt>makamaka at cpan.orgE<gt>, and also maintained by Fuji, Goro (gfx).
 
 =head1 LICENSE AND COPYRIGHT
 
