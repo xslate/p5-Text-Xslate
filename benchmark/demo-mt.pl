@@ -15,7 +15,7 @@ my $path = "$Bin/template";
 
 my $mt = Text::MicroTemplate::File->new(
     include_path => [$path],
-    cache        => 2,
+    use_cache    => 2,
 );
 my $tx = Text::Xslate->new(
     path      => [$path],

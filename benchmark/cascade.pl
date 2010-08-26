@@ -57,7 +57,7 @@ my $tx = Text::Xslate->new(
 my $mt = Text::MicroTemplate::Extended->new(
     include_path  => [$path],
     template_args => { blog_entries => \@blog_entries },
-    cache        => $cache,
+    use_cache     => $cache,
 );
 
 {
