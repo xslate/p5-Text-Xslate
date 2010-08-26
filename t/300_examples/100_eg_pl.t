@@ -2,10 +2,10 @@
 # test example/*.pl
 
 use strict;
-use Test::Requires 'IPC::Cmd';
+use Test::Requires 'IPC::Run';
 use Test::More;
 
-use IPC::Cmd qw(run);
+use IPC::Run qw(run timeout);
 use File::Path qw(rmtree);
 
 rmtree '.eg_cache';
@@ -14,11 +14,9 @@ END{ rmtree '.eg_cache' }
 sub perl {
     # We cannot use IPC::Open3 simply.
     # See also http://d.hatena.ne.jp/kazuhooku/20100813/1281690025
-    my($success, $error_code, $full_buf, $stdout_buf, $stderr_buf)
-        = run(command => [ $^X, (map { "-I$_" } @INC), @_ ], timeout => 5 );
+    run [ $^X, (map { "-I$_" } @INC), @_ ],
+        \my $in, \my $out, \my $err, timeout(5);
 
-    my $out = join '', @{$stdout_buf};
-    my $err = join '', @{$stderr_buf};
     foreach my $s($out, $err) { # for Win32
        $s =~ s/\r\n/\n/g;
     }
