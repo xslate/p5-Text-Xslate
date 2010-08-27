@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+0.2000 Fri Aug 27 11:44:26 2010
+    Version 0.2000 is stable but has some incompatible changes.
+    Please check the [CHANGES] section of this file before upgrading.
+
+    [CHANGES]
+    * Remove deprecated .defined() method. Use defined(expr) instead.
+
 0.1999_06 Thu Aug 26 14:50:46 2010
     [BUG FIXES]
     * Fix a test. IPC::Cmd seems broken.
