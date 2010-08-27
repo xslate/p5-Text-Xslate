@@ -1106,8 +1106,9 @@ _assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
     dMY_CXT;
-    MAGIC* mg;
     dTX_optable;
+    MAGIC* mg;
+    HV* hv;
     HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
     U32 const len = av_len(proto) + 1;
     U32 i;
@@ -1126,16 +1127,14 @@ CODE:
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
         croak("The xslate instance has no template table");
     }
+    hv = (HV*)*svp;
 
     if(!SvOK(name)) {
-        croak("Use of undefined name, which is an undocumented feature, is no longer supported.\n"
-              "Use <string> instead.");
+        croak("Undefined template name is invalid");
     }
 
     /* fetch the template object from $self->{template}{$name} */
-    tobj = hv_iterval((HV*)SvRV(*svp),
-         hv_fetch_ent((HV*)SvRV(*svp), name, TRUE, 0U)
-    );
+    tobj = hv_iterval(hv, hv_fetch_ent(hv, name, TRUE, 0U));
 
     tmpl = newAV();
     /* store the template object to $self->{template}{$name} */
@@ -1181,7 +1180,8 @@ CODE:
     st.code_len = len;
     st.pc       = &st.code[0];
 
-    mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext, &xslate_vtbl, (char*)&st, sizeof(st));
+    mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext,
+        &xslate_vtbl, (char*)&st, sizeof(st));
     mg->mg_flags |= MGf_DUP;
 
     oi_line = 0;
