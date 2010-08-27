@@ -78,21 +78,9 @@ tx_keys(pTHX_ SV* const hvref) {
     return avref;
 }
 
-/* ANY */
-TXBM(any, defined) {
-    tx_error(aTHX_ st, "defined() method is deprecated. Use defined(expr) function instead");
-    sv_setsv(retval, SvOK(*MARK) ? &PL_sv_yes : &PL_sv_no);
-}
-
-#define tx_bm_nil_defined    tx_bm_any_defined
-#define tx_bm_scalar_defined tx_bm_any_defined
-#define tx_bm_array_defined  tx_bm_any_defined
-#define tx_bm_hash_defined   tx_bm_any_defined
-
 /* NIL */
 
 /* SCALAR */
-
 
 /* ARRAY */
 
@@ -339,11 +327,6 @@ TXBM(hash, kv) {
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
-    TXBM_SETUP(nil,    defined, 0, 0),
-
-    TXBM_SETUP(scalar, defined, 0, 0),
-
-    TXBM_SETUP(array,  defined, 0, 0),
     TXBM_SETUP(array,  size,    0, 0),
     TXBM_SETUP(array,  join,    1, 1),
     TXBM_SETUP(array,  reverse, 0, 0),
@@ -351,7 +334,6 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array,  map,     1, 1),
     TXBM_SETUP(array,  reduce,  1, 1),
 
-    TXBM_SETUP(hash,   defined, 0, 0),
     TXBM_SETUP(hash,   size,    0, 0),
     TXBM_SETUP(hash,   keys,    0, 0), /* TODO: can take a compare function */
     TXBM_SETUP(hash,   values,  0, 0), /* TODO: can take a compare function */

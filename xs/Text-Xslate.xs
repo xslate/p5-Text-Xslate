@@ -1127,7 +1127,7 @@ CODE:
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
         croak("The xslate instance has no template table");
     }
-    hv = (HV*)*svp;
+    hv = (HV*)SvRV(*svp);
 
     if(!SvOK(name)) {
         croak("Undefined template name is invalid");

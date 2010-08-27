@@ -23,13 +23,6 @@ our $_st;
 
 our $_context;
 
-sub _any_defined {
-    my($any) = @_;
-    return $_st->bad_arg('defined') if @_ != 1;
-    $_st->error($_context, "defined() method is deprecated. Use defined(expr) function instead");
-    return defined($any);
-}
-
 sub _array_size {
     my($array_ref) = @_;
     return $_st->bad_arg('size') if @_ != 1;
@@ -112,11 +105,6 @@ sub _hash_kv {
 }
 
 our %builtin_method = (
-    'nil::defined'    => \&_any_defined,
-
-    'scalar::defined' => \&_any_defined,
-
-    'array::defined' => \&_any_defined,
     'array::size'    => \&_array_size,
     'array::join'    => \&_array_join,
     'array::reverse' => \&_array_reverse,
@@ -124,7 +112,6 @@ our %builtin_method = (
     'array::map'     => \&_array_map,
     'array::reduce'  => \&_array_reduce,
 
-    'hash::defined'  => \&_any_defined,
     'hash::size'     => \&_hash_size,
     'hash::keys'     => \&_hash_keys,
     'hash::values'   => \&_hash_values,
