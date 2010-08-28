@@ -1355,7 +1355,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Compiler - The Xslate compiler
+Text::Xslate::Compiler - An Xslate compiler to generate intermediate code
 
 =head1 DESCRIPTION
 

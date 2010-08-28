@@ -1156,7 +1156,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::Compiler::PPBooster::CodeGenerator - PP::Booster code generator
+Text::Xslate::PP::Compiler::CodeGenerator - An Xslate code generator for PP::Booster
 
 =head1 DESCRIPTION
 

@@ -31,7 +31,7 @@ __END__
 
 =head1 NAME
 
-Text::Xslate::PP::Compiler - The Xslate compiler for PP::Booster
+Text::Xslate::PP::Compiler - An Xslate compiler for PP::Booster
 
 =head1 DESCRIPTION
 
