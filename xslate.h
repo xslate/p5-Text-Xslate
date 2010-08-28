@@ -8,11 +8,7 @@ extern "C" {
 
 #include <perl.h>
 #define NO_XSLOCKS /* for exceptions */
-/* PERL_CORE makes the interpreter variable access faster.
-   See also Class::XSAccessor. */
-#define PERL_CORE
 #include <XSUB.h>
-#undef PERL_CORE
 
 #ifdef __cplusplus
 } /* extern "C" */
