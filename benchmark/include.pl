@@ -25,7 +25,7 @@ my $tx  = Text::Xslate->new(
 );
 my $mt = Text::MicroTemplate::Extended->new(
     include_path => \@path,
-    cache        => 2,
+    use_cache    => 2,
 );
 my $ht = HTML::Template->new(
     path           => \@path,
