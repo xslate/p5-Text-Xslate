@@ -1115,9 +1115,8 @@ sub statement { # process one or more statements
         return $t->std($parser);
     }
 
-    my $expr = $parser->expression(0);
-    $expr = $parser->finish_statement($expr);
-    return $parser->auto_command($expr);
+    my $expr = $parser->auto_command( $parser->expression(0) );
+    return $parser->finish_statement($expr);
 }
 
 sub auto_command {
