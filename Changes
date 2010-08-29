@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.2001
+    [FEATURES]
+    * Statement modifiers (a.k.a. post-if statements) for Kolon and TTerse
+
 0.2000 Fri Aug 27 11:44:26 2010
     Version 0.2000 is stable but has some incompatible changes.
     Please check the [CHANGES] section of this file before upgrading.
