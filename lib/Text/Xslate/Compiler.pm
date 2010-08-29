@@ -812,7 +812,8 @@ sub _generate_if {
 
     if($OPTIMIZE) {
         if($self->_code_is_literal(@cond)) {
-            if($cond[0][1]) {
+            my $value = $cond[0][1];
+            if($cond_true eq 'and' ? $value : !$value) {
                 return @then;
             }
             else {

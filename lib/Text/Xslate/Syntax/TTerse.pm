@@ -26,6 +26,7 @@ around trim_code => sub {
 
 sub init_symbols {
     my($parser) = @_;
+    my $s;
 
     $parser->init_basic_operators();
 
@@ -41,8 +42,13 @@ sub init_symbols {
 
     $parser->symbol('IN');
 
-    $parser->symbol('IF')      ->set_std(\&std_if);
-    $parser->symbol('UNLESS')  ->set_std(\&std_if);
+    $s = $parser->symbol('IF');
+    $s->set_std(\&std_if);
+    $s->can_be_modifier(1);
+    $s = $parser->symbol('UNLESS');
+    $s->set_std(\&std_if);
+    $s->can_be_modifier(1);
+
     $parser->symbol('FOREACH') ->set_std(\&std_foreach);
     $parser->symbol('FOR')     ->set_std(\&std_foreach);
     $parser->symbol('WHILE')   ->set_std(\&std_while);
@@ -188,17 +194,24 @@ sub assignment {
 }
 
 sub std_if {
-    my($parser, $symbol) = @_;
+    my($parser, $symbol, $expr) = @_;
     my $if = $symbol->clone(arity => "if");
 
-    $if->first(  $parser->expression(0) );
+    my $cond = $parser->expression(0);
+
     if($symbol->id eq 'UNLESS') {
-        my $not_expr = $parser->symbol('not')->clone(
+        $cond = $parser->symbol('!')->clone(
             arity  => 'unary',
-            first  => $if->first,
+            first  => $cond,
         );
-        $if->first($not_expr);
     }
+    $if->first($cond);
+
+    if(defined $expr) { # statement modifier
+        $if->second([ $expr ]);
+        return $if;
+    }
+
     $if->second( $parser->statements() );
 
     my $t = $parser->token;
@@ -316,9 +329,8 @@ sub std_while {
 
 around std_include => sub {
     my($super, $self, $symbol) = @_;
-    my $command = $self->$super($symbol);
-    $command->id(lc $command->id); # the case is significant
-    return $command;
+    $symbol->id( lc $symbol->id );
+    return $self->$super( $symbol );
 };
 
 sub localize_vars {
@@ -366,11 +378,12 @@ sub set_list {
 sub std_get {
     my($parser, $symbol) = @_;
 
-    return $symbol->clone(
+    my $stmt = $symbol->clone(
         id    => 'print',
         arity => 'command',
         first => [ $parser->expression(0) ],
-   );
+    );
+    return $parser->finish_statement($stmt);
 }
 
 sub std_set {
@@ -408,7 +421,8 @@ sub std_set {
 
 sub std_call {
     my($parser, $symbol) = @_;
-    return $parser->expression(0);
+    my $stmt = $parser->expression(0);
+    return $parser->finish_statement($stmt);
 }
 
 sub std_macro {
