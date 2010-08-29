@@ -1083,7 +1083,7 @@ sub define_function {
 }
 
 sub finish_statement {
-    my($parser) = @_;
+    my($parser, $expr) = @_;
 
     my $t = $parser->token;
     if($t->is_block_end or $parser->statement_is_finished) {
@@ -1095,7 +1095,7 @@ sub finish_statement {
     else {
         $parser->_unexpected("a semicolon or block end", $t);
     }
-   return;
+   return $expr;
 }
 
 sub statement { # process one or more statements
@@ -1116,8 +1116,12 @@ sub statement { # process one or more statements
     }
 
     my $expr = $parser->expression(0);
-    $parser->finish_statement();
+    $expr = $parser->finish_statement($expr);
+    return $parser->auto_command($expr);
+}
 
+sub auto_command {
+    my($parser, $expr) = @_;
     if($expr->is_statement) {
         # expressions can produce pure statements (e.g. assignment)
         return $expr;
@@ -1602,13 +1606,12 @@ sub std_include {
 
     my $arg  = $parser->expression(0);
     my $vars = $parser->localize_vars();
-
-    $parser->finish_statement();
-    return $symbol->clone(
+    my $stmt = $symbol->clone(
         first  => [$arg],
         second => $vars,
         arity  => 'command',
     );
+    return $parser->finish_statement($stmt);
 }
 
 sub std_command {
@@ -1617,9 +1620,8 @@ sub std_command {
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
-
-    $parser->finish_statement();
-    return $symbol->clone(first => $args, arity => 'command');
+    my $stmt = $symbol->clone(first => $args, arity => 'command');
+    return $parser->finish_statement($stmt);
 }
 
 sub barename {
@@ -1696,21 +1698,20 @@ sub std_cascade {
     }
 
     my $vars = $parser->localize_vars();
-
-    $parser->finish_statement();
-    return $symbol->clone(
+    my $stmt = $symbol->clone(
         arity  => 'cascade',
         first  => $base,
         second => $components,
         third  => $vars,
     );
+    return $parser->finish_statement($stmt);
 }
 
 # markers for the compiler
 sub std_marker {
     my($parser, $symbol) = @_;
-    $parser->finish_statement();
-    return $symbol->clone(arity => 'marker');
+    my $stmt = $symbol->clone(arity => 'marker');
+    return $parser->finish_statement($stmt);
 }
 
 # iterator elements
