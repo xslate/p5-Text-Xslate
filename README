@@ -2,7 +2,7 @@ This is Perl module Text::Xslate.
 
 NAME
 
-Text::Xslate - High performance template engine in Perl
+Text::Xslate - Scalable template engine for Perl5
 
 SYNOPSIS
 
@@ -33,7 +33,7 @@ SYNOPSIS
 INSTALLATION
 
 Install cpanm (App::cpanminus) and then run the following command to install
-Xslate.
+Xslate:
 
     $ cpanm Text::Xslate
 
@@ -68,3 +68,4 @@ Copyright (c) 2010, Fuji, Goro (gfx). All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
+
