@@ -1090,15 +1090,10 @@ sub finish_statement {
     my($parser, $expr) = @_;
 
     my $t = $parser->token;
-    if($t->has_std) {
-        if($t->can_be_modifier) {
-            $parser->advance();
-            $expr = $t->std($parser, $expr);
-            $t    = $parser->token;
-        }
-        else {
-            $parser->_error("Found illegal statemet modifier '$t'", $t);
-        }
+    if($t->can_be_modifier) {
+        $parser->advance();
+        $expr = $t->std($parser, $expr);
+        $t    = $parser->token;
     }
 
     if($t->is_block_end or $parser->statement_is_finished) {
