@@ -64,13 +64,14 @@ has counterpart => (
 
 # flags
 has [
-        'is_reserved',  # set by reserve()
-        'is_defined',   # set by define()
-        'is_block_end', # block ending markers
-        'is_logical',   # logical operators
-        'is_comma',     # comma like operators
-        'is_value',     # symbols with values
-        'is_statement', # expr but a statement (e.g. assignment)
+        'is_reserved',     # set by reserve()
+        'is_defined',      # set by define()
+        'is_block_end',    # block ending markers
+        'is_logical',      # logical operators
+        'is_comma',        # comma like operators
+        'is_value',        # symbols with values
+        'is_statement',    # expr but a statement (e.g. assignment)
+        'can_be_modifier', # statement modifiers (e.g. expr if cond)
     ] => (
     is       => 'rw',
     isa      => 'Bool',
@@ -200,21 +201,21 @@ sub _std_default {
 }
 
 sub nud {
-    my($self, $parser) = @_;
+    my($self, $parser, @args) = @_;
     $self->_dump_denote('nud', $parser) if _DUMP_DENOTE;
-    return $self->get_nud()->($parser, $self);
+    return $self->get_nud()->($parser, $self, @args);
 }
 
 sub led {
-    my($self, $parser, $left) = @_;
+    my($self, $parser, @args) = @_;
     $self->_dump_denote('led', $parser) if _DUMP_DENOTE;
-    return $self->get_led()->($parser, $self, $left);
+    return $self->get_led()->($parser, $self, @args);
 }
 
 sub std {
-    my($self, $parser) = @_;
+    my($self, $parser, @args) = @_;
     $self->_dump_denote('std', $parser) if _DUMP_DENOTE;
-    return $self->get_std()->($parser, $self);
+    return $self->get_std()->($parser, $self, @args);
 }
 
 sub clone {

@@ -518,6 +518,7 @@ sub init_basic_operators {
 
 sub init_symbols {
     my($parser) = @_;
+    my $s;
 
     # syntax specific separators
     $parser->symbol('{');
@@ -531,7 +532,10 @@ sub init_symbols {
     $parser->init_basic_operators();
 
     # statements
-    $parser->symbol('if')       ->set_std(\&std_if);
+    $s = $parser->symbol('if');
+    $s->set_std(\&std_if);
+    $s->can_be_modifier(1);
+
     $parser->symbol('for')      ->set_std(\&std_for);
     $parser->symbol('while' )   ->set_std(\&std_while);
     $parser->symbol('given')    ->set_std(\&std_given);
@@ -1086,6 +1090,17 @@ sub finish_statement {
     my($parser, $expr) = @_;
 
     my $t = $parser->token;
+    if($t->has_std) {
+        if($t->can_be_modifier) {
+            $parser->advance();
+            $expr = $t->std($parser, $expr);
+            $t    = $parser->token;
+        }
+        else {
+            $parser->_error("Found illegal statemet modifier '$t'", $t);
+        }
+    }
+
     if($t->is_block_end or $parser->statement_is_finished) {
         # noop
     }
@@ -1476,11 +1491,17 @@ sub std_override { # synonym to 'around'
 }
 
 sub std_if {
-    my($parser, $symbol) = @_;
+    my($parser, $symbol, $expr) = @_;
 
     my $if = $symbol->clone(arity => "if");
 
     $if->first( $parser->expression(0) );
+
+    if(defined $expr) { # statement modifier
+        $if->second([$expr]);
+        return $if;
+    }
+
     $if->second( $parser->block() );
 
     my $top_if = $if;
