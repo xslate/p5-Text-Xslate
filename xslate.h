@@ -1,9 +1,6 @@
 /* xslate.h */
 #include "perlxs.h"
 
-
-/* xslate stuff */
-
 #if defined(__GNUC__) && !defined(TX_NO_DTC)
 /* enable DTC optimization */
 #define TX_DIRECT_THREADED_CODE
