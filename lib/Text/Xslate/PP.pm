@@ -100,7 +100,7 @@ sub render {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
 
-    my $st = tx_load_template( $self, $name );
+    my $st = tx_load_template( $self, $name, 0 );
 
     local $_orig_die_handler  = $SIG{__DIE__};
     local $_orig_warn_handler = $SIG{__WARN__};
@@ -435,7 +435,7 @@ sub tx_push_frame {
 
 
 sub tx_load_template {
-    my ( $self, $name ) = @_;
+    my ( $self, $name, $from_include ) = @_;
 
     unless ( ref $self ) {
         Carp::croak( "Invalid xslate instance" );
@@ -458,7 +458,7 @@ sub tx_load_template {
     }
 
     if ( not exists $ttable->{ $name } ) {
-        $self->load_file( $name );
+        $self->load_file( $name, undef, $from_include );
         $retried++;
         goto RETRY;
     }
@@ -481,7 +481,7 @@ sub tx_load_template {
         return $self->{ tmpl_st }->{ $name };
     }
     else{
-        $self->load_file( $name, $cache_mtime );
+        $self->load_file( $name, $cache_mtime, $from_include );
         $retried++;
         goto RETRY;
     }

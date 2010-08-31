@@ -231,11 +231,13 @@ sub compile {
     my $header = delete $self->{header};
     my $footer = delete $self->{footer};
 
-    if($header) {
-        substr $input, 0, 0, $self->_cat_files($header);
-    }
-    if($footer) {
-        $input .= $self->_cat_files($footer);
+    if(!$args{from_include}) {
+        if($header) {
+            substr $input, 0, 0, $self->_cat_files($header);
+        }
+        if($footer) {
+            $input .= $self->_cat_files($footer);
+        }
     }
 
     my @code; # main code

@@ -11,15 +11,21 @@ my $tx = Text::Xslate->new(
         wrap_end   => '[% END %]',
 
         header     => 'Header' . "\n",
-        base       => '[% INCLUDE "header" %]Hello, [% content %] world!',
+        base       => '[% INCLUDE "header" %]Hello, [% content %] world!' . "\n",
         content     => 'Xslate',
     },
     header => ['wrap_begin'],
     footer => ['wrap_end'],
 );
 
-is $tx->render_string(q{block { include "content" }}), 'Xslate';
+is $tx->render_string(q{Xslate}), <<'X';
+Header
+Hello, Xslate world!
+X
 
-is $tx->render('content'), "Header\nHello, Xslate world!";
+is $tx->render('content'), <<'X';
+Header
+Hello, Xslate world!
+X
 
 done_testing;

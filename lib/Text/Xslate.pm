@@ -259,7 +259,9 @@ sub find_file {
 
 
 sub load_file {
-    my($self, $file, $mtime) = @_;
+    my($self, $file, $mtime, $from_include) = @_;
+
+    local $self->{from_include} = $from_include;
 
     print STDOUT "load_file($file)\n" if _DUMP_LOAD;
 
@@ -488,7 +490,7 @@ sub _compiler {
 
 sub compile {
     my $self = shift;
-    return $self->_compiler->compile(@_);
+    return $self->_compiler->compile(@_, from_include => $self->{from_include});
 }
 
 sub _error {

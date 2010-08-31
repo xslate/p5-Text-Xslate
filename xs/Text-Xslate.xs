@@ -134,7 +134,7 @@ static void
 tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
-tx_load_template(pTHX_ SV* const self, SV* const name);
+tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include);
 
 
 #include "xs/xslate_opcode.inc"
@@ -858,7 +858,7 @@ static MGVTBL xslate_vtbl = { /* for identity */
 
 
 static void
-tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
+tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime, bool const from_include) {
     dSP;
     ENTER;
     SAVETMPS;
@@ -867,9 +867,8 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime) {
     EXTEND(SP, 3);
     PUSHs(self);
     PUSHs(name);
-    if(mtime) {
-        PUSHs(mtime);
-    }
+    PUSHs(mtime ? mtime : &PL_sv_undef);
+    PUSHs(boolSV(from_include));
     PUTBACK;
 
     call_method("load_file", G_EVAL | G_VOID);
@@ -920,7 +919,7 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
 }
 
 static tx_state_t*
-tx_load_template(pTHX_ SV* const self, SV* const name) {
+tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) {
     HV* hv;
     const char* why = NULL;
     HE* he;
@@ -969,7 +968,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
     /* $tmpl = $ttable->{$name} */
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        tx_invoke_load_file(aTHX_ self, name, NULL);
+        tx_invoke_load_file(aTHX_ self, name, NULL, from_include);
         retried++;
         goto retry;
     }
@@ -1005,7 +1004,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name) {
         return (tx_state_t*)mg->mg_ptr;
     }
     else {
-        tx_invoke_load_file(aTHX_ self, name, cache_mtime);
+        tx_invoke_load_file(aTHX_ self, name, cache_mtime, from_include);
         retried++;
         goto retry;
     }
@@ -1339,7 +1338,7 @@ CODE:
         source = TARG;
     }
 
-    st = tx_load_template(aTHX_ self, source);
+    st = tx_load_template(aTHX_ self, source, FALSE);
 
     /* local $SIG{__WARN__} = \&warn_handler */
     SAVEGENERICSV(PL_warnhook);

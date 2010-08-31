@@ -164,7 +164,7 @@ sub op_print_raw_s {
 
 
 sub op_include {
-    my $st = Text::Xslate::PP::tx_load_template( $_[0]->engine, $_[0]->{sa} );
+    my $st = Text::Xslate::PP::tx_load_template( $_[0]->engine, $_[0]->{sa}, 1 );
     $_[0]->{ output } .= Text::Xslate::PP::tx_execute( $st, $_[0]->{vars} );
 
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

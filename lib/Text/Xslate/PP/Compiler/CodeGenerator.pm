@@ -309,7 +309,7 @@ $CODE_MANIP{ 'include' } = sub {
 # include
 {
     $st->{pc} = %2$s; # for error messages
-    my $st2 = Text::Xslate::PP::tx_load_template( $st->engine, %1$s );
+    my $st2 = Text::Xslate::PP::tx_load_template( $st->engine, %1$s, 1 );
     $output .= Text::Xslate::PP::tx_execute( $st2, $vars );
 }
 CODE

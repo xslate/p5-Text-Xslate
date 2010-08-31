@@ -12,6 +12,7 @@ TXC(move_to_sb) {
     TX_st_sb = TX_st_sa;
     TX_RETURN_NEXT();
 }
+
 TXC(move_from_sb) {
     TX_st_sa = TX_st_sb;
     TX_RETURN_NEXT();
@@ -159,7 +160,7 @@ TXC_w_sv(print_raw_s) {
 
 TXC(include) {
     dMY_CXT;
-    tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa);
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa, TRUE);
 
     ENTER;
     tx_execute(aTHX_ aMY_CXT_ st, TX_st->output, TX_st->vars);
