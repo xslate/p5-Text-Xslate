@@ -79,7 +79,7 @@ if($want_xs) {
 }
 
 if($Module::Install::AUTHOR) {
-    postamble qq{test_dynamic :: test_pp_opcode test_pp_booster\n\n};
+    postamble qq{test :: test_pp_opcode test_pp_booster\n\n};
 }
 
 sub test_with_env {
