@@ -1447,7 +1447,7 @@ CODE:
     /* $full_message = make_error(engine, msg, file, line, vm_pos) */
     PUSHMARK(SP);
     EXTEND(SP, 6);
-    PUSHs(engine);
+    PUSHs(sv_mortalcopy(engine)); /* XXX: avoid premature free */
     PUSHs(msg);
     PUSHs(file);
     mPUSHi(st->info[ pc_pos ].line);

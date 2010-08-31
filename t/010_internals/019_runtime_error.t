@@ -173,7 +173,14 @@ is $out,  '0';
 is $warn, '';
 is $@,    '';
 
+$warn = '';
+$out = eval {
+    $tx->render_string("<: block main -> { include 'no_such_file' } :>", {});
+};
+
+is $out,  undef;
+is $warn, '';
+like $@, qr/no_such_file/;
+
 is $perl_warnings, '', "Perl doesn't produce warnings";
-
-
 done_testing;
