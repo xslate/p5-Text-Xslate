@@ -2,7 +2,7 @@ Revision history for Perl extension Text::Xslate
 
 0.2001 Tue Aug 31 13:48:29 2010
     [BUG FIXES]
-    * Resolve github issue/16: header/hooter was applied recursively, which
+    * Resolve github issue/16: header/footer was applied recursively, which
       caused deep recursions (reported by egor)
     * Dies in macros could make inconsistent data
     * Optimization of if statements could make wrong results
