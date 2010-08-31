@@ -69,6 +69,9 @@ extern "C" {
 #define newAV_mortal() (AV*)sv_2mortal((SV*)newAV())
 #define newHV_mortal() (HV*)sv_2mortal((SV*)newHV())
 
+#define newRV_noinc_mortal(sv) sv_2mortal(newRV_noinc(sv))
+#define newRV_inc_mortal(sv)   sv_2mortal(newRV_inc(sv))
+
 #define DECL_BOOT(name) EXTERN_C XS(CAT2(boot_, name))
 #define CALL_BOOT(name) STMT_START {            \
         PUSHMARK(SP);                           \
