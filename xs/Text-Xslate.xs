@@ -182,9 +182,14 @@ tx_warn(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
         SV* msg;
         va_list args;
         va_start(args, fmt);
+
+        ENTER;
+        SAVETMPS;
         msg = sv_2mortal( vnewSVpvf(fmt, &args) );
         tx_call_error_handler(aTHX_ MY_CXT.warn_handler, msg);
         va_end(args);
+        FREETMPS;
+        LEAVE;
     }
 }
 
@@ -200,6 +205,7 @@ tx_error(pTHX_ tx_state_t* const st, const char* const fmt, ...) {
         va_start(args, fmt);
         msg = sv_2mortal( vnewSVpvf(fmt, &args) );
         tx_call_error_handler(aTHX_ MY_CXT.warn_handler, msg);
+        /* not reached */
         va_end(args);
     }
 }
@@ -878,6 +884,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime, bool 
             ? sv_2mortal(newRV_inc(sv_mortalcopy(ERRSV)))
             : ERRSV;
         tx_call_error_handler(aTHX_ MY_CXT.die_handler, msg);
+        /* not reached */
     }
 
     FREETMPS;
