@@ -18,6 +18,8 @@ my $tx = Text::Xslate->new(
     footer => ['wrap_end'],
 );
 
+is $tx->render_string(q{block { include "content" }}), 'Xslate';
+
 is $tx->render('content'), "Header\nHello, Xslate world!";
 
 done_testing;

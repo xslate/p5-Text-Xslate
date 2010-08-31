@@ -43,7 +43,8 @@
 
 #define TX_pop()   (*(PL_stack_sp--))
 
-#define TX_current_framex(st) ((AV*)AvARRAY((st)->frame)[(st)->current_frame])
+#define TX_frame_at(st, ix) ((AV*)AvARRAY((st)->frames)[ix])
+#define TX_current_framex(st) TX_frame_at((st), (st)->current_frame)
 #define TX_current_frame()    TX_current_framex(TX_st)
 
 #define TX_CATCH_ERROR() UNLIKELY(!!sv_true(ERRSV))
@@ -139,7 +140,7 @@ struct tx_state_s {
     HV* vars;    /* template variables */
 
     /* stack frame */
-    AV* frame;         /* see enum txframeo_ix */
+    AV* frames;        /* see enum txframeo_ix */
     I32 current_frame; /* current frame index */
     SV** pad;          /* AvARRAY(frame[current_frame]) + 3 */
 

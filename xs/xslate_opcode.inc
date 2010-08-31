@@ -539,7 +539,7 @@ TXC(funcall) { /* call a function or a macro */
 
 TXC(macro_end) {
     AV* const oldframe  = TX_current_frame();
-    AV* const cframe    = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1]; /* pop frame */
+    AV* const cframe    = TX_frame_at(TX_st, --TX_st->current_frame); /* pop frame */
     SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
     SV* tmp;
 
@@ -551,7 +551,6 @@ TXC(macro_end) {
     AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
     TX_st->output                     = tmp;
 
-    LEAVE; /* to retrieve saved current_frame */
     TX_RETURN_PC( INT2PTR(tx_pc_t, SvUVX(retaddr)) );
 }
 

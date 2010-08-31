@@ -74,7 +74,7 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
-    U32 depth;
+    I32 depth;
     HV* raw_stash;
     HV* macro_stash;
 
@@ -163,9 +163,6 @@ tx_verbose(pTHX_ tx_state_t* const st) {
 static void
 tx_call_error_handler(pTHX_ SV* const handler, SV* const msg) {
     dSP;
-    ENTER;
-    SAVETMPS;
-
     PUSHMARK(SP);
     XPUSHs(msg);
     PUTBACK;
@@ -173,9 +170,6 @@ tx_call_error_handler(pTHX_ SV* const handler, SV* const msg) {
     SPAGAIN;
     (void)POPs; /* discard */
     PUTBACK;
-
-    FREETMPS;
-    LEAVE;
 }
 
 /* for trivial errors, ignored by default */
@@ -232,11 +226,9 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     if(st->current_frame > TX_MAX_DEPTH) {
         croak("Macro call is too deep (> %d)", TX_MAX_DEPTH);
     }
-    /* local $st->{current_frame} = $st->{current_frame} + 1 */
-    SAVEI32(st->current_frame);
     st->current_frame++;
 
-    newframe = (AV*)*av_fetch(st->frame, st->current_frame, TRUE);
+    newframe = (AV*)*av_fetch(st->frames, st->current_frame, TRUE);
 
     (void)SvUPGRADE((SV*)newframe, SVt_PVAV);
     if(AvFILLp(newframe) < TXframe_START_LVAR) {
@@ -653,7 +645,6 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     }
 
     /* create a new frame */
-    ENTER; /* to save current_frame */
     cframe = tx_push_frame(aTHX_ TX_st);
 
     /* setup frame info: name, retaddr and output buffer */
@@ -672,7 +663,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     i = 0;
     if(outer > 0) { /* refers outer lexical variales */
         /* copies lexical variables from the old frame to the new one */
-        AV* const oframe = (AV*)AvARRAY(TX_st->frame)[TX_st->current_frame-1];
+        AV* const oframe = TX_frame_at(TX_st, TX_st->current_frame-1);
         for(NOOP; i < outer; i++) {
             IV const real_ix = i + TXframe_START_LVAR;
             /* XXX: macros can refer to unallocated lvars */
@@ -714,6 +705,7 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     SAVEVPTR(MY_CXT.current_st);
     MY_CXT.current_st = &st;
 
+    assert(MY_CXT.depth >= 0);
     if(MY_CXT.depth > TX_MAX_DEPTH) {
         croak("Execution is too deep (> %d)", TX_MAX_DEPTH);
     }
@@ -730,18 +722,16 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     MY_CXT.depth--;
 
     XCPT_CATCH {
-        /* unroll the stack frame to fix up TXframe_OUTPUT */
+        /* unwind the stack frame to fix up TXframe_OUTPUT */
         while(st.current_frame > 0) {
-            AV* const frame = (AV*)AvARRAY(st.frame)[st.current_frame];
+            AV* const frame = TX_frame_at(&st, st.current_frame--);
             SV* tmp;
-            st.current_frame--;
 
             /* swap st->output and TXframe_OUTPUT */
             tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
             AvARRAY(frame)[TXframe_OUTPUT] = st.output;
             st.output                      = tmp;
         }
-
         XCPT_RETHROW;
     }
 
@@ -792,7 +782,7 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     Safefree(info);
 
     SvREFCNT_dec(st->symbol);
-    SvREFCNT_dec(st->frame);
+    SvREFCNT_dec(st->frames);
     SvREFCNT_dec(st->targ);
     SvREFCNT_dec(st->engine);
 
@@ -842,7 +832,7 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
     }
 
     st->symbol   = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->symbol, param);
-    st->frame    = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->frame,    param);
+    st->frames   = (AV*)tx_sv_dup_inc(aTHX_ (SV*)st->frames,   param);
     st->targ     =      tx_sv_dup_inc(aTHX_ st->targ, param);
     st->engine   =      tx_sv_dup_inc(aTHX_ st->engine, param);
 #else
@@ -1164,7 +1154,7 @@ CODE:
     st.targ     = newSV(0);
 
     /* stack frame */
-    st.frame         = newAV();
+    st.frames        = newAV();
     st.current_frame = -1;
 
     mainframe = tx_push_frame(aTHX_ &st);
@@ -1407,7 +1397,7 @@ CODE:
 {
     dMY_CXT;
     tx_state_t* const st = MY_CXT.current_st;
-    SV* self;
+    SV* engine;
     AV* cframe;
     SV* name;
     SV* full_message;
@@ -1416,25 +1406,25 @@ CODE:
     UV pc_pos;
     SV* file;
 
+
     /* restore error handlers to avoid recursion */
     SAVESPTR(PL_warnhook);
     SAVESPTR(PL_diehook);
     PL_warnhook = MY_CXT.orig_warn_handler;
     PL_diehook  = MY_CXT.orig_die_handler;
-
     msg = sv_mortalcopy(msg);
 
     if(!st) {
         croak("%"SVf, msg);
     }
-    self   = st->engine;
 
+    engine = st->engine;
     cframe = TX_current_framex(st);
     name   = AvARRAY(cframe)[TXframe_NAME];
 
     svp = (ix == 0)
-        ? hv_fetchs((HV*)SvRV(self), "warn_handler", FALSE)
-        : hv_fetchs((HV*)SvRV(self), "die_handler",  FALSE);
+        ? hv_fetchs((HV*)SvRV(engine), "warn_handler", FALSE)
+        : hv_fetchs((HV*)SvRV(engine), "die_handler",  FALSE);
 
     if(svp && SvOK(*svp)) {
         HV* stash;
@@ -1448,19 +1438,19 @@ CODE:
     pc_pos = TX_PC2POS(st, st->pc);
     file   = st->info[ pc_pos ].file;
     if(strEQ(SvPV_nolen_const(file), "<string>")) {
-        svp = hv_fetchs((HV*)SvRV(self), "string_buffer", FALSE);
+        svp = hv_fetchs((HV*)SvRV(engine), "string_buffer", FALSE);
         if(svp) {
             file = sv_2mortal(newRV_inc(*svp));
         }
     }
 
-    /* $full_message = make_error(...) */
+    /* $full_message = make_error(engine, msg, file, line, vm_pos) */
     PUSHMARK(SP);
     EXTEND(SP, 6);
-    PUSHs(self);
+    PUSHs(engine);
     PUSHs(msg);
-    PUSHs(  file );
-    mPUSHi( st->info[ pc_pos ].line);
+    PUSHs(file);
+    mPUSHi(st->info[ pc_pos ].line);
     mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
     PUTBACK;
     call_pv("Text::Xslate::Util::make_error", G_SCALAR);
@@ -1468,7 +1458,6 @@ CODE:
     full_message = POPs;
     PUTBACK;
 
-    ENTER;
     if(ix == 0) { /* warn */
         /* handler can ignore warnings */
         if(handler) {
@@ -1484,7 +1473,6 @@ CODE:
     }
     else {
         /* TODO: append the stack info to msg */
-
         if(handler) {
             PUSHMARK(SP);
             XPUSHs(full_message);
@@ -1495,7 +1483,6 @@ CODE:
         croak("%"SVf, full_message); /* must die */
         /* not reached */
     }
-    LEAVE;
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Util
