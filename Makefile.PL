@@ -108,7 +108,7 @@ sub test_with_env {
     # see also ExtUtils::MM_Any::test_via_harness()
 
     my $t =  q{$(FULLPERLRUN) -MExtUtils::Command::MM -e}
-            .q{ "do q{%s}; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
+            .q{ "do q[%s]; test_harness($(TEST_VERBOSE), '$(INST_LIB)', '$(INST_ARCHLIB)')"}
             .q{ $(TEST_FILES)};
 
     postamble qq{$name :: pure_all\n}
