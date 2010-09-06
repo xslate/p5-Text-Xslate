@@ -575,12 +575,12 @@ are available.
 
     $ perl -Mblib benchmark/x-rich-env.pl
     Perl/5.10.1 i686-linux
-    Text::Xslate/0.2000
-    Text::MicroTemplate/0.16
+    Text::Xslate/0.2002
+    Text::MicroTemplate/0.18
     Text::MicroTemplate::Extended/0.11
     Template/2.22
     Text::ClearSilver/0.10.5.4
-    HTML::Template::Pro/0.9502
+    HTML::Template::Pro/0.9503
     1..4
     ok 1 - TT: Template-Toolkit
     ok 2 - MT: Text::MicroTemplate
@@ -588,11 +588,11 @@ are available.
     ok 4 - HTP: HTML::Template::Pro
     Benchmarks with 'include' (datasize=100)
               Rate     TT     MT    TCS    HTP Xslate
-    TT       129/s     --   -85%   -95%   -95%   -99%
-    MT       844/s   556%     --   -64%   -68%   -95%
-    TCS     2355/s  1730%   179%     --   -10%   -87%
-    HTP     2620/s  1936%   210%    11%     --   -85%
-    Xslate 17772/s 13708%  2005%   655%   578%     --
+    TT       129/s     --   -84%   -94%   -95%   -99%
+    MT       807/s   527%     --   -63%   -71%   -96%
+    TCS     2162/s  1580%   168%     --   -23%   -89%
+    HTP     2814/s  2087%   249%    30%     --   -85%
+    Xslate 19321/s 14912%  2295%   794%   587%     --
 
 According to this result, Xslate is 100+ times faster than Template-Toolkit.
 Text::MicroTemplate is a very fast template engine written in pure Perl, but
