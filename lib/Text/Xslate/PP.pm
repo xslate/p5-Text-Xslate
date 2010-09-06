@@ -26,7 +26,7 @@ use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
 use Text::Xslate::PP::Const qw(:all);
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Raw;
-use Text::Xslate;
+use Text::Xslate ();
 
 use Carp ();
 

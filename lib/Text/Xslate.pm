@@ -29,7 +29,7 @@ our @EXPORT_OK = qw(
 );
 
 # load backend (XS or PP)
-if(!__PACKAGE__->can('render')) { # The backend is already loaded
+if(!exists $INC{'Text/Xslate/PP.pm'}) { # The backend is already loaded
     my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
     if($pp) {
         eval {
