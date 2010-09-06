@@ -99,5 +99,12 @@ is uri_escape(qq{"Camel" is \x{99F1}\x{99DD} in Japanese}),
 # it doesn't touch the encoding of the arg if byte stream is passed
 is uri_escape("\xE9p\xE9k"), q{%E9p%E9k}; # "camel" in Japanese kanji (Shift_JIS)
 
+is uri_escape("AZaz09-._~"), "AZaz09-._~";
+is uri_escape(q{'foo'}), '%27foo%27';
+is uri_escape(q{"bar"}), '%22bar%22';
+
+my $x = 'foo/bar';
+is uri_escape($x), 'foo%2Fbar';
+is $x,             'foo/bar';
 
 done_testing;
