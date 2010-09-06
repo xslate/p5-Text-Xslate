@@ -3,7 +3,7 @@
 #define NEED_newSV_type
 #include "xslate.h"
 
-#include "xslate_char_trait.h"
+#include "uri_unsafe.h"
 
 /* aliases */
 #define TXCODE_literal_i   TXCODE_literal
@@ -481,7 +481,7 @@ tx_uri_escape(pTHX_ SV* const src) {
         SvPOK_on(dest);
 
         while(pv != end) {
-            if(char_trait[(U8)*pv] & TXct_URI_UNSAFE) {
+            if(is_uri_unsafe(*pv)) {
                 /* identical to PL_hexdigit + 16 */
                 static const char hexdigit[] = "0123456789ABCDEF";
                 char p[3];
