@@ -67,11 +67,6 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 
 #define TX_UNMARK_RAW(sv) SvRV(sv)
 
-#define TX_CopyToken(s, d, c) STMT_START {  \
-        Copy(s "", d, sizeof(s) - 1, char); \
-        c += sizeof(s) - 1;                 \
-    } STMT_END
-
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
 typedef struct {
     I32 depth;
@@ -412,45 +407,46 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
     STRLEN len;
     const char*       cur = SvPV_const(src, len);
     const char* const end = cur + len;
-    STRLEN dest_cur       = SvCUR(dest);
+    STRLEN const dest_cur = SvCUR(dest);
+    char* d;
 
-    (void)SvGROW(dest, dest_cur + len);
+    (void)SvGROW(dest, dest_cur + ( len * ( sizeof("&quot;") - 1) ) + 1);
     if(!SvUTF8(dest) && SvUTF8(src)) {
         sv_utf8_upgrade(dest);
     }
 
+    d = SvPVX(dest) + dest_cur;
+
+#define CopyToken(token, to) STMT_START {          \
+        Copy(token "", to, sizeof(token)-1, char); \
+        to += sizeof(token)-1;                     \
+    } STMT_END
+
     while(cur != end) {
-        /* preallocate the buffer for at least max parts_len + 1 */
-        char* const d = SvGROW(dest, dest_cur + 8) + dest_cur;
-        if(char_trait[(U8)*cur] & TXct_HTML_META) {
-            switch(*cur) {
-            case '<':
-                TX_CopyToken("&lt;",   d, dest_cur);
-                break;
-            case '>':
-                TX_CopyToken("&gt;",   d, dest_cur);
-                break;
-            case '&':
-                TX_CopyToken("&amp;",  d, dest_cur);
-                break;
-            case '"':
-                TX_CopyToken("&quot;", d, dest_cur);
-                break;
-            case '\'':
-                TX_CopyToken("&apos;", d, dest_cur);
-                break;
-            default:
-                assert(!"Not reached");
-            }
+        const char c = *(cur++);
+        if(c == '&') {
+            CopyToken("&amp;", d);
+        }
+        else if(c == '<') {
+            CopyToken("&lt;", d);
+        }
+        else if(c == '>') {
+            CopyToken("&gt;", d);
+        }
+        else if(c == '"') {
+            CopyToken("&quot;", d);
+        }
+        else if(c == '\'') {
+            CopyToken("&apos;", d);
         }
         else {
-            *d = *cur;
-            dest_cur++;
+            *(d++) = c;
         }
-
-        cur++;
     }
-    SvCUR_set(dest, dest_cur);
+
+#undef CopyToken
+
+    SvCUR_set(dest, d - SvPVX(dest));
     *SvEND(dest) = '\0';
 }
 
