@@ -29,16 +29,16 @@ our @EXPORT_OK = qw(
 );
 
 # load backend (XS or PP)
-if(!exists $INC{'Text/Xslate/PP.pm'}) { # The backend is already loaded
+if(!exists $INC{'Text/Xslate/PP.pm'}) {
     my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
-    if($pp) {
+    if(!$pp) {
         eval {
             require XSLoader;
             XSLoader::load(__PACKAGE__, $VERSION);
         };
         die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
     }
-    if(!__PACKAGE__->can('render')) { # failed to load XS, or force PP
+    if(!__PACKAGE__->can('render')) {
         require 'Text/Xslate/PP.pm';
     }
 }
