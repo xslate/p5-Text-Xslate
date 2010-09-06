@@ -30,7 +30,8 @@ our @EXPORT_OK = qw(
 
 # load backend (XS or PP)
 if(!__PACKAGE__->can('render')) { # The backend is already loaded
-    if($DEBUG !~ /\b pp \b/xms) {
+    my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
+    if($pp) {
         eval {
             require XSLoader;
             XSLoader::load(__PACKAGE__, $VERSION);
