@@ -38,7 +38,14 @@ if($want_xs) {
     cc_src_paths qw(xs);
 }
 
-auto_set_repository() if -d '.git';
+
+homepage 'http://xslate.org';
+repository { # using CPAN::Meta::Spec (meta spec 2.0)
+    type => 'git',
+    url  => 'git://github.com/gfx/p5-Text-Xslate.git',
+    web  => 'http://github.com/gfx/p5-Text-Xslate/',
+};
+
 
 system "$^X tool/opcode.pl xs/xslate_opcode.inc >xslate_ops.h";
 system "$^X tool/opcode_for_pp.pl xs/xslate_opcode.inc > lib/Text/Xslate/PP/Const.pm";
