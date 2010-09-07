@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+0.2002 Tue Sep  7 15:23:49 2010
+    [FEATURES]
+    * Performance improvement (thanks to @kazuho)
+      This version is 10% faster than the previous version!
+    * Update meta spec.
+
 0.2001 Tue Aug 31 13:48:29 2010
     [BUG FIXES]
     * Resolve github issue/16: header/footer was applied recursively, which
