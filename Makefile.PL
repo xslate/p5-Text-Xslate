@@ -38,12 +38,8 @@ if($want_xs) {
 }
 
 
-homepage 'http://xslate.org';
-repository { # using CPAN::Meta::Spec (meta spec 2.0)
-    type => 'git',
-    url  => 'git://github.com/gfx/p5-Text-Xslate.git',
-    web  => 'http://github.com/gfx/p5-Text-Xslate/',
-};
+homepage 'http://xslate.org/';
+repository 'git://github.com/gfx/p5-Text-Xslate.git';
 
 
 system "$^X tool/opcode.PL xs/xslate_opcode.inc >xslate_ops.h";
