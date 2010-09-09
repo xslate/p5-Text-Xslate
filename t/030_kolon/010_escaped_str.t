@@ -106,17 +106,4 @@ foreach my $d(@set) {
     is $tx->render_string($in, $vars), $out, $msg or diag $in;
 }
 
-is     escaped_string('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "raw strings can be stringified";
-cmp_ok escaped_string('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "raw strings are comparable";
-
-is     mark_raw('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "raw strings can be stringified";
-cmp_ok mark_raw('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "raw strings are comparable";
-
-is     unmark_raw('&lt;Xslate&gt;'),       '&lt;Xslate&gt;';
-cmp_ok unmark_raw('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;';
-
-is html_escape(q{ & ' " < > }),  qq{ &amp; &apos; &quot; &lt; &gt; }, 'html_escape()';
-is html_escape('<Xslate>'), '&lt;Xslate&gt;', 'html_escape()';
-is html_escape(html_escape('<Xslate>')), '&lt;Xslate&gt;', 'duplicated html_escape()';
-
 done_testing;
