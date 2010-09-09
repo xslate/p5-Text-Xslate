@@ -376,6 +376,7 @@ tx_mark_raw(pTHX_ SV* const str) {
 SV*
 tx_unmark_raw(pTHX_ SV* const str) {
     dMY_CXT;
+    SvGETMAGIC(str);
     if(tx_str_is_raw(aTHX_ aMY_CXT_ str)) {
         return TX_UNMARK_RAW(str);
     }
@@ -453,6 +454,7 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
 static SV*
 tx_html_escape(pTHX_ SV* const str) {
     dMY_CXT;
+    SvGETMAGIC(str);
     if(!( !SvOK(str) || tx_str_is_raw(aTHX_ aMY_CXT_ str) )) {
         SV* const dest = newSVpvs_flags("", SVs_TEMP);
         tx_sv_cat_with_html_escape_force(aTHX_ dest, str);
