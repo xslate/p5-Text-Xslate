@@ -8,6 +8,9 @@ use Text::Xslate::Util qw(
     read_around
     html_builder
     uri_escape
+    html_escape
+    mark_raw
+    unmark_raw
 );
 
 my @set = (
@@ -84,20 +87,21 @@ X
 
 # html escaping
 
-
-is     escaped_string('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "raw strings can be stringified";
-cmp_ok escaped_string('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "raw strings are comparable";
-
 is     mark_raw('&lt;Xslate&gt;'),       '&lt;Xslate&gt;', "raw strings can be stringified";
 cmp_ok mark_raw('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;', "raw strings are comparable";
 
 is     unmark_raw('&lt;Xslate&gt;'),       '&lt;Xslate&gt;';
 cmp_ok unmark_raw('&lt;Xslate&gt;'), 'eq', '&lt;Xslate&gt;';
 
-is html_escape(q{ & ' " < > }),  qq{ &amp; &apos; &quot; &lt; &gt; }, 'html_escape()';
+is html_escape(q{ & ' " < > }),  qq{ &amp; &apos; &quot; &lt; &gt; }, 'html_escape()'; # '
 is html_escape('<Xslate>'), '&lt;Xslate&gt;', 'html_escape()';
 is html_escape(html_escape('<Xslate>')), '&lt;Xslate&gt;', 'duplicated html_escape()';
 
+{ # for MAGICs
+    local $1;
+    "<foo>" =~ /(.+)/;
+    is html_escape($1), '&lt;foo&gt;', 'html_escape($1)';
+}
 
 my $hb = html_builder { "<br />" };
 is $hb->(), "<br />";
@@ -123,5 +127,11 @@ is uri_escape(q{"bar"}), '%22bar%22';
 my $x = 'foo/bar';
 is uri_escape($x), 'foo%2Fbar';
 is $x,             'foo/bar';
+
+{ # for MAGICs
+    local $1;
+    $x =~ /(.+)/;
+    is uri_escape($1), 'foo%2Fbar', 'uri_escape($1)';
+}
 
 done_testing;
