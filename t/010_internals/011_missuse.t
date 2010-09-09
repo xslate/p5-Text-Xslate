@@ -92,6 +92,6 @@ eval {
 
     __PACKAGE__->new("foo");
 };
-ok $@, qr/cannot extend Text::Xslate::Type::Raw/;
+like $@, qr/cannot extend Text::Xslate::Type::Raw/;
 
 done_testing;
