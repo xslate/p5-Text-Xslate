@@ -7,14 +7,17 @@ use Test::More;
 
 use IPC::Run qw(run timeout);
 use File::Path qw(rmtree);
+use Config;
 
 rmtree '.eg_cache';
 END{ rmtree '.eg_cache' }
 
+$ENV{PERL5LIB} = join $Config{path_sep}, @INC;
+
 sub perl {
     # We cannot use IPC::Open3 simply.
     # See also http://d.hatena.ne.jp/kazuhooku/20100813/1281690025
-    run [ $^X, (map { "-I$_" } @INC), @_ ],
+    run [ $^X, @_ ],
         \my $in, \my $out, \my $err, timeout(5);
 
     foreach my $s($out, $err) { # for Win32
