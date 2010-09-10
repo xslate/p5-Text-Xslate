@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.2004 Fri Sep 10 13:50:08 2010
+    [BUG FIXES]
+    * Workaround test failure about 'too long arguments for exec()'
+
 0.2003 Thu Sep  9 19:25:08 2010
     [BUG FIXES]
     * Fix a misuse of test functions. This problem is revealed
