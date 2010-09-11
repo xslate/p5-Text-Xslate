@@ -16,6 +16,7 @@ MANIFEST
 *.out
 *.bak
 ppport.h
+xshelper.h
 nytprof*
 cover_db*
 *.gcda

@@ -7,7 +7,7 @@ BEGIN{
     $INC{'Module/Install/ExtraTests.pm'} = 1;# considered harmful!
 }
 use inc::Module::Install;
-use Module::Install::XSUtil 0.24;
+use Module::Install::XSUtil 0.30;
 use Module::Install::AuthorTests;
 
 all_from 'lib/Text/Xslate.pm';
@@ -31,7 +31,7 @@ author_tests 'xt';
 
 my $want_xs = want_xs();
 if($want_xs) {
-    use_ppport 3.19;
+    use_xshelper;
     cc_warnings;
 
     cc_src_paths qw(xs);

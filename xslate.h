@@ -1,5 +1,5 @@
 /* xslate.h */
-#include "perlxs.h"
+#include "xshelper.h"
 
 #if defined(__GNUC__) && !defined(TX_NO_DTC)
 /* enable DTC optimization */
