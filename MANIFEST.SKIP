@@ -61,7 +61,6 @@ nytprof/
 
 Text-Xslate-
 ppport\.h$
-xshelper\.h$
 
 \.txc$
 \.ttc$
