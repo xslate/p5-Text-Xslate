@@ -16,7 +16,7 @@ eval {
 like $@, qr/Unknown option/, 'unknown options';
 like $@, qr/\b foobar \b/xms;
 
-for my $builtin qw(raw html dump) {
+for my $builtin (qw(raw html dump)) {
     eval {
         Text::Xslate->new(function => { $builtin => sub {} });
     };

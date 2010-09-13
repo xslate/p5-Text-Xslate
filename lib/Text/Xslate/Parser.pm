@@ -412,7 +412,7 @@ sub _init_basic_symbols {
     $parser->symbol('(end)')->is_block_end(1); # EOF
 
     # prototypes of value symbols
-    foreach my $type qw(name variable literal) {
+    foreach my $type (qw(name variable literal)) {
         my $s = $parser->symbol("($type)");
         $s->arity($type);
         $s->set_nud( $parser->can("nud_$type") );

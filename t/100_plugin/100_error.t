@@ -6,7 +6,7 @@ use Text::Xslate;
 
 use warnings FATAL => 'all';
 
-foreach my $builtin(qw(raw html dump)) {
+foreach my $builtin (qw(raw html dump)) {
 
     eval {
         Text::Xslate->new(

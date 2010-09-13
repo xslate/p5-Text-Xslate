@@ -11,7 +11,7 @@ use File::Path qw(rmtree);
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }
 
-for my $type qw(html xml text) {
+for my $type (qw(html xml text)) {
 # intentionally no indents because it breaks here documents
 
 my $tx = Text::Xslate->new(

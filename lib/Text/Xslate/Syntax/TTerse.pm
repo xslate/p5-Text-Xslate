@@ -72,9 +72,9 @@ sub init_symbols {
 
     # unsupported directives
     my $nos = $parser->can('not_supported');
-    foreach my $keyword qw(
+    foreach my $keyword (qw(
             INSERT PROCESS PERL RAWPERL TRY THROW NEXT LAST RETURN
-            STOP CLEAR META TAGS DEBUG VIEW) {
+            STOP CLEAR META TAGS DEBUG VIEW)) {
         $parser->symbol($keyword)->set_std($nos);
     }
 

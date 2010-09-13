@@ -174,10 +174,10 @@ sub run {
     my($self, @targets) = @_;
 
     my %args;
-    foreach my $field qw(
+    foreach my $field (qw(
         cache_dir cache path syntax
         type verbose
-            ) {
+            )) {
         my $method = "has_$field";
         $args{ $field } = $self->$field if $self->$method;
     }

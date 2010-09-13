@@ -59,7 +59,7 @@ sub _functions {
     my $funcs = $st->{_funcs}    ||= {};
 
     # for methods
-    foreach my $type qw(scalar hash array) {
+    foreach my $type (qw(scalar hash array)) {
         my $table = $st->{$type} || next;
 
         while(my($name, $body) = each %{$table}) {

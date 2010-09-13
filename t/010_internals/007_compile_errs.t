@@ -186,11 +186,11 @@ T
 };
 like $@, qr/\b foo \b/xms;
 
-foreach my $iter qw(
+foreach my $iter (qw(
         $~foo.index $~foo.count
         $~foo.max_index $~foo.size
         $~foo.is_first $~foo.is_last
-        $~foo.peek_prev $~foo.peek_prev ) {
+        $~foo.peek_prev $~foo.peek_prev )) {
     eval {
         $tx->render_string("<: $iter :>");
     };
