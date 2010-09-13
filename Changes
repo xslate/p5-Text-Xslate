@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.2005 Mon Sep 13 14:44:22 2010
+    [BUG FIXES]
+    * Workaround a new deprecated warnings for qw(...)
+      (See perl.git/master/ea25a9b2cf73948b1e8c5675de027e0ad13277bd)
+
 0.2004 Fri Sep 10 13:50:08 2010
     [BUG FIXES]
     * Workaround test failure about 'too long arguments for exec()'
