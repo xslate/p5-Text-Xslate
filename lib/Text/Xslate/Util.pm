@@ -105,10 +105,10 @@ sub literal_to_value {
     my($value) = @_;
     return $value if not defined $value;
 
-    if($value =~ s/"(.*)"/$1/xms){
+    if($value =~ s/^\s*"(.*)"\s*$/$1/xms){
         $value =~ s/\\(.)/$esc2char{$1} || $1/xmseg;
     }
-    elsif($value =~ s/'(.*)'/$1/xms) {
+    elsif($value =~ s/^\s*'(.*)'\s*$/$1/xms) {
         $value =~ s/\\(['\\])/$1/xmsg; # ' for poor editors
     }
     elsif($value =~ /\A [+-]? $NUMBER \z/xmso) {
