@@ -1346,14 +1346,22 @@ CODE:
     st = tx_load_template(aTHX_ self, source, FALSE);
 
     /* local $SIG{__WARN__} = \&warn_handler */
-    SAVEGENERICSV(PL_warnhook);
-    MY_CXT.orig_warn_handler = PL_warnhook;
-    PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
+    if (PL_warnhook != MY_CXT.warn_handler) {
+        SAVEGENERICSV(PL_warnhook);
+        MY_CXT.orig_warn_handler = PL_warnhook;
+        PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
+    } else {
+        fprintf(stderr,"Trying to install existing warn handler\n");
+    }
 
     /* local $SIG{__DIE__}  = \&die_handler */
-    SAVEGENERICSV(PL_diehook);
-    MY_CXT.orig_die_handler = PL_diehook;
-    PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
+    if (PL_diehook != MY_CXT.die_handler) {
+        SAVEGENERICSV(PL_diehook);
+        MY_CXT.orig_die_handler = PL_diehook;
+        PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
+    } else {
+        fprintf(stderr,"Trying to install existing die handler\n");
+    }
 
     result = sv_newmortal();
     sv_grow(result, st->hint_size + TX_HINT_SIZE);
