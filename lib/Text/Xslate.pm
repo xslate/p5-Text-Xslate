@@ -187,12 +187,6 @@ sub _merge_hash {
 }
 
 
-sub flush_memory_cache {
-    my($self) = @_;
-    %{$self->{template}} = ();
-    return;
-}
-
 sub load_string { # for <string>
     my($self, $string) = @_;
     if(not defined $string) {
