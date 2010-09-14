@@ -164,12 +164,6 @@ sub led_dot {
     return $parser->SUPER::led_dot($symbol, $left);
 }
 
-sub led_concat {
-    my($parser, $symbol, $left) = @_;
-
-    return $parser->led_infix($symbol->clone(id => '~'), $left);
-}
-
 sub led_assignment {
     my($parser, $symbol, $left) = @_;
 
