@@ -50,6 +50,8 @@ my @set = (
     [ q{"-10"},   "-10" ],
     [ q{"-10.0"}, "-10.0" ],
 
+    [q{'test="test"'},q{test="test"}],
+    [q{"test='test'"},q{test='test'}],
 );
 
 foreach my $d(@set) {
