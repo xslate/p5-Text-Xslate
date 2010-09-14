@@ -1350,8 +1350,6 @@ CODE:
         SAVEGENERICSV(PL_warnhook);
         MY_CXT.orig_warn_handler = PL_warnhook;
         PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
-    } else {
-        fprintf(stderr,"Trying to install existing warn handler\n");
     }
 
     /* local $SIG{__DIE__}  = \&die_handler */
@@ -1359,8 +1357,6 @@ CODE:
         SAVEGENERICSV(PL_diehook);
         MY_CXT.orig_die_handler = PL_diehook;
         PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
-    } else {
-        fprintf(stderr,"Trying to install existing die handler\n");
     }
 
     result = sv_newmortal();
