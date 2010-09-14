@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.2006 Tue Sep 14 11:46:33 2010
+    [BUF FIXES]
+    * Single-quote literals parsed wrong, when contain paired double q (Mons Anderson)
+    * Infinite recursion during _fold_constants in case of warnings (Mons Anderson)
+
 0.2005 Mon Sep 13 14:44:22 2010
     [BUG FIXES]
     * Workaround a new deprecated warnings for qw(...)
