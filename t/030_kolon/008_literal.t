@@ -44,6 +44,12 @@ my @data = (
     [q{<: '\n\n' :>}, '\n\n' ],
     [q{<: '\\\\\\\\' :>}, '\\\\' ],
     [q{<: '\'\'' :>}, '&apos;&apos;' ],
+
+    [q{<: 'foo="bar"' :>},          'foo=&quot;bar&quot;' ],
+    [qq{<: 'foo\n"bar"\nbaz' :>}, qq{foo\n&quot;bar&quot;\nbaz}],
+
+    [q{<: "foo='bar'" :>},          'foo=&apos;bar&apos;' ],
+    [qq{<: "foo\n'bar'\nbaz" :>}, qq{foo\n&apos;bar&apos;\nbaz}],
 );
 
 foreach my $pair(@data) {
