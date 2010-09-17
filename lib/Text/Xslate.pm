@@ -511,7 +511,6 @@ This document describes Text::Xslate version 0.2006.
 =head1 SYNOPSIS
 
     use Text::Xslate;
-    use FindBin qw($Bin);
 
     my $tx = Text::Xslate->new(
         # the fillowing options are optional.
@@ -598,8 +597,9 @@ There are benchmark scripts in the F<benchmark/> directory.
 
 =head3 Auto escaping to HTML meta characters
 
-All the template expressions the engine interpolates into templates are
-html-escaped automatically, so the output has no possibility to XSS by default.
+All the HTML meta characters in template expressions the engine interpolates
+into template texts are automatically escaped, so the output has no
+possibility to XSS by default.
 
 =head3 Template cascading
 
@@ -629,7 +629,7 @@ Possible options are:
 =item C<< path => \@path // ['.'] >>
 
 Specifies the include paths, which may be directory names or virtual paths,
-i.e. HASH references which contain C<< $file_name => $content >> mapping.
+i.e. HASH references which contain C<< $file_name => $content >> pairs.
 
 =item C<< cache => $level // 1 >>
 
@@ -641,7 +641,7 @@ checks the freshness of the original templates every time.
 If I<$level> E<gt>= 2, caches will be created but the freshness
 will not be checked.
 
-I<$level> == 0 creates no caches. It's provided for testing.
+I<$level> == 0 uses no caches. It's provided for testing.
 
 =item C<< cache_dir => $dir // "$ENV{HOME}/.xslate_cache" >>
 
@@ -655,7 +655,7 @@ You B<should> specify this option on productions.
 Specifies a function map which contains name-coderef pairs.
 A function C<f> may be called as C<f($arg)> or C<$arg | f> in templates.
 
-There are a few builtin filters, but they are not overridable.
+There are builtin filters which are not overridable.
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 
@@ -840,7 +840,7 @@ This function is available in templates as the C<unmark_raw> filter.
 
 =head3 C<< html_escape($str :Str) :RawStr >>
 
-Escapes html meta characters in I<$str>, and returns it as a raw string (see above).
+Escapes HTML meta characters in I<$str>, and returns it as a raw string (see above).
 If I<$str> is already a raw string, it returns I<$str> as is.
 
 By default, this function will be automatically applied to all the template
