@@ -255,7 +255,6 @@ tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char
         tx_error(aTHX_ st, "%"SVf "\n"
             "\t... exception cought on %s", ERRSV, name);
     }
-
     return retval;
 }
 
@@ -300,6 +299,7 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name) {
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     SV* retval;
+
     SvGETMAGIC(var);
     if(SvROK(var) && SvOBJECT(SvRV(var))) {
         dSP;
@@ -349,6 +349,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     else { /* undef */
         tx_warn(aTHX_ st, "Use of nil to access %s", tx_neat(aTHX_ key));
     }
+    TAINT_NOT;
 
     return retval ? retval : &PL_sv_undef;
 }
@@ -1150,6 +1151,8 @@ CODE:
 
     /* prepare function table */
     svp = hv_fetchs(self, "function", FALSE);
+    TAINT_NOT;
+
     if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
         croak("Function table must be a HASH reference");
     }

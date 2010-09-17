@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -wT
 # Taint flag breaks template for-loop parsing:
 # https://rt.cpan.org/Public/Bug/Display.html?id=61359
 
@@ -55,6 +55,11 @@ my $t = Text::Xslate->new(
 my $s = $t->render( 'taint.tx', $dataset );
 ok !tainted($s), 'not tainted';
 is $s, $gold;
+
+# taint $gold
+foreach my $value(values %{$dataset}) {
+    $value .= substr($^X, 0, 0) if not ref($value);
+}
 is $t->render( 'taint.tx', $dataset ), $gold;
 
 done_testing;
