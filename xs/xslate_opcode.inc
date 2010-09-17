@@ -216,18 +216,15 @@ TXC_goto(for_iter) {
     else { /* magical variables */
         if(++SvIVX(i) <= av_len(av)) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
-            sv_setsv(item, itemp ? *itemp : &PL_sv_undef);
+            sv_setsv(item, itemp ? *itemp : NULL);
             TX_RETURN_NEXT();
         }
     }
 
     /* the loop finished */
-    {
-        SV* const nil = &PL_sv_undef;
-        sv_setsv(item,  nil);
-        sv_setsv(i,     nil);
-        sv_setsv(avref, nil);
-    }
+    tx_sv_clear(aTHX_ item);
+    tx_sv_clear(aTHX_ i);
+    tx_sv_clear(aTHX_ avref);
 
     TX_RETURN_PC( TX_op_arg_pc );
 }

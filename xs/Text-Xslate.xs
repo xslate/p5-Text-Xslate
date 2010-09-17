@@ -86,6 +86,12 @@ typedef struct {
 } my_cxt_t;
 START_MY_CXT
 
+static void
+tx_sv_clear(pTHX_ SV* const sv) {
+    sv_unmagic(sv, PERL_MAGIC_taint);
+    sv_setsv(sv, NULL);
+}
+
 const char*
 tx_neat(pTHX_ SV* const sv);
 
@@ -578,6 +584,7 @@ tx_sv_match(pTHX_ SV* const a, SV* const b) {
 
 static bool
 tx_sv_is_macro(pTHX_ SV* const sv) {
+
     if(sv_isobject(sv)) {
         AV* const macro = (AV*)SvRV(sv);
         dMY_CXT;
@@ -740,7 +747,7 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     }
 
     /* clear temporary buffers */
-    sv_setsv(st.targ, &PL_sv_undef);
+    sv_setsv(st.targ, NULL);
 
     base->hint_size = SvCUR(st.output);
 }
@@ -1115,6 +1122,8 @@ CODE:
     AV* mainframe;
     AV* macro = NULL;
 
+    TAINT_NOT; /* All the SVs we'll create here are safe */
+
     Zero(&st, 1, tx_state_t);
 
     svp = hv_fetchs(self, "template", FALSE);
@@ -1310,6 +1319,8 @@ CODE:
     dMY_CXT;
     tx_state_t* st;
     SV* result;
+
+    TAINT_NOT; /* All the SVs we'll create here are safe */
 
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
         croak("Xslate: Invalid xslate instance: %s",

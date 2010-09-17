@@ -1,0 +1,38 @@
+foo foo foo foo foo foo foo foo foo foo foo foo
+foo foo foo foo foo foo foo foo foo foo foo foo
+foo foo foo foo foo foo foo foo foo foo foo foo
+foo foo foo foo foo foo foo foo foo foo foo foo
+foo foo foo foo foo foo foo foo foo foo foo foo
+<:= $scalar_variable :>
+<:= $hash_variable.hash_value_key :>
+<:= $array_variable[ 2 ] :>
+<:= $this.is.a.very.deep.hash.structure :>
+<: for $array_loop ->($i) { :><:= $i :><: } :>
+<: for $hash_loop.keys() ->($k) { :>
+    <:= $k :>: <:= $hash_loop[ $k ] :>
+<: } :>
+<: for $records_loop ->($r) { :>
+    <:= $r.name :>: <:= $r.age :>
+<: } :>
+<: for $array_loop ->($i) { :>
+    <:= $i :>
+<: } :>
+<: for $hash_loop.keys() ->($k) { :>
+    <:= $k :>: <:= $hash_loop[ $k ] :>
+<: } :>
+<: for $records_loop ->($r) { :>
+    <:= $r.name :>: <:= $r.age :>
+<: } :>
+<: if 1 { :>true<: } :>
+<: if $variable_if { :>true<: } :>
+<: if 1 { :>true<: } else { :>false<: } :>
+<: if $variable_if_else { :>true<: } else { :>false<: } :>
+<: if 1 { :><:= $template_if_true :><: } :>
+<: if $variable_if { :><:= $template_if_true :><: } :>
+<: if 1 { :><:= $template_if_true :><: } else { :><:= $template_if_false :><: } :>
+<: if $variable_if_else { :><:= $template_if_true :><: } else { :><:= $template_if_false :><: } :>
+<:= 10 + 12 :>
+<:= $variable_expression_a * $variable_expression_b :>
+<:= ( ( $variable_expression_a * $variable_expression_b ) + $variable_expression_a - $variable_expression_b ) / $variable_expression_b :>
+<:= substr( 'this has a substring.', 11, 9 ) :>
+<:= substr( $variable_function_arg, 4, 2 ) :>

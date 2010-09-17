@@ -434,6 +434,7 @@ tx_register_builtin_methods(pTHX_ HV* const hv) {
     for(i = 0; i < tx_num_builtin_method; i++) {
         const tx_builtin_method_t* const bm = &tx_builtin_method[i];
         SV* const sv = *hv_fetch(hv, bm->name, strlen(bm->name), TRUE);
+
         if(!SvOK(sv)) { /* users can override it */
             sv_setiv(sv, i);
         }
