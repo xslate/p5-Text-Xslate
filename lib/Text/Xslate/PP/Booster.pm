@@ -13,8 +13,6 @@ use Text::Xslate::Util qw(
     mark_raw unmark_raw html_escape
 );
 
-use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
-
 our($html_metachars, %html_escape);
 BEGIN {
     *html_metachars = \$Text::Xslate::PP::html_metachars;

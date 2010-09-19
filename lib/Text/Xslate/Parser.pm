@@ -496,19 +496,21 @@ sub init_basic_operators {
     $parser->infix('min', 120);
     $parser->infix('max', 120);
 
-    $parser->symbol(':');
-    $parser->infixr('?', 110, \&led_ternary);
+    $parser->infix('..', 110, \&led_range);
 
-    $parser->assignment('=',   100);
-    $parser->assignment('+=',  100);
-    $parser->assignment('-=',  100);
-    $parser->assignment('*=',  100);
-    $parser->assignment('/=',  100);
-    $parser->assignment('%=',  100);
-    $parser->assignment('~=',  100);
-    $parser->assignment('&&=', 100);
-    $parser->assignment('||=', 100);
-    $parser->assignment('//=', 100);
+    $parser->symbol(':');
+    $parser->infixr('?', 100, \&led_ternary);
+
+    $parser->assignment('=',   90);
+    $parser->assignment('+=',  90);
+    $parser->assignment('-=',  90);
+    $parser->assignment('*=',  90);
+    $parser->assignment('/=',  90);
+    $parser->assignment('%=',  90);
+    $parser->assignment('~=',  90);
+    $parser->assignment('&&=', 90);
+    $parser->assignment('||=', 90);
+    $parser->assignment('//=', 90);
 
     $parser->make_alias('!'  => 'not')->ubp(70);
     $parser->make_alias('&&' => 'and')->lbp(60);
@@ -933,6 +935,15 @@ sub led_pipe { # filter
     my($parser, $symbol, $left) = @_;
     # a | b -> b(a)
     return $parser->call($parser->expression($symbol->lbp), $left);
+}
+
+sub led_range { # x .. y
+    my($parser, $symbol, $left) = @_;
+    return $symbol->clone(
+        arity  => 'range',
+        first  => $left,
+        second => $parser->expression(0),
+    );
 }
 
 sub nil {

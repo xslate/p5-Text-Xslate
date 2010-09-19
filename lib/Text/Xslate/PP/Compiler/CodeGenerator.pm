@@ -6,7 +6,6 @@ use Text::Xslate::Util qw(
     value_to_literal
 );
 
-
 use Carp ();
 use Scalar::Util ();
 
@@ -65,7 +64,6 @@ sub opcode_to_perlcode {
     my ( $self, $opcode ) = @_;
 
     my $perlcode = $self->opcode_to_perlcode_string( $opcode );
-    print STDERR $perlcode, "\n" if _DUMP_PP;
     return Text::Xslate::PP::Booster->compile($perlcode);
 }
 
@@ -99,6 +97,7 @@ CODE
     $perlcode .= join( '', grep { defined } @{ $self->{lines} } );
     $perlcode .= "\n" . '    return $output;' . "\n}";
 
+    print STDERR $perlcode, "\n" if _DUMP_PP;
     return $perlcode;
 }
 
@@ -561,6 +560,11 @@ $CODE_MANIP{ 'scmp' } = sub {
     $self->sa( sprintf( '( %s cmp %s )', _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) ) );
 };
 
+$CODE_MANIP{ 'range' } = sub {
+    my ( $self, $arg, $line ) = @_;
+    push @{ $self->SP->[ -1 ] }, sprintf('( %s .. %s )',
+        _rm_tailed_lf( $self->sb() ), _rm_tailed_lf( $self->sa() ) );
+};
 
 $CODE_MANIP{ 'macrocall' } = sub {
     my ( $self, $arg, $line ) = @_;

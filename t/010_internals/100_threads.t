@@ -2,7 +2,8 @@
 
 use strict;
 use constant HAS_THREADS => eval { require threads };
-use if !HAS_THREADS, 'Test::More', skip_all => 'multi-threading tests';
+use if !( HAS_THREADS && $] >= 5.008008),
+    'Test::More', skip_all => 'multi-threading tests';
 
 use Test::More tests => 13;
 

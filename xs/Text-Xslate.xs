@@ -137,6 +137,15 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
 static tx_state_t*
 tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include);
 
+#ifndef save_op
+#define save_op() my_save_op(aTHX)
+static void
+my_save_op(pTHX) { /* copied from scope.c */
+    SSCHECK(2);
+    SSPUSHPTR(PL_op);
+    SSPUSHINT(SAVEt_OP);
+}
+#endif
 
 #include "xs/xslate_opcode.inc"
 

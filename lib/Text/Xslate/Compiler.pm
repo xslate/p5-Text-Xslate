@@ -298,6 +298,18 @@ sub opcode { # build an opcode
            ];
 }
 
+sub push_expr {
+    my($self, $node) = @_;
+
+    my $list_op = $node->arity eq 'range';
+    my @code = ($self->_expr($node));
+    if(not $list_op) {
+        push @code, $self->opcode('push');
+    }
+    return @code;
+}
+
+
 sub _cat_files {
     my($self, $files) = @_;
     my $engine = $self->engine || $self->_error("No Xslate engine which header/footer requires");
@@ -915,7 +927,7 @@ sub _generate_composer {
 
     return
         $self->opcode( pushmark => undef, comment => $type ),
-        (map{ $self->_expr($_), ['push'] } @{$list}),
+        (map{ $self->push_expr($_) } @{$list}),
         $self->opcode($type),
     ;
 }
@@ -1018,6 +1030,22 @@ sub _generate_binary {
     $self->_error("Binary operator $id is not implemented", $node);
 }
 
+sub _generate_range {
+    my($self, $node) = @_;
+
+    my @lhs  = $self->_expr($node->first);
+
+    local $self->{lvar_id} = $self->lvar_use(1);
+    my @rhs = $self->_expr($node->second);
+    return(
+        @lhs,
+        $self->opcode( save_to_lvar => $self->lvar_id ),
+        @rhs,
+        $self->opcode( load_lvar_to_sb => $self->lvar_id ),
+        $self->opcode( 'range' ),
+    );
+}
+
 sub _generate_methodcall {
     my($self, $node) = @_;
 
@@ -1025,9 +1053,8 @@ sub _generate_methodcall {
     my $method = $node->second->value;
     return (
         $self->opcode( pushmark => undef, comment => $method ),
-        $self->_expr($node->first),
-        $self->opcode( 'push' ),
-        (map { $self->_expr($_), $self->opcode('push') } @{$args}),
+        $self->push_expr($node->first),
+        (map { $self->push_expr($_) } @{$args}),
         $self->opcode( methodcall_s => $method, line => $node->line ),
     );
 }
@@ -1046,7 +1073,7 @@ sub _generate_call {
 
     return(
         $self->opcode( pushmark => undef, comment => $callable->id ),
-        (map { $self->_expr($_), $self->opcode( 'push' ) } @{$args}),
+        (map { $self->push_expr($_) } @{$args}),
         $self->_expr($callable),
         $self->opcode( 'funcall' )
     );
@@ -1133,7 +1160,6 @@ sub _generate_constant {
         @expr,
         $self->opcode( save_to_lvar => $lvar_id, symbol => $lhs, comment => $node->id);
 }
-
 
 sub _localize_vars {
     my($self, $vars) = @_;

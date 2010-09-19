@@ -160,6 +160,67 @@ T
     3
 X
 
+    [<<'T', { lang => 'Xslate' }, <<"X", "range"],
+: for [ 1 .. 5 ] -> $i {
+    <: $i :>
+: }
+T
+    1
+    2
+    3
+    4
+    5
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "range"],
+: for [ 1 .. 3 + 1 ] -> $i {
+    <: $i :>
+: }
+T
+    1
+    2
+    3
+    4
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "range 'a' .. 'c'"],
+: for [ 'a' .. 'c' ] -> $i {
+    <: $i :>
+: }
+T
+    a
+    b
+    c
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "range 0 .. 2, 'a' .. 'c'"],
+: for [ 0 .. 2, 'a' .. 'c' ] -> $i {
+    <: $i :>
+: }
+T
+    0
+    1
+    2
+    a
+    b
+    c
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "range"],
+: for [ 2 .. 0 ] -> $i {
+    <: $i :>
+: }
+T
+X
+
+    [<<'T', { lang => 'Xslate' }, <<"X", "range"],
+: for [ "z" .. "a" ] -> $i {
+    <: $i :>
+: }
+T
+    z
+X
+
 );
 
 foreach my $d(@set) {

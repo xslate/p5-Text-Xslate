@@ -508,6 +508,31 @@ TXC(scmp) {
     TX_RETURN_NEXT();
 }
 
+TXC(range) {
+    dSP;
+    SV* const lhs = TX_st_sb;
+    SV* const rhs = TX_st_sa;
+    OP myop;
+    Zero(&myop, 1, OP);
+    myop.op_ppaddr = PL_ppaddr[OP_FLOP];
+    myop.op_type   = OP_FLOP;
+
+    /* call pp_flop() */
+    ENTER;
+    SAVEOP();
+    PL_op = &myop;
+    /* set GIMME to G_ARRAY (see op.h) */
+    PL_op->op_flags |= OPf_WANT_LIST;
+    EXTEND(SP, 2);
+    PUSHs(lhs);
+    PUSHs(rhs);
+    PUTBACK;
+    myop.op_ppaddr(aTHX);
+
+    LEAVE;
+    TX_RETURN_NEXT();
+}
+
 TXC_w_key(fetch_symbol) { /* functions, macros, constants */
     SV* const name = TX_op_arg_sv;
     HE* he;

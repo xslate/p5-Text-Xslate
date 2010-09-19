@@ -414,6 +414,12 @@ sub op_scmp {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_range {
+    my($self) = @_;
+    push @{ $self->{ SP }->[ -1 ] }, ($self->{sb} .. $self->{sa});
+    goto $self->{ code }->[ ++$self->{ pc } ]->{ exec_code };
+}
+
 sub op_fetch_symbol {
     my($st) = @_;
     my $name = $st->op_arg;
