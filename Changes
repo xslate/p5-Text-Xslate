@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.2008 Sun Sep 19 18:17:51 2010
+    [CHANGES]
+    * The obsolete feature that render(undef) is the same as render('<string>')
+      has been removed. render(undef) always throws the error.
+
+    [FEATURES]
+    * Range operator (e.g. <: for [1 .. 10] -> $i {  } :>)
+
 0.2007 Fri Sep 17 12:12:50 2010
     [BUG FIXES]
     * Resolve RT #61359 (Sam Graham): Taint flag broke templates
