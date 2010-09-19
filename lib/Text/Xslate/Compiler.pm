@@ -246,7 +246,7 @@ sub compile {
         print STDERR p($ast) if _DUMP_AST;
         @code = (
             $self->opcode(set_opinfo => undef, file => $self->current_file, line => 1),
-            $self->_compile_ast($ast),
+            $self->compile_ast($ast),
             $self->opcode('end'),
         );
     }
@@ -302,7 +302,7 @@ sub push_expr {
     my($self, $node) = @_;
 
     my $list_op = $node->arity eq 'range';
-    my @code = ($self->_expr($node));
+    my @code = ($self->compile_ast($node));
     if(not $list_op) {
         push @code, $self->opcode('push');
     }
@@ -324,19 +324,14 @@ sub _cat_files {
 
 our $_lv = -1;
 
-sub _compile_ast {
+sub compile_ast {
     my($self, $ast) = @_;
     return if not defined $ast;
-
-    Carp::confess("Oops: Not an ARRAY reference: " . p($ast)) if ref($ast) ne 'ARRAY';
-
-    # TODO
-    # $self->_optimize_ast($ast) if $self->optimize;
 
     local $_lv = $_lv + 1 if _DUMP_GEN;
 
     my @code;
-    foreach my $node(@{$ast}) {
+    foreach my $node(ref($ast) eq 'ARRAY' ? @{$ast} : $ast) {
         blessed($node) or Carp::confess("Oops: Not a node object: " . p($node));
 
         printf STDERR "%s"."generate %s (%s)\n", "." x $_lv, $node->arity, $node->id if _DUMP_GEN;
@@ -348,13 +343,6 @@ sub _compile_ast {
     }
 
     return @code;
-}
-
-
-sub _expr {
-    my($self, $node) = @_;
-    my @ast = ($node);
-    return $self->_compile_ast(\@ast);
 }
 
 sub _process_cascade {
@@ -591,12 +579,12 @@ sub _generate_command {
                 ? 'print_raw'  # mark_raw, raw
                 : 'print';     # html
             push @code,
-                $self->_expr($arg->second->[0]),
+                $self->compile_ast($arg->second->[0]),
                 $self->opcode( $command => undef, symbol => $filter );
         }
         else {
             push @code,
-                $self->_expr($arg),
+                $self->compile_ast($arg),
                 $self->opcode( $proc => undef, line => $node->line );
         }
     }
@@ -631,7 +619,7 @@ sub _generate_cascade {
 
 sub _compile_block {
     my($self, $block) = @_;
-    my @block_code = $self->_compile_ast($block);
+    my @block_code = $self->compile_ast($block);
 
     foreach my $op(@block_code) {
         if($op->[0] eq 'pushmark') {
@@ -658,7 +646,7 @@ sub _generate_for {
     local $self->{lvar}  = { %{$self->lvar} }; # new scope
     local $self->{const} = [];                 # new scope
 
-    my @code = $self->_expr($expr);
+    my @code = $self->compile_ast($expr);
 
     my($iter_var) = @{$vars};
     my $lvar_id   = $self->lvar_id;
@@ -696,7 +684,7 @@ sub _generate_while {
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
 
-    my @code = $self->_expr($expr);
+    my @code = $self->compile_ast($expr);
 
     my($iter_var) = @{$vars};
     my($lvar_id, $lvar_name);
@@ -742,7 +730,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
     my %macro = (
         name      => $name,
         nargs     => $arg_ix,
-        body      => [ $opinfo, $self->_compile_ast($block) ],
+        body      => [ $opinfo, $self->compile_ast($block) ],
         line      => $opinfo->[2],
         file      => $opinfo->[3],
         outer     => $lvar_used,
@@ -769,7 +757,7 @@ sub _generate_lambda {
     my($self, $node) = @_;
 
     my $macro = $node->first;
-    $self->_compile_ast([$macro]);
+    $self->compile_ast($macro);
     return $self->opcode( fetch_symbol => $macro->first->id, line => $node->line );
 }
 
@@ -810,18 +798,18 @@ sub _generate_if {
 
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-    my @cond  = $self->_expr($expr);
+    my @cond  = $self->compile_ast($expr);
 
     my @then = do {
         local $self->{lvar}  = { %{$self->lvar}  }; # new scope
         local $self->{const} = [ @{$self->const} ]; # new scope
-        $self->_compile_ast($second);
+        $self->compile_ast($second);
     };
 
     my @else = do {
         local $self->{lvar}  = { %{$self->lvar}  }; # new scope
         local $self->{const} = [ @{$self->const} ]; # new scope
-        $self->_compile_ast($third);
+        $self->compile_ast($third);
     };
 
     if($OPTIMIZE) {
@@ -873,7 +861,7 @@ sub _generate_given {
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
 
-    my @code = $self->_expr($expr);
+    my @code = $self->compile_ast($expr);
 
     my($lvar)     = @{$vars};
     my $lvar_id   = $self->lvar_id;
@@ -883,7 +871,7 @@ sub _generate_given {
 
     local $self->{lvar_id} = $self->lvar_use(1); # topic variable
     push @code, $self->opcode( save_to_lvar => $lvar_id, symbol => $lvar ),
-        $self->_compile_ast($block);
+        $self->compile_ast($block);
 
     return @code;
 }
@@ -938,7 +926,7 @@ sub _generate_unary {
     my $id = $node->id;
     if(exists $unary{$id}) {
         my @code = (
-            $self->_expr($node->first),
+            $self->compile_ast($node->first),
             $self->opcode( $unary{$id} )
         );
         if( $OPTIMIZE and $self->_code_is_literal($code[0]) ) {
@@ -954,7 +942,7 @@ sub _generate_unary {
 sub _generate_field {
     my($self, $node) = @_;
 
-    my @lhs   = $self->_expr($node->first);
+    my @lhs   = $self->compile_ast($node->first);
     my $field = $node->second;
 
     # $foo.field
@@ -967,7 +955,7 @@ sub _generate_field {
     # $foo[expression]
     else {
         local $self->{lvar_id} = $self->lvar_use(1);
-        my @rhs = $self->_expr($field);
+        my @rhs = $self->compile_ast($field);
         if($OPTIMIZE and $self->_code_is_literal(@rhs)) {
             return
                 @lhs,
@@ -987,12 +975,12 @@ sub _generate_field {
 sub _generate_binary {
     my($self, $node) = @_;
 
-    my @lhs = $self->_expr($node->first);
+    my @lhs = $self->compile_ast($node->first);
 
     my $id = $node->id;
     if(exists $binary{$id}) {
         local $self->{lvar_id} = $self->lvar_use(1);
-        my @rhs = $self->_expr($node->second);
+        my @rhs = $self->compile_ast($node->second);
         my @code = (
             @lhs,
             $self->opcode( save_to_lvar => $self->lvar_id ),
@@ -1020,7 +1008,7 @@ sub _generate_binary {
         return @code;
     }
     elsif(exists $logical_binary{$id}) {
-        my @rhs = $self->_expr($node->second);
+        my @rhs = $self->compile_ast($node->second);
         return
             @lhs,
             $self->opcode( $logical_binary{$id} => scalar(@rhs) + 1, symbol => $node ),
@@ -1033,10 +1021,10 @@ sub _generate_binary {
 sub _generate_range {
     my($self, $node) = @_;
 
-    my @lhs  = $self->_expr($node->first);
+    my @lhs  = $self->compile_ast($node->first);
 
     local $self->{lvar_id} = $self->lvar_use(1);
-    my @rhs = $self->_expr($node->second);
+    my @rhs = $self->compile_ast($node->second);
     return(
         @lhs,
         $self->opcode( save_to_lvar => $self->lvar_id ),
@@ -1068,13 +1056,13 @@ sub _generate_call {
         if(@{$args} != 1) {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
-        return $self->_expr($args->[0]), [ $intern => undef, $node->line ];
+        return $self->compile_ast($args->[0]), [ $intern => undef, $node->line ];
     }
 
     return(
         $self->opcode( pushmark => undef, comment => $callable->id ),
         (map { $self->push_expr($_) } @{$args}),
-        $self->_expr($callable),
+        $self->compile_ast($callable),
         $self->opcode( 'funcall' )
     );
 }
@@ -1119,7 +1107,7 @@ sub _generate_assign {
         $self->_error("Assignment ($node) is not supported", $node);
     }
 
-    my @expr = $self->_expr($rhs);
+    my @expr = $self->compile_ast($rhs);
 
     if($is_decl) {
         $lvar->{$lvar_name} = $self->lvar_id;
@@ -1140,7 +1128,7 @@ sub _generate_constant {
     my $lhs     = $node->first;
     my $rhs     = $node->second;
 
-    my @expr = $self->_expr($rhs);
+    my @expr = $self->compile_ast($rhs);
 
     my $lvar            = $self->lvar;
     my $lvar_id         = $self->lvar_id;
@@ -1170,7 +1158,7 @@ sub _localize_vars {
             $self->_error("You must pass a simple name to localize variables", $key);
         }
         push @localize,
-            $self->_expr($expr),
+            $self->compile_ast($expr),
             $self->opcode( localize_s => $key->value, symbol => $key );
     }
     return @localize;
