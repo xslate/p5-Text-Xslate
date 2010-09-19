@@ -6,7 +6,7 @@ use Text::Xslate;
 use warnings FATAL => 'all';
 
 eval {
-    Text::Xslate->render(undef, {});
+    Text::Xslate->render('<string>', {});
 };
 like $@, qr/Invalid xslate instance/;
 
@@ -27,12 +27,12 @@ for my $builtin (qw(raw html dump)) {
 my $tx = Text::Xslate->new(cache => 0);
 
 eval {
-    $tx->render(undef, []);
+    $tx->render('<string>', []);
 };
 like $@, qr/must be a HASH reference/;
 
 eval {
-    $tx->render(undef, {});
+    $tx->render('<string>', {});
 };
 ok $@, 'render() requires two arguments';
 

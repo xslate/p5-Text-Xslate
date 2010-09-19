@@ -1334,20 +1334,13 @@ CODE:
 
     TAINT_NOT; /* All the SVs we'll create here are safe */
 
+    /* $_[0]: engine */
     if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
         croak("Xslate: Invalid xslate instance: %s",
             tx_neat(aTHX_ self));
     }
 
-    if(!SvOK(vars)) {
-        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
-    }
-    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
-        croak("Xslate: Template variables must be a HASH reference, not %s",
-            tx_neat(aTHX_ vars));
-    }
-
-
+    /* $_[1]: template source */
     if(ix == 1) { /* render_string() */
         dXSTARG;
         PUSHMARK(SP);
@@ -1364,6 +1357,15 @@ CODE:
     SvGETMAGIC(source);
     if(!SvOK(source)) {
         croak("Xslate: Template name is not given");
+    }
+
+    /* $_[2]: template variable */
+    if(!SvOK(vars)) {
+        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
+    }
+    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
+        croak("Xslate: Template variables must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
     }
 
     st = tx_load_template(aTHX_ self, source, FALSE);

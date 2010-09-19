@@ -87,6 +87,9 @@ sub render {
 
     Carp::croak("Usage: Text::Xslate::render(self, name, vars)")
         if !( @_ == 2 or @_ == 3 );
+    unless ( ref $self ) {
+        Carp::croak( "Invalid xslate instance" );
+    }
 
     if(!defined $vars) {
         $vars = {};
