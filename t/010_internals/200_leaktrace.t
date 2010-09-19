@@ -190,7 +190,7 @@ foreach my $d(@set) {
     $tx->load_string($in);
 
     no_leaks_ok {
-        my $result = $tx->render(undef, \%vars);
+        my $result = $tx->render('<string>', \%vars);
 
         $result eq $out or die <<"MSG"
 Rendering Error

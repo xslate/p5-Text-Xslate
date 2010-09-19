@@ -79,7 +79,7 @@ sub options {
 sub render_string {
     my($self, $string, $vars) = @_;
     $self->load_string($string);
-    return $self->render(undef, $vars);
+    return $self->render('<string>', $vars);
 }
 
 sub render {
@@ -93,7 +93,7 @@ sub render {
     }
 
     if ( !defined $name ) {
-        $name = '<string>';
+        Carp::croak("Xslate: Template name is not given");
     }
 
     unless ( ref $vars eq 'HASH' ) {

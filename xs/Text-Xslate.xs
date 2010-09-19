@@ -1349,6 +1349,7 @@ CODE:
 
 
     if(ix == 1) { /* render_string() */
+        dXSTARG;
         PUSHMARK(SP);
         EXTEND(SP, 2);
         PUSHs(self);
@@ -1356,14 +1357,13 @@ CODE:
         PUTBACK;
         call_method("load_string", G_VOID | G_DISCARD);
         SPAGAIN;
-        source = &PL_sv_undef;
+        source = TARG;
+        sv_setpvs(source, "<string>");
     }
 
     SvGETMAGIC(source);
     if(!SvOK(source)) {
-        dXSTARG;
-        sv_setpvs(TARG, "<string>");
-        source = TARG;
+        croak("Xslate: Template name is not given");
     }
 
     st = tx_load_template(aTHX_ self, source, FALSE);

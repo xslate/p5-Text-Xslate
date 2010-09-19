@@ -1208,7 +1208,7 @@ sub _fold_constants {
     my $result = eval {
         my @tmp_code = (@{$code}, $self->opcode('print_raw'), $self->opcode('end'));
         $engine->_assemble(\@tmp_code, '<string>', undef, undef, undef);
-        $engine->render(undef);
+        $engine->render('<string>');
     };
     if($@) {
         Carp::carp("Oops: constant folding failed (ignored): $@");
