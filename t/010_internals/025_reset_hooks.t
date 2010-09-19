@@ -2,9 +2,8 @@
 use strict;
 use warnings;
 
-use Text::Xslate;
-
 use Test::More tests => 20;
+use Text::Xslate;
 
 sub reset_diehook {
     local $SIG{__DIE__} = sub { die @_ };
