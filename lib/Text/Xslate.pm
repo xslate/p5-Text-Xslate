@@ -318,7 +318,7 @@ sub _load_source {
         }
 
         if(open my($out), '>', $cachepath) {
-            $self->_save_compiled($out, $asm, $fullpath);
+            $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -369,14 +369,24 @@ sub _load_compiled {
     }
 
     my $data;
-    { local $/; $data = <$in> }
+    {
+        local $/;
+        binmode $in;
+        $data = <$in>;
+        close $in;
+    }
     my $unpacker = Data::MessagePack::Unpacker->new();
     my @asm;
-    my $offset = 0;
+    my $offset  = $unpacker->execute($data);
+    my $is_utf8 = $unpacker->data();
+    #use Devel::Peek; Dump($is_utf8);
+    $unpacker->reset();
     while($offset < length($data)) {
         $offset = $unpacker->execute($data, $offset);
         my $c = $unpacker->data();
         $unpacker->reset();
+
+        utf8::decode($c->[1]);
         # my($name, $arg, $line, $file, $symbol) = @{$c};
         if($c->[0] eq 'depend') {
             my $arg = $c->[1];
@@ -406,9 +416,10 @@ sub _load_compiled {
 }
 
 sub _save_compiled {
-    my($self, $out, $asm, $fullpath) = @_;
+    my($self, $out, $asm, $fullpath, $is_utf8) = @_;
     binmode $out;
     print $out $self->_magic_token($fullpath);
+    print $out Data::MessagePack->pack($is_utf8 ? 1 : 0);
     foreach my $c(@{$asm}) {
         print $out Data::MessagePack->pack($c);
     }
