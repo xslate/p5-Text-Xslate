@@ -6,9 +6,10 @@ use warnings;
 
 our $VERSION = '0.2008';
 
-use Carp        ();
-use File::Spec  ();
-use Exporter    ();
+use Carp              ();
+use File::Spec        ();
+use Exporter          ();
+use Data::MessagePack ();
 
 use Text::Xslate::Util qw(
     $DEBUG
@@ -316,8 +317,7 @@ sub _load_source {
                 or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
         }
 
-        # use input_layer for caches
-        if(open my($out), '>' . $self->{input_layer}, $cachepath) {
+        if(open my($out), '>', $cachepath) {
             $self->_save_compiled($out, $asm, $fullpath);
 
             if(!close $out) {
@@ -361,57 +361,40 @@ sub _load_compiled {
     }
 
     my $cachepath = $fi->{cachepath};
-    open my($in), '<' . $self->{input_layer}, $cachepath
+    open my($in), '<', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
     if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
         return undef;
     }
 
-    # parse assembly
+    my $data;
+    { local $/; $data = <$in> }
+    my $unpacker = Data::MessagePack::Unpacker->new();
     my @asm;
-    while(defined(my $s = <$in>)) {
-        next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
-        chomp $s;
-
-        # See ::Compiler::as_assembly()
-        # "$opname $arg #$line:$file *$symbol // $comment"
-
-        my($name, $value, $line, $file, $symbol) = $s =~ m{
-            \A
-                [ \t]*
-                ($IDENT)                        # an opname
-
-                # the following components are optional
-                (?: [ \t]+ ($STRING|[+-]?$NUMBER) )? # operand
-                (?: [ \t]+ \#($NUMBER)          # line number
-                    (?: [:] ($STRING))?         # file name
-                )?
-                (?: [ \t]+ \*($STRING) )?       # symbol name
-                (?: [ \t]* // [^\n]*)?          # comments (anything)
-            \z
-        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
-
-        $value = literal_to_value($value);
-
-        # checks the modified of dependencies
-        if($name eq 'depend') {
-            my $dep_mtime = (stat $value)[_ST_MTIME];
+    my $offset = 0;
+    while($offset < length($data)) {
+        $offset = $unpacker->execute($data, $offset);
+        my $c = $unpacker->data();
+        $unpacker->reset();
+        # my($name, $arg, $line, $file, $symbol) = @{$c};
+        if($c->[0] eq 'depend') {
+            my $arg = $c->[1];
+            my $dep_mtime = (stat $arg)[_ST_MTIME];
             if(!defined $dep_mtime) {
                 $dep_mtime = 9**9**9; # force reload
-                Carp::carp("Xslate: Failed to stat $value (ignored): $!");
+                Carp::carp("Xslate: Failed to stat $arg (ignored): $!");
             }
             if($dep_mtime > $threshold){
                 printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                    $value,     scalar localtime($dep_mtime),
+                    $arg,       scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold)
                         if _DUMP_LOAD;
 
                 return undef;
             }
         }
-
-        push @asm, [ $name, $value, $line, $file, $symbol ];
+        push @asm, $c;
     }
 
     if(_DUMP_LOAD) {
@@ -424,7 +407,11 @@ sub _load_compiled {
 
 sub _save_compiled {
     my($self, $out, $asm, $fullpath) = @_;
-    print $out $self->_magic_token($fullpath), $self->_compiler->as_assembly($asm);
+    binmode $out;
+    print $out $self->_magic_token($fullpath);
+    foreach my $c(@{$asm}) {
+        print $out Data::MessagePack->pack($c);
+    }
     return;
 }
 
