@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.2008_01
+0.2008_01 Wed Sep 22 17:18:53 2010
     [CHANGES]
     * Use Data::MessagePack as the bytecode serializer, which make
       first render() much faster
