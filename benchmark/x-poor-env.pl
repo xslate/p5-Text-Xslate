@@ -1,6 +1,6 @@
 #!perl
 # For poor environment, e.g. CGI applications without XS
-
+BEGIN { $ENV{PERL_ONLY}= 1 }
 use strict;
 use warnings;
 
