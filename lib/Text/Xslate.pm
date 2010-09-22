@@ -317,7 +317,7 @@ sub _load_source {
                 or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
         }
 
-        if(open my($out), '>', $cachepath) {
+        if(open my($out), '>:raw', $cachepath) {
             $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
@@ -361,7 +361,7 @@ sub _load_compiled {
     }
 
     my $cachepath = $fi->{cachepath};
-    open my($in), '<', $cachepath
+    open my($in), '<:raw', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
     if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
@@ -371,16 +371,15 @@ sub _load_compiled {
     my $data;
     {
         local $/;
-        binmode $in;
         $data = <$in>;
         close $in;
     }
     my $unpacker = Data::MessagePack::Unpacker->new();
-    my @asm;
     my $offset  = $unpacker->execute($data);
     my $is_utf8 = $unpacker->data();
     $unpacker->reset();
 
+    my @asm;
     while($offset < length($data)) {
         $offset = $unpacker->execute($data, $offset);
         my $c = $unpacker->data();
@@ -417,7 +416,6 @@ sub _load_compiled {
 
 sub _save_compiled {
     my($self, $out, $asm, $fullpath, $is_utf8) = @_;
-    binmode $out;
     print $out $self->_magic_token($fullpath);
     print $out Data::MessagePack->pack($is_utf8 ? 1 : 0);
     foreach my $c(@{$asm}) {
