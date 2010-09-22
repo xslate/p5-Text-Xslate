@@ -24,6 +24,7 @@ sub capture(&) {
 
 my $app = Text::Xslate::Runner->new(
     define => { name => '<Xslate>' },
+    cache_dir => '.xslate_cache/app3',
 );
 is capture { $app->run('t/template/hello_utf8.tx') },
     encode("UTF-8", "こんにちは！ &lt;Xslate&gt;！\n");
