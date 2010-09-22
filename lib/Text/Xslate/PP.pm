@@ -10,7 +10,6 @@ BEGIN{
 }
 use Text::Xslate::Util qw(
     $DEBUG
-    $NUMBER $STRING
     p
 );
 

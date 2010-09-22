@@ -12,7 +12,6 @@ use Exporter          ();
 use Data::MessagePack ();
 
 use Text::Xslate::Util qw(
-    $DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
     uri_escape html_builder
@@ -31,13 +30,13 @@ our @EXPORT_OK = qw(
 
 # load backend (XS or PP)
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
-    my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
+    my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
     if(!$pp) {
         eval {
             require XSLoader;
             XSLoader::load(__PACKAGE__, $VERSION);
         };
-        die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
+        die $@ if $@ && $Text::Xslate::Util::DEBUG =~ /\b xs \b/xms; # force XS
     }
     if(!__PACKAGE__->can('render')) {
         require 'Text/Xslate/PP.pm';
@@ -47,8 +46,6 @@ if(!exists $INC{'Text/Xslate/PP.pm'}) {
 package Text::Xslate::Engine;
 
 use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
-    literal_to_value
     import_from
     make_error
 );
@@ -56,7 +53,7 @@ use Text::Xslate::Util qw(
 BEGIN {
     our @ISA = qw(Exporter);
 
-    my $dump_load = scalar($DEBUG =~ /\b dump=load \b/xms);
+    my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
     *_DUMP_LOAD = sub(){ $dump_load };
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
@@ -218,6 +215,8 @@ sub find_file {
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
+            # TODO: we should provide a way to specify this mtime
+            #       (like as Template::Provider?)
             $orig_mtime = $^T;
             $path_id    = 'HASH';
         }
