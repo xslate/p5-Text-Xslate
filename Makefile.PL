@@ -68,6 +68,7 @@ if($want_xs) {
     test_with_env test_pp => (
         XSLATE         => 'pp',
         MOUSE_PUREPERL => 1,
+        PERL_ONLY      => 1,
     );
 
     test_with_env test_pp_opcode => (
