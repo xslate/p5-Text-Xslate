@@ -407,6 +407,9 @@ sub _process_cascade {
                     push @{$macro->{body}}, $c;
                 }
             }
+            elsif($c->[0] eq 'depend') {
+                $self->requires($c->[1]);
+            }
         }
         $self->requires($fullpath);
         $self->_process_cascade_file($cfile, $base_code);

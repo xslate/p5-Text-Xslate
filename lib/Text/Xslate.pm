@@ -379,14 +379,14 @@ sub _load_compiled {
     my @asm;
     my $offset  = $unpacker->execute($data);
     my $is_utf8 = $unpacker->data();
-    #use Devel::Peek; Dump($is_utf8);
     $unpacker->reset();
+
     while($offset < length($data)) {
         $offset = $unpacker->execute($data, $offset);
         my $c = $unpacker->data();
         $unpacker->reset();
 
-        utf8::decode($c->[1]);
+        utf8::decode($c->[1]) if $is_utf8 && defined $c->[1];
         # my($name, $arg, $line, $file, $symbol) = @{$c};
         if($c->[0] eq 'depend') {
             my $arg = $c->[1];
