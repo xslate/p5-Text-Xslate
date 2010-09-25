@@ -51,6 +51,13 @@ SCALARs
 namespace
 CGI
 xml
+RT
+XS
+Exportable
+Misc
+callback
+callbacks
+RFC
 
 # personal name
 lestrrat
