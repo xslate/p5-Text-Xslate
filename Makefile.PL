@@ -17,6 +17,7 @@ requires 'Any::Moose' => '0.13';
 # XXX we don't handle Moose stuff here
 requires 'Mouse'                => '0.61';
 requires 'MouseX::Getopt'       => '0.2601';
+requires 'Data::MessagePack'    => '0.27';
 requires 'parent'               => '0.221';
 requires 'Scalar::Util'         => '1.23';
 
@@ -68,6 +69,7 @@ if($want_xs) {
     test_with_env test_pp => (
         XSLATE         => 'pp',
         MOUSE_PUREPERL => 1,
+        PERL_ONLY      => 1,
     );
 
     test_with_env test_pp_opcode => (

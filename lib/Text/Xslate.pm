@@ -4,14 +4,14 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.2008';
+our $VERSION = '0.2008_01';
 
-use Carp        ();
-use File::Spec  ();
-use Exporter    ();
+use Carp              ();
+use File::Spec        ();
+use Exporter          ();
+use Data::MessagePack ();
 
 use Text::Xslate::Util qw(
-    $DEBUG
     mark_raw unmark_raw
     html_escape escaped_string
     uri_escape html_builder
@@ -30,13 +30,13 @@ our @EXPORT_OK = qw(
 
 # load backend (XS or PP)
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
-    my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
+    my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
     if(!$pp) {
         eval {
             require XSLoader;
             XSLoader::load(__PACKAGE__, $VERSION);
         };
-        die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
+        die $@ if $@ && $Text::Xslate::Util::DEBUG =~ /\b xs \b/xms; # force XS
     }
     if(!__PACKAGE__->can('render')) {
         require 'Text/Xslate/PP.pm';
@@ -46,8 +46,6 @@ if(!exists $INC{'Text/Xslate/PP.pm'}) {
 package Text::Xslate::Engine;
 
 use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
-    literal_to_value
     import_from
     make_error
 );
@@ -55,7 +53,7 @@ use Text::Xslate::Util qw(
 BEGIN {
     our @ISA = qw(Exporter);
 
-    my $dump_load = scalar($DEBUG =~ /\b dump=load \b/xms);
+    my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
     *_DUMP_LOAD = sub(){ $dump_load };
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
@@ -217,6 +215,8 @@ sub find_file {
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
+            # TODO: we should provide a way to specify this mtime
+            #       (like as Template::Provider?)
             $orig_mtime = $^T;
             $path_id    = 'HASH';
         }
@@ -316,9 +316,8 @@ sub _load_source {
                 or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
         }
 
-        # use input_layer for caches
-        if(open my($out), '>' . $self->{input_layer}, $cachepath) {
-            $self->_save_compiled($out, $asm, $fullpath);
+        if(open my($out), '>:raw', $cachepath) {
+            $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
@@ -361,57 +360,49 @@ sub _load_compiled {
     }
 
     my $cachepath = $fi->{cachepath};
-    open my($in), '<' . $self->{input_layer}, $cachepath
+    open my($in), '<:raw', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
     if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
         return undef;
     }
 
-    # parse assembly
+    my $data;
+    {
+        local $/;
+        $data = <$in>;
+        close $in;
+    }
+    my $unpacker = Data::MessagePack::Unpacker->new();
+    my $offset  = $unpacker->execute($data);
+    my $is_utf8 = $unpacker->data();
+    $unpacker->reset();
+
     my @asm;
-    while(defined(my $s = <$in>)) {
-        next if $s =~ m{\A [ \t]* (?: \# | // )}xms; # comments
-        chomp $s;
+    while($offset < length($data)) {
+        $offset = $unpacker->execute($data, $offset);
+        my $c = $unpacker->data();
+        $unpacker->reset();
 
-        # See ::Compiler::as_assembly()
-        # "$opname $arg #$line:$file *$symbol // $comment"
-
-        my($name, $value, $line, $file, $symbol) = $s =~ m{
-            \A
-                [ \t]*
-                ($IDENT)                        # an opname
-
-                # the following components are optional
-                (?: [ \t]+ ($STRING|[+-]?$NUMBER) )? # operand
-                (?: [ \t]+ \#($NUMBER)          # line number
-                    (?: [:] ($STRING))?         # file name
-                )?
-                (?: [ \t]+ \*($STRING) )?       # symbol name
-                (?: [ \t]* // [^\n]*)?          # comments (anything)
-            \z
-        }xmsog or $self->_error("LoadError: Cannot parse assembly (line $.): $s");
-
-        $value = literal_to_value($value);
-
-        # checks the modified of dependencies
-        if($name eq 'depend') {
-            my $dep_mtime = (stat $value)[_ST_MTIME];
+        utf8::decode($c->[1]) if $is_utf8 && defined $c->[1];
+        # my($name, $arg, $line, $file, $symbol) = @{$c};
+        if($c->[0] eq 'depend') {
+            my $arg = $c->[1];
+            my $dep_mtime = (stat $arg)[_ST_MTIME];
             if(!defined $dep_mtime) {
                 $dep_mtime = 9**9**9; # force reload
-                Carp::carp("Xslate: Failed to stat $value (ignored): $!");
+                Carp::carp("Xslate: Failed to stat $arg (ignored): $!");
             }
             if($dep_mtime > $threshold){
                 printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                    $value,     scalar localtime($dep_mtime),
+                    $arg,       scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold)
                         if _DUMP_LOAD;
 
                 return undef;
             }
         }
-
-        push @asm, [ $name, $value, $line, $file, $symbol ];
+        push @asm, $c;
     }
 
     if(_DUMP_LOAD) {
@@ -423,8 +414,12 @@ sub _load_compiled {
 }
 
 sub _save_compiled {
-    my($self, $out, $asm, $fullpath) = @_;
-    print $out $self->_magic_token($fullpath), $self->_compiler->as_assembly($asm);
+    my($self, $out, $asm, $fullpath, $is_utf8) = @_;
+    print $out $self->_magic_token($fullpath);
+    print $out Data::MessagePack->pack($is_utf8 ? 1 : 0);
+    foreach my $c(@{$asm}) {
+        print $out Data::MessagePack->pack($c);
+    }
     return;
 }
 
@@ -506,7 +501,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.2008.
+This document describes Text::Xslate version 0.2008_01.
 
 =head1 SYNOPSIS
 

@@ -15,7 +15,7 @@ END{
 
 system $^X, (map { "-I$_" } @INC), "script/xslate",
     '--suffix', 'tx=txt',
-    '--cache_dir=.app_cache2',
+    '--cache_dir=.xslate_cache/app2',
     '--dest=.tree_out',
     '--ignore=dont_touch',
     "$Bin/simple",

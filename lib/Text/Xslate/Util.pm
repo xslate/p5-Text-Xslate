@@ -18,8 +18,18 @@ our @EXPORT_OK = qw(
     is_int any_in
     read_around
     make_error
-    $STRING $NUMBER $DEBUG
+    $DEBUG
+    $STRING $NUMBER
 );
+
+our $DEBUG;
+defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
+
+our $DisplayWidth = 76;
+if($DEBUG =~ /display_width=(\d+)/) {
+    $DisplayWidth = $1;
+}
+
 
 my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
 my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
@@ -36,14 +46,6 @@ our $NUMBER  = qr/ (?:
             (?: b [01_]+ )       # binary
         )?)
     )/xms;
-
-our $DEBUG;
-defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
-
-our $DisplayWidth = 76;
-if($DEBUG =~ /display_width=(\d+)/) {
-    $DisplayWidth = $1;
-}
 
 require Text::Xslate; # load XS stuff
 

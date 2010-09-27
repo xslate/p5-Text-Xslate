@@ -5,7 +5,8 @@ use Scalar::Util ();
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
-    $NUMBER $STRING $DEBUG
+    $DEBUG
+    $STRING $NUMBER
     is_int any_in
     neat
     literal_to_value
@@ -17,6 +18,10 @@ use constant _DUMP_PROTO => scalar($DEBUG =~ /\b dump=proto \b/xmsi);
 use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
+
+my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
+
+my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 # Operator tokens that the parser recognizes.
 # All the single characters are tokanized as an operator.
@@ -42,9 +47,6 @@ my %shortcut_table = (
 
 my $CHOMP_FLAGS = qr/-/xms;
 
-my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
-
-my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 
 has identity_pattern => (
     is  => 'ro',

@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.2008_01 Wed Sep 22 17:18:53 2010
+    [CHANGES]
+    * Use Data::MessagePack as the bytecode serializer, which make
+      first render() much faster
+
 0.2008 Sun Sep 19 18:17:51 2010
     [CHANGES]
     * The obsolete feature that render(undef) is the same as render('<string>')
