@@ -28,6 +28,10 @@ our @EXPORT_OK = qw(
     html_builder
 );
 
+# $format_version + $fullpath + $compiler_and_parser_options
+my $FORMAT_VERSION = '1.0';
+my $XSLATE_MAGIC   = qq{xslate $FORMAT_VERSION %s-%s\n};
+
 # load backend (XS or PP)
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
     my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
@@ -70,8 +74,6 @@ BEGIN {
 
 my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
-# version-path-{compiler options}
-my $XSLATE_MAGIC    = qq{.xslate "%s-%s-{%s}"\n};
 
 # the real defaults are dfined in the parser
 my %parser_option = (
@@ -363,12 +365,13 @@ sub _load_compiled {
     open my($in), '<:raw', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
 
-    if(scalar(<$in>) ne $self->_magic_token($fi->{fullpath})) {
+    my $magic = $self->_magic_token($fi->{fullpath});
+    my $data;
+    read $in, $data, length($magic);
+    if($data ne $magic) {
         return undef;
     }
-
-    my $data;
-    {
+    else {
         local $/;
         $data = <$in>;
         close $in;
@@ -428,8 +431,9 @@ sub _magic_token {
 
     my $opt = join(',',
         ref($self->{compiler}) || $self->{compiler},
-        (map { ref $_ ? "[@{$_}]" : $_ } $self->_extract_options(\%compiler_option)),
-        $self->_extract_options(\%parser_option),
+        (map { ref $_ ? "[@{$_}]" : $_ }
+            $self->_extract_options(\%compiler_option)),
+            $self->_extract_options(\%parser_option),
     );
 
     if(ref $fullpath) { # ref to content string
@@ -439,8 +443,7 @@ sub _magic_token {
         $fullpath = ref($fullpath) . ':' . $md5->hexdigest();
     }
 
-    return sprintf $XSLATE_MAGIC,
-        $VERSION, $fullpath, $opt;
+    return sprintf $XSLATE_MAGIC, $fullpath, $opt;
 }
 
 sub _extract_options {
