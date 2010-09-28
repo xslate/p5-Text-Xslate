@@ -545,22 +545,22 @@ This document describes Text::Xslate version 0.2008_02.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> is a template engine tuned for persistent applications.
-This engine introduces the virtual machine paradigm. Templates are
-compiled into intermediate code, and then executed by the virtual machine.
+B<Text::Xslate> is a template engine, tuned for persistent applications,
+safe as an HTML generator, and with rich features.
 
 The concept of Xslate is strongly influenced by Text::MicroTemplate
 and Template-Toolkit 2, but the central philosophy of Xslate is different
-from them.
-That is, the philosophy is B<sandboxing> that the template logic should
-not have no access outside the template beyond your permission.
+from them. That is, the philosophy is B<sandboxing> that the template logic
+should not have no access outside the template beyond your permission.
 
 =head2 Features
 
 =head3 High performance
 
-Xslate has a virtual machine written in XS, which is highly optimized for
-rendering templates.
+This engine introduces the virtual machine paradigm. Templates are
+compiled into intermediate code, and then executed by the virtual machine,
+which is highly optimized for rendering templates. Thus, Xslate is
+much faster than any other template engines.
 
 Here is a result of F<benchmark/x-rich-env.pl> to compare various template
 engines in "rich" environment where applications are persistent and XS modules
