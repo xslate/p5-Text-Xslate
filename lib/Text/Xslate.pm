@@ -30,7 +30,7 @@ our @EXPORT_OK = qw(
 
 # $format_version + $fullpath + $compiler_and_parser_options
 my $FORMAT_VERSION = '1.0';
-my $XSLATE_MAGIC   = qq{xslate $FORMAT_VERSION %s-%s\n};
+my $XSLATE_MAGIC   = qq{xslate;$FORMAT_VERSION;%s;%s;};
 
 # load backend (XS or PP)
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
@@ -352,7 +352,7 @@ sub _load_compiled {
     if($self->{cache} >= 2) {
         # threshold is the most latest modified time of all the related caches,
         # so if the cache level >= 2, they seems always fresh.
-        $threshold = 9**9**9;
+        $threshold = 9**9**9; # force to purge the cache
     }
     else {
         $threshold ||= $fi->{cache_mtime};
@@ -360,7 +360,8 @@ sub _load_compiled {
     # see also tx_load_template() in xs/Text-Xslate.xs
     if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
             and $threshold >= $fi->{orig_mtime} )) {
-        printf "  _load_compiled: no fresh cache: %s, %s", $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
+        printf "  _load_compiled: no fresh cache: %s, %s",
+            $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
         $fi->{cache_mtime} = undef;
         return undef;
     }
@@ -391,22 +392,20 @@ sub _load_compiled {
         my $c = $unpacker->data();
         $unpacker->reset();
 
-        utf8::decode($c->[1]) if $is_utf8 && defined $c->[1];
         # my($name, $arg, $line, $file, $symbol) = @{$c};
+        utf8::decode($c->[1]) if $is_utf8 && defined $c->[1];
         if($c->[0] eq 'depend') {
-            my $arg = $c->[1];
-            my $dep_mtime = (stat $arg)[_ST_MTIME];
+            my $dep_mtime = (stat $c->[1])[_ST_MTIME];
             if(!defined $dep_mtime) {
-                $dep_mtime = 9**9**9; # force reload
-                Carp::carp("Xslate: Failed to stat $arg (ignored): $!");
+                Carp::carp("Xslate: Failed to stat $c->[1] (ignored): $!");
+                return undef; # purge the cache
             }
             if($dep_mtime > $threshold){
                 printf "  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                    $arg,       scalar localtime($dep_mtime),
+                    $c->[1],    scalar localtime($dep_mtime),
                     $cachepath, scalar localtime($threshold)
                         if _DUMP_LOAD;
-
-                return undef;
+                return undef; # purge the cache
             }
         }
         push @asm, $c;
@@ -434,20 +433,18 @@ sub _save_compiled {
 sub _magic_token {
     my($self, $fullpath) = @_;
 
-    my $opt = join(',',
+    my $opt = Data::MessagePack->pack([
         ref($self->{compiler}) || $self->{compiler},
-        (map { ref $_ ? "[@{$_}]" : $_ }
-            $self->_extract_options(\%compiler_option)),
-            $self->_extract_options(\%parser_option),
-    );
+        $self->_extract_options(\%parser_option),
+        $self->_extract_options(\%compiler_option),
+    ]);
 
     if(ref $fullpath) { # ref to content string
         require 'Digest/MD5.pm';
         my $md5 = Digest::MD5->new();
         $md5->add(${$fullpath});
-        $fullpath = ref($fullpath) . ':' . $md5->hexdigest();
+        $fullpath = join ':', ref($fullpath), $md5->hexdigest();
     }
-
     return sprintf $XSLATE_MAGIC, $fullpath, $opt;
 }
 
