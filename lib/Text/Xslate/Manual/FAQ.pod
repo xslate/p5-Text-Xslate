@@ -18,7 +18,7 @@ pure Perl implementations are also provided.
 
 =head3 What are 'Kolon', 'Metakolon', and 'TTerse' ?
 
-Xslate supports several template syntaxes. Kolon is the default syntax,
+Xslate supports multiple template syntaxes. Kolon is the default syntax,
 Metakolon is suitable to output Kolon templates, and TTerse is compatible
 with Template-Toolkit. You can specify the template syntax by passing
 C<syntax> option to the Text::Xslate constructor.
@@ -35,8 +35,8 @@ C<syntax> option to the Text::Xslate constructor.
 
 =head3 How can I changes template tags?
 
-Use C<start_tag>, C<end_tag>, and C<line_start> options, which can be joined
-together with C<syntax> option:
+Use C<start_tag>, C<end_tag>, and C<line_start> options to C<new> method,
+which can be joined together with C<syntax> option:
 
     my $tx = Text::Xslate->new(
         syntax     => 'TTerse',
@@ -73,13 +73,26 @@ Xslate itself does not support these methods and filters, but there
 are modules on CPAN that implement them.
 
 L<Text::Xslate::Bridge::TT2> provides almost all the TT methods and filters,
-but it requires Template-Toolkit itself.
+but it requires Template-Toolkit installed.
 
-L<Text::Xslate::Bridge::TT2Like> provides the same features as C<Bridge::TT2>,
-but it does not require the Template-Toolkit distribution.
+L<Text::Xslate::Bridge::TT2Like> provides the same features as
+C<T::X::Bridge::TT2>, but it does not require the Template-Toolkit distribution.
 
 These bridge modules are useful not only for TTerse users, but
 also for Kolon users.
+
+=head3 How can I (write|get) plugins?
+
+It is unlikely to write plugins for Xslate, because Xslate allows
+you to export any functions to templates. Any function-based modules
+are available by the C<module> option to the C<new> method.
+
+Xslate also allows to call methods for object instances, so you can
+use any object-oriented modules, except for classes which only provide
+class methods (they need wrappers).
+
+If you want to add methods to builtin data types (nil, scalars, arrays and
+hashes), you can write bridge modules. See L<Text::Xslate::Bridge> for details.
 
 =head2 How to limit while-loop like Template-Toolkit?
 
@@ -107,7 +120,7 @@ they are not a I<real> CODE reference.
 
     my $tx = Text::Xslate->new(
         function => {
-            'count' => sub {
+            count => sub {
                 my($a, $cb) = @_;
                 # Don't check the type of $cb!
                 return scalar grep { $cb->($_) } @{$a};
