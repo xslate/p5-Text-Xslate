@@ -73,7 +73,7 @@ BEGIN {
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
-my $IDENT   = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
+my $IDENT = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
 
 
 # the real defaults are dfined in the parser
@@ -892,7 +892,7 @@ See L<xslate(1)> for details.
 
 =head1 TEMPLATE SYNTAX
 
-Several syntaxes are provided for templates.
+There are multiple template syntaxes available in Xslate.
 
 =over
 
@@ -977,11 +977,13 @@ Xslate command:
 
 L<xlsate>
 
-The Xslate web site:
+The Xslate web site and public repository:
 
 L<http://xslate.org/>
 
-Other template modules that Xslate is influenced by:
+L<http://github.com/gfx/p5-Text-Xslate>
+
+Other template modules that Xslate has been influenced by:
 
 L<Text::MicroTemplate>
 
@@ -1008,7 +1010,8 @@ L<http://xslate.org/benchmark.html>
 =head1 ACKNOWLEDGEMENT
 
 Thanks to lestrrat for the suggestion to the interface of C<render()>,
-the contribution of App::Xslate, and a lot of suggestions.
+the contribution of Text::Xslate::Runner (was App::Xslate), and a lot of
+suggestions.
 
 Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug finding.
 
@@ -1028,13 +1031,17 @@ Thanks to chiba for the bug reports and patches.
 
 Thanks to turugina for the patch to fix Win32 problems
 
+Thanks to Sam Graham to the bug reports.
+
+Thanks to Mons Anderson to the bug reports and patches.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
 
-Makamaka Hannyaharamitu (makamaka)
+Makamaka Hannyaharamitu (makamaka) (Text::Xslate::PP)
 
-Maki, Daisuke (lestrrat)
+Maki, Daisuke (lestrrat) (Text::Xslate::Runner)
 
 =head1 LICENSE AND COPYRIGHT
 
