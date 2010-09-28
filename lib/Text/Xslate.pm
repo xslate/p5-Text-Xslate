@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 our $VERSION = '0.2008_01';
+$VERSION =~ s/_//; # for developpers versions
 
 use Carp              ();
 use File::Spec        ();

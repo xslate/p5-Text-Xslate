@@ -4,6 +4,7 @@ use 5.008_001;
 use strict;
 
 our $VERSION = '0.2008_01';
+$VERSION =~ s/_//; # for developpers versions
 
 BEGIN{
     $ENV{XSLATE} = ($ENV{XSLATE} || '') . '[pp]';
