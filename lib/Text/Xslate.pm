@@ -418,6 +418,7 @@ sub _load_compiled {
 
 sub _save_compiled {
     my($self, $out, $asm, $fullpath, $is_utf8) = @_;
+    local $\;
     print $out $self->_magic_token($fullpath);
     print $out Data::MessagePack->pack($is_utf8 ? 1 : 0);
     foreach my $c(@{$asm}) {
