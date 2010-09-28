@@ -140,7 +140,7 @@ returns I<str> as is.
 Escapes html meta characters in I<str>. If I<str> is a raw string, this
 function returns I<str> as is.
 
-The html meta characters are C</[<>"'&]/>.
+The html meta characters are C<< /[<>"'&]/ >>.
 
 =head2 C<< uri($str) >>
 
@@ -148,7 +148,7 @@ Escapes unsafe URI characters in I<$str>.
 
 The unsafe URI characters are characters not included in
 the C<unreserved> character class defined by RFC 3986,
-i.e. C</[^A-Za-z0-9\-\._~]/>.
+i.e. C<< /[^A-Za-z0-9\-\._~]/ >>.
 
 See also RFC 3986.
 
