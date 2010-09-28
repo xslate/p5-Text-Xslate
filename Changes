@@ -1,13 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
-0.2008_02
+0.2008_02 Tue Sep 28 16:42:21 2010
     [BUG FIXES]
-    * Special variables $/ and $\ broke caches
-    * Developpers' releases produced warnings about versions
+    * Cache mechanism was affected by the special variables $/ and $\
+    * Developpers' releases might produced warnings about versions
 
     [CHANGES]
     * Upgrading Text::Xslate no longer forces to purge cached templates.
-      Instead, the internal bytecode version (1.0) is used.
+      Instead, the internal bytecode version (1.0, currentl) is used.
 
 0.2008_01 Wed Sep 22 17:18:53 2010
     [CHANGES]
