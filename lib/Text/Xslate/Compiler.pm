@@ -592,7 +592,11 @@ sub _generate_command {
         }
     }
     if(defined(my $vars = $node->second)) {
-        @code = ($self->opcode('enter'), $self->_localize_vars($vars), @code, $self->opcode('leave'));
+        @code = ($self->opcode('enter'),
+            $self->_localize_vars($vars),
+            @code,
+            $self->opcode('leave'),
+        );
     }
 
     if(!@code) {
