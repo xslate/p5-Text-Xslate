@@ -1297,6 +1297,7 @@ sub _optimize_vmcode {
         elsif($name eq 'literal') {
             if(is_int($c->[$i][1])) {
                 $c->[$i][0] = 'literal_i';
+                $c->[$i][1] = int($c->[$i][1]); # force int
             }
         }
         elsif($name eq 'fetch_field') {
