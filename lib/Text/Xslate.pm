@@ -386,6 +386,8 @@ sub _load_compiled {
     my $is_utf8 = $unpacker->data();
     $unpacker->reset();
 
+    $unpacker->utf8($is_utf8);
+
     my @asm;
     while($offset < length($data)) {
         $offset = $unpacker->execute($data, $offset);
@@ -393,7 +395,6 @@ sub _load_compiled {
         $unpacker->reset();
 
         # my($name, $arg, $line, $file, $symbol) = @{$c};
-        utf8::decode($c->[1]) if $is_utf8 && defined $c->[1];
         if($c->[0] eq 'depend') {
             my $dep_mtime = (stat $c->[1])[_ST_MTIME];
             if(!defined $dep_mtime) {
