@@ -76,9 +76,6 @@ BEGIN {
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
-my $IDENT = qr/(?: [a-zA-Z_][a-zA-Z0-9_\@]* )/xms;
-
-
 # the real defaults are dfined in the parser
 my %parser_option = (
     line_start => undef,
