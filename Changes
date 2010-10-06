@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+0.2009 Wed Oct  6 18:50:45 2010
+    [BUG FIXES]
+    * Large template files could cause SEGV (reported by id:peppon)
+
+    [ENHANCEMENT]
+    * The first call of render() has been significantly faster than 0.2008
+
 0.2008_02 Tue Sep 28 16:42:21 2010
     [BUG FIXES]
     * Cache mechanism was affected by the special variables $/ and $\
