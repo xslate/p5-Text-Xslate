@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Text::Xslate qw(html_builder html_escape);
-use URI::Find;
+use URI::Find 20100505;
 
 my $text = <<'EOT';
 <http://example.com/?a=10&b=20>
