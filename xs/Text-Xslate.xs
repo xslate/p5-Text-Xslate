@@ -796,7 +796,6 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
 
         /* opinfo */
         SvREFCNT_dec(info[i].file);
-        SvREFCNT_dec(info[i].symbol);
     }
 
     Safefree(code);
@@ -849,7 +848,6 @@ tx_mg_dup(pTHX_ MAGIC* const mg, CLONE_PARAMS* const param){
         st->info[i].optype    = proto_info[i].optype;
         st->info[i].line      = proto_info[i].line;
         st->info[i].file      = tx_sv_dup_inc(aTHX_ proto_info[i].file, param);
-        st->info[i].symbol    = tx_sv_dup_inc(aTHX_ proto_info[i].symbol, param);
     }
 
     st->symbol   = (HV*)tx_sv_dup_inc(aTHX_ (SV*)st->symbol, param);
@@ -1210,7 +1208,6 @@ CODE:
             SV** const arg   =  av_fetch(av, 1, FALSE);
             SV** const line  =  av_fetch(av, 2, FALSE);
             SV** const file  =  av_fetch(av, 3, FALSE);
-            SV** const sym   =  av_fetch(av, 4, FALSE);
             HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
             IV  opnum;
 
@@ -1270,7 +1267,6 @@ CODE:
             st.info[i].optype = (U16)opnum;
             st.info[i].line   = oi_line;
             st.info[i].file   = SvREFCNT_inc_simple_NN(oi_file);
-            st.info[i].symbol = (sym && SvOK(*sym)) ? newSVsv(*sym) : NULL;
 
             /* special cases */
             if(opnum == TXOP_macro_begin) {

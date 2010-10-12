@@ -169,7 +169,6 @@ struct tx_info_s {
     U16 optype;
     U16 line;
     SV* file;
-    SV* symbol;
 };
 
 #define TX_VERBOSE_DEFAULT 1
