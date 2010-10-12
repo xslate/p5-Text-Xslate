@@ -7,7 +7,7 @@ BEGIN{
     $INC{'Module/Install/ExtraTests.pm'} = 1;# considered harmful!
 }
 use inc::Module::Install;
-use Module::Install::XSUtil 0.30;
+use Module::Install::XSUtil 0.36;
 use Module::Install::AuthorTests;
 
 all_from 'lib/Text/Xslate.pm';
