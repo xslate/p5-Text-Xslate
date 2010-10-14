@@ -95,6 +95,9 @@ my %builtin = (
 
     'mark_raw'   => 'builtin_mark_raw',
     'unmark_raw' => 'builtin_unmark_raw',
+
+    'uri'        => 'builtin_uri',
+    'ref'        => 'builtin_ref',
 );
 
 has lvar_id => ( # local varialbe id

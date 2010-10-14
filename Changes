@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+0.2010
+    This is the commemorative release for YAPC::Asia Tokyo 2010!
+
+    [NEW FEATURES]
+    * Add a builtin function ref(), which is the same as Perl's ref()
+
 0.2009 Wed Oct  6 18:50:45 2010
     [BUG FIXES]
     * Large template files could cause SEGV (reported by id:peppon)

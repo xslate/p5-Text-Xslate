@@ -152,6 +152,10 @@ i.e. C<< /[^A-Za-z0-9\-\._~]/ >>.
 
 See also RFC 3986.
 
+=head2 C<< ref($value) >>
+
+The same as Perl's C<ref>.
+
 =head2 C<< dump($value) >>
 
 Inspects I<$value> with C<Data::Dumper>.

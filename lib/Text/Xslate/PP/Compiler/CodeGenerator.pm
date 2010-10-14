@@ -12,7 +12,6 @@ use Scalar::Util ();
 use Text::Xslate::Util qw(
     $DEBUG p neat
     value_to_literal
-    mark_raw unmark_raw html_escape
 );
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::Booster;
@@ -503,7 +502,17 @@ $CODE_MANIP{ 'builtin_unmark_raw' } = sub  {
 
 $CODE_MANIP{ 'builtin_html_escape' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'Text::Xslate::html_escape( %s )', $self->sa ) );
+    $self->sa( sprintf( 'html_escape( %s )', $self->sa ) );
+};
+
+$CODE_MANIP{ 'builtin_uri' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'uri_escape( %s )', $self->sa ) );
+};
+
+$CODE_MANIP{ 'builtin_ref' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'ref( %s )', $self->sa ) );
 };
 
 $CODE_MANIP{ 'match' } = sub {

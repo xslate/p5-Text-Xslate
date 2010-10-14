@@ -8,7 +8,7 @@ use Scalar::Util ();
 use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw(
     p neat
-    mark_raw unmark_raw html_escape
+    mark_raw unmark_raw html_escape uri_escape
     $DEBUG
 );
 
@@ -363,8 +363,18 @@ sub op_builtin_unmark_raw {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_builtin_html_escape{
+sub op_builtin_html_escape {
     $_[0]->{sa} = html_escape($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_builtin_uri {
+    $_[0]->{sa} = uri_escape($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_builtin_ref {
+    $_[0]->{sa} = ref($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 

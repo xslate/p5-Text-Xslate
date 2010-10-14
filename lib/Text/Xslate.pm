@@ -28,9 +28,10 @@ our @EXPORT_OK = qw(
     html_builder
 );
 
-# $format_version + $fullpath + $compiler_and_parser_options
-my $FORMAT_VERSION = '1.0';
-my $XSLATE_MAGIC   = qq{xslate;$FORMAT_VERSION;%s;%s;};
+my $BYTECODE_VERSION = '1.1';
+
+# $bytecode_version + $fullpath + $compiler_and_parser_options
+my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
 
 # load backend (XS or PP)
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
@@ -97,6 +98,8 @@ my %builtin = (
     mark_raw   => \&Text::Xslate::Util::mark_raw,
     unmark_raw => \&Text::Xslate::Util::unmark_raw,
     uri        => \&Text::Xslate::Util::uri_escape,
+    ref        => \&_builtin_ref,
+
     dump       => \&Text::Xslate::Util::p,
 );
 
@@ -186,7 +189,6 @@ sub _merge_hash {
     }
     return;
 }
-
 
 sub load_string { # for <string>
     my($self, $string) = @_;
@@ -484,6 +486,10 @@ sub _compiler {
 sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_, from_include => $self->{from_include});
+}
+
+sub _builtin_ref {
+    return ref($_[0]);
 }
 
 sub _error {

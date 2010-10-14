@@ -119,6 +119,9 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src);
 static SV*
 tx_html_escape(pTHX_ SV* const str);
 
+static SV*
+tx_uri_escape(pTHX_ SV* const src);
+
 STATIC_INLINE I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b);
 

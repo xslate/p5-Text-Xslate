@@ -9,8 +9,9 @@ use Scalar::Util ();
 use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw(
     $DEBUG p neat
-    value_to_literal
-    mark_raw unmark_raw html_escape
+    mark_raw unmark_raw
+    html_escape
+    uri_escape
 );
 
 our($html_metachars, %html_escape);

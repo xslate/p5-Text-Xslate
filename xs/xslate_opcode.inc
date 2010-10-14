@@ -441,6 +441,23 @@ TXC(builtin_unmark_raw) {
     TX_RETURN_NEXT();
 }
 
+TXC(builtin_uri) {
+    TX_st_sa = tx_uri_escape(aTHX_ TX_st_sa);
+    TX_RETURN_NEXT();
+}
+
+TXC(builtin_ref) {
+    SvGETMAGIC(TX_st_sa);
+    if(SvROK(TX_st_sa)) {
+        const char* const ref = sv_reftype(SvRV(TX_st_sa), TRUE);
+        TX_st_sa = newSVpvn_flags(ref, strlen(ref), SVs_TEMP);
+    }
+    else {
+        TX_st_sa = &PL_sv_no;
+    }
+    TX_RETURN_NEXT();
+}
+
 TXC(builtin_html_escape) {
     TX_st_sa = tx_html_escape(aTHX_ TX_st_sa);
     TX_RETURN_NEXT();

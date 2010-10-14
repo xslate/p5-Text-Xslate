@@ -30,6 +30,9 @@ my @set = (
     ['<: $s | uri :>', { s => ' ' x 255 }, '%20' x 255 ],
     ['<: (nil | uri) == nil ? "true" : "false" :>', {}, 'true' ],
 
+    ['<: ref([]) :>', {}, 'ARRAY', 'ref'],
+    ['<: ref(42) :>', {}, '', 'ref'],
+    ['<: ref($foo) :>', {foo => bless {}, 'Foo'}, 'Foo', 'ref'],
 
     ['<: html($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'true'],
@@ -61,6 +64,8 @@ my @set = (
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'mark_raw itself'],
     ['<: unmark_raw :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'unmark_raw itself'],
+
+    ['<: my $x = ref; $x([]) :>', {}, 'ARRAY', 'the entity of ref'],
 
     # with macros
     [<<'T', {}, <<'X'],
