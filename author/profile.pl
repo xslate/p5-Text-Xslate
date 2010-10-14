@@ -11,7 +11,9 @@ use UNIVERSAL(); # makes NYTProf happy
     has body  => (is => 'rw');
 }
 
-my $cache = shift(@ARGV) || 0;
+my($cache, $n) = @ARGV;
+$cache //= 1;
+$n     //= 100;
 
 my @blog_entries = map{ BlogEntry->new($_) } (
     {
@@ -23,7 +25,7 @@ my @blog_entries = map{ BlogEntry->new($_) } (
         body  => 'This is my second entry.',
     },
 ) x 10;
-for(1 .. 100) {
+for(1 .. $n) {
     my $tx = Text::Xslate->new(
         path  => ["./benchmark/template"],
         cache => $cache,
