@@ -1367,7 +1367,7 @@ sub as_assembly {
             }
         }
         if(defined $label) {
-            $asm .= " *" . value_to_literal($label);
+            $asm .= " " . value_to_literal($label);
         }
         if(defined $comment) {
             $asm .= " // $comment";
