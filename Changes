@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.2011 Sun Oct 17 18:38:01 2010
+    [CHANGES]
+    * Remove builtin ref(); Add is_array_ref() and is_hash_ref() instead.
+      I'm sorry to change APIs, but use of ref() would confuse people.
+
 0.2010 Sat Oct 16 10:00:00 2010
     This is the commemorative release for YAPC::Asia Tokyo 2010!
 

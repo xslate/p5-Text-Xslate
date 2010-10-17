@@ -30,9 +30,15 @@ my @set = (
     ['<: $s | uri :>', { s => ' ' x 255 }, '%20' x 255 ],
     ['<: (nil | uri) == nil ? "true" : "false" :>', {}, 'true' ],
 
-    ['<: ref([]) :>', {}, 'ARRAY', 'ref'],
-    ['<: ref(42) :>', {}, '', 'ref'],
-    ['<: ref($foo) :>', {foo => bless {}, 'Foo'}, 'Foo', 'ref'],
+    ['<: is_array_ref([]) ? 10 : 20 :>', {}, '10', 'is_array_ref'],
+    ['<: is_array_ref({}) ? 10 : 20 :>', {}, '20', 'ref'],
+    ['<: is_array_ref($v) ? 10 : 20 :>', {v => 42},       '20', 'ref'],
+    ['<: is_array_ref($v) ? 10 : 20 :>', {v => bless []}, '20', 'ref'],
+
+    ['<: is_hash_ref([]) ? 10 : 20 :>', {}, '20', 'ref'],
+    ['<: is_hash_ref({}) ? 10 : 20 :>', {}, '10', 'ref'],
+    ['<: is_hash_ref($v) ? 10 : 20 :>', {v => 42},       '20', 'ref'],
+    ['<: is_hash_ref($v) ? 10 : 20 :>', {v => bless []}, '20', 'ref'],
 
     ['<: html($value) == "&lt;Xslate&gt;" ? "true" : "false" :>',
         { value => '<Xslate>' }, 'true'],
@@ -65,7 +71,8 @@ my @set = (
     ['<: unmark_raw :>',
         { value => '<Xslate>' }, qr/\b CODE \b/xms, 'unmark_raw itself'],
 
-    ['<: my $x = ref; $x([]) :>', {}, 'ARRAY', 'the entity of ref'],
+    ['<: my $x = is_array_ref; $x([]) ? "ok" : "ng" :>', {}, 'ok', 'the entity of ref'],
+    ['<: my $x = is_hash_ref;  $x({}) ? "ok" : "ng" :>', {}, 'ok', 'the entity of ref'],
 
     # with macros
     [<<'T', {}, <<'X'],

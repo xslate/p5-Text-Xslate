@@ -90,14 +90,15 @@ my %unary = (
 );
 
 my %builtin = (
-    'raw'        => 'builtin_mark_raw',
-    'html'       => 'builtin_html_escape',
+    'raw'          => 'builtin_mark_raw',
+    'html'         => 'builtin_html_escape',
 
-    'mark_raw'   => 'builtin_mark_raw',
-    'unmark_raw' => 'builtin_unmark_raw',
+    'mark_raw'     => 'builtin_mark_raw',
+    'unmark_raw'   => 'builtin_unmark_raw',
 
-    'uri'        => 'builtin_uri',
-    'ref'        => 'builtin_ref',
+    'uri'          => 'builtin_uri',
+    'is_array_ref' => 'builtin_is_array_ref',
+    'is_hash_ref'  => 'builtin_is_hash_ref',
 );
 
 has lvar_id => ( # local varialbe id

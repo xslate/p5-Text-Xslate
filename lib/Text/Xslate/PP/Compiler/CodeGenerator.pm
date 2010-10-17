@@ -510,9 +510,14 @@ $CODE_MANIP{ 'builtin_uri' } = sub  {
     $self->sa( sprintf( 'uri_escape( %s )', $self->sa ) );
 };
 
-$CODE_MANIP{ 'builtin_ref' } = sub  {
+$CODE_MANIP{ 'builtin_is_array_ref' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'ref( %s )', $self->sa ) );
+    $self->sa( sprintf( 'ref( %s ) eq "ARRAY"', $self->sa ) );
+};
+
+$CODE_MANIP{ 'builtin_is_hash_ref' } = sub  {
+    my ( $self, $arg, $line ) = @_;
+    $self->sa( sprintf( 'ref( %s ) eq "HASH"', $self->sa ) );
 };
 
 $CODE_MANIP{ 'match' } = sub {

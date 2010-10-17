@@ -3,7 +3,7 @@ package Text::Xslate::PP;
 use 5.008_001;
 use strict;
 
-our $VERSION = '0.2010';
+our $VERSION = '0.2011';
 $VERSION =~ s/_//; # for developpers versions
 
 BEGIN{
@@ -629,7 +629,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 0.2010.
+This document describes Text::Xslate::PP version 0.2011.
 
 =head1 DESCRIPTION
 

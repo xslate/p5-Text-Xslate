@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.2010';
+our $VERSION = '0.2011';
 
 use Carp              ();
 use File::Spec        ();
@@ -28,7 +28,7 @@ our @EXPORT_OK = qw(
     html_builder
 );
 
-my $BYTECODE_VERSION = '1.1';
+my $BYTECODE_VERSION = '1.2';
 
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
@@ -93,12 +93,13 @@ my %compiler_option = (
 );
 
 my %builtin = (
-    raw        => \&Text::Xslate::Util::mark_raw,
-    html       => \&Text::Xslate::Util::html_escape,
-    mark_raw   => \&Text::Xslate::Util::mark_raw,
-    unmark_raw => \&Text::Xslate::Util::unmark_raw,
-    uri        => \&Text::Xslate::Util::uri_escape,
-    ref        => \&_builtin_ref,
+    raw          => \&Text::Xslate::Util::mark_raw,
+    html         => \&Text::Xslate::Util::html_escape,
+    mark_raw     => \&Text::Xslate::Util::mark_raw,
+    unmark_raw   => \&Text::Xslate::Util::unmark_raw,
+    uri          => \&Text::Xslate::Util::uri_escape,
+    is_array_ref => \&_builtin_is_array_ref,
+    is_hash_ref  => \&_builtin_is_hash_ref,
 
     dump       => \&Text::Xslate::Util::p,
 );
@@ -488,8 +489,12 @@ sub compile {
     return $self->_compiler->compile(@_, from_include => $self->{from_include});
 }
 
-sub _builtin_ref {
-    return ref($_[0]);
+sub _builtin_is_array_ref {
+    return ref($_[0]) eq 'ARRAY';
+}
+
+sub _builtin_is_hash_ref {
+    return ref($_[0]) eq 'HASH';
 }
 
 sub _error {
@@ -510,7 +515,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.2010.
+This document describes Text::Xslate version 0.2011.
 
 =head1 SYNOPSIS
 

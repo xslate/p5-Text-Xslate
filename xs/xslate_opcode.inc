@@ -446,15 +446,25 @@ TXC(builtin_uri) {
     TX_RETURN_NEXT();
 }
 
-TXC(builtin_ref) {
-    SvGETMAGIC(TX_st_sa);
-    if(SvROK(TX_st_sa)) {
-        const char* const ref = sv_reftype(SvRV(TX_st_sa), TRUE);
-        TX_st_sa = newSVpvn_flags(ref, strlen(ref), SVs_TEMP);
-    }
-    else {
-        TX_st_sa = &PL_sv_no;
-    }
+TXC(builtin_is_array_ref) {
+    SV* const sv = TX_st_sa;
+    SvGETMAGIC(sv);
+    TX_st_sa = boolSV(
+        SvROK(sv)
+        && SvTYPE(SvRV(sv)) == SVt_PVAV
+        && !SvOBJECT(SvRV(sv))
+    );
+    TX_RETURN_NEXT();
+}
+
+TXC(builtin_is_hash_ref) {
+    SV* const sv = TX_st_sa;
+    SvGETMAGIC(sv);
+    TX_st_sa = boolSV(
+        SvROK(sv)
+        && SvTYPE(SvRV(sv)) == SVt_PVHV
+        && !SvOBJECT(SvRV(sv))
+    );
     TX_RETURN_NEXT();
 }
 

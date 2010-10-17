@@ -152,9 +152,13 @@ i.e. C<< /[^A-Za-z0-9\-\._~]/ >>.
 
 See also RFC 3986.
 
-=head2 C<< ref($value) >>
+=head2 C<< is_array_ref(($value) >>
 
-The same as Perl's C<ref>.
+Returns true if I<$value> is an ARRAY reference.
+
+=head2 C<< is_hash_ref(($value) >>
+
+Returns true if I<$value> is a HASH reference.
 
 =head2 C<< dump($value) >>
 
