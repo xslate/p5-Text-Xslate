@@ -1145,7 +1145,7 @@ sub statement { # process one or more statements
 sub auto_command {
     my($parser, $expr) = @_;
     if($expr->is_statement) {
-        # expressions can produce pure statements (e.g. assignment)
+        # expressions can produce pure statements (e.g. assignment )
         return $expr;
     }
     else {

@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-0.2010
+0.2010 Sat Oct 16 10:00:00 2010
     This is the commemorative release for YAPC::Asia Tokyo 2010!
 
     [CHANGES]
@@ -8,6 +8,9 @@ Revision history for Perl extension Text::Xslate
 
     [NEW FEATURES]
     * Add a builtin function ref(), which is the same as Perl's ref()
+
+    [BUG FIXES]
+    * Resolve RT #62028 (Kaare Rasmussen): Test failed on old URI::Find
 
 0.2009 Wed Oct  6 18:50:45 2010
     [BUG FIXES]
