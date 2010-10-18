@@ -2,7 +2,7 @@
 Module::Install
 Module::Install::XSUtil
 Module::Install::AuthorTests
-Module::Install::Repository
+Module::Install::ExtendsMakeTest
 
 # for testing
 Test::Vars
@@ -24,3 +24,5 @@ Data::Section::Simple
 HTML::FillInForm
 HTML::FillInForm::Lite
 HTML::Shakan
+URI::Find
+
