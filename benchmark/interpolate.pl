@@ -11,7 +11,9 @@ foreach my $mod(qw(Text::Xslate Text::MicroTemplate)){
     print $mod, '/', $mod->VERSION, "\n";
 }
 
-my $n = shift(@ARGV) || 100;
+my($n, $data) = @ARGV;
+$n    ||= 100;
+$data ||= 10;
 
 my %vpath = (
     interpolate => <<'TX' x $n,
@@ -37,8 +39,10 @@ my $subst_tmpl = qq{Hello, %lang% world!\n} x $n;
 my $sprintf_tmpl = qq{Hello, %1\$s world!\n} x $n;
 
 my $vars = {
-    lang => 'Template',
+    lang => 'Template' x $data,
 };
+printf "template size: %d bytes; data size: %d bytes\n",
+    length $vpath{interpolate}, length $vars->{lang};
 
 {
     use Test::More;
