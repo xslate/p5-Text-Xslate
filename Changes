@@ -1,7 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+0.2012 Mon Oct 18 23:25:38 2010
+    * No code changes
+    * Update Module::Install::ExtendsMakeTest (to HEAD of the repo)
+      to avoid problems with non-author environments
+
 0.2011 Sun Oct 17 18:38:01 2010
     [CHANGES]
+    * The bytecode version is now 1.2
     * Remove builtin ref(); Add is_array_ref() and is_hash_ref() instead.
       I'm sorry to change APIs, but use of ref() would confuse people.
 
