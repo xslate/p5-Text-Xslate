@@ -39,9 +39,9 @@ my %vars = (
           author => 'Brian Kernighan, Jon Bentley, et. al.' },
         { title  => q{Atkinson and Hilgard's Introduction to Psychology With Infotrac}, # '
           author => 'Edward E. Smith, et. al.' },
-        { title => 'Programming Perl',
+        { title  => 'Programming Perl',
           author => 'Larry Wall, et.al.' },
-        { title => 'Compilers: Principles, Techniques, and Tools',
+        { title  => 'Compilers: Principles, Techniques, and Tools',
           author => 'Alfred V. Aho, et. al.' },
      ) x $n],
 );

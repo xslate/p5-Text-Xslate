@@ -23,27 +23,27 @@ my $cache = defined($args{'--cache'}) ? $args{'--cache'} : 2;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }
-
+my $n = $args{'--size'} || 2;
 my @blog_entries = map{ BlogEntry->new($_) } (
     {
         title => 'Entry one',
-        body  => 'This is my first entry.',
+        body  => "This is my first entry.\n" x $n,
     },
     {
         title => 'Entry two',
-        body  => 'This is my second entry.',
+        body  => "This is my second entry.\n" x $n,
     },
     {
         title => 'Entry three',
-        body  => 'This is my thrid entry.',
+        body  => "This is my thrid entry.\n" x $n,
     },
     {
         title => 'Entry four',
-        body  => 'This is my forth entry.',
+        body  => "This is my forth entry.\n" x $n,
     },
     {
         title => 'Entry five',
-        body  => 'This is my fifth entry.',
+        body  => "This is my fifth entry.\n" x $n,
     },
 );
 
