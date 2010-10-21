@@ -762,7 +762,8 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     /* clear temporary buffers */
     sv_setsv(st.targ, NULL);
 
-    base->hint_size = SvLEN(st.output);
+    /* store the current buffer size as a hint size */
+    base->hint_size = SvCUR(st.output);
 }
 
 

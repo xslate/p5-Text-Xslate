@@ -11,7 +11,7 @@
 #define TX_MACRO_CLASS "Text::Xslate::Type::Macro"
 
 /* arbitrary initial buffer size */
-#define TX_HINT_SIZE 128
+#define TX_HINT_SIZE 200
 
 /* max calling depth (execution/macrocall) */
 #define TX_MAX_DEPTH 100
