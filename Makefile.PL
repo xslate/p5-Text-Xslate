@@ -9,7 +9,7 @@ BEGIN{
 use inc::Module::Install;
 use Module::Install::XSUtil 0.36;
 use Module::Install::AuthorTests;
-use Module::Install::ExtendsMakeTest;
+use Module::Install::TestTarget;
 
 all_from 'lib/Text/Xslate.pm';
 
@@ -59,10 +59,9 @@ lib/Text/Xslate/PP/Const.pm :: xs/xslate_opcode.inc tool/opcode_for_pp.PL
 M
 
 if(eval q{ use Moose 1.05 (); 1}) {
-    extends_make_test
-        target => 'test_moose',
+    test_target test_moose => (
         env    => { ANY_MOOSE => 'Moose' },
-    ;
+    );
 }
 
 my @testall;
@@ -71,23 +70,17 @@ if($Module::Install::AUTHOR) {
 }
 
 if($want_xs) {
-    extends_make_test
-        target => 'test_pp',
+    # default pp backend is pp_booster
+    test_target test_pp => (
         env    => { PERL_ONLY => 1 },
         @testall,
-    ;
+    );
 
-    extends_make_test
-        target => 'test_pp_opcode',
+    # optional pp backend
+    test_target test_pp_opcode => (
         env    => { XSLATE => 'pp=opcode' },
         @testall,
-    ;
-
-    extends_make_test
-        target => 'test_pp_opcode',
-        env    => { XSLATE => 'pp=opcode' },
-        @testall,
-    ;
+    );
 }
 
 clean_files qw(
