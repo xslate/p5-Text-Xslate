@@ -962,6 +962,28 @@ Perl 5.8.1 or later.
 If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
 backend will be used.
 
+=head1 TODO
+
+=over
+
+=item *
+
+Default value. e.g. "FILLME".
+
+=item *
+
+Context controls. e.g. C<< <: [ $foo->bar @list ] :> >>.
+
+=item *
+
+Augment modifiers.
+
+=item *
+
+Loop controls.
+
+=cut
+
 =head1 BUGS
 
 All complex software has bugs lurking in it, and this module is no
