@@ -807,10 +807,11 @@ Xslate, which bridges Template::VMethods implementation.
     use Text::Xslate::Bridge::TT2;
 
     my $tx = Text::Xslate->new(
+        syntax => 'TTerse',
         module => [qw(Text::Xslate::Bridge::TT2)],
     );
 
-   print $tx->render_strig('[% "foo".length() %]'); # => 3
+   print $tx->render_string('[% "foo".length() %]'); # => 3
 
 See L<Text::Xslate::Bridge>, or search for C<Text::Xslate::Bridge::*> on CPAN.
 
