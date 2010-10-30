@@ -42,6 +42,19 @@ Xslate has a builtin C<dump> filter to dump template values.
 
     <: $value | dump # Dump $value with Data::Dumper :>
 
+=head2 Detection of missing variables (or typos or variable names)
+
+Xslate itself has warning system for use of uninitialized values, but sometimes
+it is not enough.
+
+If you want fill in some string, e.g. B<FILL ME>, for missing variables,
+you can use the C<hash_with_default()> utility. For example:
+
+    use Text::Xslate::Util qw(hash_with_default);
+    $tx->render($name, hash_with_default(\%vars, sub { "FILL ME '@_' " }) );
+
+Note that this is really B<slow> because it is a tied-hash wrapper.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>

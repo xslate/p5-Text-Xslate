@@ -11,6 +11,7 @@ our @EXPORT_OK = qw(
     uri_escape
     p
     html_builder
+    hash_with_default
 
     literal_to_value value_to_literal
     import_from
@@ -65,6 +66,19 @@ sub html_builder (&){
             : mark_raw($ret);
     };
 }
+
+sub hash_with_default {
+    my($hash_ref, $default) = @_;
+    ref($hash_ref) eq 'HASH'
+        or Carp::croak('Usage: hash_with_default(\%vars, $default)');
+    require 'Text/Xslate/HashWithDefault.pm';
+    my %vars;
+    tie %vars, 'Text::Xslate::HashWithDefault', $hash_ref, $default;
+    return \%vars;
+}
+
+
+# for internals
 
 sub neat {
     my($s) = @_;
@@ -317,6 +331,12 @@ Wraps I<&function> with C<mark_raw> so that the new subroutine returns
 a raw string.
 
 This function is the same as what Text::Xslate exports.
+
+=head3 C<< hash_with_default \%hash, $default :Any >>
+
+Set a default value I<$default> to I<%hash> and returns a HashRef.
+
+This is provided for debugging.
 
 =head1 SEE ALSO
 

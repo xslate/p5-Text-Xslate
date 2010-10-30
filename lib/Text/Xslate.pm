@@ -968,10 +968,6 @@ backend will be used.
 
 =item *
 
-Default value. e.g. "FILLME".
-
-=item *
-
 Context controls. e.g. C<< <: [ $foo->bar @list ] :> >>.
 
 =item *
@@ -981,6 +977,8 @@ Augment modifiers.
 =item *
 
 Loop controls.
+
+=back
 
 =cut
 
