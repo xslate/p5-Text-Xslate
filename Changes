@@ -1,5 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+0.2013 2010-10-30 15:17:40
+    [BUG FIXES]
+    * Magic handlings for 'print' opcode
+
+    [NEW FEATURES]
+    * hash_with_default(\%vars, $default) in Text::Xslate::Util
+      see Text::Xslate::Manual::Debugging
+
+    [OTHERS]
+    * Switch from M::I::ExtendsMakeTest to M::I::TestTarget
+
 0.2012 Mon Oct 18 23:25:38 2010
     * No code changes
     * Update Module::Install::ExtendsMakeTest (to HEAD of the repo)
