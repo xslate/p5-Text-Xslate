@@ -108,7 +108,7 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
 STATIC_INLINE bool
-tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv);
+tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv); /* doesn't handle magics */
 
 STATIC_INLINE void
 tx_sv_cat(pTHX_ SV* const dest, SV* const src);

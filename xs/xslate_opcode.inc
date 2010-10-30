@@ -121,6 +121,7 @@ TXC(print) {
     SV* const sv  = TX_st_sa;
     SV* const out = TX_st->output;
 
+    SvGETMAGIC(sv);
     if(tx_str_is_raw(aTHX_ aMY_CXT_ sv)) {
         SV* const arg = TX_UNMARK_RAW(sv);
         if(SvOK(arg)) {
