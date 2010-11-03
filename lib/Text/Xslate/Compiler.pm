@@ -1044,6 +1044,9 @@ sub _generate_binary {
 sub _generate_range {
     my($self, $node) = @_;
 
+    $self->can_be_in_list_context
+        or $self->_error("Range operator must be in list context");
+
     my @lhs  = $self->compile_ast($node->first);
 
     local $self->{lvar_id} = $self->lvar_use(1);
@@ -1199,6 +1202,20 @@ sub requires {
     my($self, @files) = @_;
     push @{ $self->dependencies }, @files;
     return;
+}
+
+sub can_be_in_list_context {
+    my $i = 2;
+    while(my $funcname = (caller ++$i)[3]) {
+        if($funcname =~ /::_generate_(\w+) \z/xms) {
+            return any_in($1,  qw(
+                methodcall
+                call
+                composer
+            ));
+        }
+    }
+    return 0;
 }
 
 # optimizatin stuff
