@@ -651,7 +651,7 @@ XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 From 0.1024 on, there are two pure Perl engines.
 C<Text::Xslate::PP::Booster>, enabled by C<< $ENV{XSLATE} = 'pp=booster' >>,
 generates optimized Perl code from intermediate code.
-C<Text::Xlsate::PP::Opcode>, enabled by C<< $ENV{XSLATE} = 'pp=opcode' >>,
+C<Text::Xslate::PP::Opcode>, enabled by C<< $ENV{XSLATE} = 'pp=opcode' >>,
 executes intermediate code directly, emulating the virtual machine in pure Perl.
 
 PP::Booster is much faster than PP::Opcode, but it may be less stable.

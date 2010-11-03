@@ -1004,7 +1004,7 @@ L<Text::Xslate::Syntax::TTerse>
 
 Xslate command:
 
-L<xlsate>
+L<xslate>
 
 The Xslate web site and public repository:
 
