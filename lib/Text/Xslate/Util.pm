@@ -256,11 +256,16 @@ sub make_error {
 sub read_around { # for error messages
     my($file, $line, $around) = @_;
 
-    defined($file) && defined($line)       or return '';
+    defined($file) && defined($line) or return '';
 
     $around = 1 if not defined $around;
 
-    open my $in, '<', $file or return '';
+    my $layer = '';
+    if(my $xslate = Text::Xslate->current_engine) {
+        $layer = $xslate->{input_layer};
+    }
+
+    open my $in, '<' . $layer, $file or return '';
     local $/ = "\n";
     local $. = 0;
 
