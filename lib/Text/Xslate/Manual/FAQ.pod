@@ -94,7 +94,7 @@ class methods (they need wrappers).
 If you want to add methods to builtin data types (nil, scalars, arrays and
 hashes), you can write bridge modules. See L<Text::Xslate::Bridge> for details.
 
-=head2 How to limit while-loop like Template-Toolkit?
+=head3 How to limit while-loop like Template-Toolkit?
 
 While Template-Toolkit has a loop counter to prevent runaway WHILE loop,
 Xslate has no arbitrary limitation.
@@ -131,6 +131,13 @@ they are not a I<real> CODE reference.
     print $tx->render_string('<: count($a, -> $x { $x >= 50 }) :>',
         { a => [ 0 .. 100 ] },
     ); # => 50
+
+=head2 Development
+
+=head3 How can I coloerize Xslate templates?
+
+If you are a C<vim> user, there is F<xslate.vim> for Kolon:
+L<https://github.com/motemen/xslate-vim>
 
 =head1 SEE ALSO
 
