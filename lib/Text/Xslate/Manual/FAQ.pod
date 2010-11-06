@@ -139,6 +139,28 @@ they are not a I<real> CODE reference.
 If you are a C<vim> user, there is F<xslate.vim> for Kolon:
 L<https://github.com/motemen/xslate-vim>
 
+=head2 Web Application Frameworks
+
+=head3 How can I use Xslate into my favorite WAF?
+
+There are bridges that integrate Xslate into WAFs:
+
+=over
+
+=item *
+
+L<Catalyst::View::Xslate>
+
+=item *
+
+L<MojoX::Renderer::Xslate>.
+
+=item *
+
+L<Tiffany>
+
+=back
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
