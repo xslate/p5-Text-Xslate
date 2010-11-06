@@ -185,6 +185,11 @@ has line => (
     required => 0,
 );
 
+has input_layer => (
+    is => 'ro',
+    default => ':utf8',
+);
+
 sub symbol_class() { 'Text::Xslate::Symbol' }
 
 # the entry point
@@ -1914,7 +1919,7 @@ sub _error {
     if($near ne ";" && $message !~ /\b \Q$near\E \b/xms) {
         $message .= ", near $near";
     }
-    die make_error($parser, $message . ", while parsing templates",
+    die $parser->make_error($message . ", while parsing templates",
         $parser->file, $line || $parser->line);
 }
 

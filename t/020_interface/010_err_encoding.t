@@ -19,5 +19,10 @@ my $tx = Text::Xslate->new(
 like $tx->render('hello_utf8.tx'), qr/こんにちは/;
 like $warn,                        qr/こんにちは/;
 
+eval {
+    $tx->render_string('<: こんにちは');
+};
+like $@, qr/<: こんにちは/;
+
 done_testing;
 

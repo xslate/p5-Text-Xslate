@@ -223,7 +223,7 @@ sub make_error {
         return ${$message};
     }
 
-    my $lines = read_around($file, $line);
+    my $lines = read_around($file, $line, 1, $self->input_layer);
     if($lines) {
         $lines .= "\n" if $lines !~ /\n\z/xms;
         $lines = '-' x $DisplayWidth . "\n"
@@ -254,18 +254,14 @@ sub make_error {
 }
 
 sub read_around { # for error messages
-    my($file, $line, $around) = @_;
+    my($file, $line, $around, $input_layer) = @_;
 
     defined($file) && defined($line) or return '';
 
-    $around = 1 if not defined $around;
+    $around      = 1  if not defined $around;
+    $input_layer = '' if not defined $input_layer;
 
-    my $layer = '';
-    if(my $xslate = Text::Xslate->current_engine) {
-        $layer = $xslate->{input_layer};
-    }
-
-    open my $in, '<' . $layer, $file or return '';
+    open my $in, '<' . $input_layer, $file or return '';
     local $/ = "\n";
     local $. = 0;
 

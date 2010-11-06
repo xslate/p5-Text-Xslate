@@ -52,6 +52,9 @@ if(!exists $INC{'Text/Xslate/PP.pm'}) {
 # it must be here because the bootstrap routine requires the under bar.
 $VERSION =~ s/_//;
 
+# for error messages (see T::X::Util)
+sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
+
 package Text::Xslate::Engine;
 
 use Text::Xslate::Util qw(
@@ -468,10 +471,13 @@ sub _compiler {
         require Any::Moose;
         Any::Moose::load_class($compiler);
 
+        my $input_layer = $self->input_layer;
         $compiler = $compiler->new(
-            engine => $self,
+            engine      => $self,
+            input_layer => $input_layer,
             $self->_extract_options(\%compiler_option),
             parser_option => {
+                input_layer => $input_layer,
                 $self->_extract_options(\%parser_option),
             },
         );

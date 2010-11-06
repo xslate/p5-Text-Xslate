@@ -58,6 +58,7 @@ Misc
 callback
 callbacks
 RFC
+colorize
 
 # personal name
 lestrrat
