@@ -984,6 +984,10 @@ Augment modifiers.
 
 Loop controls.
 
+=item *
+
+Default arguments and named arguments for macros.
+
 =back
 
 =cut
