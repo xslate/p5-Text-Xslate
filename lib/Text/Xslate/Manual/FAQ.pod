@@ -149,15 +149,15 @@ There are bridges that integrate Xslate into WAFs:
 
 =item *
 
-L<Catalyst::View::Xslate>
+L<Catalyst::View::Xslate> for L<Catalyst>
 
 =item *
 
-L<MojoX::Renderer::Xslate>.
+L<MojoX::Renderer::Xslate> for L<Mojolicious>
 
 =item *
 
-L<Tiffany>
+L<Tiffany> for general
 
 =back
 
