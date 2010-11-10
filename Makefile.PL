@@ -3,13 +3,28 @@
 #   "make test_with_env" does all the extra tests (with pure Perl, Moose, etc.)
 use strict;
 use warnings;
-BEGIN{
+BEGIN {
+	# author requires, or bundled modules
+    my @devmods = qw(
+        inc::Module::Install             1.00
+        Module::Install::XSUtil          0.36
+        Module::Install::TestTarget      0.13
+        Module::Install::AuthorTests     0.002
+    );
+    my @not_available;
+	while(my($mod, $ver) = splice @devmods, 0, 2) {
+        eval qq{use $mod $ver (); 1} or push @not_available, $mod;
+    }
+    if(@not_available) {
+        print qq{# The following modules are not available.\n};
+        print qq{# `perl $0 | cpanm` will install them:\n};
+        print $_, "\n" for @not_available;
+		exit 1;
+     }
+
     $INC{'Module/Install/ExtraTests.pm'} = 1;# considered harmful!
 }
 use inc::Module::Install;
-use Module::Install::XSUtil 0.36;
-use Module::Install::AuthorTests;
-use Module::Install::TestTarget;
 
 all_from 'lib/Text/Xslate.pm';
 
