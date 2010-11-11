@@ -181,7 +181,7 @@ C<$~ITERATOR_VAR> is a pseudo object, so you can access its elements
 via the dot-name syntax.
 
     : for $data -> $i {
-        : $~i       # iterator index (0, 1, 2, ...)
+        : $~i       # 0-origin iterator index (0, 1, 2, ...)
         : $~i.index # the same as $~i
         : $~i.count # the same as $~i + 1
 

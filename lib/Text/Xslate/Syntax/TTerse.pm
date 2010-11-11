@@ -650,7 +650,7 @@ Loop iterators are partially supported.
         [%- IF loop.is_first -%]
         <first>
         [%- END -%]
-        * [% loop.index %]
+        * [% loop.index %]  # 0 origin
         * [% loop.count     # loop.index + 1 %]
         * [% loop.body      # alias to arrayref %]
         * [% loop.size      # loop.body.size %]
