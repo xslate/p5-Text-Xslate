@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 BEGIN {
+    unshift @INC, 'inc';
 	# author requires, or bundled modules
     my @devmods = qw(
         inc::Module::Install             1.00
