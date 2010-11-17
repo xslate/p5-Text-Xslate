@@ -582,7 +582,7 @@ sub _can_print_optimize {
         && any_in($node->first->id, qw(raw mark_raw html));
 }
 
-sub _generate_command {
+sub _generate_print {
     my($self, $node) = @_;
 
     my @code;
@@ -612,16 +612,29 @@ sub _generate_command {
                 $self->opcode( $proc => undef, line => $node->line );
         }
     }
+
+    if(!@code) {
+        $self->_error("$node requires at least one argument", $node);
+    }
+    return @code;
+}
+
+sub _generate_include {
+    my($self, $node) = @_;
+
+    my $file = $node->first;
+    my @code = (
+        ( ref($file) eq 'ARRAY'
+            ? $self->opcode( literal => $self->_bare_to_file($file) )
+            : $self->compile_ast($file) ),
+        $self->opcode( $node->id => undef, line => $node->line ),
+    );
     if(defined(my $vars = $node->second)) {
         @code = ($self->opcode('enter'),
             $self->_localize_vars($vars),
             @code,
             $self->opcode('leave'),
         );
-    }
-
-    if(!@code) {
-        $self->_error("$node requires at least one argument", $node);
     }
     return @code;
 }
@@ -631,8 +644,11 @@ sub _bare_to_file {
     if(ref($file) eq 'ARRAY') { # myapp::foo
         return join('/', map { $_->value } @{$file}) . $self->{engine}->{suffix};
     }
-    else {
+    elsif($file->arity eq 'literal') {
         return $file->value;
+    }
+    else {
+        $self->_error("Expected a name or string literal", $file);
     }
 }
 

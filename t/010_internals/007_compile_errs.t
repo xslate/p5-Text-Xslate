@@ -238,6 +238,11 @@ eval {
 };
 like $@, qr/Forbidden/;
 
+eval {
+    $tx->render_string(': cascade $foo');
+};
+like $@, qr/Expected a name or string literal/;
+like $@, qr/\$foo/;
 
 # for TTerse
 

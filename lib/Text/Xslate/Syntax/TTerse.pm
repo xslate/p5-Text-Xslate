@@ -372,11 +372,7 @@ sub set_list {
 sub std_get {
     my($parser, $symbol) = @_;
 
-    my $stmt = $symbol->clone(
-        id    => 'print',
-        arity => 'command',
-        first => [ $parser->expression(0) ],
-    );
+    my $stmt = $parser->print( $parser->expression(0) );
     return $parser->finish_statement($stmt);
 }
 
@@ -552,14 +548,7 @@ sub std_filter {
         $filter = 'unmark_raw';
     }
     my $callfilter = $parser->call($filter, $callmacro);
-
-    my $print = $parser->symbol('print')->clone(
-        arity => 'command',
-        first => [$callfilter],
-        line  => $symbol->line,
-    );
-
-    return( $proc, $print );
+    return( $proc, $parser->print($callfilter) );
 }
 
 no Any::Moose;

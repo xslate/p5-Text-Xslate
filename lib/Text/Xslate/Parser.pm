@@ -434,8 +434,8 @@ sub _init_basic_symbols {
     $parser->symbol('=>') ->is_comma(1);
 
     # common commands
-    $parser->symbol('print')    ->set_std(\&std_command);
-    $parser->symbol('print_raw')->set_std(\&std_command);
+    $parser->symbol('print')    ->set_std(\&std_print);
+    $parser->symbol('print_raw')->set_std(\&std_print);
 
     # special literals
     $parser->define_literal(nil   => undef);
@@ -1070,6 +1070,15 @@ sub define { # define a name to the scope
     return $symbol;
 }
 
+sub print {
+    my($parser, @args) = @_;
+    return $parser->symbol('print')->clone(
+        arity => 'print',
+        first => \@args,
+        line  => $parser->line,
+    );
+}
+
 sub binary {
     my($parser, $symbol, $lhs, $rhs) = @_;
     if(!ref $symbol) {
@@ -1154,11 +1163,7 @@ sub auto_command {
         return $expr;
     }
     else {
-        return $parser->symbol('print')->clone(
-            arity  => 'command',
-            first  => [$expr],
-            line   => $expr->line,
-        );
+        return $parser->print($expr);
     }
 }
 
@@ -1489,12 +1494,8 @@ sub std_macro_block {
             $call = $parser->call($filter, $call);
         }
     }
-    my $print = $parser->symbol('print')->clone(
-        arity => 'command',
-        first => [$call],
-    );
     # std() can return a list
-    return( $macro, $print );
+    return( $macro, $parser->print($call) );
 }
 
 sub std_override { # synonym to 'around'
@@ -1637,41 +1638,37 @@ sub build_given_body {
 sub std_include {
     my($parser, $symbol) = @_;
 
-    my $arg  = $parser->expression(0);
+    my $arg  = $parser->barename();
     my $vars = $parser->localize_vars();
     my $stmt = $symbol->clone(
-        first  => [$arg],
+        first  => $arg,
         second => $vars,
-        arity  => 'command',
+        arity  => 'include',
     );
     return $parser->finish_statement($stmt);
 }
 
-sub std_command {
+sub std_print {
     my($parser, $symbol) = @_;
     my $args;
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
-    my $stmt = $symbol->clone(first => $args, arity => 'command');
+    my $stmt = $symbol->clone(first => $args, arity => 'print');
     return $parser->finish_statement($stmt);
 }
 
+# for cascade() and include()
 sub barename {
     my($parser) = @_;
 
     my $t = $parser->token;
-    if(!any_in($t->arity, qw(name literal))) {
-        $parser->_unexpected("a name or string literal", $t)
+    if($t->arity ne 'name') {
+        # string literal for 'cascade', or any expression for 'include'
+        return $parser->expression(0);
     }
 
-    # "string" is ok
-    if($t->arity eq 'literal') {
-        $parser->advance();
-        return $t;
-    }
-
-    # package::name
+    # path::to::name
     my @parts;
     push @parts, $t;
     $parser->advance();
