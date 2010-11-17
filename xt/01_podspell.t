@@ -77,4 +77,6 @@ clouder
 punytan
 chiba
 turugina
+WAF
+WAFs
 
