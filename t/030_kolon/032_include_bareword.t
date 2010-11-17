@@ -21,5 +21,19 @@ is $tx->render_string(<<EOT), 'Hello, world!', 'include bareword';
 : include hello;
 EOT
 
+%vpath = (
+    'hello.html' => 'Hello, world!',
+);
+
+$tx = Text::Xslate->new(
+    path   => \%vpath,
+    cache  => 0,
+    suffix => '.html',
+);
+
+is $tx->render_string(<<EOT), 'Hello, world!', 'include bareword';
+: include hello;
+EOT
+
 done_testing;
 
