@@ -141,7 +141,7 @@ The operator precedence is very like Perl's:
 
 =head2 Constants (or binding)
 
-You can define lexical constants with C<constant>, which requires a bare name,
+You can define lexical constants with C<constant>, which requires a bare word,
 and C<my>, which requires a variable name.
 
     : constant FOO = 42;
@@ -328,6 +328,11 @@ Template inclusion is a traditional way to extend templates.
 
     : include "foo.tx";
     : include "foo.tx" { var1 => value1, var2 => value2, ... };
+
+As C<cascade> does, C<include> allows barewords:
+
+    : include foo      # the same as 'foo.tx'
+    : include foo::bar # the same as 'foo/bar.tx'
 
 Xslate templates may be recursively included, but the including depth is
 limited to 100.

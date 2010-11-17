@@ -718,7 +718,8 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 
 =item C<< suffix => $ext // '.tx' >>
 
-Specify the template suffix, which is used for template cascading.
+Specify the template suffix, which is used for C<cascade> and C<include>
+in Kolon.
 
 =item C<< syntax => $name // 'Kolon' >>
 
