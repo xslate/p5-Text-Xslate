@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+0.2015 2010-11-17 22:27:34
+    [NEW FEATURES]
+    * The 'include' command allows barewords as 'cascade' does
+
 0.2014 2010-11-06 09:24:00
     [BUF FIXES]
     * Error messages did not respect input_layer

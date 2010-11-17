@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '0.2014';
+our $VERSION = '0.2015';
 
 use Carp              ();
 use File::Spec        ();
@@ -521,7 +521,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 0.2014.
+This document describes Text::Xslate version 0.2015.
 
 =head1 SYNOPSIS
 
