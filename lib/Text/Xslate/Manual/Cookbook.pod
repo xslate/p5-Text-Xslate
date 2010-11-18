@@ -200,6 +200,22 @@ and originated from Mojo.
 See also L<Data::Section::Simple>, L<Text::MicroTemplate::DataSection>,
 and L<Mojo>.
 
+=head1 How to assign a specific C<path> by user's environment
+
+If you want to assign a specific C<path> by users environment, namely their
+language or platform (PC or mobile), you'd better create Xslate instances
+with those C<path>s.
+
+For example:
+
+    my %common_config = ( cache_dir => $dir, module => \@module );
+    my %xslate = (
+        ja => Text::Xslate->new( path => [ $template_ja ], %common_config ),
+        en => Text::Xslate->new( path => [ $template_en ], %common_config ),
+        ro => Text::Xslate->new( path => [ $template_ro ], %common_config ),
+    );
+    $xslate{$lang}->render(...);
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
