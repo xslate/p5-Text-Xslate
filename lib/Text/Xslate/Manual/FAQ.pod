@@ -110,6 +110,17 @@ Instead, you can use C<alarm()> to limit B<any> runaway code:
         # timeout!
     }
 
+=head3 Does Xslate process text strings, or binary strings?
+X<utf8> X<UTF-8> X<utf8 flagged string> X<unicode>
+
+(The meaning of I<text string> and I<binary string> is that of Perl,
+see L<perlunifaq>.)
+
+Xslate assumes template files to be encoded in C<UTF-8> by default, so the
+output is a text string and template parameters must be text strings.
+However, if you want to process binary strings, you can do by passing C<:raw>
+for C<input_encoding>.
+
 =head2 Functions, filters and macros
 
 =head3 How can I use macros as a callback to high-level functions?
