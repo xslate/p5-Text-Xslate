@@ -3,7 +3,26 @@ use strict;
 use Test::More;
 use Text::Xslate;
 
-my $tx = Text::Xslate->new(
+{
+    package Foo;
+    use Any::Moose;
+
+    has bar => (
+        is  => 'rw',
+        isa => 'Int',
+    );
+
+    package MyXslate;
+    our @ISA = qw(Text::Xslate);
+
+    sub render_string {
+        my($self, @args) = @_;
+        local $self->{foo} = 'bar';
+        return $self->SUPER::render_string(@args);
+    }
+}
+
+my $tx = MyXslate->new(
     module       => [qw(Carp) => [qw(confess croak)] ],
     warn_handler => sub { die @_ },
 );
@@ -18,5 +37,9 @@ eval {
 };
 like $@, qr/bar/, 'confess in templates';
 
+eval {
+    $tx->render_string('<: $foo.bar("xyzzy") :>', { foo => Foo->new });
+};
+like $@, qr/Validation failed/, 'confess in templates';
 done_testing;
 
