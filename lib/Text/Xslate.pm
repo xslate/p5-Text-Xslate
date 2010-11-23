@@ -635,7 +635,8 @@ engine and even add a new syntax via extending the parser.
 
 =head3 B<< Text::Xslate->new(%options) :XslateEngine >>
 
-Creates a new xslate template engine with options.
+Creates a new xslate template engine with options. You can reuse the instance
+for multiple call of C<render()>.
 
 Possible options are:
 
@@ -742,7 +743,8 @@ This option is passed to the compiler directly.
 
 =item C<< line_start => $token // $parser_defined_str >>
 
-Specify the token to start line code as a string, which C<quotemeta> will be applied to.
+Specify the token to start line code as a string, which C<quotemeta> will be applied to. If you give C<undef> to this option, the line code style will be
+disabled.
 
 This option is passed to the parser via the compiler.
 

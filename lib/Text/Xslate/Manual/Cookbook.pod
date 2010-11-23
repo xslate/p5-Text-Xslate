@@ -200,7 +200,7 @@ and originated from Mojo.
 See also L<Data::Section::Simple>, L<Text::MicroTemplate::DataSection>,
 and L<Mojo>.
 
-=head1 How to assign a specific C<path> by user's environment
+=head2 How to assign a specific C<path> by user's environment
 
 If you want to assign a specific C<path> by users environment, namely their
 language or platform (PC or mobile), you'd better create Xslate instances
@@ -215,6 +215,17 @@ For example:
         ro => Text::Xslate->new( path => [ $template_ro ], %common_config ),
     );
     $xslate{$lang}->render(...);
+
+=head2 How to interpolate data into JavaScript sections without XSS
+
+(This section is not yet completed. Example code should be provided.)
+
+Because Xslate escapes only HTML meta characters, you must escape
+JavaScript meta characters by yourself when you give data into
+C<< <script> ... </script> >> sections.
+
+It is better to use secure modules for JavaScript escaping to avoid XSS.
+L<JavaScript::Value::Escape> may help you for this aim.
 
 =head1 SEE ALSO
 
