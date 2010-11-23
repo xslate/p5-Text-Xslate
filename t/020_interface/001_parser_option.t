@@ -18,6 +18,17 @@ is $tx->render_string(<<'T'), qq{: "Hello, Xslate world!"\n};
 : "Hello, Xslate world!"
 T
 
+# https://github.com/gfx/p5-Text-Xslate/issues#issue/21
+$tx = Text::Xslate->new(
+    line_start => undef,
+);
+
+is $tx->render_string(<<'T'), qq{# "Hello, Xslate world!"\n}, 'line_start => undef';
+# "Hello, Xslate world!"
+T
+is $tx->render_string(<<'T'), qq{: "Hello, Xslate world!"\n};
+: "Hello, Xslate world!"
+T
 
 $tx = Text::Xslate->new(
     tag_start => '[%',

@@ -141,7 +141,7 @@ sub new {
         if(exists $args{$key}) {
             $used++;
         }
-        if(!defined($args{$key}) && defined($options->{$key})) {
+        elsif(defined($options->{$key})) {
             $args{$key} = $options->{$key};
         }
     }
@@ -437,7 +437,7 @@ sub _save_compiled {
 sub _magic_token {
     my($self, $fullpath) = @_;
 
-    my $opt = Data::MessagePack->pack([
+    $self->{serial_opt} ||= Data::MessagePack->pack([
         ref($self->{compiler}) || $self->{compiler},
         $self->_extract_options(\%parser_option),
         $self->_extract_options(\%compiler_option),
@@ -449,14 +449,14 @@ sub _magic_token {
         $md5->add(${$fullpath});
         $fullpath = join ':', ref($fullpath), $md5->hexdigest();
     }
-    return sprintf $XSLATE_MAGIC, $fullpath, $opt;
+    return sprintf $XSLATE_MAGIC, $fullpath, $self->{serial_opt};
 }
 
 sub _extract_options {
     my($self, $opt_ref) = @_;
     my @options;
     foreach my $name(sort keys %{$opt_ref}) {
-        if(defined($self->{$name})) {
+        if(exists $self->{$name}) {
             push @options, $name => $self->{$name};
         }
     }
