@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.3000
+    [CHANGES]
+    * `option => undef` passes the option as is, which allows
+      Text::Xslate->new( line_start => undef ) (issue/21, reported by @tomita)
+
 0.2015 2010-11-17 22:27:34
     [NEW FEATURES]
     * The 'include' command allows barewords as 'cascade' does
