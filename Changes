@@ -1,9 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
-0.3000
+0.3000 2010-11-23 15:19:04
     [CHANGES]
     * `option => undef` passes the option as is, which allows
-      Text::Xslate->new( line_start => undef ) (issue/21, reported by @tomita)
+      Text::Xslate->new( line_start => undef ) (issue/21, reported by @tomita).
+      Note that this is an IMCOMPATIBLE CHANGE.
+
+    [DOCUMENTS]
+    * Update Cookbook and FAQ
 
 0.2015 2010-11-17 22:27:34
     [NEW FEATURES]
