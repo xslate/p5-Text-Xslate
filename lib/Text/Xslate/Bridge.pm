@@ -16,7 +16,7 @@ sub bridge {
 
 sub export_into_xslate {
     my($class, $funcs_ref, @args) = @_;
-    @{$funcs_ref} = $class->methods(@args);
+    push @{$funcs_ref}, $class->methods(@args);
     return;
 }
 
