@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.3001 2010-12-09 17:18:14
+    [BUG FIXES]
+    * Fix `module => \@bridges` that importing of bridge modules
+      incorrectly cleared the function mapping (reported by lestrrat)
+
 0.3000 2010-11-23 15:19:04
     [CHANGES]
     * `option => undef` passes the option as is, which allows
