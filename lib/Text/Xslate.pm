@@ -1073,9 +1073,11 @@ Thanks to chiba for the bug reports and patches.
 
 Thanks to turugina for the patch to fix Win32 problems
 
-Thanks to Sam Graham to the bug reports.
+Thanks to Sam Graham for the bug reports.
 
-Thanks to Mons Anderson to the bug reports and patches.
+Thanks to Mons Anderson for the bug reports and patches.
+
+Thanks to hirose31 for the feature requests and bug reports.
 
 =head1 AUTHOR
 

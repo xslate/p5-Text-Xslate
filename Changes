@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+0.3002 2010-12-16 16:17:48
+    [BUG FIXES]
+    * hash_with_default() didn't work with `include with vars` syntax
+      (thanks to hirose31 for reporting this issue)
+
 0.3001 2010-12-09 17:18:14
     [BUG FIXES]
     * Fix `module => \@bridges` that importing of bridge modules

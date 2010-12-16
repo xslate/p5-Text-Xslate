@@ -56,7 +56,7 @@ TXC_w_key(localize_s) {
     else {
         save_helem(vars, key, svp);
     }
-    sv_setsv(*svp, newval);
+    sv_setsv_mg(*svp, newval);
 
     TX_RETURN_NEXT();
 }
