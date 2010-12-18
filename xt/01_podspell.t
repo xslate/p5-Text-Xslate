@@ -77,6 +77,7 @@ clouder
 punytan
 chiba
 turugina
+hirose
 
 WAF
 WAFs
