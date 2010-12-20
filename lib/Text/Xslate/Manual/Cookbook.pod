@@ -227,6 +227,25 @@ C<< <script> ... </script> >> sections.
 It is better to use secure modules for JavaScript escaping to avoid XSS.
 L<JavaScript::Value::Escape> may help you for this aim.
 
+=head2 How to use localization in templates
+
+For example:
+
+    use I18N::Handle;
+    I18N::Handle->new( ... )->speak('zh_tw');  # I18N::Handle export the locale function "_" to global.
+
+    my $tx = Text::Xslate->new(
+        function => {
+            _ => \&_,
+        },
+    );
+
+Then in your templates:
+
+    <: _('Hello %1', $john ) :>
+
+See also: L<I18N::Handle>, L<App::I18N>.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
