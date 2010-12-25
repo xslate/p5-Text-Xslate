@@ -528,7 +528,7 @@ This document describes Text::Xslate version 0.3002.
     use Text::Xslate;
 
     my $tx = Text::Xslate->new(
-        # the fillowing options are optional.
+        # the following options are optional.
         path       => ['.'],
         cache_dir  => "$ENV{HOME}/.xslate_cache",
         cache      => 1,
