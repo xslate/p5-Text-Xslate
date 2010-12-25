@@ -31,6 +31,10 @@ C<syntax> option to the Text::Xslate constructor.
         syntax => 'Text::Xslate::Syntax::TTerse', # by fully qualified name
     );
 
+=head3 What version of perl does Xslate require?
+
+Xslate is tested on perl v5.8.1. No special settings should be required.
+
 =head2 Templates
 
 =head3 How can I changes template tags?
