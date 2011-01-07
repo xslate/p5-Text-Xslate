@@ -59,8 +59,7 @@ sub escaped_string; *escaped_string = \&mark_raw;
 sub html_builder (&){
     my($code_ref) = @_;
     return sub {
-        my($s) = @_;
-        my $ret = $code_ref->(unmark_raw($s));
+        my $ret = $code_ref->(map { unmark_raw($_) } @_);
         return ref($ret) eq 'CODE'
             ? html_builder(\&{$ret})
             : mark_raw($ret);

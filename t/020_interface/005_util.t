@@ -107,6 +107,11 @@ is html_escape(html_escape('<Xslate>')), '&lt;Xslate&gt;', 'duplicated html_esca
 
 my $hb = html_builder { "<br />" };
 is $hb->(), "<br />";
+$hb = html_builder {
+    my($x, $y) = @_;
+    return sprintf "<%d>", $x + $y;
+};
+is $hb->(1, 2), "<3>";
 
 # uri_escape
 
