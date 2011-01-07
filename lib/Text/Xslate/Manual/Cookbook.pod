@@ -229,10 +229,14 @@ L<JavaScript::Value::Escape> may help you for this aim.
 
 =head2 How to use localization in templates
 
+You can register any functions including C<_()>, so no specific techniques are required.
+
 For example:
 
     use I18N::Handle;
-    I18N::Handle->new( ... )->speak('zh_tw');  # I18N::Handle export the locale function "_" to global.
+    # I18N::Handle installs the locale function "_" to the global namespace.
+    # (remember the symbol *_ is global)
+    I18N::Handle->new( ... )->speak('zh_tw');
 
     my $tx = Text::Xslate->new(
         function => {
