@@ -64,6 +64,7 @@ ppport\.h$
 
 \.txc$
 \.ttc$
+\.cache$
 
 \.c$
 

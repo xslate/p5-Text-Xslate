@@ -13,6 +13,7 @@ use Getopt::Long;
 use Test::More;
 use Benchmark qw(:all);
 use FindBin qw($Bin);
+use Storable ();
 use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 
 GetOptions(
@@ -103,11 +104,11 @@ if($has_mst) {
 }
 
 my $tenjin;
-if($try_tenjin) {
-    $tenjin = Tenjin->new(
+if($has_tenjin) {
+    $tenjin = Tenjin->new({
         path => [$path],
         strict => 1,
-    );
+    });
 }
 
 my $vars = {
@@ -118,6 +119,7 @@ my $vars = {
         }) x $n
    ],
 };
+my $vars_tenjin = Storable::dclone($vars);
 
 {
     my $expected = $tx->render("$tmpl.tx", $vars);
@@ -127,6 +129,7 @@ my $vars = {
     $tests++ if $has_tcs;
     $tests++ if $has_mst;
     $tests++ if $has_htp;
+    $tests++ if $has_tenjin;
     plan tests => $tests;
 
     $tt->process("$tmpl.tt", $vars, \my $out) or die $tt->error;
@@ -154,6 +157,11 @@ my $vars = {
         $out = $htp->output();
         $out =~ s/\n+/\n/g;
         is $out, $expected, 'HTP: HTML::Template::Pro';
+    }
+    if($has_tenjin) {
+        $out = $tenjin->render("$tmpl.tj", $vars_tenjin);
+        $out =~ s/\n+/\n/g;
+        is $out, $expected, 'Tenjin';
     }
 }
 
@@ -190,6 +198,12 @@ cmpthese -1 => {
         HTP => sub {
             $htp->param($vars);
             my $body = $htp->output();
+            return;
+        },
+    ) : (),
+    $has_tenjin ? (
+        Tenjin => sub {
+            my $body = $tenjin->render("$tmpl.tj", $vars_tenjin);
             return;
         },
     ) : (),
