@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+1.0001 2011-02-02 11:50:43
+    [BUG FIXES]
+    * Template caches was not purged correctly when functions were added
+      (thanks to @tokuhirom for reporting it)
+    * The 'super' keyword didn't work in template components
+      (thanks to @shiba_yu36 for reporting it)
+
 1.0000 2011-01-07 16:08:44
     This is the version 1.0, which means "very stable". Although some features are planned
     to impement in the near future, the basic features are unlikely to be changed.
