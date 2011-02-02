@@ -132,9 +132,9 @@ The current iterating index in the loop, which starts B<0>.
 
 =head2 C<< $~item.count >>
 
-The current iterating count in the loop, which starts B<1>. The same as C<< $~item + 1 >>.
+The current iterating count in the loop, which starts B<1>. i.e. the same as C<< $~item + 1 >>.
 
-=head2 C<< $~item.cycle(...) >
+=head2 C<< $~item.cycle(...) >>
 
 Selects a value in the arguments in cycle.
 
