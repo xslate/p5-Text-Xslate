@@ -633,6 +633,47 @@ This mechanism is also called as template inheritance.
 Xslate is highly extensible. You can add functions and methods to the template
 engine and even add a new syntax via extending the parser.
 
+=head2 Optimizations Employed By Text::Xslate
+
+Here are some optimizations worth noting that makes Text::Xslate run so fast,
+in no particular order:
+
+=head3 Pre-Compiled Templates
+
+Text::Xslate is among the template engines that pre-compile the templates.
+This is similar to, say, Template::Toolkit, but Text::Xslate compiles the
+templates to C structures and stores them as binary data.
+
+=head3 Built On Top Of A Virtual Machine
+
+Text::Xslate is built on top of virtual machine that executes bytecode, and
+this virtual machine is fine-tuned I<speficially> for template processing.
+
+The virtual machine also employs optimizations such as direct-threading 
+style coding to shave off any extra milliseconds that the engine might take
+otherwise
+
+=head3 Custom Byte Codes For Oft-Used Operations
+
+Some operations which are used very often are optimized into its own
+byte code. For example (as described elsewhere) Text::Xslate automatically
+escapes HTML unless you tell it not to. Text::Xslate implements this process
+which involves escaping the string I<while> appending the result to the
+output buffer in C, as a custom byte code. This lets you avoid the penalties
+usually involved in such operations.
+
+=head3 Pre-Allocation Of Output Buffers
+
+One of the main things to consider to reduce performance degradation
+while processing a template is to avoid the number of calls to C<malloc()>.
+One of the tricks that Text::Xslate employs to reduce the number of calls to
+C<malloc()> is to pre-allocate the output buffer in an intelligent manner: 
+For exmample, Text::Xslate assumes that most templates will be rendered to be
+about the same as the previous run, so when a template is rendered it uses
+the size allocated for the previous rendering as an approximation of how much
+space the current rendering will require. This allows to greatly reduce the
+number of C<malloc()> calls required to render a template.
+
 =head1 INTERFACE
 
 =head2 Methods
