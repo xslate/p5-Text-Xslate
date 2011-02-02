@@ -120,6 +120,64 @@ For example:
         <: $pair.key :>=<: $pair.value :>
     : }
 
+=head1 LOOP VARIABLES
+
+You can use special loop variables in C<for> loops, although its forms vary in template syntaxes, i.e. C<< $~item >> in Kolon and C<< loop >> in TTerse. In this list, the name of the loop variable is represented as C<< $~item >>.
+
+See also L<Text::Xslate::Syntax::Kolon/Loops> and L<Text::Xslate::Syntax::TTerse/Loops>.
+
+=head2 C<< $~item / $~item.index >>
+
+The current iterating index in the loop, which starts B<0>.
+
+=head2 C<< $~item.count >>
+
+The current iterating count in the loop, which starts B<1>. The same as C<< $~item + 1 >>.
+
+=head2 C<< $~item.cycle(...) >
+
+Selects a value in the arguments in cycle.
+
+For example:
+
+    : for $arrayref -> $item {
+        <: $~item.cycle('odd', 'even') :>
+    : }
+
+It will print C<< odd even odd even ... >>.
+
+=head2 C<< $~item.is_first >>
+
+True if the loop block is the first, false otherwise.
+
+This is aliased to C<first> in TTerse for compatibility with TT2.
+
+=head2 C<< $~item.last >>
+
+True if the loop block is the last, false otherwise.
+
+This is aliased to C<last> in TTerse for compatibility with TT2.
+
+=head2 C<< $~item.peek_next >>
+
+The next item of the looping array. C<nil> if C<is_last>. i.e. the same as C<< $~item.is_last ? nil : $~item.body[$~item+1] >>.
+
+=head2 C<< $~item.peek_prev >>
+
+The previous item of the looping array. C<nil> if C<is_first>. i.e. the same as C<< $~item.is_first ? nil : $~item.body[$~item-1] >>.
+
+=head2 C<< $~item.body >>
+
+The reference of the looping array.
+
+=head2 C<< $~item.size >>
+
+The size of the looping array. i.e. C<< scalar(@{$arrayref}) >> in Perl.
+
+=head2 C<< $~item.max_index >>
+
+The maximum index of the looping array. i.e. C<< $#{$arrayref} >> in Perl.
+
 =head1 FILTERS/FUNCTIONS
 
 The xslate engine supports filter syntax as well as function call.
