@@ -526,7 +526,7 @@ This document describes Text::Xslate version 1.0000.
 
 =head1 SYNOPSIS
 
-    use Text::Xslate;
+    use Text::Xslate qw(mark_raw);
 
     my $tx = Text::Xslate->new(
         # the following options are optional.
@@ -542,6 +542,9 @@ This document describes Text::Xslate version 1.0000.
             { title => 'Programming Perl'      },
             # ...
         ],
+
+        # mark HTML components as raw not to escape its HTML tags
+        gadget => mark_raw('<div class="gadget">...</div>'),
     );
 
     # for files
