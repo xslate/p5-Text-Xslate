@@ -266,6 +266,31 @@ T
 * Int
 END
 X
+
+    [<<'T', <<'X', 'nested'],
+[%- FOR outer IN nested -%]
+[% SET o_index = loop.index -%]
+[% FOR elem IN outer -%]
+[% o_index %].[% loop.index %]: [% elem %]
+[% END -%]
+END inner
+[% END -%]
+END
+T
+0.0: A1
+0.1: A2
+0.2: A3
+END inner
+1.0: B1
+1.1: B2
+1.2: B3
+END inner
+2.0: C1
+2.1: C2
+2.2: C3
+END inner
+END
+X
 );
 
 foreach my $d(@data) {
@@ -275,8 +300,12 @@ foreach my $d(@data) {
 
     my %vars = (
         lang => 'Xslate',
-
         types => [qw(Str Int Object)],
+        nested => [
+            [ qw( A1 A2 A3 ) ],
+            [ qw( B1 B2 B3 ) ],
+            [ qw( C1 C2 C3 ) ],
+        ]
     );
     is render_str($in, \%vars), $out, $msg;
 }
