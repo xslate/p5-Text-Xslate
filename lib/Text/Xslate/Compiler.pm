@@ -21,6 +21,7 @@ use constant {
     _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms),
     _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms),
     _DUMP_GEN => scalar($DEBUG =~ /\b dump=gen \b/xms),
+    _DUMP_CAS => scalar($DEBUG =~ /\b dump=cascade \b/xms),
 
     _OP_NAME    => 0,
     _OP_ARG     => 1,
@@ -367,6 +368,7 @@ sub compile_ast {
 
 sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
+    printf STDERR "cascade %s\n", $self->file, $cascade->dump if _DUMP_CAS;
     my $engine = $self->engine
         || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 
@@ -456,6 +458,7 @@ sub _process_cascade {
 
 sub _process_cascade_file {
     my($self, $file, $base_code) = @_;
+    printf STDERR "cascade file %s\n", Mouse::Util::dump($file) if _DUMP_CAS;
     my $mtable = $self->macro_table;
 
     for(my $i = 0; $i < @{$base_code}; $i++) {

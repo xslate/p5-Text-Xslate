@@ -675,7 +675,7 @@ $CODE_MANIP{ 'fetch_symbol' } = sub {
 
     # macro
     if ( exists $self->stash->{ macro_names }->{ $arg } ) {
-        my $next_op = $self->ops->[ $self->current_line + 1 ]; 
+        my $next_op = $self->ops->[ $self->current_line + 1 ];
         if ( $next_op->[0] eq 'funcall' ) {
             $self->sa( $arg );
         }
@@ -777,11 +777,11 @@ $CODE_MANIP{ 'goto' } = sub {
 };
 
 
-$CODE_MANIP{ 'depend' } = $CODE_MANIP{'noop'};
-
+$CODE_MANIP{ 'depend' }      = $CODE_MANIP{'noop'};
 $CODE_MANIP{ 'macro_nargs' } = $CODE_MANIP{'noop'};
 $CODE_MANIP{ 'macro_outer' } = $CODE_MANIP{'noop'};
 $CODE_MANIP{ 'set_opinfo'  } = $CODE_MANIP{'noop'};
+$CODE_MANIP{ 'super'  }      = $CODE_MANIP{'noop'};
 
 $CODE_MANIP{ 'end' } = sub {
     my ( $self, $arg, $line ) = @_;
