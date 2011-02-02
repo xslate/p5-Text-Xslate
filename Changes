@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.0002 2011-02-02 12:02:40
+    [BUG FIXES]
+    * A tiny doc fix
+
 1.0001 2011-02-02 11:50:43
     [BUG FIXES]
     * Template caches was not purged correctly when functions were added
