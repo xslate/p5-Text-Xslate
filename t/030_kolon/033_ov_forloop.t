@@ -6,7 +6,10 @@ use Text::Xslate;
 
 {
     package _defer;
-    use overload '@{}' => sub { $_[0]->() }, fallback => 1;
+    use overload
+        '@{}' => sub { $_[0]->() },
+        '%{}' => sub { $_[0]->() },
+        fallback => 1;
 
     package _str;
     use overload '""' => sub { 'foo' };
@@ -48,5 +51,27 @@ is $tx->render_string(': for $foo -> $i { $i }',
     { foo => defer { 42 } }), '';
 is $tx->render_string(': for $foo -> $i { $i }',
     { foo => bless {}, '_str'}), '';
+
+# is_array_ref() is_hash_ref() respect overloading
+
+foreach my $x([], defer { [] }) {
+    ok $tx->render_string(': is_array_ref($x)', { x => $x }),
+        "is_array_ref($x)";
+}
+
+foreach my $x(0, {}, bless [], defer { "foo" }) {
+    ok $tx->render_string(': !is_array_ref($x)', { x => $x }),
+        "!is_array_ref($x)";
+}
+
+foreach my $x({}, defer { +{} }) {
+    ok $tx->render_string(': is_hash_ref($x)', { x => $x }),
+        "is_hash_ref($x)";
+}
+
+foreach my $x(0, [], bless {}, defer { "foo" }) {
+    ok $tx->render_string(': !is_hash_ref($x)', { x => $x }),
+        "!is_hash_ref($x)";
+}
 
 done_testing;

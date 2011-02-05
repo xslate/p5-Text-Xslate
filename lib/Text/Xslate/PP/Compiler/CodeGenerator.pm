@@ -512,12 +512,16 @@ $CODE_MANIP{ 'builtin_uri' } = sub  {
 
 $CODE_MANIP{ 'builtin_is_array_ref' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'ref( %s ) eq "ARRAY"', $self->sa ) );
+    $self->sa( sprintf(
+        'Text::Xslate::Util::is_array_ref(%s)',
+        $self->sa ) );
 };
 
 $CODE_MANIP{ 'builtin_is_hash_ref' } = sub  {
     my ( $self, $arg, $line ) = @_;
-    $self->sa( sprintf( 'ref( %s ) eq "HASH"', $self->sa ) );
+    $self->sa( sprintf(
+        'Text::Xslate::Util::is_hash_ref(%s)',
+        $self->sa ) );
 };
 
 $CODE_MANIP{ 'match' } = sub {

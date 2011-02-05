@@ -108,11 +108,21 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
-STATIC_INLINE bool
+static bool
 tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id);
 
-STATIC_INLINE bool
-tx_sv_is_array_ref(pTHX_ SV* const sv);
+static SV*
+tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, int const amg_id);
+
+STATIC_INLINE SV*
+tx_sv_is_array_ref(pTHX_ SV* const sv) {
+    return tx_sv_is_ref(aTHX_ sv, SVt_PVAV, to_av_amg);
+}
+
+STATIC_INLINE SV*
+tx_sv_is_hash_ref(pTHX_ SV* const sv) {
+    return tx_sv_is_ref(aTHX_ sv, SVt_PVHV, to_hv_amg);
+}
 
 STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv); /* doesn't handle magics */
@@ -374,7 +384,7 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
 }
 
 
-STATIC_INLINE bool
+static bool
 tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id) {
     if(SvAMAGIC(sv)) {
         const MAGIC* const mg = mg_find((SV*)SvSTASH(SvRV(sv)),
@@ -387,11 +397,25 @@ tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id) {
     return FALSE;
 }
 
-STATIC_INLINE bool
-tx_sv_is_array_ref(pTHX_ SV* const sv) {
-    return SvROK(sv)
-    && SvTYPE(SvRV(sv)) == SVt_PVAV
-    && !SvOBJECT(SvRV(sv));
+static SV*
+tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, const int amg_id) {
+    if(SvROK(sv)) {
+        SV* const r = SvRV(sv);
+        if(SvOBJECT(r)) {
+            if(tx_sv_has_amg(aTHX_ sv, amg_id)) {
+                SV* const tmpsv = AMG_CALLun_var(sv, amg_id);
+                if(SvROK(tmpsv)
+                        && SvTYPE(SvRV(tmpsv)) == svt
+                        && !SvOBJECT(SvRV(tmpsv))) {
+                    return tmpsv;
+                }
+            }
+        }
+        else if(SvTYPE(r) == svt) {
+            return sv;
+        }
+    }
+    return NULL;
 }
 
 STATIC_INLINE bool
@@ -1026,7 +1050,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
     }
 
     sv = hv_iterval(ttable, he);
-    if(!tx_sv_is_array_ref(aTHX_ sv)) {
+    if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
         why = "template entry is invalid";
         goto err;
     }
@@ -1234,7 +1258,7 @@ CODE:
 
     for(i = 0; i < len; i++) {
         SV* const code = *av_fetch(proto, i, TRUE);
-        if(tx_sv_is_array_ref(aTHX_ code)) {
+        if(SvROK(code) && SvTYPE(SvRV(code)) == SVt_PVAV) {
             AV* const av     = (AV*)SvRV(code);
             SV* const opname = *av_fetch(av, 0, TRUE);
             SV** const arg   =  av_fetch(av, 1, FALSE);

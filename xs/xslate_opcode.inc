@@ -173,19 +173,14 @@ TXC(include) {
 TXC_w_var(for_start) {
     SV* avref    = TX_st_sa;
     IV  const id = TX_op_arg_iv;
+    SV* tmpsv;
 
     SvGETMAGIC(avref);
-    if(!tx_sv_is_array_ref(aTHX_ avref)) {
+    if((tmpsv = tx_sv_is_array_ref(aTHX_ avref))) {
+        avref = tmpsv;
+    }
+    else {
         if(SvOK(avref)) {
-            /* cf. tryAMAGICunDEREF(to_av) in pp.h */
-            if(tx_sv_has_amg(aTHX_ avref, to_av_amg)) {
-                SV* const tmpsv = AMG_CALLun(avref, to_av);
-
-                if(tx_sv_is_array_ref(aTHX_ tmpsv)) {
-                    avref = tmpsv;
-                    goto avref_ok;
-                }
-            }
             tx_error(aTHX_ TX_st,
                 "Iterating data must be an ARRAY reference, not %s",
                 tx_neat(aTHX_ avref));
@@ -196,7 +191,6 @@ TXC_w_var(for_start) {
         avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
 
-    avref_ok:
     (void)   TX_lvar(id+TXfor_ITEM); /* allocate the space */
     sv_setiv(TX_lvar(id+TXfor_ITER), -1); /* (re)set iterator */
     sv_setsv(TX_lvar(id+TXfor_ARRAY), avref);
@@ -468,11 +462,7 @@ TXC(builtin_is_array_ref) {
 TXC(builtin_is_hash_ref) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
-    TX_st_sa = boolSV(
-        SvROK(sv)
-        && SvTYPE(SvRV(sv)) == SVt_PVHV
-        && !SvOBJECT(SvRV(sv))
-    );
+    TX_st_sa = boolSV( tx_sv_is_hash_ref(aTHX_ sv) );
     TX_RETURN_NEXT();
 }
 

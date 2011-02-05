@@ -101,8 +101,8 @@ my %builtin = (
     mark_raw     => \&Text::Xslate::Util::mark_raw,
     unmark_raw   => \&Text::Xslate::Util::unmark_raw,
     uri          => \&Text::Xslate::Util::uri_escape,
-    is_array_ref => \&_builtin_is_array_ref,
-    is_hash_ref  => \&_builtin_is_hash_ref,
+    is_array_ref => \&Text::Xslate::Util::is_array_ref,
+    is_hash_ref  => \&Text::Xslate::Util::is_hash_ref,
 
     dump       => \&Text::Xslate::Util::p,
 );
@@ -494,14 +494,6 @@ sub _compiler {
 sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_, from_include => $self->{from_include});
-}
-
-sub _builtin_is_array_ref {
-    return ref($_[0]) eq 'ARRAY';
-}
-
-sub _builtin_is_hash_ref {
-    return ref($_[0]) eq 'HASH';
 }
 
 sub _error {

@@ -363,12 +363,12 @@ sub op_builtin_uri {
 }
 
 sub op_builtin_is_array_ref {
-    $_[0]->{sa} = ref($_[0]->{sa}) eq 'ARRAY';
+    $_[0]->{sa} = Text::Xslate::Util::is_array_ref($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
 sub op_builtin_is_hash_ref {
-    $_[0]->{sa} = ref($_[0]->{sa}) eq 'HASH';
+    $_[0]->{sa} = Text::Xslate::Util::is_hash_ref($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 

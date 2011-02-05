@@ -354,10 +354,8 @@ sub tx_check_itr_ar {
     return $ar if ref($ar) eq 'ARRAY';
 
     if ( defined $ar ) {
-        if(Scalar::Util::blessed($ar)
-                && (my $m = overload::Method($ar, '@{}'))) {
-            my $sv = $ar->$m(undef, undef);
-            return $sv if ref($sv) eq 'ARRAY';
+        if(my $x = Text::Xslate::Util::is_ref($ar, 'ARRAY', '@{}')) {
+            return $x;
         }
 
         $st->error( [$frame, $line],

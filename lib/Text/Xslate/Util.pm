@@ -13,6 +13,8 @@ our @EXPORT_OK = qw(
     html_builder
     hash_with_default
 
+    is_array_ref
+    is_hash_ref
     literal_to_value value_to_literal
     import_from
     neat
@@ -93,6 +95,21 @@ sub neat {
         return 'nil';
     }
 }
+
+sub is_ref {
+    my($sv, $t, $ov) = @_;
+    return $sv if ref($sv) eq $t;
+
+    if(Scalar::Util::blessed($sv)
+        && (my $m = overload::Method($sv, $ov))) {
+        $sv = $sv->$m(undef, undef);
+        return $sv if ref($sv) eq $t;
+    }
+    return undef;
+}
+
+sub is_array_ref { ! ! is_ref($_[0], 'ARRAY', '@{}') }
+sub is_hash_ref  { ! ! is_ref($_[0], 'HASH',  '%{}') }
 
 sub is_int {
     my($s) = @_;
