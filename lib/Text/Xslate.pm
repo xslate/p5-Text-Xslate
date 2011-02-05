@@ -647,9 +647,9 @@ templates to C structures and stores them as binary data.
 =head3 Built On Top Of A Virtual Machine
 
 Text::Xslate is built on top of virtual machine that executes bytecode, and
-this virtual machine is fine-tuned I<speficially> for template processing.
+this virtual machine is fine-tuned I<specifically> for template processing.
 
-The virtual machine also employs optimizations such as direct-threading 
+The virtual machine also employs optimizations such as direct-threading
 style coding to shave off any extra milliseconds that the engine might take
 otherwise
 
@@ -667,8 +667,8 @@ usually involved in such operations.
 One of the main things to consider to reduce performance degradation
 while processing a template is to avoid the number of calls to C<malloc()>.
 One of the tricks that Text::Xslate employs to reduce the number of calls to
-C<malloc()> is to pre-allocate the output buffer in an intelligent manner: 
-For exmample, Text::Xslate assumes that most templates will be rendered to be
+C<malloc()> is to pre-allocate the output buffer in an intelligent manner:
+For example, Text::Xslate assumes that most templates will be rendered to be
 about the same as the previous run, so when a template is rendered it uses
 the size allocated for the previous rendering as an approximation of how much
 space the current rendering will require. This allows to greatly reduce the
