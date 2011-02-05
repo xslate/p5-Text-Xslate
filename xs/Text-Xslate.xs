@@ -109,6 +109,9 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
 STATIC_INLINE bool
+tx_sv_is_array_ref(pTHX_ SV* const sv);
+
+STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv); /* doesn't handle magics */
 
 STATIC_INLINE void
@@ -365,6 +368,13 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     TAINT_NOT;
 
     return retval ? retval : &PL_sv_undef;
+}
+
+STATIC_INLINE bool
+tx_sv_is_array_ref(pTHX_ SV* const sv) {
+    return SvROK(sv)
+    && SvTYPE(SvRV(sv)) == SVt_PVAV
+    && !SvOBJECT(SvRV(sv));
 }
 
 STATIC_INLINE bool
@@ -999,7 +1009,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
     }
 
     sv = hv_iterval(ttable, he);
-    if(!(SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV)) {
+    if(!tx_sv_is_array_ref(aTHX_ sv)) {
         why = "template entry is invalid";
         goto err;
     }
@@ -1207,7 +1217,7 @@ CODE:
 
     for(i = 0; i < len; i++) {
         SV* const code = *av_fetch(proto, i, TRUE);
-        if(SvROK(code) && SvTYPE(SvRV(code)) == SVt_PVAV) {
+        if(tx_sv_is_array_ref(aTHX_ code)) {
             AV* const av     = (AV*)SvRV(code);
             SV* const opname = *av_fetch(av, 0, TRUE);
             SV** const arg   =  av_fetch(av, 1, FALSE);

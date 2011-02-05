@@ -450,11 +450,7 @@ TXC(builtin_uri) {
 TXC(builtin_is_array_ref) {
     SV* const sv = TX_st_sa;
     SvGETMAGIC(sv);
-    TX_st_sa = boolSV(
-        SvROK(sv)
-        && SvTYPE(SvRV(sv)) == SVt_PVAV
-        && !SvOBJECT(SvRV(sv))
-    );
+    TX_st_sa = boolSV( tx_sv_is_array_ref(aTHX_ sv) );
     TX_RETURN_NEXT();
 }
 
