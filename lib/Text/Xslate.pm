@@ -1094,6 +1094,10 @@ L<Template::Benchmark>
 
 L<http://xslate.org/benchmark.html>
 
+Papers:
+
+L<http://www.cs.usfca.edu/~parrt/papers/mvc.templates.pdf> -  Enforcing Strict Model-View Separation in Template Engines
+
 =head1 ACKNOWLEDGEMENT
 
 Thanks to lestrrat for the suggestion to the interface of C<render()>,
