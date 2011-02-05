@@ -344,7 +344,7 @@ $CODE_MANIP{ 'for_iter' } = sub {
     my $array    = sprintf '$pad->[-1][%s+TXfor_ARRAY]', $self->sa();
 
     $self->write_lines(
-        sprintf( '%s = check_itr_ar( $st, %s, %s, %s );',
+        sprintf( '%s = Text::Xslate::PP::tx_check_itr_ar( $st, %s, %s, %s );',
             $array, $ar,
             value_to_literal($self->framename), $self->stash->{ for_start_line } )
     );

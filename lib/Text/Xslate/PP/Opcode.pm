@@ -170,21 +170,10 @@ sub op_include {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-
 sub op_for_start {
     my($st) = @_;
-    my $ar = $st->{sa};
     my $id = $st->op_arg;
-
-    unless ( $ar and ref $ar eq 'ARRAY' ) {
-        if ( defined $ar ) {
-            $st->error( undef, "Iterator variables must be an ARRAY reference, not %s", neat( $ar ) );
-        }
-        else {
-            $st->warn( undef, "Use of nil to iterate" );
-        }
-        $ar = [];
-    }
+    my $ar = Text::Xslate::PP::tx_check_itr_ar($st, $st->{sa});
 
     #tx_access_lvar( $st, $id + TXfor_ITEM, undef );
     tx_access_lvar( $st, $id + TXfor_ITER, -1 );

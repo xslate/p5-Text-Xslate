@@ -28,7 +28,9 @@ use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Raw;
 use Text::Xslate ();
 
-use Carp ();
+use Scalar::Util ();
+use overload     ();
+use Carp         ();
 
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
@@ -347,6 +349,25 @@ sub _assemble {
 # INTERNAL
 #
 
+sub tx_check_itr_ar {
+    my ( $st, $ar, $frame, $line ) = @_;
+    return $ar if ref($ar) eq 'ARRAY';
+
+    if ( defined $ar ) {
+        if(Scalar::Util::blessed($ar) && overload::Method($ar, '@{}')) {
+            return \@{$ar};
+        }
+
+        $st->error( [$frame, $line],
+            "Iterator variables must be an ARRAY reference, not %s",
+            Text::Xslate::Util::neat( $ar ) );
+    }
+    else {
+        $st->warn( [$frame, $line], "Use of nil to iterate" );
+    }
+    return [];
+}
+
 sub tx_sv_eq {
     my($x, $y) = @_;
     if ( defined $x ) {
@@ -520,7 +541,7 @@ sub tx_all_deps_are_fresh {
     return 1;
 }
 
-sub tx_execute { 
+sub tx_execute {
     my ( $st, $vars ) = @_;
     no warnings 'recursion';
 
