@@ -13,6 +13,7 @@ Debugging options ($ENV{XSLATE}; or --debug for xslate(1)):
     dump=asm:ix Output xslate assembly with indexes
     dump=pp     Output Perl code PP::Booster generates
     optimize=0  Suppress optimization
+    pp=verbose  Make error messages verbose (by Carp->import('verbose'))
 
 Parser's terminology:
     arity  Symbol class; used while compiling
