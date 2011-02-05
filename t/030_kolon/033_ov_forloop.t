@@ -6,7 +6,10 @@ use Text::Xslate;
 
 {
     package _defer;
-    use overload '@{}' => sub { $_[0]->() };
+    use overload '@{}' => sub { $_[0]->() }, fallback => 1;
+
+    package _str;
+    use overload '""' => sub { 'foo' };
 }
 
 sub defer(&) {
@@ -14,7 +17,7 @@ sub defer(&) {
     return bless $coderef, '_defer';
 }
 
-my $tx = Text::Xslate->new();
+my $tx = Text::Xslate->new(verbose => 0);
 
 my @data = (
     ['Hello,
@@ -40,5 +43,10 @@ foreach my $pair(@data) {
         diag($tx->_compiler->as_assembly($code));
     } for 1 .. 2;
 }
+
+is $tx->render_string(': for $foo -> $i { $i }',
+    { foo => defer { 42 } }), '';
+is $tx->render_string(': for $foo -> $i { $i }',
+    { foo => bless {}, '_str'}), '';
 
 done_testing;

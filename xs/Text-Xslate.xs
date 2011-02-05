@@ -109,6 +109,9 @@ static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
 STATIC_INLINE bool
+tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id);
+
+STATIC_INLINE bool
 tx_sv_is_array_ref(pTHX_ SV* const sv);
 
 STATIC_INLINE bool
@@ -368,6 +371,20 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     TAINT_NOT;
 
     return retval ? retval : &PL_sv_undef;
+}
+
+
+STATIC_INLINE bool
+tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id) {
+    if(SvAMAGIC(sv)) {
+        const MAGIC* const mg = mg_find((SV*)SvSTASH(SvRV(sv)),
+            PERL_MAGIC_overload_table);
+        const AMT* const amt  = (AMT*)mg->mg_ptr;
+        assert(amt);
+        assert(AMT_AMAGIC(amt));
+        return amt->table[amg_id] ? TRUE : FALSE;
+    }
+    return FALSE;
 }
 
 STATIC_INLINE bool

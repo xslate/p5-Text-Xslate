@@ -178,7 +178,7 @@ TXC_w_var(for_start) {
     if(!tx_sv_is_array_ref(aTHX_ avref)) {
         if(SvOK(avref)) {
             /* cf. tryAMAGICunDEREF(to_av) in pp.h */
-            if(SvAMAGIC(avref)) {
+            if(tx_sv_has_amg(aTHX_ avref, to_av_amg)) {
                 SV* const tmpsv = AMG_CALLun(avref, to_av);
 
                 if(tx_sv_is_array_ref(aTHX_ tmpsv)) {

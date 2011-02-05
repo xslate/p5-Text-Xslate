@@ -354,8 +354,10 @@ sub tx_check_itr_ar {
     return $ar if ref($ar) eq 'ARRAY';
 
     if ( defined $ar ) {
-        if(Scalar::Util::blessed($ar) && overload::Method($ar, '@{}')) {
-            return \@{$ar};
+        if(Scalar::Util::blessed($ar)
+                && (my $m = overload::Method($ar, '@{}'))) {
+            my $sv = $ar->$m(undef, undef);
+            return $sv if ref($sv) eq 'ARRAY';
         }
 
         $st->error( [$frame, $line],
