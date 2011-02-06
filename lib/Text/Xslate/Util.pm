@@ -9,7 +9,7 @@ our @EXPORT_OK = qw(
     mark_raw unmark_raw
     html_escape escaped_string
     uri_escape
-    p
+    p dump
     html_builder
     hash_with_default
 
@@ -304,6 +304,7 @@ sub p { # for debugging, the guts of dump()
     print $dd->Dump();
 }
 
+sub dump :method { goto &p }
 
 1;
 __END__
@@ -336,7 +337,7 @@ This is the entity of the C<html_escape> filter.
 
 This is the entity of the C<uri> filter.
 
-=head3 C<p($any)>
+=head3 C<p($any)> / C<dump($any)>
 
 Displays the contents of I<$any> using C<Data::Dumper>.
 

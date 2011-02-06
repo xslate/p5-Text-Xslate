@@ -60,6 +60,7 @@ package Text::Xslate::Engine;
 use Text::Xslate::Util qw(
     import_from
     make_error
+    dump
 );
 
 BEGIN {
@@ -104,7 +105,7 @@ my %builtin = (
     is_array_ref => \&Text::Xslate::Util::is_array_ref,
     is_hash_ref  => \&Text::Xslate::Util::is_hash_ref,
 
-    dump       => \&Text::Xslate::Util::p,
+    dump         => \&Text::Xslate::Util::dump,
 );
 
 sub default_functions { +{} } # overridable
@@ -500,9 +501,6 @@ sub _error {
     die make_error(@_);
 }
 
-sub dump :method {
-    goto &Text::Xslate::Util::p;
-}
 
 package Text::Xslate;
 1;
