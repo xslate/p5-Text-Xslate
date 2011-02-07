@@ -18,7 +18,6 @@ T
     [% INCLUDE 'entry' WITH entry = child ; # SEGV HERE %]
 [% END %]
 T
-
 );
 
 my @entries = (
@@ -35,9 +34,7 @@ my $tx = Text::Xslate->new( syntax => 'TTerse', cache => 0, path => \%vpath );
 
 ok $tx->render('entry', { entry => $entries[0] });
 
-my $s  = $tx->render('main', { entries => \@entries });
-like $s, qr/hoge/;
-like $s, qr/fuga/;
-like $s, qr/foobar/;
+my $s = $tx->render('main', { entries => \@entries });
+ok $s;
 done_testing;
 
