@@ -6,6 +6,7 @@ extends qw(Text::Xslate::PP::State);
 use Carp ();
 use Scalar::Util ();
 
+use Text::Xslate::PP::Method;
 use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw(
     $DEBUG p neat
