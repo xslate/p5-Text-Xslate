@@ -196,10 +196,7 @@ tx_call_error_handler(pTHX_ SV* const handler, SV* const msg) {
     PUSHMARK(SP);
     XPUSHs(msg);
     PUTBACK;
-    call_sv(handler, G_VOID);
-    SPAGAIN;
-    (void)POPs; /* discard */
-    PUTBACK;
+    call_sv(handler, G_VOID | G_DISCARD);
 }
 
 /* for trivial errors, ignored by default */
