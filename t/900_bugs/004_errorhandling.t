@@ -8,6 +8,9 @@ my $view = Text::Xslate->new(
     function => { f => sub { die } },
 );
 
+close STDERR;
+open STDERR, '>', \my $stderr;
+
 {
 
     package MyMap;
@@ -39,6 +42,6 @@ my $view = Text::Xslate->new(
 
 my $res = MyMap->call( {} );
 is ref($res), 'ARRAY';
-
+note $stderr;
 done_testing;
 
