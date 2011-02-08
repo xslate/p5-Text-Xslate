@@ -343,6 +343,9 @@ sub _assemble {
         $s =~ s/($uri_unsafe_rfc3986)/sprintf '%%' . '%02X', ord $1/xmsgeo;
         return $s;
     }
+
+    sub is_array_ref { ref($_[0]) eq 'ARRAY' }
+    sub is_hash_ref  { ref($_[0]) eq 'HASH'  }
 }
 
 #
@@ -354,7 +357,7 @@ sub tx_check_itr_ar {
     return $ar if ref($ar) eq 'ARRAY';
 
     if ( defined $ar ) {
-        if(my $x = Text::Xslate::Util::is_ref($ar, 'ARRAY', '@{}')) {
+        if(my $x = Text::Xslate::PP::sv_is_ref($ar, 'ARRAY', '@{}')) {
             return $x;
         }
 
@@ -366,6 +369,18 @@ sub tx_check_itr_ar {
         $st->warn( [$frame, $line], "Use of nil to iterate" );
     }
     return [];
+}
+
+sub sv_is_ref {
+    my($sv, $t, $ov) = @_;
+    return $sv if ref($sv) eq $t;
+
+    if(Scalar::Util::blessed($sv)
+        && (my $m = overload::Method($sv, $ov))) {
+        $sv = $sv->$m(undef, undef);
+        return $sv if ref($sv) eq $t;
+    }
+    return undef;
 }
 
 sub tx_sv_eq {

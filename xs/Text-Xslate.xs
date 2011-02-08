@@ -114,17 +114,22 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 static bool
 tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id);
 
+/* tx_sv_is_ref() respects overloading */
 static SV*
 tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, int const amg_id);
 
-STATIC_INLINE SV*
+STATIC_INLINE int
 tx_sv_is_array_ref(pTHX_ SV* const sv) {
-    return tx_sv_is_ref(aTHX_ sv, SVt_PVAV, to_av_amg);
+    assert(sv);
+    return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV && !SvOBJECT(SvRV(sv));
+    // return tx_sv_is_ref(aTHX_ sv, SVt_PVAV, to_av_amg);
 }
 
-STATIC_INLINE SV*
+STATIC_INLINE int
 tx_sv_is_hash_ref(pTHX_ SV* const sv) {
-    return tx_sv_is_ref(aTHX_ sv, SVt_PVHV, to_hv_amg);
+    assert(sv);
+    return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV && !SvOBJECT(SvRV(sv));
+    // return tx_sv_is_ref(aTHX_ sv, SVt_PVHV, to_hv_amg);
 }
 
 STATIC_INLINE bool
@@ -1610,6 +1615,20 @@ uri_escape(SV* str)
 CODE:
 {
     ST(0) = tx_uri_escape(aTHX_ str);
+}
+
+void
+is_array_ref(SV* sv)
+CODE:
+{
+    ST(0) = boolSV( tx_sv_is_array_ref(aTHX_ sv));
+}
+
+void
+is_hash_ref(SV* sv)
+CODE:
+{
+    ST(0) = boolSV( tx_sv_is_hash_ref(aTHX_ sv));
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw
