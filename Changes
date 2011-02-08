@@ -1,5 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+1.0004 2011-02-08 12:36:21
+    NOTE: All the versions including this version has a bug that INCLUDE
+          recursion doesn't work. It will be fixed in the next release.
+    [BUG FIXES]
+    * Fix a critical bug that warnings in templates could break the Perl stack
+      (thanks to @tokuhirom for reporting it)
+    * Fix a bug that method calls didn't work in PP version
+      (thanks to @tokuhirom for reporting it)
+
 1.0003 2011-02-05 11:54:45
     [NEW FEATURES]
     * For-loops allow overloaded objects. i.e. you can use Scalar::Defer
