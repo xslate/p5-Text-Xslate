@@ -164,7 +164,9 @@ TXC(include) {
     tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa, TRUE);
 
     ENTER;
+    //tx_push_frame(aTHX_ st);
     tx_execute(aTHX_ aMY_CXT_ st, TX_st->output, TX_st->vars);
+    //tx_pop_frame(aTHX_ st);
     LEAVE;
 
     TX_RETURN_NEXT();
@@ -586,18 +588,11 @@ TXC(funcall) { /* call a function or a macro */
 }
 
 TXC(macro_end) {
-    AV* const oldframe  = TX_current_frame();
-    AV* const cframe    = TX_frame_at(TX_st, --TX_st->current_frame); /* pop frame */
-    SV* const retaddr   = AvARRAY(oldframe)[TXframe_RETADDR];
-    SV* tmp;
-
-    TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR; /* switch the pad */
+    SV* const retaddr   = AvARRAY(TX_current_frame())[TXframe_RETADDR];
 
     TX_st_sa = tx_mark_raw(aTHX_ TX_st->output);
 
-    tmp                               = AvARRAY(oldframe)[TXframe_OUTPUT];
-    AvARRAY(oldframe)[TXframe_OUTPUT] = TX_st->output;
-    TX_st->output                     = tmp;
+    tx_pop_frame(aTHX_ TX_st);
 
     TX_RETURN_PC( INT2PTR(tx_pc_t, SvUVX(retaddr)) );
 }

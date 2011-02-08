@@ -102,6 +102,9 @@ tx_load_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix);
 static AV*
 tx_push_frame(pTHX_ tx_state_t* const st);
 
+static void
+tx_pop_frame(pTHX_ tx_state_t* const st);
+
 static SV*
 tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
 
@@ -270,6 +273,23 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     /* switch the pad */
     st->pad = AvARRAY(newframe) + TXframe_START_LVAR;
     return newframe;
+}
+
+static void
+tx_pop_frame(pTHX_ tx_state_t* const st) {
+    AV* const top  = TX_frame_at(st, st->current_frame);
+    SV** const ary = AvARRAY(top);
+    SV* tmp;
+
+    //sv_dump(cframe);
+    /* switch the pad */
+    st->pad = AvARRAY(TX_frame_at(st, --st->current_frame))
+                + TXframe_START_LVAR;
+
+    /* place st->output back */
+    tmp                 = ary[TXframe_OUTPUT];
+    ary[TXframe_OUTPUT] = st->output;
+    st->output          = tmp;
 }
 
 SV* /* thin wrapper of Perl_call_sv() */
@@ -795,15 +815,9 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     MY_CXT.depth--;
 
     XCPT_CATCH {
-        /* unwind the stack frame to fix up TXframe_OUTPUT */
+        /* unwind the stack frames */
         while(st.current_frame > 0) {
-            AV* const frame = TX_frame_at(&st, st.current_frame--);
-            SV* tmp;
-
-            /* swap st->output and TXframe_OUTPUT */
-            tmp                            = AvARRAY(frame)[TXframe_OUTPUT];
-            AvARRAY(frame)[TXframe_OUTPUT] = st.output;
-            st.output                      = tmp;
+            tx_pop_frame(aTHX_ &st);
         }
         XCPT_RETHROW;
     }
@@ -840,7 +854,6 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     tx_code_t* const code     = st->code;
     I32 const len             = st->code_len;
     I32 i;
-
     for(i = 0; i < len; i++) {
         /* opcode */
         if( tx_oparg[ info[i].optype ] & TXARGf_SV ) {
