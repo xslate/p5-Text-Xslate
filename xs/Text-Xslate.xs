@@ -103,7 +103,7 @@ static AV*
 tx_push_frame(pTHX_ tx_state_t* const st);
 
 static void
-tx_pop_frame(pTHX_ tx_state_t* const st);
+tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output);
 
 static SV*
 tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
@@ -276,20 +276,19 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 }
 
 static void
-tx_pop_frame(pTHX_ tx_state_t* const st) {
+tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     AV* const top  = TX_frame_at(st, st->current_frame);
     SV** const ary = AvARRAY(top);
-    SV* tmp;
 
-    //sv_dump(cframe);
     /* switch the pad */
     st->pad = AvARRAY(TX_frame_at(st, --st->current_frame))
                 + TXframe_START_LVAR;
 
-    /* place st->output back */
-    tmp                 = ary[TXframe_OUTPUT];
-    ary[TXframe_OUTPUT] = st->output;
-    st->output          = tmp;
+    if(replace_output) {
+        SV* const tmp       = ary[TXframe_OUTPUT];
+        ary[TXframe_OUTPUT] = st->output;
+        st->output          = tmp;
+    }
 }
 
 SV* /* thin wrapper of Perl_call_sv() */
@@ -787,8 +786,10 @@ static void
 tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv) {
     dXCPT;
     tx_state_t st;
+
     StructCopy(base, &st, tx_state_t);
 
+    //PerlIO_stdoutf("# 0x%p %d %d\n", base, (int)MY_CXT.depth, (int)st.current_frame);
     st.output = output;
     st.vars   = hv;
 
@@ -817,7 +818,7 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     XCPT_CATCH {
         /* unwind the stack frames */
         while(st.current_frame > 0) {
-            tx_pop_frame(aTHX_ &st);
+            tx_pop_frame(aTHX_ &st, TRUE);
         }
         XCPT_RETHROW;
     }

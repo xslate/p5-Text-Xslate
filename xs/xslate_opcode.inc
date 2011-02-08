@@ -166,7 +166,7 @@ TXC(include) {
     ENTER;
     //tx_push_frame(aTHX_ st);
     tx_execute(aTHX_ aMY_CXT_ st, TX_st->output, TX_st->vars);
-    //tx_pop_frame(aTHX_ st);
+    //tx_pop_frame(aTHX_ st, FALSE);
     LEAVE;
 
     TX_RETURN_NEXT();
@@ -588,11 +588,11 @@ TXC(funcall) { /* call a function or a macro */
 }
 
 TXC(macro_end) {
-    SV* const retaddr   = AvARRAY(TX_current_frame())[TXframe_RETADDR];
+    SV* const retaddr = AvARRAY(TX_current_frame())[TXframe_RETADDR];
 
     TX_st_sa = tx_mark_raw(aTHX_ TX_st->output);
 
-    tx_pop_frame(aTHX_ TX_st);
+    tx_pop_frame(aTHX_ TX_st, TRUE);
 
     TX_RETURN_PC( INT2PTR(tx_pc_t, SvUVX(retaddr)) );
 }
