@@ -424,7 +424,9 @@ tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, const int amg_id) {
         SV* const r = SvRV(sv);
         if(SvOBJECT(r)) {
             if(tx_sv_has_amg(aTHX_ sv, amg_id)) {
-                SV* const tmpsv = AMG_CALLun_var(sv, amg_id);
+                /* AMG_CALLunary() */
+                SV* const tmpsv = amagic_call(sv,
+                    &PL_sv_undef, amg_id, AMGf_noright | AMGf_unary);
                 if(SvROK(tmpsv)
                         && SvTYPE(SvRV(tmpsv)) == svt
                         && !SvOBJECT(SvRV(tmpsv))) {
