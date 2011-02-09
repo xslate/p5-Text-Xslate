@@ -15,6 +15,14 @@ eval {
 };
 
 like $@, qr/too deep/, 'first';
+note $@;
+
+eval {
+    $tx->render('include2.tx', { file => 'include2.tx', lang => 'Xslate' });
+};
+
+like $@, qr/too deep/, 'second';
+note $@;
 
 done_testing;
 

@@ -2,7 +2,7 @@
 # recursive INCLUDE broke the stack frame
 use strict;
 use warnings;
-use Test::More skip_all => 'Not yet resolved';
+use Test::More;
 
 use Text::Xslate;
 
@@ -37,9 +37,11 @@ my $tx = Text::Xslate->new( syntax => 'TTerse', cache => 0, path => \%vpath );
 ok $tx->render('entry', { entry => $entries[0] });
 
 my $s = $tx->render('main', { entries => \@entries });
+note $s;
 ok $s;
 like $s, qr/hoge/;
 like $s, qr/fuga/;
 like $s, qr/foobar/;
+
 done_testing;
 

@@ -164,10 +164,13 @@ sub op_print_raw_s {
 
 
 sub op_include {
-    my $st = Text::Xslate::PP::tx_load_template( $_[0]->engine, $_[0]->{sa}, 1 );
-    $_[0]->{ output } .= Text::Xslate::PP::tx_execute( $st, $_[0]->{vars} );
-
-    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+    my($st) = @_;
+    my $child = Text::Xslate::PP::tx_load_template( $st->engine, $st->{sa}, 1 );
+    $st->push_frame('include', undef);
+    my $output = Text::Xslate::PP::tx_execute( $child, $st->{vars} );
+    $st->pop_frame(0);
+    $st->{output} .= $output;
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
 sub op_for_start {
@@ -450,11 +453,9 @@ sub tx_macro_enter {
         return;
     }
 
-    my $cframe = Text::Xslate::PP::tx_push_frame( $st );
+    my $cframe = $st->push_frame($name, $retaddr);
 
-    $cframe->[ TXframe_RETADDR ] = $retaddr;
     $cframe->[ TXframe_OUTPUT ]  = $st->{ output };
-    $cframe->[ TXframe_NAME ]    = $name;
 
     $st->{ output } = '';
 
@@ -481,16 +482,14 @@ sub tx_macro_enter {
 
 sub op_macro_end {
     my($st) = @_;
-    my $frames   = $st->frame;
-    my $oldframe = $frames->[ $st->current_frame ];
-    my $cframe   = $frames->[ $st->current_frame( $st->current_frame - 1 ) ]; # pop frame
 
-    print STDERR " " x $st->current_frame, "tx_macro_end($oldframe->[ TXframe_NAME ])\n" if _DUMP_PP;
+    my $top = $st->frame->[ $st->current_frame ];
+    printf STDERR "%stx_macro_end(%s)]\n", ' ' x $st->current_frame - 1, $top->[ TXframe_NAME ] if _DUMP_PP;
 
     $st->{sa} = mark_raw( $st->{ output } );
+    $st->pop_frame(1);
 
-    $st->{ output } = $oldframe->[ TXframe_OUTPUT ];
-    $st->{ pc }     = $oldframe->[ TXframe_RETADDR ];
+    $st->{ pc } = $top->[ TXframe_RETADDR ];
     goto $st->{ code }->[ $st->{ pc } ]->{ exec_code };
 }
 
@@ -551,7 +550,7 @@ sub op_end {
     $st->{ pc } = $st->code_len;
 
     if($st->current_frame != 0) {
-        Carp::croak("Oops: broken stack frame:" .  p($st->frame));
+        #Carp::croak("Oops: broken stack frame:" .  p($st->frame));
     }
     return;
 }

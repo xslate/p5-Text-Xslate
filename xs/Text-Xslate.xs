@@ -285,6 +285,8 @@ tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     AV* const top  = TX_frame_at(st, st->current_frame);
     SV** const ary = AvARRAY(top);
 
+    assert( st->current_frame > 0 );
+
     /* switch the pad */
     st->pad = AvARRAY(TX_frame_at(st, --st->current_frame))
                 + TXframe_START_LVAR;
@@ -796,7 +798,7 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
 
     StructCopy(base, &st, tx_state_t);
 
-    //PerlIO_stdoutf("# 0x%p %d %d\n", base, (int)MY_CXT.depth, (int)st.current_frame);
+    //PerlIO_stdoutf("#>> 0x%p %d %d\n", base, (int)MY_CXT.depth, (int)st.current_frame);
     st.output = output;
     st.vars   = hv;
 
@@ -823,8 +825,9 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     MY_CXT.depth--;
 
     XCPT_CATCH {
+        I32 const start = base->current_frame;
         /* unwind the stack frames */
-        while(st.current_frame > 0) {
+        while(st.current_frame > start) {
             tx_pop_frame(aTHX_ &st, TRUE);
         }
         XCPT_RETHROW;
@@ -862,6 +865,8 @@ tx_mg_free(pTHX_ SV* const sv, MAGIC* const mg){
     tx_code_t* const code     = st->code;
     I32 const len             = st->code_len;
     I32 i;
+
+    // PerlIO_stdoutf("# tx_mg_free()\n");
     for(i = 0; i < len; i++) {
         /* opcode */
         if( tx_oparg[ info[i].optype ] & TXARGf_SV ) {
@@ -1087,7 +1092,11 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
 
     cache_mtime = AvARRAY(tmpl)[TXo_MTIME];
 
+    /* NOTE: Ensure the life of the template object  */
+    sv_2mortal( (SV*)SvREFCNT_inc_simple_NN(tmpl) );
+
     if(!SvOK(cache_mtime)) { /* non-checking mode (i.e. release mode) */
+
         return (tx_state_t*)mg->mg_ptr;
     }
 
@@ -1521,6 +1530,7 @@ CODE:
         croak("%"SVf, msg);
     }
 
+
     engine = st->engine;
     cframe = TX_current_framex(st);
     name   = AvARRAY(cframe)[TXframe_NAME];
@@ -1546,7 +1556,9 @@ CODE:
             file = sv_2mortal(newRV_inc(*svp));
         }
     }
-
+    if(!SvOK(name)) { // FIXME: something's wrong
+        name = newSVpvs_flags("(oops)", SVs_TEMP);
+    }
     /* $full_message = make_error(engine, msg, file, line, vm_pos) */
     PUSHMARK(SP);
     EXTEND(SP, 6);

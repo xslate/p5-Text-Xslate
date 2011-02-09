@@ -2,7 +2,9 @@ package Text::Xslate::PP::State; # implement tx_state_t
 use Any::Moose;
 
 use Text::Xslate::Util qw(neat $DEBUG);
-use Text::Xslate::PP::Const qw(TXframe_NAME TX_VERBOSE_DEFAULT);
+use Text::Xslate::PP::Const qw(
+    TXframe_NAME TXframe_RETADDR TXframe_OUTPUT
+    TX_VERBOSE_DEFAULT);
 
 require Text::Xslate::PP;
 if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
@@ -125,6 +127,31 @@ sub localize {
     return;
 }
 
+sub push_frame {
+    my ( $st, $name, $retaddr ) = @_;
+
+    if ( $st->current_frame > 100 ) {
+        Carp::croak("Macro call is too deep (> 100)");
+    }
+
+    my $new = $st->frame->[ $st->current_frame( $st->current_frame + 1 ) ]
+        ||= [];
+    $new->[ TXframe_NAME ]    = $name;
+    $new->[ TXframe_RETADDR ] = $retaddr;
+    return $new;
+}
+
+sub pop_frame {
+    my( $st, $replace_output ) = @_;
+    $st->current_frame( $st->current_frame - 1 );
+    if($replace_output) {
+        my $top = $st->frame->[ $st->current_frame + 1];
+        ($st->{output}, $top->[ TXframe_OUTPUT ])
+            = ($top->[ TXframe_OUTPUT ], $st->{output});
+    }
+
+    return;
+}
 
 sub pad {
     return $_[0]->{frame}->[ $_[0]->{current_frame} ];
