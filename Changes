@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.0005 2011-02-09 14:33:57
+    ANNOUNCE: If you are interested in xslate dev, jon #xslate @ irc.perl.org!
+
+    [BUG FIXES]
+    * The INCLUDE recursion bug (see the NOTE at 1.0004) has been fixed.
+
 1.0004 2011-02-08 12:36:21
     NOTE: All the versions including this version has a bug that INCLUDE
           recursion doesn't work. It will be fixed in the next release.
