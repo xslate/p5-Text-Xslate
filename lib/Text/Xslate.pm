@@ -766,6 +766,18 @@ Specify the footer template files, which are inserted to the foot of each templa
 
 This option is passed to the compiler.
 
+=item C<< warn_handler => \&cb >>
+
+Specify the callback I<&cb> which is called on warnings.
+
+This option is experimental.
+
+=item C<< die_handler => \&cb >>
+
+Specify the callback I<&cb> which is called on fatal errors.
+
+This option is experimental.
+
 =back
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
