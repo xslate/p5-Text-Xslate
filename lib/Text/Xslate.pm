@@ -991,7 +991,7 @@ Augment modifiers.
 
 =item *
 
-Loop controls.
+Loop controls (last / next).
 
 =item *
 
@@ -1000,6 +1000,16 @@ Default arguments and named arguments for macros.
 =back
 
 =cut
+
+=head1 SUPPORT
+
+WEB: L<http://xslate.org/>
+
+IRC: #xslate @ irc.perl.org
+
+REPOSITORY:
+    http://github.com/gfx/p5-Text-Xslate/
+    git://github.com/gfx/p5-Text-Xslate.git
 
 =head1 BUGS
 
@@ -1024,12 +1034,6 @@ L<Text::Xslate::Syntax::TTerse>
 Xslate command:
 
 L<xslate>
-
-The Xslate web site and public repository:
-
-L<http://xslate.org/>
-
-L<http://github.com/gfx/p5-Text-Xslate>
 
 Other template modules that Xslate has been influenced by:
 
