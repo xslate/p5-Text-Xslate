@@ -1073,9 +1073,9 @@ Thanks to tokuhirom for the ideas, feature requests, encouragement, and bug find
 
 Thanks to gardejo for the proposal to the name B<template cascading>.
 
-Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
-
 Thanks to makamaka for the contribution of Text::Xslate::PP.
+
+Thanks to jjn1056 to the concept of template overlay (now implemented as C<cascade with ...>).
 
 Thanks to typester for the various inspirations.
 
@@ -1092,6 +1092,12 @@ Thanks to Sam Graham for the bug reports.
 Thanks to Mons Anderson for the bug reports and patches.
 
 Thanks to hirose31 for the feature requests and bug reports.
+
+Thahks to c9s for the contribution of the documents.
+
+Thanks to shiba_yu36 for the bug reports.
+
+Thanks to kane46taka for the bug reports.
 
 =head1 AUTHOR
 
