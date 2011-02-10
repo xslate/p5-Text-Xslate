@@ -1605,9 +1605,6 @@ CODE:
             file = sv_2mortal(newRV_inc(*svp));
         }
     }
-    if(!SvOK(name)) { // FIXME: something's wrong
-        name = newSVpvs_flags("(oops)", SVs_TEMP);
-    }
     /* TODO: append the stack info to msg */
     /* $full_message = make_error(engine, msg, file, line, vm_pos) */
     PUSHMARK(SP);
@@ -1616,7 +1613,12 @@ CODE:
     PUSHs(msg);
     PUSHs(file);
     mPUSHi(st->info[ pc_pos ].line);
-    mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
+    if(tx_verbose(aTHX_ st) >= 3) {
+        if(!SvOK(name)) { // FIXME: something's wrong
+            name = newSVpvs_flags("(oops)", SVs_TEMP);
+        }
+        mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
+    }
     PUTBACK;
     call_sv(MY_CXT.make_error, G_SCALAR);
     SPAGAIN;
