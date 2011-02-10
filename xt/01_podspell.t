@@ -60,6 +60,8 @@ callbacks
 RFC
 colorize
 Pre
+IRC
+org
 
 # personal name
 lestrrat
@@ -79,6 +81,8 @@ punytan
 chiba
 turugina
 hirose
+kane
+taka
 
 WAF
 WAFs

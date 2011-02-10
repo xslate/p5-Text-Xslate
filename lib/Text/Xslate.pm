@@ -1093,7 +1093,7 @@ Thanks to Mons Anderson for the bug reports and patches.
 
 Thanks to hirose31 for the feature requests and bug reports.
 
-Thahks to c9s for the contribution of the documents.
+Thanks to c9s for the contribution of the documents.
 
 Thanks to shiba_yu36 for the bug reports.
 
