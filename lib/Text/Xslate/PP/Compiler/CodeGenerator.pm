@@ -274,28 +274,11 @@ CODE
 $CODE_MANIP{ 'print' } = sub {
     my ( $self, $arg, $line ) = @_;
     my $sv = $self->sa();
-    my $err;
-
-    $err = sprintf( '$st->warn( [%s, %s], "Use of nil to print" );', $self->frame_and_line );
-
-    $self->write_lines( sprintf( <<'CODE', $sv, $err, $err ) );
+    $self->write_lines( sprintf( <<'CODE', $sv, $self->frame_and_line) );
 # print
-$sv = %s;
-if ( ref($sv) eq TXt_RAW ) {
-    if(defined ${$sv}) {
-        $output .= $sv;
-    }
-    else {
-        %s
-    }
-}
-elsif ( defined $sv ) {
-    $sv =~ s/($html_metachars)/$html_escape{$1}/xmsgeo;
-    $output .= $sv;
-}
-else {
-    %s
-}
+$st->{output} = '';
+$st->print(%s, [%s, %s]);
+$output .= delete $st->{output};
 CODE
 
 };

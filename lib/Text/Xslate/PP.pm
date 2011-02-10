@@ -131,6 +131,19 @@ sub current_line {
         : undef;
 }
 
+sub print {
+    shift;
+    if(defined $_current_st) {
+        foreach my $s(@_) {
+            $_current_st->print($s);
+        }
+    }
+    else {
+        Carp::croak('You cannot call print() method outside render()');
+    }
+    return '';
+}
+
 # >> copied and modified from Text::Xslate
 
 sub _assemble {
@@ -448,7 +461,6 @@ sub tx_repeat {
     elsif(!Scalar::Util::looks_like_number($rhs)) {
         $_current_st->error(undef, "Repeat count must be a number, not %s",
             Text::Xslate::Util::neat($rhs));
-        return undef;
     }
     else {
         if( ref( $lhs ) eq TXt_RAW ) {
@@ -458,6 +470,7 @@ sub tx_repeat {
             return $lhs x $rhs;
         }
     }
+    return '';
 }
 
 

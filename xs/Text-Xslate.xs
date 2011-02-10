@@ -142,6 +142,9 @@ tx_sv_cat(pTHX_ SV* const dest, SV* const src);
 static void
 tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src);
 
+STATIC_INLINE void
+tx_print(pTHX_ tx_state_t* const st, SV* const sv);
+
 static SV*
 tx_html_escape(pTHX_ SV* const str);
 
@@ -546,6 +549,30 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
 
     SvCUR_set(dest, d - SvPVX(dest));
     *SvEND(dest) = '\0';
+}
+
+STATIC_INLINE void
+tx_print(pTHX_ tx_state_t* const st, SV* const sv) {
+    dMY_CXT;
+    SV* const out = st->output;
+
+    SvGETMAGIC(sv);
+    if(tx_str_is_raw(aTHX_ aMY_CXT_ sv)) {
+        SV* const arg = TX_UNMARK_RAW(sv);
+        if(SvOK(arg)) {
+            tx_sv_cat(aTHX_ out, arg);
+        }
+        else {
+            tx_warn(aTHX_ st, "Use of nil to print");
+        }
+    }
+    else if(SvOK(sv)) {
+        tx_sv_cat_with_html_escape_force(aTHX_ out, sv);
+    }
+    else {
+        tx_warn(aTHX_ st, "Use of nil to print");
+        /* does nothing */
+    }
 }
 
 static SV*
@@ -1504,6 +1531,23 @@ ALIAS:
     current_engine = 0
     current_file   = 1
     current_line   = 2
+
+void
+print(klass, ...)
+CODE:
+{
+    dMY_CXT;
+    int i;
+    tx_state_t* const st = MY_CXT.current_st;
+    if(!st) {
+        croak("You cannot call print() method outside render()");
+    }
+
+    for(i = 1; i < items; i++) {
+        tx_print(aTHX_ st, ST(i));
+    }
+    XSRETURN_NO; /* return false as an empty string */
+}
 
 void
 _warn(SV* msg)

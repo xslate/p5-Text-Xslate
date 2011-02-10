@@ -5,6 +5,7 @@ extends qw(Text::Xslate::PP::State);
 use Carp ();
 use Scalar::Util ();
 
+use Text::Xslate::PP;
 use Text::Xslate::PP::Const;
 use Text::Xslate::Util qw(
     p neat
@@ -16,7 +17,6 @@ use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
 no warnings 'recursion';
 
-require Text::Xslate::PP;
 if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate
@@ -123,24 +123,7 @@ sub op_fetch_field_s {
 
 sub op_print {
     my($st) = @_;
-    my $sv = $st->{sa};
-
-    if ( ref( $sv ) eq TXt_RAW ) {
-        if(defined ${$sv}) {
-            $st->{ output } .= ${$sv};
-        }
-        else {
-            $st->warn(undef, "Use of nil to print" );
-        }
-    }
-    elsif ( defined $sv ) {
-        $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
-        $st->{ output } .= $sv;
-    }
-    else {
-        $st->warn( undef, "Use of nil to print" );
-    }
-
+    $st->print($st->{sa});
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 

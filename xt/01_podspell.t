@@ -61,6 +61,7 @@ RFC
 colorize
 Pre
 IRC
+irc
 org
 
 # personal name

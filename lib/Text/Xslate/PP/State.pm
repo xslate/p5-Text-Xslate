@@ -1,12 +1,12 @@
 package Text::Xslate::PP::State; # implement tx_state_t
 use Any::Moose;
 
-use Text::Xslate::Util qw(neat $DEBUG);
+use Text::Xslate::Util qw(neat p $DEBUG);
+use Text::Xslate::PP;
 use Text::Xslate::PP::Const qw(
     TXframe_NAME TXframe_RETADDR TXframe_OUTPUT
     TX_VERBOSE_DEFAULT);
 
-require Text::Xslate::PP;
 if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate::PP::Opcode
@@ -159,6 +159,26 @@ sub pad {
 
 sub op_arg {
     $_[0]->{ code }->[ $_[0]->{ pc } ]->{ arg };
+}
+
+sub print {
+    my($st, $sv, $frame_and_line) = @_;
+    if ( ref( $sv ) eq Text::Xslate::PP::TXt_RAW ) {
+        if(defined ${$sv}) {
+            $st->{output} .= ${$sv};
+        }
+        else {
+            $st->warn($frame_and_line, "Use of nil to print" );
+        }
+    }
+    elsif ( defined $sv ) {
+        $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
+        $st->{output} .= $sv;
+    }
+    else {
+        $st->warn( $frame_and_line, "Use of nil to print" );
+    }
+    return;
 }
 
 sub _doerror {
