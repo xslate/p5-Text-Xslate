@@ -716,6 +716,8 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 Specify the template suffix, which is used for C<cascade> and C<include>
 in Kolon.
 
+Note that this is used statically. That is, the compiler uses it but the runtime engine doesn't.
+
 =item C<< syntax => $name // 'Kolon' >>
 
 Specifies the template syntax you want to use.
