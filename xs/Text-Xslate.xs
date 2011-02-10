@@ -1564,6 +1564,7 @@ CODE:
     if(!SvOK(name)) { // FIXME: something's wrong
         name = newSVpvs_flags("(oops)", SVs_TEMP);
     }
+    /* TODO: append the stack info to msg */
     /* $full_message = make_error(engine, msg, file, line, vm_pos) */
     PUSHMARK(SP);
     EXTEND(SP, 6);
@@ -1592,7 +1593,6 @@ CODE:
         }
     }
     else {
-        /* TODO: append the stack info to msg */
         if(handler) {
             PUSHMARK(SP);
             XPUSHs(full_message);
@@ -1665,7 +1665,8 @@ BOOT:
         XS_Text__Xslate__fallback, file);
 
     /* *{'(""'} = \&as_string */
-    as_string = sv_2mortal(newRV_inc((SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
+    as_string = sv_2mortal(newRV_inc(
+        (SV*)get_cv( TX_RAW_CLASS "::as_string", GV_ADD)));
     sv_setsv_mg(
         (SV*)gv_fetchpvs( TX_RAW_CLASS "::(\"\"", GV_ADDMULTI, SVt_PVCV),
         as_string);
