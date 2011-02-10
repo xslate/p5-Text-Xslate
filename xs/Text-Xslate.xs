@@ -84,6 +84,7 @@ typedef struct {
     /* original error handlers */
     SV* orig_warn_handler;
     SV* orig_die_handler;
+    SV* make_error;
 } my_cxt_t;
 START_MY_CXT
 
@@ -1146,8 +1147,12 @@ tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
     MY_CXT.depth = 0;
     MY_CXT.raw_stash     = gv_stashpvs(TX_RAW_CLASS, GV_ADDMULTI);
     MY_CXT.macro_stash   = gv_stashpvs(TX_MACRO_CLASS, GV_ADDMULTI);
-    MY_CXT.warn_handler  = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADDMULTI));
-    MY_CXT.die_handler   = SvREFCNT_inc_NN((SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADDMULTI));
+    MY_CXT.warn_handler  = SvREFCNT_inc_NN(
+        (SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADD));
+    MY_CXT.die_handler   = SvREFCNT_inc_NN(
+        (SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADD));
+    MY_CXT.make_error    = SvREFCNT_inc_NN(
+        (SV*)get_cv("Text::Xslate::Engine::make_error",  GV_ADD));
 }
 
 /* Because overloading stuff of old xsubpp didn't work,
@@ -1568,7 +1573,7 @@ CODE:
     mPUSHi(st->info[ pc_pos ].line);
     mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
     PUTBACK;
-    call_pv("Text::Xslate::Util::make_error", G_SCALAR);
+    call_sv(MY_CXT.make_error, G_SCALAR);
     SPAGAIN;
     full_message = POPs;
     PUTBACK;
