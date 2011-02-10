@@ -837,7 +837,7 @@ This method is significant when it is called by template functions and methods.
 
 =head3 B<< Text::Xslate->print(...) >>
 
-Adds the argument into the output buffer. This method is avalable on executing.
+Adds the argument into the output buffer. This method is available on executing.
 
 =head2 Exportable functions
 
