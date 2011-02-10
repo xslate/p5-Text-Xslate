@@ -835,6 +835,10 @@ This method is significant when it is called by template functions and methods.
 Returns the current line number while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
+=head3 B<< Text::Xslate->print(...) >>
+
+Adds the argument into the output buffer. This method is avalable on executing.
+
 =head2 Exportable functions
 
 =head3 C<< mark_raw($str :Str) :RawStr >>

@@ -170,7 +170,17 @@ output is a text string and template parameters must be text strings.
 However, if you want to process binary strings, you can do by passing C<:raw>
 for C<input_encoding>.
 
+=head3 Why doesn't $object.attr access the hash element?
+
+Template-Toolkit allows objects (i.e. blessed references) to access its element, i.e. C<< [% object.attr %] >> means C<< $object->{attr} >> if the object has no C<attr> method. This behavior breaks encapsulation and hides typos, so Xslate doesn't take this strategy.
+
+If you want to access hash elements, define the accessor of them, or prepare values before calling C<render()>.
+
 =head2 Functions, filters and macros
+
+=head3 Where are the list of builtin functions?
+
+See L<Text::Xslate::Manual::Builtin>.
 
 =head3 How can I use macros as a callback to high-level functions?
 
@@ -192,7 +202,7 @@ they are not a I<real> CODE reference.
         { a => [ 0 .. 100 ] },
     ); # => 50
 
-=head2 Development
+=head2 Development utilities
 
 =head3 How can I colorize Xslate templates?
 
