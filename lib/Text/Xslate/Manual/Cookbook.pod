@@ -250,6 +250,28 @@ Then in your templates:
 
 See also: L<I18N::Handle>, L<App::I18N>.
 
+=head2 Customization of error messages
+
+You can customize error handlers by C<warn_handler> and C<die_handler>.
+In these handlers, you can call C<< Text::Xslate->print() >> method in order to add your custom messages to the output buffer, which makes debugging easier.
+
+    #!perl -w
+    use strict;
+    use Text::Xslate;
+    my %vpath = (
+        hello => 'Hello, <: $lang :> world!' . "\n",
+    );
+    my $tx = Text::Xslate->new(
+        path         => \%vpath,
+        verbose      => 2,
+        warn_handler => sub { Text::Xslate->print('[[', @_, ']]') },
+    );
+
+    print $tx->render('hello', { });
+    # => Hello, [[use nil to print at ...]] world!
+
+L<Text::Xslate::HashWithDefault> is also useful for debugging.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
