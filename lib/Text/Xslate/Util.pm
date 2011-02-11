@@ -31,9 +31,9 @@ if($DEBUG =~ /display_width=(\d+)/) {
     $DisplayWidth = $1;
 }
 
-
-my $dquoted = qr/" (?: \\. | [^"\\] )* "/xms; # " for poor editors
-my $squoted = qr/' (?: \\. | [^'\\] )* '/xms; # ' for poor editors
+# cf. http://swtch.com/~rsc/regexp/regexp1.html
+my $dquoted = qr/"  [^"\\]* (?: \\. [^"\\]* )* "/xms;
+my $squoted = qr/'  [^'\\]* (?: \\. [^'\\]* )* '/xms;
 our $STRING  = qr/(?: $dquoted | $squoted )/xms;
 
 our $NUMBER  = qr/ (?:

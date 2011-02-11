@@ -8,11 +8,7 @@ use Test::More
 #    skip_all => 'Not yet resolved'
 ;
 use Text::Xslate;
-
-my $XSLATE = Text::Xslate->new(
-    syntax => 'TTerse',
-    cache     => 0,
-);
+use Text::Xslate::Parser;
 
 my $template = sprintf <<'EOF', qq{    "a",\n} x 10000;
 [%% JS = [
@@ -20,6 +16,11 @@ my $template = sprintf <<'EOF', qq{    "a",\n} x 10000;
 ] %%]
 foobar
 EOF
+
+my $XSLATE = Text::Xslate->new(
+    syntax => 'TTerse',
+    cache     => 0,
+);
 
 like $XSLATE->render_string($template), qr/foobar/;
 
