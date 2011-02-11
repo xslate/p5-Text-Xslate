@@ -1,10 +1,22 @@
 Revision history for Perl extension Text::Xslate
 
+1.0006 2011-02-11 16:23:32
+    [BUG FIXES]
+    * Complex templates which include too many string literals (e.g. large
+      JSON) could cause fatal errors on 5.10+, or SEGV on 5.8
+      (github issue/27; thanks to @cho45 for reporting it)
+
+    [NEW FEATURES]
+    * You can inject customized messages into the output with
+      the 'wanr_handler' option and Text::Xslate->print() method.
+      See the Cookbook for details.
+
 1.0005 2011-02-09 14:33:57
-    ANNOUNCE: If you are interested in xslate dev, jon #xslate @ irc.perl.org!
+    ANNOUNCE: If you are interested in xslate, join #xslate @ irc.perl.org!
 
     [BUG FIXES]
     * The INCLUDE recursion bug (see the NOTE at 1.0004) has been fixed.
+      (thanks to @kane46taka for reporting it)
 
 1.0004 2011-02-08 12:36:21
     NOTE: All the versions including this version has a bug that INCLUDE
