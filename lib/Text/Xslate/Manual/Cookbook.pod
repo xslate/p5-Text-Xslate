@@ -81,6 +81,7 @@ See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 =head3 Using HTML form builders
 
 Another solution to manage HTML forms is to use form builders.
+In such cases, all you have to do is to apply C<mark_raw()> to HTML parts.
 
 Here is a PSGI application that uses C<HTML::Shakan>:
 
@@ -170,7 +171,7 @@ See L<Text::Xslate/"Template cascading"> for details.
 
 =head2 How to map __DATA__ sections to the include path
 
-Use Data::Section::Simple, and the C<path> option of C<new()>, which accepts
+Use C<Data::Section::Simple>, and the C<path> option of C<new()>, which accepts
 HASH references which contain C<< $file_name => $content >> mapping.
 
     use Text::Xslate;
@@ -198,7 +199,7 @@ This feature is directly inspired by Text::MicroTemplate::DataSection,
 and originated from Mojo.
 
 See also L<Data::Section::Simple>, L<Text::MicroTemplate::DataSection>,
-and L<Mojo>.
+and L<Mojolicious>.
 
 =head2 How to assign a specific C<path> by user's environment
 
@@ -227,7 +228,7 @@ C<< <script> ... </script> >> sections.
 It is better to use secure modules for JavaScript escaping to avoid XSS.
 L<JavaScript::Value::Escape> may help you for this aim.
 
-=head2 How to use localization in templates
+=head2 How to manage localization in templates
 
 You can register any functions including C<_()>, so no specific techniques are required.
 

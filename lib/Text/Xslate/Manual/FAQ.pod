@@ -20,7 +20,7 @@ pure Perl implementations are also provided.
 
 Xslate supports multiple template syntaxes. Kolon is the default syntax,
 Metakolon is suitable to output Kolon templates, and TTerse is compatible
-with Template-Toolkit. You can specify the template syntax by passing
+with Template-Toolkit 2. You can specify the template syntax by passing
 C<syntax> option to the Text::Xslate constructor.
 
     my $tx = Text::Xslate->new(
@@ -89,11 +89,13 @@ which can be joined together with C<syntax> option:
 
     my $tx = Text::Xslate->new(
         syntax     => 'TTerse',
-        tag_start  => '{',
-        tag_end    => '}',
+        tag_start  => '{{',
+        tag_end    => '}}',
         line_start => undef,
     );
-    print $tx->render_string('Hello, {lang} world!', { lang => 'Xslate' });
+    print $tx->render_string('Hello, {{lang}} world!', { lang => 'Xslate' });
+
+Note that you'd better to avoid symbols which can be used for operators.
 
 =head3 How can I iterate over HASH references?
 
@@ -132,9 +134,9 @@ also for Kolon users.
 
 =head3 How can I (write|get) plugins?
 
-It is unlikely to write plugins for Xslate, because Xslate allows
+It is unlikely to need to write plugins for Xslate, because Xslate allows
 you to export any functions to templates. Any function-based modules
-are available by the C<module> option to the C<new> method.
+are available by the C<module> option.
 
 Xslate also allows to call methods for object instances, so you can
 use any object-oriented modules, except for classes which only provide
@@ -170,9 +172,9 @@ output is a text string and template parameters must be text strings.
 However, if you want to process binary strings, you can do by passing C<:raw>
 for C<input_encoding>.
 
-=head3 Why doesn't $object.attr access the hash element?
+=head3 Why doesn't I cannot access $object.attr like TT2?
 
-Template-Toolkit allows objects (i.e. blessed references) to access its element, i.e. C<< [% object.attr %] >> means C<< $object->{attr} >> if the object has no C<attr> method. This behavior breaks encapsulation and hides typos, so Xslate doesn't take this strategy.
+Template-Toolkit allows objects (i.e. blessed references) to access its element, i.e. C<< [% object.attr %] >> means C<< $object->{attr} >> if the object has no C<attr> method. This behavior breaks encapsulation and hides typos, so Xslate doesn't allow such fallbacks.
 
 If you want to access hash elements, define the accessor of them, or prepare values before calling C<render()>.
 
@@ -185,7 +187,7 @@ See L<Text::Xslate::Manual::Builtin>.
 =head3 How can I use macros as a callback to high-level functions?
 
 Macros are objects that overload C<&{}>, the CODE dereference operator, so
-all you have to do is to call them, but don't check their types because
+all you have to do is to call them simply, but don't check their types because
 they are not a I<real> CODE reference.
 
     my $tx = Text::Xslate->new(

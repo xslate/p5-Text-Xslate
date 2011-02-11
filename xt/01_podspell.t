@@ -63,6 +63,10 @@ Pre
 IRC
 irc
 org
+WAF
+WAFs
+JavaScript
+fallbacks
 
 # personal name
 lestrrat
@@ -84,8 +88,6 @@ turugina
 hirose
 kane
 taka
+cho
 
-WAF
-WAFs
-JavaScript
 

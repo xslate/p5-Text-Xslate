@@ -562,6 +562,8 @@ and Template-Toolkit 2, but the central philosophy of Xslate is different
 from them. That is, the philosophy is B<sandboxing> that the template logic
 should not have no access outside the template beyond your permission.
 
+Other remarkable features are as follows:
+
 =head2 Features
 
 =head3 High performance
@@ -572,7 +574,7 @@ which is highly optimized for rendering templates. Thus, Xslate is
 much faster than any other template engines.
 
 Here is a result of F<benchmark/x-rich-env.pl> to compare various template
-engines in "rich" environment where applications are persistent and XS modules
+engines in I<rich> environment where applications are persistent and XS modules
 are available.
 
     $ perl -Mblib benchmark/x-rich-env.pl
@@ -651,21 +653,23 @@ checks the freshness of the original templates every time.
 If I<$level> E<gt>= 2, caches will be created but the freshness
 will not be checked.
 
-I<$level> == 0 uses no caches. It's provided for testing.
+I<$level> == 0 uses no caches, which is provided for testing.
 
 =item C<< cache_dir => $dir // "$ENV{HOME}/.xslate_cache" >>
 
 Specifies the directory used for caches. If C<$ENV{HOME}> doesn't exist,
 C<< File::Spec->tmpdir >> will be used.
 
-You B<should> specify this option on productions.
+You B<should> specify this option for productions to avoid conflicts of
+template names.
 
 =item C<< function => \%functions >>
 
 Specifies a function map which contains name-coderef pairs.
 A function C<f> may be called as C<f($arg)> or C<$arg | f> in templates.
 
-There are builtin filters which are not overridable.
+There are built-in functions which are not overridable.
+See L<Text::Xslate::Manual::Builtin> for details.
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 
@@ -716,7 +720,8 @@ If C<< $level >= 2 >>, all the possible errors will be warned.
 Specify the template suffix, which is used for C<cascade> and C<include>
 in Kolon.
 
-Note that this is used statically. That is, the compiler uses it but the runtime engine doesn't.
+Note that this is used for static name resolution. That is, the compiler
+uses it but the runtime engine doesn't.
 
 =item C<< syntax => $name // 'Kolon' >>
 
@@ -730,8 +735,10 @@ This option is passed to the compiler directly.
 =item C<< type => $type // 'html' >>
 
 Specifies the output content type. If I<$type> is C<html> or C<xml>,
-template expressions are interpolated via the C<html-escape> filter.
-If I<$type> is C<text>, template expressions are interpolated as they are.
+smart escaping is applied to template expressions. That is,
+they are interpolated via the C<html_escape> filter.
+If I<$type> is C<text> smart escaping is not applied so that it is
+suitable for plain texts like e-mails.
 
 I<$type> may be B<html>, B<xml> (identical to C<html>), and B<text>.
 
@@ -739,8 +746,7 @@ This option is passed to the compiler directly.
 
 =item C<< line_start => $token // $parser_defined_str >>
 
-Specify the token to start line code as a string, which C<quotemeta> will be applied to. If you give C<undef> to this option, the line code style will be
-disabled.
+Specify the token to start line code as a string, which C<quotemeta> will be applied to. If you give C<undef>, the line code style is disabled.
 
 This option is passed to the parser via the compiler.
 
@@ -784,14 +790,14 @@ This option is experimental.
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
 
-Renders a template file with variables, and returns the result.
+Renders a template file with given variables, and returns the result.
 I<\%vars> is optional.
 
 Note that I<$file> may be cached according to the cache level.
 
 =head3 B<< $tx->render_string($string, \%vars) :Str >>
 
-Renders a template string with variables, and returns the result.
+Renders a template string with given variables, and returns the result.
 I<\%vars> is optional.
 
 Note that I<$string> is never cached, so this method may not be suitable for
@@ -799,8 +805,8 @@ productions.
 
 =head3 B<< $tx->load_file($file) :Void >>
 
-Loads I<$file> into memory for following C<render($file, \%vars)>.
-Compiles and saves it as caches if needed.
+Loads I<$file> into memory for following C<render()>.
+Compiles and saves it as disk caches if needed.
 
 It is a good idea to load templates before applications fork.
 Here is an example to to load all the templates which is in a given path:
@@ -837,7 +843,7 @@ This method is significant when it is called by template functions and methods.
 Returns the current line number while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
-=head3 B<< Text::Xslate->print(...) >>
+=head3 B<< Text::Xslate->print(...) :Void >>
 
 Adds the argument into the output buffer. This method is available on executing.
 
@@ -859,7 +865,7 @@ For example:
     # => Mailaddress: Foo &lt;foo@example.com&gt;
 
 This function is available in templates as the C<mark_raw> filter, although
-the use of it is discouraged.
+the use of it is strongly discouraged.
 
 =head3 C<< unmark_raw($str :Str) :Str >>
 
@@ -913,7 +919,7 @@ The C<xslate(1)> command is provided as a CLI to the Text::Xslate module,
 which is used to process directory trees or to evaluate one liners.
 For example:
 
-    $ xslate -D name=value -o dest_path src_path
+    $ xslate -Dname=value -o dest_path src_path
 
     $ xslate -e 'Hello, <: $ARGV[0] :> wolrd!' Xslate
     $ xslate -s TTerse -e 'Hello, [% ARGV.0 %] world!' TTerse
