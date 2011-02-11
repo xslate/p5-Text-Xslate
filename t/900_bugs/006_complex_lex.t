@@ -10,7 +10,7 @@ use Test::More
 use Text::Xslate;
 use Text::Xslate::Parser;
 
-my $template = sprintf <<'EOF', qq{    "a",\n} x 10000;
+my $template = sprintf <<'EOF', qq{    "a",\n} x 5000;
 [%% JS = [
 %s
 ] %%]
