@@ -604,10 +604,10 @@ Text::ClearSilver and HTML::Template::Pro.
 
 There are benchmark scripts in the F<benchmark/> directory.
 
-=head3 Auto escaping to HTML meta characters
+=head3 Smart escaping for HTML meta characters
 
 All the HTML meta characters in template expressions the engine interpolates
-into template texts are automatically escaped, so the output has no
+into template texts are escaped automatically, so the output has no
 possibility to XSS by default.
 
 =head3 Template cascading
