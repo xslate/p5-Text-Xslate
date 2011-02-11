@@ -19,8 +19,7 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
-my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
-
+my $CODE    = qr/ (?: $STRING | [^'"] ) /xms;
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 # Operator tokens that the parser recognizes.
@@ -291,7 +290,6 @@ sub split :method {
 
     my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* \Q$line_start\E ([^\n]* \n?) /xms;
     my $lex_tag_start = qr/\A \Q$tag_start\E ($CHOMP_FLAGS?)/xms;
-    my $lex_tag_end   = qr/\A ($CODE) ($CHOMP_FLAGS?) \Q$tag_end\E/xms;
 
     my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= \Q$tag_start\E ) | \z ) ) /xms;
 
@@ -299,10 +297,25 @@ sub split :method {
 
     while($_) {
         if($in_tag) {
-            if(s/$lex_tag_end//xms) {
-                my($code, $chomp) = ($1, $2);
-                $in_tag = 0;
+            my $start = 0;
+            my $pos;
+            while( ($pos = index $_, $tag_end, $start) >= 0 ) {
+                my $code = substr $_, 0, $pos;
+                $code =~ s/$CODE//xmsog;
+                if(length($code) == 0) {
+                    last;
+                }
+                $start = $pos + 1;
+            }
 
+            if($pos >= 0) {
+                my $code = substr $_, 0, $pos, '';
+                $code =~ s/($CHOMP_FLAGS?) \z//xmso;
+                my $chomp = $1;
+
+                s/\A \Q$tag_end\E //xms or die "Oops!";
+
+                $in_tag = 0;
                 push @tokens, [ code => $code ];
                 if($chomp) {
                     push @tokens, [ postchomp => $chomp ];
