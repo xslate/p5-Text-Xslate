@@ -24,7 +24,7 @@ my $CODE    = qr/ (?: (?: $STRING | [^'"] )*? ) /xms; # ' for poor editors
 my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
 
 # Operator tokens that the parser recognizes.
-# All the single characters are tokanized as an operator.
+# All the single characters are tokenized as an operator.
 my $OPERATOR_TOKEN = sprintf '(?:%s|[^ \t\r\n])', join('|', map{ quotemeta } qw(
     ...
     ..
@@ -208,7 +208,7 @@ sub parse {
 
     $parser->input( $parser->preprocess($input) );
 
-    $parser->next_token( $parser->tokanize() );
+    $parser->next_token( $parser->tokenize() );
     $parser->advance();
     my $ast = $parser->statements();
 
@@ -278,7 +278,7 @@ sub auto_chomp {
     return $nl;
 }
 
-# split templates by tags before tokanizing
+# split templates by tags before tokenizing
 sub split :method {
     my $parser  = shift;
     local($_) = @_;
@@ -614,8 +614,8 @@ sub define_pair {
     return;
 }
 
-# the low-level tokanizer. Don't use it directly, use advance() instead.
-sub tokanize {
+# the low-level tokenizer. Don't use it directly, use advance() instead.
+sub tokenize {
     my($parser) = @_;
 
     local *_ = \$parser->{input};
@@ -652,7 +652,7 @@ sub next_token_is {
     return $parser->next_token->[1] eq $token;
 }
 
-# the high-level tokanizer
+# the high-level tokenizer
 sub advance {
     my($parser, $expect) = @_;
 
@@ -673,7 +673,7 @@ sub advance {
     $parser->statement_is_finished( $parser->following_newline != 0 );
     my $line = $parser->line( $parser->line + $parser->following_newline );
 
-    $parser->next_token( $parser->tokanize() );
+    $parser->next_token( $parser->tokenize() );
 
     my($arity, $id) = @{$t};
     if( $arity eq "name" && $parser->next_token_is("=>") ) {
