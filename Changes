@@ -8,7 +8,7 @@ Revision history for Perl extension Text::Xslate
 
     [NEW FEATURES]
     * You can inject customized messages into the output with
-      the 'wanr_handler' option and Text::Xslate->print() method.
+      the 'warn_handler' option and Text::Xslate->print() method.
       See the Cookbook for details.
 
 1.0005 2011-02-09 14:33:57
