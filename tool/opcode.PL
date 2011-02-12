@@ -1,4 +1,5 @@
 #!perl -w
+use 5.008_001;
 use strict;
 
 sub code {
