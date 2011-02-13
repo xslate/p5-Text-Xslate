@@ -474,21 +474,27 @@ TXC(lt) {
     TX_RETURN_NEXT();
 }
 TXC(le) {
-    TX_st_sa = boolSV( SvNVx(TX_st_sb) <= SvNVx(TX_st_sa) );
+    TX_st_sa = boolSV(
+        SvNVx(TX_ckuuv_lhs(TX_st_sb)) <= SvNVx(TX_ckuuv_rhs(TX_st_sa))
+    );
     TX_RETURN_NEXT();
 }
 TXC(gt) {
-    TX_st_sa = boolSV( SvNVx(TX_st_sb) > SvNVx(TX_st_sa) );
+    TX_st_sa = boolSV(
+        SvNVx(TX_ckuuv_lhs(TX_st_sb)) > SvNVx(TX_ckuuv_rhs(TX_st_sa))
+    );
     TX_RETURN_NEXT();
 }
 TXC(ge) {
-    TX_st_sa = boolSV( SvNVx(TX_st_sb) >= SvNVx(TX_st_sa) );
+    TX_st_sa = boolSV(
+        SvNVx(TX_ckuuv_lhs(TX_st_sb)) >= SvNVx(TX_ckuuv_rhs(TX_st_sa))
+    );
     TX_RETURN_NEXT();
 }
 
 TXC(ncmp) {
-    NV const lhs = SvNVx(TX_st_sb);
-    NV const rhs = SvNVx(TX_st_sa);
+    NV const lhs = SvNVx(TX_ckuuv_lhs(TX_st_sb));
+    NV const rhs = SvNVx(TX_ckuuv_rhs(TX_st_sa));
     IV value;
     if(lhs == rhs) {
         value =  0;
@@ -511,7 +517,9 @@ TXC(ncmp) {
 }
 
 TXC(scmp) {
-    sv_setiv(TX_st->targ, sv_cmp(TX_st_sb, TX_st_sa));
+    sv_setiv(TX_st->targ,
+        sv_cmp(TX_ckuuv_lhs(TX_st_sb), TX_ckuuv_rhs(TX_st_sa))
+    );
     TX_st_sa = TX_st->targ;
     TX_RETURN_NEXT();
 }
@@ -532,8 +540,8 @@ TXC(range) {
     /* set GIMME to G_ARRAY (see op.h) */
     PL_op->op_flags |= OPf_WANT_LIST;
     EXTEND(SP, 2);
-    PUSHs(lhs);
-    PUSHs(rhs);
+    PUSHs(TX_ckuuv_lhs(lhs));
+    PUSHs(TX_ckuuv_rhs(rhs));
     PUTBACK;
     myop.op_ppaddr(aTHX);
 

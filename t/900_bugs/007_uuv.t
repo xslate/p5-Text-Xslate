@@ -9,12 +9,15 @@ use Text::Xslate;
 
 my @warnings;
 my $xslate = Text::Xslate->new(
-    syntax        => 'TTerse',
+    syntax       => 'TTerse',
     warn_handler => sub { push @warnings, @_ },
+    verbose      => 2,
 );
 $xslate->render_string('[% IF others.size() > 0 %][% END %]', {});
 
+note @warnings;
 like   "@warnings", qr/\b nil \b/xms;
+like   "@warnings", qr/\b lhs \b/xms;
 unlike "@warnings", qr/Use of uninitialized value/;
 
 done_testing;

@@ -66,6 +66,9 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 #define TX_lvar(ix)     TX_lvarx(TX_st, ix)     /* init if uninitialized */
 #define TX_lvar_get(ix) TX_lvarx_get(TX_st, ix)
 
+#define TX_ckuuv_lhs(x) tx_sv_check_uuv(aTHX_ (x), "lhs")
+#define TX_ckuuv_rhs(x) tx_sv_check_uuv(aTHX_ (x), "rhs")
+
 #define TX_UNMARK_RAW(sv) SvRV(sv)
 
 #define MY_CXT_KEY "Text::Xslate::_guts" XS_VERSION
@@ -153,6 +156,9 @@ tx_uri_escape(pTHX_ SV* const src);
 
 STATIC_INLINE I32
 tx_sv_eq(pTHX_ SV* const a, SV* const b);
+
+static SV*
+tx_sv_check_uuv(pTHX_ SV* const sv, const char* const name);
 
 static I32
 tx_sv_match(pTHX_ SV* const a, SV* const b);
@@ -626,6 +632,20 @@ tx_uri_escape(pTHX_ SV* const src) {
     else {
         return &PL_sv_undef;
     }
+}
+
+/* for tx_ckuuv_lhs() / tx_ckuuv_rhs() macros */
+static SV*
+tx_sv_check_uuv(pTHX_ SV* const sv, const char* const name) {
+    /* check "Use of uninitialized value" (uuv) */
+    SvGETMAGIC(sv);
+    if(!SvOK(sv)) {
+        dMY_CXT;
+        tx_warn(aTHX_ MY_CXT.current_st,
+            "Use of nil for %s of binary operator", name);
+        return &PL_sv_no;
+    }
+    return sv;
 }
 
 static I32
