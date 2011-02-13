@@ -3,9 +3,10 @@
 use strict;
 use warnings;
 use utf8;
+use Text::Xslate;
+use if exists $INC{'Text/Xslate/PP.pm'}, 'Test::More', skip_all => 'NYI in PP';
 use Test::More;
 
-use Text::Xslate;
 
 my @warnings;
 my $xslate = Text::Xslate->new(
