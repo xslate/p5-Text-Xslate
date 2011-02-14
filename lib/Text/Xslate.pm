@@ -518,12 +518,7 @@ This document describes Text::Xslate version 1.0008.
 
     use Text::Xslate qw(mark_raw);
 
-    my $tx = Text::Xslate->new(
-        # the following options are optional.
-        path       => ['.'],
-        cache_dir  => "$ENV{HOME}/.xslate_cache",
-        cache      => 1,
-    );
+    my $tx = Text::Xslate->new();
 
     my %vars = (
         title => 'A list of books',
