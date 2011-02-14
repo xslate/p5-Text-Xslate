@@ -169,8 +169,8 @@ see L<perlunifaq>.)
 
 Xslate assumes template files to be encoded in C<UTF-8> by default, so the
 output is a text string and template parameters must be text strings.
-However, if you want to process binary strings, you can do by passing C<:bytes>
-for C<input_layer>. Thus, parameters which you give C<render()> and values
+(however, if you want to process binary strings, you can do by passing C<:bytes>
+for C<input_layer>). Thus, parameters which you give C<render()> and values
 which registered functions return must be text strings.
 
 =head3 Why doesn't I cannot access $object.attr like TT2?
