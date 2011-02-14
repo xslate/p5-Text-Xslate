@@ -800,8 +800,16 @@ Note that I<$file> may be cached according to the cache level.
 Renders a template string with given variables, and returns the result.
 I<\%vars> is optional.
 
-Note that I<$string> is never cached, so this method may not be suitable for
-productions.
+Note that I<$string> is never cached, so this method should be avoided in
+production environment. If you want in-memory templates, consider the I<path>
+option for HASH references which are cached as you expect:
+
+    my %vpath = (
+        'hello.tx' => 'Hello, <: $lang :> world!',
+    );
+
+    my $tx = Text::Xslate->new( path => \%vpath );
+    print $tx->render('hello.tx', { lang => 'Xslate' });
 
 =head3 B<< $tx->load_file($file) :Void >>
 
