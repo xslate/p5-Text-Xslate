@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+NEXT
+    [BUG FIXES]
+    * Fix docs
+
 1.0007 2011-02-13 23:10:03
     [BUG FIXES]
     * Suppress irrational uuv warnings in relational operators
