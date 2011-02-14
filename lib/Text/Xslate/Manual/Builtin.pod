@@ -152,7 +152,7 @@ True if the loop block is the first, false otherwise.
 
 This is aliased to C<first> in TTerse for compatibility with TT2.
 
-=head2 C<< $~item.last >>
+=head2 C<< $~item.is_last >>
 
 True if the loop block is the last, false otherwise.
 
@@ -182,6 +182,7 @@ The maximum index of the looping array. i.e. C<< $#{$arrayref} >> in Perl.
 
 The xslate engine supports filter syntax as well as function call.
 The following is the builtin functions, which can be invoked as filter syntax.
+
 =head2 C<< mark_raw($str) >>
 
 Mark I<$str> as a raw string to avoid auto HTML escaping.
@@ -202,7 +203,7 @@ The html meta characters are C<< /[<>"'&]/ >>.
 
 =head2 C<< uri($str) >>
 
-Escapes unsafe URI characters in I<$str>.
+Escapes unsafe URI characters in I<$str> which gets encoded to UTF-8.
 
 The unsafe URI characters are characters not included in
 the C<unreserved> character class defined by RFC 3986,
