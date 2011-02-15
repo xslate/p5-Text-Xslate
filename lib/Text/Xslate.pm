@@ -7,6 +7,7 @@ use warnings;
 our $VERSION = '1.0008';
 
 use Carp              ();
+use Fcntl             ();
 use File::Spec        ();
 use Exporter          ();
 use Data::MessagePack ();
@@ -295,6 +296,7 @@ sub slurp {
 
     open my($source), '<' . $self->{input_layer}, $fullpath
         or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+    flock($source, Fcntl::LOCK_SH());
     local $/;
     return scalar <$source>;
 }
@@ -326,7 +328,9 @@ sub _load_source {
                 or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
         }
 
-        if(open my($out), '>:raw', $cachepath) {
+        if(sysopen my($out), $cachepath, Fcntl::O_WRONLY() | Fcntl::O_CREAT()) {
+            flock $out, Fcntl::LOCK_EX();
+            truncate $out, 0 or Carp::croak("Xslate: failed to truncate: $!");
             $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
