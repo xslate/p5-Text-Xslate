@@ -331,6 +331,7 @@ sub _load_source {
         if(sysopen my($out), $cachepath, Fcntl::O_WRONLY() | Fcntl::O_CREAT()) {
             flock $out, Fcntl::LOCK_EX();
             truncate $out, 0 or Carp::croak("Xslate: failed to truncate: $!");
+            binmode($out);
             $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
@@ -377,6 +378,7 @@ sub _load_compiled {
     my $cachepath = $fi->{cachepath};
     open my($in), '<:raw', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
+    flock($in, Fcntl::LOCK_SH());
 
     my $magic = $self->_magic_token($fi->{fullpath});
     my $data;
