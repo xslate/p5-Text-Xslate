@@ -67,6 +67,7 @@ WAF
 WAFs
 JavaScript
 fallbacks
+UTF
 
 # personal name
 lestrrat
