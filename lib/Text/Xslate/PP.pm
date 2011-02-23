@@ -35,6 +35,7 @@ use Carp         ();
 require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
 my $state_class = 'Text::Xslate::PP::' . _PP_BACKEND;
+$state_class->VERSION($VERSION); # ensure the version
 
 if(_PP_ERROR_VERBOSE) {
     Carp->import('verbose');
