@@ -18,7 +18,7 @@ use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
 use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
 use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
                             : _PP_BOOSTER ? 'Booster'
-                            :               'Booster'; # default
+                            :               'Opcode'; # default
 use constant _PP_ERROR_VERBOSE => scalar($DEBUG =~ /\b pp=verbose \b/xms);
 
 use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
