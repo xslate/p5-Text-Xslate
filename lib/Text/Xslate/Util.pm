@@ -208,8 +208,15 @@ END_IMPORT
     };
     Carp::confess("Xslate: Failed to import:\n" . $e) if $e;
     push @funcs, map {
-            my $glob_ref = \$Text::Xslate::Util::_import::{$_};
-            my $c = ref($glob_ref) eq 'GLOB' ? *{$glob_ref}{CODE} : undef;
+            my $entity_ref = \$Text::Xslate::Util::_import::{$_};
+            my $c;
+            if(ref($entity_ref) eq 'GLOB') { # normal symbols
+                $c = *{$entity_ref}{CODE};
+            }
+            elsif(ref($entity_ref) eq 'REF') { # special constants
+                no strict 'refs';
+                $c = \&{ 'Text::Xslate::Util::_import::' . $_ };
+            }
             defined($c) ? ($_ => $c) : ();
         } keys %Text::Xslate::Util::_import::;
 

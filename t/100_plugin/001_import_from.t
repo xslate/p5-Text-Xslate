@@ -24,10 +24,12 @@ for(1 .. 2) {
             confess  => \&Carp::confess,
     };
 
+    # for constants
     $f = import_from(
            "Fcntl" => [qw(:flock)],
     );
 
+    ok exists $f->{LOCK_EX} or diag explain($f);
     is $f->{LOCK_EX}->(), Fcntl::LOCK_EX(), 'constant';
     is $f->{LOCK_SH}->(), Fcntl::LOCK_SH(), 'constant';
 }
