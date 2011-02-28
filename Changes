@@ -1,9 +1,19 @@
 Revision history for Perl extension Text::Xslate
 
+1.0010 2011-02-28 18:09:28
+    [BUG FIXES]
+    * Fix a bug in import_from(), which failed to import optimized constant
+      introduced in 5.10 (thanks to @kane46taka)
+
 1.0009 2011-02-28 13:00:50
     [BUG FIXES]
     * Lock cache file operations with flock(2)
     * Fix doc issues
+
+    [CHANGES]
+    * Switch PP backend from PP::Booster to PP::Opcode.
+      PP::Booster will be removed from the core because
+      its maintainance cost is too high.
 
 1.0008 2011-02-14 12:46:45
     [BUG FIXES]
