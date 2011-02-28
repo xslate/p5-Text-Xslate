@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.0009 2011-02-28 13:00:50
+    [BUG FIXES]
+    * Lock cache file operations with flock(2)
+    * Fix doc issues
+
 1.0008 2011-02-14 12:46:45
     [BUG FIXES]
     * Fix docs
