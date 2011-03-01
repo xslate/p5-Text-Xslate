@@ -544,7 +544,9 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
             CopyToken("&quot;", d);
         }
         else if(c == '\'') {
-            CopyToken("&apos;", d);
+            // XXX: Internet Explorer (at least version 8) doesn't support &apos; in title
+            // CopyToken("&apos;", d);
+            CopyToken("&#39;", d);
         }
         else {
             *(d++) = c;

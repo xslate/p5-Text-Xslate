@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.0011 2011-03-01 18:08:16
+    [CHANGES]
+    * Internet Explorer (<= 8) doesn't support &apos; in title, so
+      we must escape ' (apostrophe) into &#39;, not &apos;
+      (thanks to @tokuhirom)
+
 1.0010 2011-02-28 18:09:28
     [BUG FIXES]
     * Fix a bug in import_from(), which failed to import optimized constant

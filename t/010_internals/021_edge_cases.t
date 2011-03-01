@@ -9,8 +9,8 @@ my $tx = Text::Xslate->new();
 my @data = (
     ['<: "foo\tbar\n" :>', "foo\tbar\n"],
     [q{<: 'foo\tbar\n' :>}, 'foo\tbar\n'],
-    [q{<: ' & " \' ' :>}, ' &amp; &quot; &apos; '],
-    [q{<: "<: 'foo' :>" :>}, "&lt;: &apos;foo&apos; :&gt;"],
+    [q{<: ' & " \' ' :>}, ' &amp; &quot; &#39; '],
+    [q{<: "<: 'foo' :>" :>}, "&lt;: &#39;foo&#39; :&gt;"],
 
     [q{foo<:# this is a comment :>bar}, "foobar"],
     [q{<:$lang:> foo<:# this is a comment :>bar <:$lang:>}, "Xslate foobar Xslate"],

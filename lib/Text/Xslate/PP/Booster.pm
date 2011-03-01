@@ -3,7 +3,7 @@ package Text::Xslate::PP::Booster;
 use Any::Moose;
 extends qw(Text::Xslate::PP::State);
 
-our $VERSION = '1.0010';
+our $VERSION = '1.0011';
 
 use Carp ();
 use Scalar::Util ();

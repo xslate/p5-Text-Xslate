@@ -3,7 +3,7 @@ package Text::Xslate::PP;
 use 5.008_001;
 use strict;
 
-our $VERSION = '1.0010';
+our $VERSION = '1.0011';
 $VERSION =~ s/_//; # for developpers versions
 
 BEGIN{
@@ -65,7 +65,7 @@ our %html_escape = (
     '<' => '&lt;',
     '>' => '&gt;',
     '"' => '&quot;',
-    "'" => '&apos;',
+    "'" => '&#39;', # IE8 doesn't support &apos; in title
 );
 our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
@@ -667,7 +667,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version 1.0010.
+This document describes Text::Xslate::PP version 1.0011.
 
 =head1 DESCRIPTION
 
