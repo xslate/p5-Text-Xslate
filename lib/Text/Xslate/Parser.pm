@@ -1121,7 +1121,9 @@ sub define_function {
     my($parser, @names) = @_;
 
     foreach my $name(@names) {
-        $parser->symbol($name)->set_nud(\&nud_name);
+        my $s = $parser->symbol($name);
+        $s->set_nud(\&nud_name);
+        $s->is_defined(1);
     }
     return;
 }
@@ -1676,7 +1678,7 @@ sub barename {
     my($parser) = @_;
 
     my $t = $parser->token;
-    if($t->arity ne 'name') {
+    if($t->arity ne 'name' or $t->is_defined) {
         # string literal for 'cascade', or any expression for 'include'
         return $parser->expression(0);
     }
