@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.0011';
+our $VERSION = '1.0012';
 
 use Carp              ();
 use Fcntl             ();
@@ -518,7 +518,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.0011.
+This document describes Text::Xslate version 1.0012.
 
 =head1 SYNOPSIS
 
@@ -1121,6 +1121,8 @@ Thanks to shiba_yu36 for the bug reports.
 Thanks to kane46taka for the bug reports.
 
 Thanks to cho45 for the bug reports.
+
+THanks to shmorimo for the bug reports.
 
 =head1 AUTHOR
 
