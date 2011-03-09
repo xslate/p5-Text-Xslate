@@ -1122,7 +1122,7 @@ Thanks to kane46taka for the bug reports.
 
 Thanks to cho45 for the bug reports.
 
-THanks to shmorimo for the bug reports.
+Thanks to shmorimo for the bug reports.
 
 =head1 AUTHOR
 
