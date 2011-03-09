@@ -70,6 +70,21 @@ sub op_localize_s {
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
+sub op_localize_vars {
+    my($st) = @_;
+    my $new_vars = $st->{sa};
+    my $old_vars = $st->vars;
+
+    push @{ $st->{local_stack} }, sub {
+            $st->vars($old_vars);
+            return;
+        };
+
+    $st->vars($new_vars);
+
+    goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
+}
+
 sub op_push {
     push @{ $_[0]->{ SP }->[ -1 ] }, $_[0]->{sa};
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

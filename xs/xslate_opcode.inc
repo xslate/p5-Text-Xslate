@@ -61,6 +61,23 @@ TXC_w_key(localize_s) {
     TX_RETURN_NEXT();
 }
 
+/* local $engine->{vars} = expr; */
+TXC(localize_vars) {
+    SV* vars = sv_mortalcopy(TX_st_sa);
+
+    if(!( SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV
+            && !SvOBJECT(SvRV(vars)) )) {
+        tx_warn(aTHX_ TX_st, "Variable map must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
+        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
+    }
+
+    save_hptr(&(TX_st->vars));
+    TX_st->vars = (HV*)SvRV(vars);
+
+    TX_RETURN_NEXT();
+}
+
 TXC(push) {
     dSP;
     XPUSHs(sv_mortalcopy(TX_st_sa));

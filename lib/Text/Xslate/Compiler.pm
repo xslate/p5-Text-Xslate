@@ -632,6 +632,7 @@ sub _generate_include {
             : $self->compile_ast($file) ),
         $self->opcode( $node->id => undef, line => $node->line ),
     );
+
     if(defined(my $vars = $node->second)) {
         @code = ($self->opcode('enter'),
             $self->_localize_vars($vars),
@@ -1203,6 +1204,17 @@ sub _localize_vars {
     my($self, $vars) = @_;
     my @localize;
     my @pairs = @{$vars};
+
+    if( (@pairs % 2) != 0 ) {
+        if(@pairs == 1) {
+            return $self->compile_ast(@pairs),
+                $self->opcode( 'localize_vars' );
+        }
+        else {
+            $self->_error("You must pass pairs of expressions to include");
+        }
+    }
+
     while(my($key, $expr) = splice @pairs, 0, 2) {
         if(!any_in($key->arity, qw(literal variable))) {
             $self->_error("You must pass a simple name to localize variables", $key);
