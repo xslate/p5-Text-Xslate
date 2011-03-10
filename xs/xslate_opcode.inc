@@ -185,9 +185,6 @@ TXC_w_var(for_start) {
                 "Iterating data must be an ARRAY reference, not %s",
                 tx_neat(aTHX_ avref));
         }
-        else {
-            tx_warn(aTHX_ TX_st, "Use of nil to iterate");
-        }
         avref = sv_2mortal(newRV_noinc((SV*)newAV()));
     }
 
@@ -211,16 +208,16 @@ TXC_goto(for_iter) {
     assert(SvIOK(i));
 
     SvIOK_only(i); /* for $^item */
-
+    SvIVX(i)++;
     //warn("for_next[%d %d]", (int)SvIV(i), (int)AvFILLp(av));
     if(LIKELY(!SvRMAGICAL(av))) {
-        if(++SvIVX(i) <= AvFILLp(av)) {
+        if(SvIVX(i) <= AvFILLp(av)) {
             sv_setsv(item, AvARRAY(av)[SvIVX(i)]);
             TX_RETURN_NEXT();
         }
     }
     else { /* magical variables */
-        if(++SvIVX(i) <= av_len(av)) {
+        if(SvIVX(i) <= av_len(av)) {
             SV** const itemp = av_fetch(av, SvIVX(i), FALSE);
             sv_setsv(item, itemp ? *itemp : NULL);
             TX_RETURN_NEXT();
@@ -228,6 +225,7 @@ TXC_goto(for_iter) {
     }
 
     /* the loop finished */
+    TX_st_sa = boolSV( SvIVX(i) > 0 ); /* for foreach-else */
     tx_sv_clear(aTHX_ item);
     tx_sv_clear(aTHX_ i);
     tx_sv_clear(aTHX_ avref);

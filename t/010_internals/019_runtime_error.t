@@ -21,6 +21,7 @@ my $tx = Text::Xslate->new(
 
 my $FILE = quotemeta(__FILE__);
 
+note 'default verbose';
 foreach my $code(
     q{ nil },
     q{ nil.foo },
@@ -144,7 +145,6 @@ foreach my $code(
     q{ nil },
     q{ nil.foo },
     q{ nil.foo() },
-    q{ for nil -> ($item) { print "foobar"; } },
     q{ $h[nil] },
     q{ $a[nil] },
     q{ nil | raw },

@@ -1434,6 +1434,14 @@ sub std_for {
     my $proc = $symbol->clone(arity => 'for');
     $proc->first( $parser->expression(0) );
     $parser->pointy($proc, 1);
+    if($parser->token eq 'else') {
+        $parser->advance();
+        my $else = $parser->block();
+        $proc = $symbol->clone( arity => 'for_else',
+            first  => $proc,
+            second => $else,
+        )
+    }
     return $proc;
 }
 

@@ -717,6 +717,26 @@ sub _generate_for {
     return @code;
 }
 
+sub _generate_for_else {
+    my($self, $node) = @_;
+
+    my $for_block  = $node->first;
+    my $else_block = $node->second;
+
+    my @code = (
+        $self->compile_ast($for_block),
+    );
+
+    # 'for' block sets __a with true if the loop count > 0
+    my @else = $self->compile_ast($else_block);
+    push @code, (
+        $self->opcode( or => scalar(@else) + 1, comment => 'for-else' ),
+        @else,
+    );
+
+    return @code;
+}
+
 sub _generate_while {
     my($self, $node) = @_;
     my $expr  = $node->first;
