@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.0099_02 2011-03-10 16:21:18
+    [NEW FEATURES]
+    * Add loop control statements (last and next) in both Kolon and TTerse
+
 1.0099_01 2011-03-10 12:42:28
     [CHANGES]
     * The bytecode version is now 1.3, which means all the compiled codes
