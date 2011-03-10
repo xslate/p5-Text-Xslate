@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-next major release
+1.0099_01 2011-03-10 12:42:28
     [CHANGES]
     * The bytecode version is now 1.3, which means all the compiled codes
       will be purged on render()
