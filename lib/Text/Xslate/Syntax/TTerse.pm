@@ -63,6 +63,9 @@ sub init_symbols {
     $parser->symbol('DEFAULT') ->set_std(\&std_set);
     $parser->symbol('CALL')    ->set_std(\&std_call);
 
+    $parser->symbol('NEXT')    ->set_std( $parser->can('std_next') );
+    $parser->symbol('LAST')    ->set_std( $parser->can('std_last') );
+
     $parser->symbol('MACRO') ->set_std(\&std_macro);
     $parser->symbol('BLOCK');
     $parser->symbol('WRAPPER')->set_std(\&std_wrapper);
@@ -73,7 +76,7 @@ sub init_symbols {
     # unsupported directives
     my $nos = $parser->can('not_supported');
     foreach my $keyword (qw(
-            INSERT PROCESS PERL RAWPERL TRY THROW NEXT LAST RETURN
+            INSERT PROCESS PERL RAWPERL TRY THROW RETURN
             STOP CLEAR META TAGS DEBUG VIEW)) {
         $parser->symbol($keyword)->set_std($nos);
     }

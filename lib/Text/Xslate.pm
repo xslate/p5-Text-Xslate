@@ -1012,10 +1012,6 @@ Augment modifiers.
 
 =item *
 
-Loop controls (last / next).
-
-=item *
-
 Default arguments and named arguments for macros.
 
 =back

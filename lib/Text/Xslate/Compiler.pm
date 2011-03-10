@@ -29,6 +29,9 @@ use constant {
     _OP_FILE    => 3,
     _OP_LABEL   => 4,
     _OP_COMMENT => 5,
+
+    _FOR_LOOP   => 1,
+    _WHILE_LOOP => 2,
 };
 
 
@@ -88,6 +91,15 @@ my %unary = (
     '+^'  => 'bitneg',
 
     'max_index' => 'max_index', # for loop context vars
+);
+
+my %goto_family = map { $_ => undef } qw(
+    for_iter
+    and
+    dand
+    or
+    dor
+    goto
 );
 
 my %builtin = (
@@ -239,6 +251,7 @@ sub compile {
     local $self->{lvar_id     } = 0;
     local $self->{lvar}         = {};
     local $self->{const}        = [];
+    local $self->{in_loop}      = 0;
     local $self->{dependencies} = [];
     local $self->{cascade};
     local $self->{header}       = $self->{header};
@@ -665,17 +678,30 @@ sub _generate_cascade {
     return;
 }
 
-sub _compile_block {
+# XXX: need more consideration
+sub _compile_loop_block {
     my($self, $block) = @_;
     my @block_code = $self->compile_ast($block);
 
     foreach my $op(@block_code) {
-        if($op->[_OP_NAME] eq 'pushmark') {
+        if(any_in( $op->[_OP_NAME], qw(pushmark loop_control))) {
             # pushmark ... funcall (or something) may create mortal SVs
             # so surround the block with ENTER and LEAVE
             unshift @block_code, $self->opcode('enter');
             push    @block_code, $self->opcode('leave');
             last;
+        }
+    }
+
+    foreach my $i(1 .. (@block_code-1)) {
+        my $op = $block_code[$i];
+        if($op->[_OP_NAME] eq 'loop_control') {
+            my $type = $op->[_OP_ARG];
+            $op->[_OP_NAME] = 'goto';
+
+            $op->[_OP_ARG] = (@block_code - $i);
+
+            $op->[_OP_ARG] += 1 if $type eq 'last';
         }
     }
 
@@ -693,6 +719,7 @@ sub _generate_for {
     }
     local $self->{lvar}  = { %{$self->lvar} }; # new scope
     local $self->{const} = [];                 # new scope
+    local $self->{in_loop} = _FOR_LOOP;
 
     my @code = $self->compile_ast($expr);
 
@@ -701,13 +728,14 @@ sub _generate_for {
     my $lvar_name = $iter_var->id;
 
     $self->lvar->{$lvar_name} = $lvar_id;
+    $self->lvar->{'($_)'}     = $lvar_id;
 
     push @code, $self->opcode( for_start => $lvar_id, symbol => $iter_var );
 
     # a for statement uses three local variables (container, iterator, and item)
     local $self->{lvar_id} = $self->lvar_use(3);
 
-    my @block_code = $self->_compile_block($block);
+    my @block_code = $self->_compile_loop_block($block);
     push @code,
         $self->opcode( literal_i => $lvar_id, symbol => $iter_var ),
         $self->opcode( for_iter  => scalar(@block_code) + 2 ),
@@ -749,8 +777,10 @@ sub _generate_while {
 
     (my $cond_op, undef, $expr) = $self->_prepare_cond_expr($expr);
 
+    # TODO: combine all the loop contexts into single one
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
+    local $self->{in_loop} = _WHILE_LOOP;
 
     my @code = $self->compile_ast($expr);
 
@@ -765,13 +795,45 @@ sub _generate_while {
     }
 
     local $self->{lvar_id} = $self->lvar_use(scalar @{$vars});
-    my @block_code = $self->_compile_block($block);
+    my @block_code = $self->_compile_loop_block($block);
     return @code,
         $self->opcode( $cond_op => scalar(@block_code) + 2, symbol => $node ),
         @block_code,
         $self->opcode( goto => -(scalar(@block_code) + scalar(@code) + 1), comment => "end while" );
 
     return @code;
+}
+
+sub _generate_loop_control {
+    my($self, $node) = @_;
+    my $type = $node->id;
+
+    any_in($type, qw(last next))
+        or $self->_error("Oops: unknown loop control statement '$type'");
+
+    if(not $self->{in_loop}) {
+        $self->_error("Use of loop control statement ($type) outside of loops");
+    }
+
+    my @cleanup;
+    if( $self->{in_loop} == _FOR_LOOP && $type eq 'last' ) {
+        my $lvar_id = $self->lvar->{'($_)'};
+        defined($lvar_id)
+            or $self->_error('Oops: undefined loop iterator');
+
+        @cleanup = (
+            $self->opcode( 'nil', undef,
+                comment => 'to clean the loop context' ),
+            $self->opcode( save_to_lvar => $lvar_id + 0), # item
+            $self->opcode( save_to_lvar => $lvar_id + 1), # iterator
+            $self->opcode( save_to_lvar => $lvar_id + 2), # body
+            $self->opcode( literal_i    => 1 ), # for 'for-else'
+        );
+    }
+
+    return $self->opcode('leave'),
+           @cleanup,
+           $self->opcode('loop_control' => $type, comment => $type);
 }
 
 sub _generate_proc { # definition of macro, block, before, around, after
@@ -959,10 +1021,10 @@ sub _generate_variable {
     }
 }
 
-sub _generate_marker {
+sub _generate_super {
     my($self, $node) = @_;
 
-    return return $self->opcode( $node->id => undef, symbol => $node );
+    return return $self->opcode( super => undef, symbol => $node );
 }
 
 sub _generate_literal {
@@ -1149,9 +1211,13 @@ sub _generate_iterator {
             $node);
     }
 
-    return $self->opcode( load_lvar => $lvar_id+1, symbol => $node );
+    return $self->opcode(
+        load_lvar => $lvar_id + 1,
+        symbol    => $node,
+    );
 }
 
+# $~iterator.body
 sub _generate_iterator_body {
     my($self, $node) = @_;
 
@@ -1162,7 +1228,10 @@ sub _generate_iterator_body {
             $node);
     }
 
-    return $self->opcode( load_lvar => $lvar_id+2, symbol => $node );
+    return $self->opcode(
+        load_lvar => $lvar_id + 2,
+        symbol    => $node,
+    );
 }
 
 sub _generate_assign {
@@ -1303,15 +1372,6 @@ sub _fold_constants {
     return 1;
 }
 
-my %goto_family;
-@goto_family{qw(
-    for_iter
-    and
-    dand
-    or
-    dor
-    goto
-)} = ();
 
 sub _noop {
     my($self, $op) = @_;

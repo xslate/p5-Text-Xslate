@@ -566,6 +566,9 @@ sub init_symbols {
 
     $parser->symbol('include')  ->set_std(\&std_include);
 
+    $parser->symbol('last')  ->set_std(\&std_last);
+    $parser->symbol('next')  ->set_std(\&std_next);
+
     # macros
 
     $parser->symbol('cascade')  ->set_std(\&std_cascade);
@@ -574,7 +577,7 @@ sub init_symbols {
     $parser->symbol('before')   ->set_std(\&std_proc);
     $parser->symbol('after')    ->set_std(\&std_proc);
     $parser->symbol('block')    ->set_std(\&std_macro_block);
-    $parser->symbol('super')    ->set_std(\&std_marker);
+    $parser->symbol('super')    ->set_std(\&std_super);
     $parser->symbol('override') ->set_std(\&std_override);
 
     $parser->symbol('->')       ->set_nud(\&nud_lambda);
@@ -1760,10 +1763,21 @@ sub std_cascade {
     return $parser->finish_statement($stmt);
 }
 
-# markers for the compiler
-sub std_marker {
+sub std_super {
     my($parser, $symbol) = @_;
-    my $stmt = $symbol->clone(arity => 'marker');
+    my $stmt = $symbol->clone(arity => 'super');
+    return $parser->finish_statement($stmt);
+}
+
+sub std_next {
+    my($parser, $symbol) = @_;
+    my $stmt = $symbol->clone(arity => 'loop_control', id => 'next');
+    return $parser->finish_statement($stmt);
+}
+
+sub std_last {
+    my($parser, $symbol) = @_;
+    my $stmt = $symbol->clone(arity => 'loop_control', id => 'last');
     return $parser->finish_statement($stmt);
 }
 
@@ -1908,7 +1922,9 @@ sub make_alias { # alas(from => to)
 
     my $stash = $parser->symbol_table;
     if(exists $parser->symbol_table->{$to}) {
-        Carp::croak("Cannot make an alias to an existing symbol ($from => $to)");
+        Carp::confess(
+            "Cannot make an alias to an existing symbol ($from => $to / "
+            . p($parser->symbol_table->{$to}) .")");
     }
 
     # make a snapshot
