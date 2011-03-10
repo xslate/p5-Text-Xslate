@@ -75,10 +75,14 @@ sub op_localize_vars {
     my $new_vars = $st->{sa};
     my $old_vars = $st->vars;
 
-    push @{ $st->{local_stack} }, sub {
+    if(ref($new_vars) ne 'HASH') {
+        $st->warn(undef, "Variable map must be a HASH reference");
+    }
+
+    push @{ $st->{local_stack} }, bless sub {
             $st->vars($old_vars);
             return;
-        };
+        }, 'Text::Xslate::PP::Guard';
 
     $st->vars($new_vars);
 
