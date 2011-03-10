@@ -29,7 +29,7 @@ our @EXPORT_OK = qw(
     html_builder
 );
 
-my $BYTECODE_VERSION = '1.2';
+my $BYTECODE_VERSION = '1.3';
 
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
