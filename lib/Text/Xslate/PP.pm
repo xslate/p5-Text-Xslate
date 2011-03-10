@@ -671,7 +671,7 @@ This document describes Text::Xslate::PP version 1.0012.
 
 =head1 DESCRIPTION
 
-This module implements Text::Xslate runtime engine in pure Perl.
+This module implements a Text::Xslate runtime engine in pure Perl.
 Normally it will be loaded if it fails to load XS. So you do not need
 to use this module explicitly.
 
@@ -686,57 +686,13 @@ If you want to use Text::Xslate::PP, however, you can use it.
 
 XS/PP mode might be switched with C<< $ENV{XSLATE} = 'pp' or 'xs' >>.
 
-From 0.1024 on, there are two pure Perl engines.
-C<Text::Xslate::PP::Booster>, enabled by C<< $ENV{XSLATE} = 'pp=booster' >>,
-generates optimized Perl code from intermediate code.
-C<Text::Xslate::PP::Opcode>, enabled by C<< $ENV{XSLATE} = 'pp=opcode' >>,
-executes intermediate code directly, emulating the virtual machine in pure Perl.
-
-PP::Booster is much faster than PP::Opcode, but it may be less stable.
-The default pure Perl engine is B<PP::Booster>, so if you run into problems,
-please try C<< $ENV{XSLATE} = 'pp=opcode' >>.
-
 C<< $ENV{XSLATE} = 'pp=verbose' } >> may be useful for debugging.
-
-=head1 NOTE
-
-=head2 Performance
-
-There might be cases where you cannot use XS modules.
-
-Here is a result of F<benchmark/x-poor-env.pl> to compare pure Perl template
-engines in poor environment where applications runs as CGI scripts and XS
-modules are not available.
-
-    $ perl -Mblib benchmark/x-poor-env.pl
-    Perl/5.10.1 i686-linux
-    Xslate backend: Booster
-    Text::Xslate/0.1058
-    Template/2.22
-    HTML::Template/2.9
-    Text::MicroTemplate/0.15
-    Text::MicroTemplate::Extended/0.11
-    1..3
-    ok 1 - TT: Template-Toolkit
-    ok 2 - MT: Text::MicroTemplate
-    ok 3 - HT: HTML::Template
-    Benchmarks with 'include' (datasize=100)
-             Rate     TT     HT Xslate     MT
-    TT     76.1/s     --   -60%   -61%   -82%
-    HT      189/s   149%     --    -3%   -56%
-    Xslate  196/s   158%     4%     --   -54%
-    MT      429/s   463%   126%   118%     --
-
-According to this result, PP::Booster is over 2 times faster than Template::Toolkit,
-and as fast as HTML::Template, but slower than Text::MicroTemplate.
 
 =head1 SEE ALSO
 
 L<Text::Xslate>
 
 L<Text::Xslate::PP::Opcode>
-
-L<Text::Xslate::PP::Booster>
 
 =head1 AUTHOR
 

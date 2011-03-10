@@ -86,15 +86,8 @@ if($Module::Install::AUTHOR) {
 }
 
 if($want_xs) {
-    # default pp backend is pp_booster
     test_target test_pp => (
         env    => { PERL_ONLY => 1 },
-        @testall,
-    );
-
-    # optional pp backend
-    test_target test_pp_opcode => (
-        env    => { XSLATE => 'pp=opcode' },
         @testall,
     );
 }
