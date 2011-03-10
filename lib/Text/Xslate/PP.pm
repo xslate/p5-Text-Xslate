@@ -377,9 +377,6 @@ sub tx_check_itr_ar {
             "Iterator variables must be an ARRAY reference, not %s",
             Text::Xslate::Util::neat( $ar ) );
     }
-    else {
-        $st->warn( [$frame, $line], "Use of nil to iterate" );
-    }
     return [];
 }
 

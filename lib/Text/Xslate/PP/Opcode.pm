@@ -204,6 +204,8 @@ sub op_for_iter {
             goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
         }
         else {
+            # finish the loop
+            $st->{sa} = ( $i > 0 ); # for 'for-else' block
             tx_access_lvar( $st, $id + TXfor_ITEM,  undef );
             tx_access_lvar( $st, $id + TXfor_ITER,  undef );
             tx_access_lvar( $st, $id + TXfor_ARRAY, undef );

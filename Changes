@@ -3,10 +3,12 @@ Revision history for Perl extension Text::Xslate
 next major release
     [CHANGES]
     * Remove PP::Booster because of its high maintainance cost
+    * <: for nil -> $i { } :> no longer produces warnings
 
     [NEW FEATURES]
     * <: include { $vars } :> for replacing the whole template parameters
       in the included files (requested by @shmorimo)
+    * Add for-else syntax in Kolon
 
 1.0012 2011-03-04 12:18:19
     [BUG FIXES]
