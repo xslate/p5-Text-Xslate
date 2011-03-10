@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+next major release
+    [CHANGES]
+    * Remove PP::Booster because of its high maintainance cost
+
+    [NEW FEATURES]
+    * <: include { $vars } :> for replacing the whole template parameters
+      in the included files (requested by @shmorimo)
+
 1.0012 2011-03-04 12:18:19
     [BUG FIXES]
     * Fix a bug that <: include foo() :> and <: my $var = ...; include $var :>
