@@ -166,6 +166,17 @@ There is C<for> loops that are like Perl's C<foreach>.
         <: $key :>=<: $data[$key] :>
     : }
 
+And the C<for> statement can take C<else> block:
+
+    : for $data -> $item {
+        [<: $item.field :>]
+    : }
+    : else {
+        Nothing in data
+    : }
+
+The C<else> block is executed if I<$data> is an empty array or nil.
+
 You can get the iterator index in C<for> statements as C<$~ITERATOR_VAR>:
 
     : for $data -> $item {
