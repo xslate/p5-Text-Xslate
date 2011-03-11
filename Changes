@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+(next)
+    [NEW FEATURES]
+    * Loop control statements (next and last)
+    * for-else syntax in Kolon
+
 1.0099_02 2011-03-10 16:21:18
     [NEW FEATURES]
     * Add loop control statements (last and next) in both Kolon and TTerse
@@ -12,8 +17,6 @@ Revision history for Perl extension Text::Xslate
     * <: for nil -> $i { } :> no longer produces warnings
 
     [NEW FEATURES]
-    * <: include { $vars } :> for replacing the whole template parameters
-      in the included files (requested by @shmorimo)
     * Add for-else syntax in Kolon
 
 1.0012 2011-03-04 12:18:19
