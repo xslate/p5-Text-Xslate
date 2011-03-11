@@ -663,6 +663,14 @@ discouraged because they are not easy to understand:
     loop.first # for loop.is_first
     loop.last  # for loop.is_last
 
+Loop control statements, namely C<NEXT> and C<LAST>, are also suppored
+in both C<FOR> and C<WHILE> loops.
+
+    [% FOR item IN data -%]
+        [% LAST IF item == 42 -%]
+        ...
+    [% END -%]
+
 =head2 Conditional statements
 
     [% IF logical_expression %]
@@ -871,7 +879,7 @@ plugins which do not depend on the context object of Template-Toolkit.
 
 The following directives are not supported:
 C<INSERT>, C<PROCESS>, C<BLOCK> as a named blocks, C<USE> (but see above),
-C<PERL>, C<RAWPERL>, C<TRY>, C<THROW>, C<NEXT>, C<LAST>,
+C<PERL>, C<RAWPERL>, C<TRY>, C<THROW>,
 C<RETURN>, C<STOP>, C<CLEAR>, C<META>, C<TAGS>, C<DEBUG>, and C<VIEW>.
 
 Some might be supported in a future.

@@ -223,6 +223,14 @@ C<< while defined(my $item = expr) >> for convenience.
         [<: $item # $item can be false-but-defined :>]
     : }
 
+Loop control statements, namely C<next> and C<last>, are also supported
+in both C<for> and C<while> loops.
+
+    : for $data -> $item {
+        : last if $item == 42
+        ...
+    : }
+
 =head2 Conditional statements
 
 There are C<if-else> and C<given-when> conditional statements.
