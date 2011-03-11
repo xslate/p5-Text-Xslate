@@ -14,7 +14,6 @@ require Text::Xslate::PP;
 if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate::PP::Opcode
-        Text::Xslate::PP::Booster
     );
 }
 

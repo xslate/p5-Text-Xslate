@@ -13,11 +13,6 @@ use Text::Xslate::Util qw(
     p
 );
 
-use constant _PP_OPCODE  => scalar($DEBUG =~ /\b pp=opcode  \b/xms);
-use constant _PP_BOOSTER => scalar($DEBUG =~ /\b pp=booster \b/xms);
-use constant _PP_BACKEND =>   _PP_OPCODE  ? 'Opcode'
-                            : _PP_BOOSTER ? 'Booster'
-                            :               'Opcode'; # default
 use constant _PP_ERROR_VERBOSE => scalar($DEBUG =~ /\b pp=verbose \b/xms);
 
 use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
@@ -25,15 +20,15 @@ use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
 use Text::Xslate::PP::Const qw(:all);
 use Text::Xslate::PP::State;
 use Text::Xslate::PP::Type::Raw;
+use Text::Xslate::PP::Opcode;
 use Text::Xslate ();
 
 use Scalar::Util ();
 use overload     ();
 use Carp         ();
 
-require sprintf('Text/Xslate/PP/%s.pm', _PP_BACKEND);
 
-my $state_class = 'Text::Xslate::PP::' . _PP_BACKEND;
+my $state_class = 'Text::Xslate::PP::Opcode';
 $VERSION eq $state_class->VERSION
     or die "Version mismatch (" . __PACKAGE__ . "/$VERSION v.s. "
          . "$state_class/" . $state_class->VERSION . ")";
@@ -71,12 +66,6 @@ our %html_escape = (
     "'" => '&#39;', # IE8 doesn't support &apos; in title
 );
 our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
-
-sub options {
-    my $options  = Text::Xslate::Engine->options;
-    $options->{ compiler } = 'Text::Xslate::' . (_PP_BACKEND eq 'Booster' ? 'PP::Compiler' : 'Compiler');
-    return $options;
-}
 
 #
 # public APIs
@@ -161,16 +150,6 @@ sub _assemble {
 
     my $st  = $state_class->new();
 
-    if(_PP_BACKEND eq 'Booster'){
-        if($asm->[0][0] eq '_ppbooster') {
-            my $ppbooster = shift @{$asm};
-            $st->{ booster_code } = Text::Xslate::PP::Booster->compile($ppbooster->[1]);
-        }
-        else {
-            Carp::croak("Oops: No booster code: ", p($asm));
-        }
-    }
-
     $st->symbol({ %{$self->{ function }} });
 
     my $tmpl = [];
@@ -233,9 +212,7 @@ sub _assemble {
             file   => $oi_file,
         };
 
-        if(_PP_BACKEND eq 'Opcode') {
-            $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ];
-        }
+        $code->[ $i ]->{ exec_code } = $OPCODE[ $opnum ];
 
         my $oparg = $OPARGS[ $opnum ];
 
@@ -565,6 +542,10 @@ sub tx_execute {
     if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
+    if(_PP_ERROR_VERBOSE and ref $st->{code}->[0]->{ exec_code } ne 'CODE') {
+        Carp::croak("Oops: Not a CODE reference: "
+            . Text::Xslate::Util::neat($st->{code}->[0]->{ exec_code }));
+    }
 
     local $st->{pc}   = 0;
     local $st->{vars} = $vars;
@@ -575,25 +556,11 @@ sub tx_execute {
     local $st->{local_stack};
     local $st->{SP} = [];
 
-    if ( _PP_BACKEND eq 'Booster' ) {
-        if(_PP_ERROR_VERBOSE and ref $st->{ booster_code } ne 'CODE') {
-            Carp::croak("Oops: Not a CODE reference: "
-                . Text::Xslate::Util::neat($st->{ booster_code }));
-        }
-        return $st->{ booster_code }->( $st );
-    }
-    else {
-        if(_PP_ERROR_VERBOSE and ref $st->{code}->[0]->{ exec_code } ne 'CODE') {
-            Carp::croak("Oops: Not a CODE reference: "
-                . Text::Xslate::Util::neat($st->{code}->[0]->{ exec_code }));
-        }
-
-        local $st->{sa};
-        local $st->{sb};
-        local $st->{output} = '';
-        $st->{code}->[0]->{ exec_code }->( $st );
-        return $st->{output};
-    }
+    local $st->{sa};
+    local $st->{sb};
+    local $st->{output} = '';
+    $st->{code}->[0]->{ exec_code }->( $st );
+    return $st->{output};
 }
 
 
