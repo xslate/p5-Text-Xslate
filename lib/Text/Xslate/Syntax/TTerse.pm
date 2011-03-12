@@ -663,7 +663,7 @@ discouraged because they are not easy to understand:
     loop.first # for loop.is_first
     loop.last  # for loop.is_last
 
-Loop control statements, namely C<NEXT> and C<LAST>, are also suppored
+Loop control statements, namely C<NEXT> and C<LAST>, are also supported
 in both C<FOR> and C<WHILE> loops.
 
     [% FOR item IN data -%]
