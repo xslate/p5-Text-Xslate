@@ -73,4 +73,11 @@ T
     * 42
     * 43
 X
+
+eval { $tx->render_string(': last') };
+like $@, qr/Use of loop control statement \(last\)/;
+
+eval { $tx->render_string(': next') };
+like $@, qr/Use of loop control statement \(next\)/;
+
 done_testing;
