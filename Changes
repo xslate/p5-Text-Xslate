@@ -1,6 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
-(next major release)
+1.1000 2011-03-17 22:18:07
+    This is a major update with the bytecode version 1.3
+    See the 1.0099_* for details
+
     [NEW FEATURES]
     * Loop control statements (next and last)
     * for-else syntax in Kolon
