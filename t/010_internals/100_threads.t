@@ -5,6 +5,9 @@ use constant HAS_THREADS => eval { require threads };
 use if !( HAS_THREADS && $] >= 5.008008),
     'Test::More', skip_all => 'multi-threading tests';
 
+use if ( Test::More->VERSION >= 2.0 ),
+    'Test::More', skip_all => 'Test::Builder 2.0 is not thread-safe';
+
 use Test::More tests => 13;
 
 use Text::Xslate;

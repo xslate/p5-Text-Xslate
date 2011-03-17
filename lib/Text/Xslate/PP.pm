@@ -29,9 +29,6 @@ use Carp         ();
 
 
 my $state_class = 'Text::Xslate::PP::Opcode';
-$VERSION eq $state_class->VERSION
-    or die "Version mismatch (" . __PACKAGE__ . "/$VERSION v.s. "
-         . "$state_class/" . $state_class->VERSION . ")";
 
 $VERSION =~ s/_//; # for developpers versions
 
