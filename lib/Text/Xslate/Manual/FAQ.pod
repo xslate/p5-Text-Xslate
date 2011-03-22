@@ -7,11 +7,11 @@ Text::Xslate::Manual::FAQ - Frequently asked questions and answers
 
 =head2 General
 
-=head3 How do you pronounce Xslate?
+=head3 How do you pronounce 'Xslate'?
 
 We read it C</eks-leit/>.
 
-=head3 What Xslate stands for?
+=head3 What 'Xslate' stands for?
 
 It stands for I<XS template>, a template engine written in XS, although
 pure Perl implementations are also provided.
@@ -35,20 +35,20 @@ C<syntax> option to the Text::Xslate constructor.
 
 Xslate is tested on perl v5.8.1. No special settings should be required.
 
-=head3 Optimizations Employed By Text::Xslate
+=head3 What optimizations does Xslate employs?
 
 Here are some optimizations worth noting that makes Text::Xslate run so fast,
 in no particular order:
 
 =over
 
-=item Pre-Compiled Templates
+=item Pre-compiled templates
 
 Text::Xslate is among the template engines that pre-compile the templates.
 This is similar to, say, Template::Toolkit, but Text::Xslate compiles the
 templates to C structures and stores them as binary data.
 
-=item Built On Top Of A Virtual Machine
+=item Built on top of a virtual machine
 
 Text::Xslate is built on top of virtual machine that executes bytecode, and
 this virtual machine is fine-tuned I<specifically> for template processing.
@@ -57,7 +57,7 @@ The virtual machine also employs optimizations such as direct-threading
 style coding to shave off any extra milliseconds that the engine might take
 otherwise
 
-=item Custom Byte Codes For Oft-Used Operations
+=item Custom byte codes for oft-used operations
 
 Some operations which are used very often are optimized into its own
 byte code. For example (as described elsewhere) Text::Xslate automatically
@@ -66,7 +66,7 @@ which involves escaping the string I<while> appending the result to the
 output buffer in C, as a custom byte code. This lets you avoid the penalties
 usually involved in such operations.
 
-=item Pre-Allocation Of Output Buffers
+=item Pre-allocation of output buffers
 
 One of the main things to consider to reduce performance degradation
 while processing a template is to avoid the number of calls to C<malloc()>.
@@ -214,7 +214,7 @@ L<https://github.com/motemen/xslate-vim>
 
 =head2 Web Application Frameworks
 
-=head3 How can I use Xslate into my favorite WAF?
+=head3 How can I use Xslate in $my_favorite_WAF?
 
 There are bridges that integrate Xslate into WAFs:
 
