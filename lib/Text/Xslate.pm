@@ -112,11 +112,12 @@ my %builtin = (
 sub default_functions { +{} } # overridable
 
 sub options { # overridable
+    my($self) = @_;
     return {
         # name       => default
         suffix       => '.tx',
         path         => ['.'],
-        input_layer  => ':utf8',
+        input_layer  => $self->input_layer,
         cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
         cache_dir    => _DEFAULT_CACHE_DIR,
         module       => undef,
@@ -555,8 +556,13 @@ This document describes Text::Xslate version 1.1000.
 
 =head1 DESCRIPTION
 
-B<Text::Xslate> is a template engine, tuned for persistent applications,
+B<Xslate> is a template engine, tuned for persistent applications,
 safe as an HTML generator, and with rich features.
+
+There are a lot of template engines in CPAN, for example Template-Toolkit,
+Text::MicroTemplate, HTML::Template, and so on, but all of them have
+demerits at some points. This is why Xslate is developed and now it is
+well-honed as the standard template engine for web applications.
 
 The concept of Xslate is strongly influenced by Text::MicroTemplate
 and Template-Toolkit 2, but the central philosophy of Xslate is different
@@ -621,9 +627,9 @@ but is more powerful.
 
 This mechanism is also called as template inheritance.
 
-=head3 Easy to enhance
+=head3 Easiness to enhance
 
-Xslate is highly extensible. You can add functions and methods to the template
+Xslate is ready to enhance. You can add functions and methods to the template
 engine and even add a new syntax via extending the parser.
 
 =head1 INTERFACE
@@ -1013,6 +1019,10 @@ Augment modifiers.
 =item *
 
 Default arguments and named arguments for macros.
+
+=item *
+
+External macros.
 
 =back
 
