@@ -1004,6 +1004,17 @@ Default arguments and named arguments for macros.
 
 External macros.
 
+Just idea: in the new macro concept, macros and external templates will be
+the same in internals:
+
+    : macro foo($lang) { "Hello, " ~ $lang ~ " world!" }
+    : include foo { lang => 'Xslate' }
+    : # => 'Hello, Xslate world!'
+
+    : extern bar 'my/bar.tx';     # 'extern bar $file' is ok
+    : bar( value => 42 );         # calls an external template
+    : include bar { value => 42 } # ditto
+
 =back
 
 =cut
