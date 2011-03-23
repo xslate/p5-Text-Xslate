@@ -823,26 +823,6 @@ option for HASH references which are cached as you expect:
 Loads I<$file> into memory for following C<render()>.
 Compiles and saves it as disk caches if needed.
 
-It is a good idea to load templates before applications fork.
-Here is an example to to load all the templates which is in a given path:
-
-    my $path = ...;
-    my $tx = Text::Xslate->new(
-        path      => [$path],
-        cache_dir =>  $path,
-    );
-
-    find sub {
-        if(/\.tx$/) {
-            my $file = $File::Find::name;
-            $file =~ s/\Q$path\E .//xsm; # fix path names
-            $tx->load_file($file);
-        }
-    }, $path;
-
-    # fork and render ...
-
-
 =head3 B<< Text::Xslate->current_engine :XslateEngine >>
 
 Returns the current Xslate engine while executing. Otherwise returns C<undef>.

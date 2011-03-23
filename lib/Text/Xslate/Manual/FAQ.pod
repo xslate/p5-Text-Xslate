@@ -240,4 +240,6 @@ L<Text::Xslate>
 
 L<Text::Xslate::Manual>
 
+L<Text::Xslate::Manual::Cookbook>
+
 =cut

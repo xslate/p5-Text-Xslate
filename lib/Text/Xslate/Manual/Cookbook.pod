@@ -251,10 +251,36 @@ Then in your templates:
 
 See also: L<I18N::Handle>, L<App::I18N>.
 
+=head2 How to load templates before C<fork()>ing?
+
+It is a good idea to load templates in preforking-model applications.
+Here is an example to to load all the templates which is in a given path:
+
+    use File::Find;
+
+    my $path = ...;
+    my $tx = Text::Xslate->new(
+        path      => [$path],
+        cache_dir =>  $path,
+    );
+
+    # pre-load files
+    find sub {
+        if(/\.tx$/) {
+            my $file = $File::Find::name;
+            $file =~ s/\Q$path\E .//xsm; # fix path names
+            $tx->load_file($file);
+        }
+    }, $path;
+
+    # fork and render ...
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
 
 L<Text::Xslate::Manual>
+
+L<Text::Xslate::Manual::FAQ>
 
 =cut
