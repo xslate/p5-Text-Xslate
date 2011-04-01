@@ -219,6 +219,11 @@ Returns true if I<$value> is an ARRAY reference.
 
 Returns true if I<$value> is a HASH reference.
 
+=head2 C<< defined($value) >>
+
+Returns true if I<$value> is defined. This is not a real function, but
+an unary operator, so you can omit the parens like C<< defined $value >>.
+
 =head2 C<< dump($value) >>
 
 Inspects I<$value> with C<Data::Dumper>.
