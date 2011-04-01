@@ -5,15 +5,27 @@ use Test::More;
 
 use Text::Xslate;
 
-my %vpath = (
-    'main.tx' => <<'T',
+my $tx = Text::Xslate->new(type => 'text');
+
+is $tx->render_string(<<'T'), "\n";
 <: # it's a comment! :>
 T
-);
 
-my $tx = Text::Xslate->new(path => \%vpath, cache => 0);
-my $out = $tx->render('main.tx', { message => 'OK'});
-is $out, "\n";
+is $tx->render_string(<<'T'), "# it's a comment!\n";
+<: "# it's a comment!" :>
+T
+
+is $tx->render_string(<<'T'), "# it's a comment!\n";
+<: '# it\'s a comment!' :>
+T
+
+is $tx->render_string(<<'T'), "\n";
+<: '' # it's a comment! :>
+T
+
+is $tx->render_string(<<'T'), "\n";
+<:''# it's a comment! :>
+T
 
 done_testing;
 

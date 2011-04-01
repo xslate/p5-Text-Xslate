@@ -153,6 +153,13 @@ has tag_end => (
 );
 sub _build_tag_end { ':>' }
 
+has comment_pattern => (
+    is      => 'ro',
+    isa     => 'RegexpRef',
+    builder => '_build_comment_pattern',
+);
+sub _build_comment_pattern { $COMMENT }
+
 has shortcut_table => (
     is      => 'ro',
     isa     => 'HashRef[Str]',
@@ -297,6 +304,9 @@ sub split :method {
     # follwoing a newline, $tag_start, or end of the input
     my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= \Q$tag_start\E ) | \z ) ) /xms;
 
+    my $lex_comment = $parser->comment_pattern;
+    my $lex_code    = qr/(?: $lex_comment | $CODE )/xms;
+
     my $in_tag = 0;
 
     while($_) {
@@ -305,7 +315,7 @@ sub split :method {
             my $pos;
             while( ($pos = index $_, $tag_end, $start) >= 0 ) {
                 my $code = substr $_, 0, $pos;
-                $code =~ s/$CODE//xmsog;
+                $code =~ s/$lex_code//xmsg;
                 if(length($code) == 0) {
                     last;
                 }
@@ -640,17 +650,18 @@ sub tokenize {
 
     local *_ = \$parser->{input};
 
+    my $comment_rx = $parser->comment_pattern;
+    my $id_rx      = $parser->identity_pattern;
     TRY: {
         my $i = 0;
         s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
         $parser->following_newline($i);
 
-        my $id_rx = $parser->identity_pattern;
-        if(s/\A ($id_rx)//xms){
-            return [ name => $1 ];
-        }
-        elsif(s/\A $COMMENT //xmso) {
+        if(s/\A $comment_rx //xmso) {
             redo TRY; # retry
+        }
+        elsif(s/\A ($id_rx)//xms){
+            return [ name => $1 ];
         }
         elsif(s/\A ($NUMBER | $STRING)//xmso){
             return [ literal => $1 ];

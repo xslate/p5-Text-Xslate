@@ -68,6 +68,7 @@ WAFs
 JavaScript
 fallbacks
 UTF
+preforking
 
 # personal name
 lestrrat
