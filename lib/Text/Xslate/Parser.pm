@@ -288,9 +288,13 @@ sub split :method {
     my $tag_start     = $parser->tag_start;
     my $tag_end       = $parser->tag_end;
 
-    my $lex_line_code = defined($line_start) && qr/\A ^ [ \t]* \Q$line_start\E ([^\n]* \n?) /xms;
+    my $lex_line_code = defined($line_start)
+        && qr/\A ^ [ \t]* \Q$line_start\E ([^\n]* \n?) /xms;
+
     my $lex_tag_start = qr/\A \Q$tag_start\E ($CHOMP_FLAGS?)/xms;
 
+    # 'text' is a something without newlines
+    # follwoing a newline, $tag_start, or end of the input
     my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= \Q$tag_start\E ) | \z ) ) /xms;
 
     my $in_tag = 0;
