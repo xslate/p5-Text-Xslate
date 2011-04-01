@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.1001 2011-04-02 00:00:16
+    [BUG FIXES]
+    * A quote in comments caused parse errors (reported by @lestrrat)
+
 1.1000 2011-03-17 22:18:07
     This is a major update with the bytecode version 1.3
     See the 1.0099_* for details
