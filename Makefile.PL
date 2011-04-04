@@ -33,7 +33,6 @@ requires 'Any::Moose' => '0.13';
 
 # XXX we don't handle Moose stuff here
 requires 'Mouse'                => '0.61';
-requires 'MouseX::Getopt'       => '0.2601';
 requires 'Data::MessagePack'    => '0.30';
 requires 'parent'               => '0.221';
 requires 'Scalar::Util'         => '1.14';

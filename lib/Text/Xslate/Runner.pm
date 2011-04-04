@@ -2,13 +2,38 @@ package Text::Xslate::Runner;
 use Any::Moose;
 use Any::Moose '::Util::TypeConstraints';
 
+use List::Util     ();
 use File::Spec     ();
 use File::Basename ();
-use Encode         ();
+use Getopt::Long   ();
 
-with any_moose 'X::Getopt';
+{
+    package
+        Text::Xslate::Runner::Getopt;
+    use Any::Moose 'Role';
 
-my $getopt_traits = [any_moose('X::Getopt::Meta::Attribute::Trait')];
+    has cmd_aliases => (
+        is         => 'ro',
+        isa        => 'ArrayRef[Str]',
+        default    => sub { [] },
+        auto_deref => 1,
+    );
+
+    no Any::Moose 'Role';
+}
+
+my $getopt = Getopt::Long::Parser->new(
+    config => [qw(
+        no_ignore_case
+        bundling
+        no_auto_abbrev
+    )],
+);
+
+my $Pattern = subtype __PACKAGE__ . '.Pattern', as 'RegexpRef';
+coerce $Pattern => from 'Str' => via { qr/$_/ };
+
+my $getopt_traits = ['Text::Xslate::Runner::Getopt'];
 
 has cache_dir => (
     documentation => 'Directory the cache files will be saved in',
@@ -96,15 +121,11 @@ has verbose => (
 );
 
 # --ignore=pattern
-any_moose('X::Getopt::OptionTypeMap')->add_option_type_to_map(
-    RegexpRef => '=s'
-);
-coerce 'RegexpRef' => from 'Str' => via { qr/$_/ };
 has ignore => (
     documentation => 'Regular expression the process will ignore',
     cmd_aliases   => [qw(i)],
     is            => 'ro',
-    isa           => 'RegexpRef',
+    isa           => $Pattern,
     coerce        => 1,
     traits        => $getopt_traits,
 );
@@ -168,7 +189,72 @@ has version => (
     documentation => 'Print version information',
     is            => 'ro',
     isa           => 'Bool',
+    traits        => $getopt_traits,
 );
+
+has help => (
+    documentation => 'Print this help',
+    is            => 'ro',
+    isa           => 'Bool',
+    traits        => $getopt_traits,
+);
+
+has targets => (
+    is         => 'ro',
+    isa        => 'ArrayRef[Str]',
+    default    => sub { [] },
+    auto_deref => 1,
+);
+
+my @Spec = __PACKAGE__->_build_getopt_spec();
+sub getopt_spec { @Spec }
+
+sub _build_getopt_spec {
+    my($self) = @_;
+
+    my @spec;
+    foreach my $attr($self->meta->get_all_attributes) {
+        next unless $attr->does('Text::Xslate::Runner::Getopt');
+
+        my @names   = $attr->name;
+        push @names, $attr->cmd_aliases;
+
+        my $isa = $attr->type_constraint;
+
+        my $type;
+        if($isa->is_a_type_of('Bool')) {
+            $type = '';
+        }
+        elsif($isa->is_a_type_of('Int')) {
+            $type = '=i';
+        }
+        elsif($isa->is_a_type_of('Num')) {
+            $type = '=f';
+        }
+        elsif($isa->is_a_type_of('ArrayRef')) {
+            $type = '=s@';
+        }
+        elsif($isa->is_a_type_of('HashRef')) {
+            $type = '=s%';
+        }
+        else {
+            $type = '=s';
+        }
+        push @spec, join('|', @names) . $type;
+    }
+    return @spec;
+}
+
+sub new_from {
+    my $class = shift;
+    local @ARGV = @_;
+    my %opts;
+    $getopt->getoptions(\%opts, $class->getopt_spec())
+        or die $class->help_message;
+
+    $opts{targets} = [@ARGV];
+    return $class->new(\%opts);
+}
 
 sub run {
     my($self, @targets) = @_;
@@ -199,8 +285,12 @@ sub run {
 
     require Text::Xslate;
 
-    if($self->version) {
-        print $self->version_info(), "\n";
+    if($self->help) {
+        print $self->help_message();
+        return;
+    }
+    elsif($self->version) {
+        print $self->version_info();
         return;
     }
 
@@ -289,7 +379,7 @@ sub process_file {
     }
 
     my $rendered = $xslate->render( $filearg, $self->define );
-    $rendered = Encode::encode($self->output_encoding, $rendered);
+    $rendered = $self->_encode($rendered);
 
     if(defined $outfile) {
         my $fh;
@@ -307,11 +397,46 @@ sub process_file {
 
 sub version_info {
     my($self) = @_;
-    return sprintf q{%s (%s) on Text::Xslate/%s, Perl/%vd.},
-        $0, ref($self),
+    return sprintf qq{%s (%s) on Text::Xslate/%s, Perl/%vd.\n},
+        File::Basename::basename($0), ref($self),
         Text::Xslate->VERSION,
         $^V,
     ;
+}
+
+sub help_message {
+    my($self) = @_;
+    my @options;
+    foreach my $attr($self->meta->get_all_attributes) {
+        next unless $attr->does('Text::Xslate::Runner::Getopt');
+
+        my $name  = join ' ', map { length($_) == 1 ? "-$_": "--$_" }
+                                ($attr->cmd_aliases, $attr->name);
+
+        push @options, [ $name => $attr->documentation ];
+    }
+    my $max_len = List::Util::max( map { length $_->[0] } @options );
+
+    my $message = sprintf "usage: %s [options...] [input-files]\n",
+        File::Basename::basename($0);
+
+    foreach my $opt(@options) {
+        $message .= sprintf "    %-*s  %s\n", $max_len, @{$opt};
+    }
+    return $message;
+}
+
+sub _encode {
+    my($self, $str) = @_;
+    my $oe = $self->output_encoding;
+    if($oe ne 'UTF-8') {
+        require Encode;
+        return Encode::encode($oe, $str);
+    }
+    else {
+        utf8::encode($str);
+        return $oe;
+    }
 }
 
 no Any::Moose;

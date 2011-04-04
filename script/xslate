@@ -2,8 +2,8 @@
 use strict;
 use Text::Xslate::Runner;
 
-my $app = Text::Xslate::Runner->new_with_options();
-$app->run(@{ $app->extra_argv });
+my $app = Text::Xslate::Runner->new_from(@ARGV);
+$app->run( $app->targets );
 
 __END__
 

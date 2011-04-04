@@ -45,42 +45,41 @@ $app = Text::Xslate::Runner->new(
 );
 is capture { $app->run() }, "Hello, &lt;Xslate&gt; world!\n";
 
+my @argv;
 
-@ARGV = (
+@argv = (
     '-e<: max(10, 20, 30, 25, 15) :>/<: min(10, 20, 30, 25, 15) :>',
     '-MList::Util=max,min',
 );
-$app = Text::Xslate::Runner->new_with_options();
+$app = Text::Xslate::Runner->new_from(@argv);
 is capture { $app->run() }, "30/10\n";
 
-@ARGV = (
+@argv = (
     '-e', '<: $foo :>/<: $bar :>',
     '-Dfoo=100',
     '-Dbar=200',
 );
-$app = Text::Xslate::Runner->new_with_options();
+$app = Text::Xslate::Runner->new_from(@argv);
 is capture { $app->run() }, "100/200\n";
 
-@ARGV = (
+@argv = (
     '-e', '<: $foo :>/<: $bar :>',
     '-D', 'foo=100',
     '-D', 'bar=200',
 );
-$app = Text::Xslate::Runner->new_with_options();
+$app = Text::Xslate::Runner->new_from(@argv);
 is capture { $app->run() }, "100/200\n";
 
-#my $help = capture {
-#    @ARGV = qw(--help);
-#    Text::Xslate::Runner->new_with_options()->run();
-#};
-#like $help, qr/--help/;
-#like $help, qr/--define/;
-#like $help, qr/--eval/;
+my $help = capture {
+    Text::Xslate::Runner->new_from('--help')->run();
+};
+like $help, qr/--help/;
+like $help, qr/--define/;
+like $help, qr/--eval/;
 
 
 my $version_info = capture {
-    @ARGV = qw(--version);
-    Text::Xslate::Runner->new_with_options()->run();
+    Text::Xslate::Runner->new_from('--version')->run();
 };
 like $version_info, qr/Text::Xslate::Runner/;
 
