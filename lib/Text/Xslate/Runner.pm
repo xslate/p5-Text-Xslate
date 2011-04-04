@@ -435,7 +435,7 @@ sub _encode {
     }
     else {
         utf8::encode($str);
-        return $oe;
+        return $str;
     }
 }
 

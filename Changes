@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.1002 2011-04-05 00:41:09
+    [CHANGES]
+    * Remove the dependency on MX::Getopt
+
 1.1001 2011-04-02 00:00:16
     [BUG FIXES]
     * A quote in comments caused parse errors (reported by @lestrrat)
