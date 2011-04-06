@@ -82,6 +82,37 @@ T
 is $@, '';
 like $warn, qr/<string>:2/xms;
 
+$warn = '';
+eval {
+    $tx->render_string(<<'T', {data => "foo"});
+
+: if($data) {
+
+* <:= $item :>
+
+: }
+
+T
+};
+is $@, '';
+like $warn, qr/<string>:4/xms;
+
+$warn = '';
+eval {
+    $tx->render_string(<<'T', {data => "foo"});
+
+<:- if($data) { -:>
+
+* <:= $item :>
+
+<:- } -:>
+
+T
+};
+is $@, '';
+like $warn, qr/<string>:4/xms;
+
+
 {
     package Foo;
     sub bar { die 42 };
