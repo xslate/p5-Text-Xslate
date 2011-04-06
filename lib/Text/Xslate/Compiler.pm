@@ -610,7 +610,9 @@ sub _generate_print {
 
     foreach my $arg(@{ $node->first }){
         if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
-            push @code, $self->opcode( $proc . '_s' => $arg->value );
+            push @code,
+                $self->opcode( $proc . '_s' => $arg->value,
+                               line         => $arg->line );
         }
         elsif($self->_can_print_optimize($proc, $arg)){
             my $filter      = $arg->first;

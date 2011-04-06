@@ -1695,7 +1695,10 @@ sub std_print {
     if($parser->token->id ne ";") {
         $args = $parser->expression_list();
     }
-    my $stmt = $symbol->clone(first => $args, arity => 'print');
+    my $stmt = $symbol->clone(
+        arity => 'print',
+        first => $args,
+    );
     return $parser->finish_statement($stmt);
 }
 
