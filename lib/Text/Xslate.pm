@@ -260,7 +260,6 @@ sub find_file {
     print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD;
 
     return {
-        name        => $file,
         fullpath    => $fullpath,
         cachepath   => $cachepath,
 
@@ -320,7 +319,7 @@ sub _load_source {
     }
 
     my $source = $self->slurp($fullpath);
-    $self->{source}{$fi->{name}} = $source if _SAVE_SRC;
+    $self->{source}{$fi->{fullpath}} = $source if _SAVE_SRC;
 
     my $asm = $self->compile($source,
         file => $fullpath,
