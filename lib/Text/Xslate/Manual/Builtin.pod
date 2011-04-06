@@ -194,18 +194,21 @@ which you cannot use as a filter.
 =head2 C<< mark_raw($str) >>
 
 Mark I<$str> as a raw string to avoid auto HTML escaping.
+You'd better avoid to use this function. Instead, you should use the
+C<mark_raw()> subroutine, which you can import from C<Text::Xslate::Util>,
+in programs.
 
 C<raw> is an alias to C<mark_raw>.
 
 =head2 C<< unmark_raw($str) >>
 
-Remove the raw mark from I<str>. If I<str> is not a raw string, this function
-returns I<str> as is.
+Remove the raw mark from I<$str>. If I<$str> is not a raw string, this function
+returns I<$str> as is.
 
 =head2 C<< html($str) >>
 
-Escapes html meta characters in I<str>. If I<str> is a raw string, this
-function returns I<str> as is.
+Escapes html meta characters in I<$str>. If I<$str> is a raw string, this
+function returns I<$str> as is.
 
 The html meta characters are C<< /[<>"'&]/ >>.
 
