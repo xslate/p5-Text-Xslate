@@ -95,7 +95,7 @@ sub render {
         Carp::croak( sprintf("Xslate: Template variables must be a HASH reference, not %s", $vars ) );
     }
 
-    my $st = tx_load_template( $self, $name, 0 );
+    my $st = $self->tx_load_template( $name, 0 );
 
     local $_orig_die_handler  = $SIG{__DIE__};
     local $_orig_warn_handler = $SIG{__WARN__};

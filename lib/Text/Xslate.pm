@@ -70,6 +70,9 @@ BEGIN {
     my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
     *_DUMP_LOAD = sub(){ $dump_load };
 
+    my $save_src = scalar($Text::Xslate::Util::DEBUG =~ /\b save_src \b/xms);
+    *_SAVE_SRC  = sub() { $save_src };
+
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
     my $cache_dir = '.xslate_cache';
@@ -197,11 +200,12 @@ sub _merge_hash {
     return;
 }
 
-sub load_string { # for <string>
+sub load_string { # called in render_string()
     my($self, $string) = @_;
     if(not defined $string) {
         $self->_error("LoadError: Template string is not given");
     }
+    $self->{source}{'<string>'} = $string if _SAVE_SRC;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
     $self->_assemble($asm, '<string>', \$string, undef, undef);
@@ -256,6 +260,7 @@ sub find_file {
     print STDOUT "  find_file: $fullpath (", ($cache_mtime || 0), ")\n" if _DUMP_LOAD;
 
     return {
+        name        => $file,
         fullpath    => $fullpath,
         cachepath   => $cachepath,
 
@@ -315,6 +320,7 @@ sub _load_source {
     }
 
     my $source = $self->slurp($fullpath);
+    $self->{source}{$fi->{name}} = $source if _SAVE_SRC;
 
     my $asm = $self->compile($source,
         file => $fullpath,
