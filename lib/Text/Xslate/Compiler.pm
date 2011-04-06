@@ -185,12 +185,6 @@ has parser => (
     init_arg => undef,
 );
 
-has file => (
-    is  => 'rw',
-
-    init_arg => undef,
-);
-
 has input_layer => (
     is      => 'ro',
     default => ':utf8',
@@ -226,6 +220,12 @@ has [qw(header footer)] => (
 );
 
 has current_file => (
+    is  => 'rw',
+
+    init_arg => undef,
+);
+
+has file => (
     is  => 'rw',
 
     init_arg => undef,
