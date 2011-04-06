@@ -376,7 +376,7 @@ sub _load_compiled {
     if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
             and $threshold >= $fi->{orig_mtime} )) {
         printf "  _load_compiled: no fresh cache: %s, %s",
-            $threshold, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
+            $threshold || 0, Text::Xslate::Util::p($fi) if _DUMP_LOAD;
         $fi->{cache_mtime} = undef;
         return undef;
     }
