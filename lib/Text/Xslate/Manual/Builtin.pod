@@ -183,6 +183,14 @@ The maximum index of the looping array. i.e. C<< $#{$arrayref} >> in Perl.
 The xslate engine supports filter syntax as well as function call.
 The following is the builtin functions, which can be invoked as filter syntax.
 
+For example, the following two statements are the same:
+
+    <: $value | foo :>
+    <: foo($value) :>
+
+Note that some builtin functions, such as C<defined>, are not a real function
+which you cannot use as a filter.
+
 =head2 C<< mark_raw($str) >>
 
 Mark I<$str> as a raw string to avoid auto HTML escaping.
@@ -219,16 +227,16 @@ Returns true if I<$value> is an ARRAY reference.
 
 Returns true if I<$value> is a HASH reference.
 
-=head2 C<< defined($value) >>
-
-Returns true if I<$value> is defined. This is not a real function, but
-an unary operator, so you can omit the parens like C<< defined $value >>.
-
 =head2 C<< dump($value) >>
 
 Inspects I<$value> with C<Data::Dumper>.
 
 This function is provided for testing and debugging.
+
+=head2 C<< defined($value) >>
+
+Returns true if I<$value> is defined. This is not a real function, but
+an unary operator, so you can omit the parens like C<< defined $value >>.
 
 =head1 SEE ALSO
 
