@@ -455,7 +455,9 @@ sub _magic_token {
     if(ref $fullpath) { # ref to content string
         require 'Digest/MD5.pm';
         my $md5 = Digest::MD5->new();
-        $md5->add(${$fullpath});
+        my $s = ${$fullpath};
+        utf8::encode($s);
+        $md5->add($s);
         $fullpath = join ':', ref($fullpath), $md5->hexdigest();
     }
     return sprintf $XSLATE_MAGIC, $fullpath, $self->{serial_opt};
@@ -817,6 +819,8 @@ option for HASH references which are cached as you expect:
 
     my $tx = Text::Xslate->new( path => \%vpath );
     print $tx->render('hello.tx', { lang => 'Xslate' });
+
+Note that I<$string> must be a text string, not a binary string.
 
 =head3 B<< $tx->load_file($file) :Void >>
 

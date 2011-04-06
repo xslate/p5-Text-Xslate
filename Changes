@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+NEXT
+    [BUG FIXES]
+    * render_string(), to which you must pass a text string, died when wide
+      characters were passed (reported by @kazeburo)
+
 1.1002 2011-04-05 00:41:09
     [CHANGES]
     * Remove the dependency on MX::Getopt
