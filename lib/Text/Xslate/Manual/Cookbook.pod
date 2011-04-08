@@ -228,6 +228,12 @@ C<< <script> ... </script> >> sections.
 It is better to use secure modules for JavaScript escaping to avoid XSS.
 L<JavaScript::Value::Escape> may help you for this aim.
 
+=head2 How to interpolate structured texts into HTML without XSS
+
+(This section is not yet completed. Example code should be provided.)
+
+See L<String::Filter>.
+
 =head2 How to manage localization in templates
 
 You can register any functions including C<_()>, so no specific techniques are required.
