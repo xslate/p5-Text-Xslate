@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-NEXT
+1.1003 2011-04-08 09:51:47
     [BUG FIXES]
     * render_string(), to which you must pass a text string, died when wide
       characters were passed (reported by @kazeburo)
