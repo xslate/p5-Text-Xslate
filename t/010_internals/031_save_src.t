@@ -6,6 +6,7 @@ use Test::More;
 BEGIN{ $ENV{XSLATE} ||= ''; $ENV{XSLATE} .= ':save_src' }
 
 use Text::Xslate;
+use File::Spec;
 use t::lib::Util;
 
 my $tx = Text::Xslate->new(
@@ -15,7 +16,8 @@ my $tx = Text::Xslate->new(
 
 note 'from file';
 is $tx->render('hello.tx', { lang => 'Xslate' } ), "Hello, Xslate world!\n";
-is $tx->{source}{path . '/hello.tx'}, "Hello, <:= \$lang :> world!\n"
+is $tx->{source}{File::Spec->catfile(path, 'hello.tx')},
+    "Hello, <:= \$lang :> world!\n"
     or diag(explain($tx->{source}));
 
 note 'from hash';
