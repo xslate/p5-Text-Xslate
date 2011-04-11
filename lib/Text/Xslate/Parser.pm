@@ -657,7 +657,7 @@ sub tokenize {
         s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
         $parser->following_newline($i);
 
-        if(s/\A $comment_rx //xmso) {
+        if(s/\A $comment_rx //xms) {
             redo TRY; # retry
         }
         elsif(s/\A ($id_rx)//xms){
