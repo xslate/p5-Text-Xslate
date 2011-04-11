@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.1004 2011-04-11 22:55:59
+    [BUG FIXES]
+    * Fix a test which failed on Windows
+
 1.1003 2011-04-08 09:51:47
     [BUG FIXES]
     * render_string(), to which you must pass a text string, died when wide
