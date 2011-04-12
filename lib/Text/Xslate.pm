@@ -1035,6 +1035,10 @@ the same in internals:
     : bar( value => 42 );         # calls an external template
     : include bar { value => 42 } # ditto
 
+=item *
+
+Customization of the default escaping filter
+
 =back
 
 =cut
