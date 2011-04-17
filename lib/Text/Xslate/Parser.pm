@@ -1999,4 +1999,6 @@ L<Text::Xslate>
 
 L<Text::Xslate::Compiler>
 
+L<Text::Xslate::Symbol>
+
 =cut

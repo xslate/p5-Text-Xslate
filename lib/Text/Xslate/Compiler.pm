@@ -1544,4 +1544,6 @@ L<Text::Xslate>
 
 L<Text::Xslate::Parser>
 
+L<Text::Xslate::Symbol>
+
 =cut
