@@ -195,7 +195,7 @@ which you cannot use as a filter.
 
 Mark I<$str> as a raw string to avoid auto HTML escaping.
 You'd better avoid to use this function. Instead, you should use the
-C<mark_raw()> subroutine in prorams, which you can import from
+C<mark_raw()> subroutine in programs, which you can import from
 C<Text::Xslate::Util>.
 
 C<raw> is an alias to C<mark_raw>.
