@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.1005 2011-04-30 11:56:35
+    [BUG FIXES]
+    * Fix a bug which caused the performance to suffer severly under large
+      template files
+
 1.1004 2011-04-11 22:55:59
     [BUG FIXES]
     * Fix a test which failed on Windows
