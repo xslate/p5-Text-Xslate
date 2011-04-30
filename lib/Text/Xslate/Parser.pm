@@ -218,8 +218,10 @@ sub parse {
     $parser->advance();
     my $ast = $parser->statements();
 
-    if($parser->input ne '') {
-        $parser->_error("Syntax error", $parser->token);
+    if(my $input_pos = pos $parser->{input}) {
+        if($input_pos != length($parser->{input})) {
+            $parser->_error("Syntax error", $parser->token);
+        }
     }
 
     return $ast;
@@ -654,22 +656,24 @@ sub tokenize {
     my $id_rx      = $parser->identity_pattern;
     TRY: {
         my $i = 0;
-        s{\G (\s) }{ $1 eq "\n" and ++$i; "" }xmsge;
+        while(/\G (\s) /xmsgc) {
+            $i++ if $1 eq "\n";
+        }
         $parser->following_newline($i);
 
-        if(s/\A $comment_rx //xms) {
+        if(/\G $comment_rx /xmsgc) {
             redo TRY; # retry
         }
-        elsif(s/\A ($id_rx)//xms){
+        elsif(/\G ($id_rx)/xmsgc){
             return [ name => $1 ];
         }
-        elsif(s/\A ($NUMBER | $STRING)//xmso){
+        elsif(/\G ($NUMBER | $STRING)/xmsogc){
             return [ literal => $1 ];
         }
-        elsif(s/\A ($OPERATOR_TOKEN)//xmso){
+        elsif(/\G ($OPERATOR_TOKEN)/xmsogc){
             return [ operator => $1 ];
         }
-        elsif(s/\A (\S+)//xms) {
+        elsif(/\G (\S+)/xmsgc) {
             Carp::confess("Oops: Unexpected token '$1'");
         }
         else { # empty
