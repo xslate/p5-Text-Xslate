@@ -181,6 +181,7 @@ sub new {
 
     my %funcs = %builtin;
     $class->_register_builtin_methods(\%funcs);
+    $class->_merge_hash(\%funcs, $class->default_functions());
     # user defined functions (added functions) can override builtins
     $class->_merge_hash(\%funcs, \%added_funcs);
     $class->_resolve_function_aliases(\%funcs);
