@@ -470,7 +470,7 @@ sub _process_cascade {
 
 sub _process_cascade_file {
     my($self, $file, $base_code) = @_;
-    printf STDERR "cascade file %s\n", Mouse::Util::dump($file) if _DUMP_CAS;
+    printf STDERR "cascade file %s\n", p($file) if _DUMP_CAS;
     my $mtable = $self->macro_table;
 
     for(my $i = 0; $i < @{$base_code}; $i++) {

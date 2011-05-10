@@ -19,7 +19,7 @@ my $cache = defined($args{'--cache'}) ? $args{'--cache'} : 2;
 
 {
     package BlogEntry;
-    use Mouse;
+    use Any::Moose;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }
