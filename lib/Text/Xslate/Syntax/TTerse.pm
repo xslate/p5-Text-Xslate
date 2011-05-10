@@ -86,7 +86,7 @@ sub init_symbols {
 
     foreach my $id(keys %{$parser->symbol_table}) {
         if($id =~ /\A [A-Z]+ \z/xms) { # upper-cased keywords
-            $parser->make_alias($id => lc $id);
+            $parser->make_alias($id => lc $id)->set_nud(\&aliased_nud);
         }
     }
 
@@ -116,6 +116,14 @@ sub default_nud {
     my($parser, $symbol) = @_;
     return $symbol->clone(
         arity => 'variable',
+    );
+}
+
+sub aliased_nud {
+    my($parser, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'variale',
+        id    => lc( $symbol->id ),
     );
 }
 
