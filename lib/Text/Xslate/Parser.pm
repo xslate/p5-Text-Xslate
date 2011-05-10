@@ -769,7 +769,7 @@ sub nud_literal {
 
 sub default_nud {
     my($parser, $symbol) = @_;
-    return $symbol; # as is
+    return $symbol->clone(); # as is
 }
 
 sub default_led {
