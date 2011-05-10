@@ -9,7 +9,6 @@ use Carp         ();
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
     $DEBUG
-    literal_to_value
     value_to_literal
     is_int any_in
     make_error

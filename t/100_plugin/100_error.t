@@ -6,20 +6,6 @@ use Text::Xslate;
 
 use warnings FATAL => 'all';
 
-foreach my $builtin (qw(raw html dump)) {
-
-    eval {
-        Text::Xslate->new(
-            function => {
-                $builtin => sub { "foo" },
-            }
-        );
-    };
-
-    like $@, qr/cannot redefine builtin function/;
-    like $@, qr/\b $builtin \b/xms;
-}
-
 eval {
     Text::Xslate->new(
         module => [ 'Text::Xslate::No::Such::Module' ],

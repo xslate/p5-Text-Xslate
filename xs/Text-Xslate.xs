@@ -1248,6 +1248,13 @@ CODE:
 #endif
 
 void
+_register_builtin_methods(self, HV* hv)
+CODE:
+{
+    tx_register_builtin_methods(aTHX_ hv);
+}
+
+void
 _assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
@@ -1300,8 +1307,9 @@ CODE:
     if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
         croak("Function table must be a HASH reference");
     }
-    st.symbol = newHVhv((HV*)SvRV(*svp)); /* must be copied */
-    tx_register_builtin_methods(aTHX_ st.symbol);
+    /* $self->{function} must be copied
+       because it might be changed per templates */
+    st.symbol = newHVhv( (HV*)SvRV(*svp) );
 
     st.tmpl   = tmpl;
     st.engine = newRV_inc((SV*)self);

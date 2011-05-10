@@ -3,14 +3,14 @@ package Text::Xslate::PP::Method;
 use strict;
 use warnings;
 
-use Text::Xslate::Util qw($DEBUG);
-use Text::Xslate::PP::State;
-use Text::Xslate::PP::Type::Pair;
 
 use Scalar::Util ();
 use Carp         ();
 
 require Text::Xslate::PP;
+require Text::Xslate::PP::State;
+require Text::Xslate::PP::Type::Pair;
+
 if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate::PP::Opcode
@@ -103,19 +103,29 @@ sub _hash_kv {
     ];
 }
 
-our %builtin_method = (
-    'array::size'    => \&_array_size,
-    'array::join'    => \&_array_join,
-    'array::reverse' => \&_array_reverse,
-    'array::sort'    => \&_array_sort,
-    'array::map'     => \&_array_map,
-    'array::reduce'  => \&_array_reduce,
+BEGIN {
+    our %builtin_method = (
+        'array::size'    => \&_array_size,
+        'array::join'    => \&_array_join,
+        'array::reverse' => \&_array_reverse,
+        'array::sort'    => \&_array_sort,
+        'array::map'     => \&_array_map,
+        'array::reduce'  => \&_array_reduce,
 
-    'hash::size'     => \&_hash_size,
-    'hash::keys'     => \&_hash_keys,
-    'hash::values'   => \&_hash_values,
-    'hash::kv'       => \&_hash_kv,
-);
+        'hash::size'     => \&_hash_size,
+        'hash::keys'     => \&_hash_keys,
+        'hash::values'   => \&_hash_values,
+        'hash::kv'       => \&_hash_kv,
+    );
+}
+
+sub tx_register_builtin_methods {
+    my($hv) = @_;
+    our %builtin_method;
+    while(my($k, $v) = each %builtin_method) {
+        $hv->{$k} = $v;
+    }
+}
 
 sub tx_methodcall {
     my($st, $context, $method, $invocant, @args) = @_;
@@ -132,7 +142,7 @@ sub tx_methodcall {
              :                             'nil::';
     my $fq_name = $type . $method;
 
-    if(my $body = $st->symbol->{$fq_name} || $builtin_method{$fq_name}){
+    if(my $body = $st->symbol->{$fq_name}){
         push @{ $st->{ SP } }, [ $invocant, @args ]; # re-pushmark
         local $_context = $context;
         return $st->proccall($body, $context);

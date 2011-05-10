@@ -9,6 +9,7 @@ use Scalar::Util ();
 
 use Text::Xslate::PP;
 use Text::Xslate::PP::Const;
+use Text::Xslate::PP::Method;
 use Text::Xslate::Util qw(
     p neat
     mark_raw unmark_raw html_escape uri_escape
@@ -514,7 +515,6 @@ sub op_funcall {
 
 sub op_methodcall_s {
     my($st) = @_;
-    require Text::Xslate::PP::Method;
     $st->{sa} = Text::Xslate::PP::Method::tx_methodcall(
         $st, undef, $st->op_arg, @{ pop @{ $st->{SP} } });
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };

@@ -396,13 +396,15 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
             const tx_builtin_method_t* bm;
 
             if(SvUVX(entity) >= tx_num_builtin_method) {
-                croak("Oops: Builtin method index of %"SVf" is out of range", fq_name);
+                croak("Oops: Builtin method index of %"SVf" is out of range",
+                    fq_name);
             }
 
             bm = &tx_builtin_method[SvUVX(entity)];
 
             if(!(items >= bm->nargs_min && items <= bm->nargs_max)) {
-                tx_error(aTHX_ st, "Wrong number of arguments for %"SVf, method);
+                tx_error(aTHX_ st, "Wrong number of arguments for %"SVf,
+                    method);
                 goto finish;
             }
 
@@ -419,7 +421,8 @@ tx_methodcall(pTHX_ tx_state_t* const st, SV* const method) {
         tx_warn(aTHX_ st, "Use of nil to invoke method %"SVf, method);
         goto finish;
     }
-    tx_error(aTHX_ st, "Undefined method %"SVf" called for %s", method, tx_neat(aTHX_ invocant));
+    tx_error(aTHX_ st, "Undefined method %"SVf" called for %s", method,
+        tx_neat(aTHX_ invocant));
 
     finish:
     SP = ORIGMARK;
@@ -436,6 +439,7 @@ tx_register_builtin_methods(pTHX_ HV* const hv) {
         SV* const sv = *hv_fetch(hv, bm->name, strlen(bm->name), TRUE);
 
         if(!SvOK(sv)) { /* users can override it */
+            TAINT_NOT;
             sv_setiv(sv, i);
         }
     }

@@ -50,6 +50,7 @@ my $t = Text::Xslate->new(
     function  => {
             substr => sub { substr( $_[ 0 ], $_[ 1 ], $_[ 2 ] ) },
         },
+    warn_handler => sub { die @_ },
     );
 
 my $s = $t->render( 'taint.tx', $dataset );
