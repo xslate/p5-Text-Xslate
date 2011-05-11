@@ -1235,8 +1235,11 @@ sub _generate_call {
         if(@{$args} != 1) {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
-        return $self->compile_ast($args->[0]),
-            [ $intern->[0] => undef, $node->line ];
+
+        if( !$self->overridden_builtin->{ $intern->[0] } ) {
+            return $self->compile_ast($args->[0]),
+                [ $intern->[0] => undef, $node->line ];
+        }
     }
 
     return(
