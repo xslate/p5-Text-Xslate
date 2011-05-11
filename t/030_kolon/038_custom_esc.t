@@ -11,7 +11,7 @@ my $tx = Text::Xslate->new(
     warn_handler => sub { die @_ },
 
     function => {
-        html_escape => html_builder {
+        html_escape => sub {
             my($s) = @_;
             $s =~ s/(.)/ '&#' . ord($1) . ';'/xmsge;
             return $s;
