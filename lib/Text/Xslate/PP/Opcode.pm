@@ -367,7 +367,7 @@ sub op_builtin_html_escape {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
-sub op_builtin_uri {
+sub op_builtin_uri_escape {
     $_[0]->{sa} = uri_escape($_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }

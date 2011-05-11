@@ -19,9 +19,10 @@ my $tx = Text::Xslate->new(
     },
 );
 
-local $TODO = 'not yet implemented';
-
 is $tx->render_string('<: "<foo>" :>'),
-    join '', map { "&#$_;" } 60, 102, 111, 62;
+    join '', map { "&#$_;" } 60, 102, 111, 111, 62;
+
+is $tx->render_string('<: $foo :>', { foo => '<foo>' }),
+    join '', map { "&#$_;" } 60, 102, 111, 111, 62;
 
 done_testing;

@@ -445,7 +445,7 @@ TXC(builtin_unmark_raw) {
     TX_RETURN_NEXT();
 }
 
-TXC(builtin_uri) {
+TXC(builtin_uri_escape) {
     TX_st_sa = tx_uri_escape(aTHX_ TX_st_sa);
     TX_RETURN_NEXT();
 }

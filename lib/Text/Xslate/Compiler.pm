@@ -102,15 +102,27 @@ my %goto_family = map { $_ => undef } qw(
 );
 
 my %builtin = (
-    'raw'          => 'builtin_mark_raw',
-    'html'         => 'builtin_html_escape',
+    'html_escape'  => ['builtin_html_escape',
+                        \&Text::Xslate::Util::html_escape],
+    'uri_escape'   => ['builtin_uri_escape',
+                        \&Text::Xslate::Util::uri_escape],
+    'mark_raw'     => ['builtin_mark_raw',
+                        \&Text::Xslate::Util::mark_raw],
+    'unmark_raw'   => ['builtin_unmark_raw',
+                        \&Text::Xslate::Util::unmark_raw],
 
-    'mark_raw'     => 'builtin_mark_raw',
-    'unmark_raw'   => 'builtin_unmark_raw',
+    'raw'          => ['builtin_mark_raw',
+                        \&Text::Xslate::Util::mark_raw],
 
-    'uri'          => 'builtin_uri',
-    'is_array_ref' => 'builtin_is_array_ref',
-    'is_hash_ref'  => 'builtin_is_hash_ref',
+    'html'         => ['builtin_html_escape',
+                        \&Text::Xslate::Util::html_escape],
+    'uri'          => ['builtin_uri_escape',
+                        \&Text::Xslate::Util::uri_escape],
+
+    'is_array_ref' => ['builtin_is_array_ref',
+                        \&Text::Xslate::Util::is_array_ref],
+    'is_hash_ref'  => ['builtin_is_hash_ref',
+                        \&Text::Xslate::Util::is_hash_ref],
 );
 
 has lvar_id => ( # local varialbe id
@@ -144,6 +156,7 @@ has macro_table => (
 
 has engine => ( # Xslate engine
     is       => 'ro',
+    isa      => 'Object',
     required => 0,
     weak_ref => 1,
 );
@@ -230,6 +243,13 @@ has file => (
     init_arg => undef,
 );
 
+has overridden_builtin => (
+    is  => 'ro',
+    isa => 'HashRef',
+
+    default => sub { +{} },
+);
+
 sub lvar_use {
     my($self, $n) = @_;
 
@@ -257,6 +277,16 @@ sub compile {
     local $self->{footer}       = $self->{footer};
     local $self->{current_file} = '<string>'; # for opinfo
     local $self->{file}         = $args{file} || \$input;
+
+    if(my $engine = $self->engine) {
+        my $ob = $self->overridden_builtin;
+        Internals::SvREADONLY($ob, 0);
+        while(my $name = each %builtin) {
+            my $f = $engine->{function}{$name};
+            $ob->{$name} = ( $builtin{$name}[1] != $f ) + 0;
+        }
+        Internals::SvREADONLY($ob, 1);
+    }
 
     my $parser = $self->parser;
 
@@ -609,7 +639,17 @@ sub _generate_print {
     }
 
     foreach my $arg(@{ $node->first }){
-        if(exists $Text::Xslate::OPS{$proc . '_s'} && $arg->arity eq 'literal'){
+        if( $self->overridden_builtin->{html_escape} ) {
+            push @code,
+                $self->opcode('pushmark'),
+                $self->compile_ast($arg),
+                $self->opcode('push'),
+                $self->opcode('fetch_symbol' => 'html_escape'),
+                $self->opcode('funcall'),
+                $self->opcode('print_raw');
+        }
+        elsif(exists $Text::Xslate::OPS{$proc . '_s'}
+                && $arg->arity eq 'literal'){
             push @code,
                 $self->opcode( $proc . '_s' => $arg->value,
                                line         => $arg->line );
@@ -617,25 +657,15 @@ sub _generate_print {
         elsif($self->_can_print_optimize($proc, $arg)){
             my $filter      = $arg->first;
             my $filter_name = $filter->id;
-            my $command = $builtin{ $filter_name } eq 'builtin_mark_raw'
+            my $command = $builtin{ $filter_name }[0] eq 'builtin_mark_raw'
                 ? 'print_raw'  # mark_raw, raw
                 : 'print';     # html
 
-            push @code, $self->compile_ast($arg->second->[0]);
-
-            if( $self->engine
-                    and $self->engine->{function}->{html_escape}
-                        != \&Text::Xslate::Util::html_escape ) {
-                # html_escape() is overridden!
-                push @code, $self->opcode(
-                    funcall_sa => 'html_escape',
-                    comment    => 'custom html_escape()',
-                );
-                $command = 'print_raw';
-            }
-            push @code, $self->opcode(
-                $command => undef,
-                symbol   => $filter );
+            push @code,
+                $self->compile_ast($arg->second->[0]),
+                $self->opcode(
+                    $command => undef,
+                    symbol   => $filter );
 
         }
         else {
@@ -1205,7 +1235,8 @@ sub _generate_call {
         if(@{$args} != 1) {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
-        return $self->compile_ast($args->[0]), [ $intern => undef, $node->line ];
+        return $self->compile_ast($args->[0]),
+            [ $intern->[0] => undef, $node->line ];
     }
 
     return(
