@@ -597,6 +597,7 @@ sub _can_print_optimize {
         && any_in($node->first->id, qw(raw mark_raw html));
 }
 
+# also deal with smart escaping
 sub _generate_print {
     my($self, $node) = @_;
 
@@ -619,9 +620,23 @@ sub _generate_print {
             my $command = $builtin{ $filter_name } eq 'builtin_mark_raw'
                 ? 'print_raw'  # mark_raw, raw
                 : 'print';     # html
-            push @code,
-                $self->compile_ast($arg->second->[0]),
-                $self->opcode( $command => undef, symbol => $filter );
+
+            push @code, $self->compile_ast($arg->second->[0]);
+
+            if( $self->engine
+                    and $self->engine->{function}->{html_escape}
+                        != \&Text::Xslate::Util::html_escape ) {
+                # html_escape() is overridden!
+                push @code, $self->opcode(
+                    funcall_sa => 'html_escape',
+                    comment    => 'custom html_escape()',
+                );
+                $command = 'print_raw';
+            }
+            push @code, $self->opcode(
+                $command => undef,
+                symbol   => $filter );
+
         }
         else {
             push @code,
