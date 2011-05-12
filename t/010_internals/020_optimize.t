@@ -10,7 +10,7 @@ use t::lib::Util;
 use File::Find;
 use File::Basename;
 
-if(!$Text::Xslate::Compiler::OPTIMIZE or exists $INC{"Text/Xslate/PP.pm"}){
+if(!$Text::Xslate::Compiler::OPTIMIZE) {
     plan skip_all => 'Full optimization is disabled';
 }
 
@@ -70,5 +70,23 @@ find {
     },
     no_chdir => 1,
 }, path;
+
+# check whether builtins are used
+sub builtin_ok {
+    my($code, $name) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    like $tx->_compiler->as_assembly( $tx->compile($code) ),
+       qr/\b$name\b/xms, $name;
+}
+
+builtin_ok ': uri_escape($a)',          'builtin_uri_escape';
+builtin_ok ': uri_escape($a) ~ "foo"',  'builtin_uri_escape';
+builtin_ok ': mark_raw($a) ~ "foo"',    'builtin_mark_raw';
+builtin_ok ': unmark_raw($a) ~ "foo"',  'builtin_unmark_raw';
+builtin_ok ': html_escape($a) ~ "foo"', 'builtin_html_escape';
+
+builtin_ok ': is_array_ref($a)', 'builtin_is_array_ref';
+builtin_ok ': is_hash_ref($a)',  'builtin_is_hash_ref';
 
 done_testing;
