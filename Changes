@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+1.2000 2011-05-14 14:32:46
+    See the changes for 1.1005_01
+
 1.1005_01 2011-05-12 00:13:48
     [CHANGES]
     * The bytecode version is 1.4

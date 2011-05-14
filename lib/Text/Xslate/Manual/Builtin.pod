@@ -205,14 +205,16 @@ C<raw> is an alias to C<mark_raw>.
 Remove the raw mark from I<$str>. If I<$str> is not a raw string, this function
 returns I<$str> as is.
 
-=head2 C<< html($str) >>
+=head2 C<< html_escape($str) >>
 
 Escapes html meta characters in I<$str>. If I<$str> is a raw string, this
 function returns I<$str> as is.
 
 The html meta characters are C<< /[<>"'&]/ >>.
 
-=head2 C<< uri($str) >>
+C<html> is an alias to C<html_escape>.
+
+=head2 C<< uri_escape($str) >>
 
 Escapes unsafe URI characters in I<$str> which gets encoded to UTF-8.
 
@@ -220,7 +222,7 @@ The unsafe URI characters are characters not included in
 the C<unreserved> character class defined by RFC 3986,
 i.e. C<< /[^A-Za-z0-9\-\._~]/ >>.
 
-See also RFC 3986.
+C<uri> is an alias to C<uri_escape>.
 
 =head2 C<< is_array_ref(($value) >>
 
