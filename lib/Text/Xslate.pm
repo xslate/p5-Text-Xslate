@@ -726,8 +726,7 @@ template names.
 Specifies a function map which contains name-coderef pairs.
 A function C<f> may be called as C<f($arg)> or C<$arg | f> in templates.
 
-There are built-in functions which are not overridable.
-See L<Text::Xslate::Manual::Builtin> for details.
+There are built-in functions described in L<Text::Xslate::Manual::Builtin>.
 
 =item C<< module => [$module => ?\@import_args, ...] >>
 
