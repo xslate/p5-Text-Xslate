@@ -10,14 +10,14 @@ Test::Synopsis
 Test::Spelling
 Test::LeakTrace
 Plack
-IPC::Cmd
+IPC::Run
 
 # for benchmarks
 Text::MicroTemplate::Extended
 Text::ClearSilver
 HTML::Template
 HTML::Template::Pro
-# Template
+Template
 
 # for examples
 Data::Section::Simple
