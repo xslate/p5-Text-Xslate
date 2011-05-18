@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.2002 2011-05-18 23:53:31
+    [BUG FIXES]
+    * Fix the overriding of the default escaping routine (rep. by @shmorimo)
+
 1.2001 2011-05-16 23:39:16
     * No code chages
     * Just updated Module::Install::XSUtil for PERL_ONLY configuration support
