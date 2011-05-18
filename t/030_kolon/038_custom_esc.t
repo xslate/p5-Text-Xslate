@@ -11,18 +11,58 @@ my $tx = Text::Xslate->new(
     warn_handler => sub { die @_ },
 
     function => {
-        html_escape => sub {
-            my($s) = @_;
-            $s =~ s/(.)/ '&#' . ord($1) . ';'/xmsge;
-            return $s;
-        },
+        html_escape => \&custom_html_escape
     },
 );
 
-is $tx->render_string('<: "<foo>" :>'),
-    join '', map { "&#$_;" } 60, 102, 111, 111, 62;
+is $tx->render_string(q{<div><: '<^_^>&hearts;' :></div>}),
+    '<div>&lt;^_^&gt;&hearts;</div>';
 
-is $tx->render_string('<: $foo :>', { foo => '<foo>' }),
-    join '', map { "&#$_;" } 60, 102, 111, 111, 62;
+is $tx->render_string(q{<div><: $foo :></div>}, { foo => '<^_^>&hearts;' }),
+    '<div>&lt;^_^&gt;&hearts;</div>';
+
+is $tx->render_string(q{<: '<div>' :>}),
+    '&lt;div&gt;';
+
+is $tx->render_string(q{<: '<div>' | raw :>}),
+    '<div>';
+
+is $tx->render_string(q{<: '<div>' | html :>}),
+    '&lt;div&gt;';
+
+my $tx_no_autoescape = Text::Xslate->new(
+    cache   => 0,
+    verbose => 2,
+    warn_handler => sub { die @_ },
+    type => 'text',
+
+    function => {
+        html_escape => \&custom_html_escape
+    },
+);
+
+is $tx_no_autoescape->render_string(q{<: '<div>' :>}),
+    '<div>';
+
+is $tx_no_autoescape->render_string(q{<: '<div>' | raw :>}),
+    '<div>';
+
+is $tx_no_autoescape->render_string(q{<: '<div>' | html :>}),
+    '&lt;div&gt;';
+
 
 done_testing;
+
+sub custom_html_escape {
+    my $s = shift;
+    my %h = (
+        '<' => '&lt;',
+        '>' => '&gt;',
+        q{'} => '&#039;',
+        q{"} => '&quot;',
+        # '&' => '&amp;', # Don't espcae &. allowing to use character-entitfy-references(like '&#hearts)
+    );
+
+    $s =~ s/(.)/$h{$1} or $1/xmsge;
+    $s;
+}
