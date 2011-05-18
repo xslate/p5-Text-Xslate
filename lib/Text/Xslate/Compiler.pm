@@ -639,7 +639,7 @@ sub _generate_print {
     }
 
     foreach my $arg(@{ $node->first }){
-        if( $self->overridden_builtin->{html_escape} ) {
+        if( $proc eq 'print' && $self->overridden_builtin->{html_escape} ) {
             push @code,
                 $self->opcode('pushmark'),
                 $self->compile_ast($arg),
