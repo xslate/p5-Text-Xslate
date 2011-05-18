@@ -615,7 +615,7 @@ sub _generate_operator {
     $self->_error("Invalid expression", $node);
 }
 
-sub _can_print_optimize {
+sub _can_optimize_print {
     my($self, $name, $node) = @_;
 
     return 0 if !$OPTIMIZE;
@@ -654,7 +654,7 @@ sub _generate_print {
                 $self->opcode( $proc . '_s' => $arg->value,
                                line         => $arg->line );
         }
-        elsif($self->_can_print_optimize($proc, $arg)){
+        elsif($self->_can_optimize_print($proc, $arg)){
             my $filter      = $arg->first;
             my $filter_name = $filter->id;
             my $command = $builtin{ $filter_name }[0] eq 'builtin_mark_raw'
