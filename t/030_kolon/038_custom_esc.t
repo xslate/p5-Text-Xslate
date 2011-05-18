@@ -55,6 +55,7 @@ done_testing;
 
 sub custom_html_escape {
     my $s = shift;
+    return $s if ref $s;
     my %h = (
         '<' => '&lt;',
         '>' => '&gt;',
