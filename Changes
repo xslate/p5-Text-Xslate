@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.2003 2011-06-03 00:41:03
+    [BUG FIXES]
+    * Fix a miss-format in docs
+    * Suppress a compiler warnings
+
 1.2002 2011-05-18 23:53:31
     [BUG FIXES]
     * Fix the overriding of the default escaping routine (rep. by @shmorimo)
