@@ -11,7 +11,7 @@ my $tx = Text::Xslate->new(
     warn_handler => sub { die @_ },
 
     function => {
-        html_escape => \&custom_html_escape
+        html => \&custom_html_escape
     },
 );
 
@@ -37,7 +37,7 @@ my $tx_no_autoescape = Text::Xslate->new(
     type => 'text',
 
     function => {
-        html_escape => \&custom_html_escape
+        html => \&custom_html_escape
     },
 );
 
@@ -65,5 +65,5 @@ sub custom_html_escape {
     );
 
     $s =~ s/(.)/$h{$1} or $1/xmsge;
-    $s;
+    Text::Xslate::Util::mark_raw($s);
 }

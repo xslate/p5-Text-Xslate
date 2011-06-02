@@ -624,7 +624,8 @@ sub _can_optimize_print {
     return $node->arity eq 'call'
         && $node->first->arity eq 'name'
         && @{$node->second} == 1 # args of the filter
-        && any_in($node->first->id, qw(raw mark_raw html));
+        && any_in($node->first->id, qw(raw mark_raw html))
+        && !$self->overridden_builtin->{$node->first->id};
 }
 
 # also deal with smart escaping
@@ -1236,7 +1237,7 @@ sub _generate_call {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
 
-        if( !$self->overridden_builtin->{ $intern->[0] } ) {
+        if( !$self->overridden_builtin->{ $callable->id } ) {
             return $self->compile_ast($args->[0]),
                 [ $intern->[0] => undef, $node->line ];
         }

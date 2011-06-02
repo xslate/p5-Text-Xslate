@@ -172,7 +172,11 @@ sub print {
         }
     }
     elsif ( defined $sv ) {
-        $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
+        if($st->{engine}->{function}->{html}){
+            $sv = $st->{engine}->{function}->{html}->($sv);
+        }else{
+            $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
+        }
         $st->{output} .= $sv;
     }
     else {
