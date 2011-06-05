@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.2004 2011-06-06 08:54:50
+    [BUG FIXES]
+    * Overriding builtins (introduced in 1.1005) didn't work
+
 1.2003 2011-06-03 00:41:03
     [BUG FIXES]
     * Fix a miss-format in docs
