@@ -175,6 +175,8 @@ but is more powerful.
 
 This mechanism is also called as template inheritance.
 
+See also L<Text::Xslate/"Template cascading">.
+
 =head2 How to map __DATA__ sections to the include path
 
 Use C<Data::Section::Simple>, and the C<path> option of C<new()>, which accepts
