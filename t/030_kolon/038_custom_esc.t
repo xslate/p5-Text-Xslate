@@ -62,6 +62,37 @@ note 'override html_escape()';
         '&lt;div&gt;';
 }
 
+note 'override html()';
+{
+    my $tx = Text::Xslate->new(
+        cache   => 0,
+        verbose => 2,
+        warn_handler => sub { die @_ },
+
+        function => {
+            html => \&custom_html_filter
+        },
+    );
+
+    is $tx->render_string(q{<div><: '<^_^>&hearts;' :></div>}),
+        '<div>&lt;^_^&gt;&amp;hearts;</div>';
+
+    is $tx->render_string(q{<div><: $foo :></div>}, { foo => '<^_^>&hearts;' }),
+        '<div>&lt;^_^&gt;&amp;hearts;</div>';
+
+    is $tx->render_string(q{<: '<div>' :>}),
+        '&lt;div&gt;';
+
+    is $tx->render_string(q{<: '<div>' | raw :>}),
+        '<div>';
+
+    is $tx->render_string(q{<: '<div>' | html :>}),
+        '&lt;div&gt;';
+
+    is $tx->render_string(q{<div><: $foo | html :></div>}, { foo => '<^_^>&hearts;' }),
+        '<div>&lt;^_^&gt;&hearts;</div>' or die 'stop';
+}
+
 note 'override html_escape() with type=text';
 {
     my $tx_no_autoescape = Text::Xslate->new(

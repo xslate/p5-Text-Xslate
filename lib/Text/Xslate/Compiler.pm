@@ -621,10 +621,12 @@ sub _can_optimize_print {
     return 0 if !$OPTIMIZE;
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
+    my $maybe_name = $node->first;
     return $node->arity eq 'call'
-        && $node->first->arity eq 'name'
+        && $maybe_name->arity eq 'name'
         && @{$node->second} == 1 # args of the filter
-        && any_in($node->first->id, qw(raw mark_raw html));
+        && any_in($maybe_name->id, qw(raw mark_raw html))
+        && !$self->overridden_builtin->{$maybe_name->id};
 }
 
 # also deal with smart escaping
@@ -640,6 +642,7 @@ sub _generate_print {
 
     foreach my $arg(@{ $node->first }){
         if( $proc eq 'print' && $self->overridden_builtin->{html_escape} ) {
+            # default behaviour of print() is overridden
             push @code,
                 $self->opcode('pushmark'),
                 $self->compile_ast($arg),
@@ -1231,15 +1234,13 @@ sub _generate_call {
     my $callable = $node->first; # function or macro
     my $args     = $node->second;
 
-    if(my $intern = $builtin{$callable->id}) {
+    if(my $intern = $builtin{$callable->id} and !$self->overridden_builtin->{$callable->id}) {
         if(@{$args} != 1) {
             $self->_error("Wrong number of arguments for $callable", $node);
         }
 
-        if( !$self->overridden_builtin->{ $intern->[0] } ) {
-            return $self->compile_ast($args->[0]),
-                [ $intern->[0] => undef, $node->line ];
-        }
+        return $self->compile_ast($args->[0]),
+            [ $intern->[0] => undef, $node->line ];
     }
 
     return(
