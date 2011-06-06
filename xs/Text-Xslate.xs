@@ -1130,7 +1130,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
 
     tmpl = (AV*)SvRV(sv);
     if(AvFILLp(tmpl) < (TXo_least_size-1)) {
-        why = form("template entry is broken (size: %d < %d)", AvFILLp(tmpl)+1, TXo_least_size);
+        why = form("template entry is broken (size: %d < %d)",
+            (int)AvFILLp(tmpl)+1, (int)TXo_least_size);
         goto err;
     }
 

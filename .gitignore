@@ -2,6 +2,7 @@ Text-Xslate-*
 .*
 !.gitignore
 !.shipit
+*~
 *.o
 *.obj
 *.bs

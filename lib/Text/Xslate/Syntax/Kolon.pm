@@ -529,12 +529,14 @@ and you can apply filters to that block with C<< infix:<|> >>.
 Here is an example to embed HTML source code into templates.
 
 Template:
+
     : block source | unmark_raw -> {
         <em>Hello, world!</em>
     : }
 
 Output:
-        &lt;em&gt;Hello, world!&lt;/em&gt;
+
+    &lt;em&gt;Hello, world!&lt;/em&gt;
 
 See also L<Text::Xslate::Manual::Cookbook/"Using FillInForm"> for
 another example to use this block filter syntax.
