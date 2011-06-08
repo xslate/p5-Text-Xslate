@@ -167,7 +167,15 @@ Output:
         Hello, world!
     </div>
 
-See L<Text::Xslate/"Template cascading"> for details.
+=head3 Template cascading
+
+Xslate supports B<template cascading>, which allows you to extend
+templates with block modifiers. It is like traditional template inclusion,
+but is more powerful.
+
+This mechanism is also called as template inheritance.
+
+See also L<Text::Xslate/"Template cascading">.
 
 =head2 How to map __DATA__ sections to the include path
 
