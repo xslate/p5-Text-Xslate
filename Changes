@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+1.3000 2011-06-11 18:20:02
+    [CHANGES]
+    * html_builder(\&f) passes @_ as-is to &f
+
+    [BUG FIXES]
+    * Comments broke line numers (thanks to ktat)
+    * <: "10" x 100 :> was broken (thanks to ktat)
+
 1.2004 2011-06-06 08:54:50
     [BUG FIXES]
     * Overriding builtins (introduced in 1.1005) didn't work
