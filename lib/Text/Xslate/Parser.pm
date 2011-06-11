@@ -230,7 +230,7 @@ sub parse {
 sub trim_code {
     my($parser, $s) = @_;
 
-    $s =~ s/\A \s+         //xms;
+    $s =~ s/\A [ \t]+      //xms;
     $s =~ s/   [ \t]+ \n?\z//xms;
 
     return $s;
@@ -331,11 +331,11 @@ sub split :method {
 
                 s/\A \Q$tag_end\E //xms or die "Oops!";
 
-                $in_tag = 0;
                 push @tokens, [ code => $code ];
                 if($chomp) {
                     push @tokens, [ postchomp => $chomp ];
                 }
+                $in_tag = 0;
             }
             else {
                 last; # the end tag is not found
@@ -655,11 +655,9 @@ sub tokenize {
     my $comment_rx = $parser->comment_pattern;
     my $id_rx      = $parser->identity_pattern;
     TRY: {
-        my $i = 0;
-        while(/\G (\s) /xmsgc) {
-            $i++ if $1 eq "\n";
-        }
-        $parser->following_newline($i);
+        /\G (\s*) /xmsgc;
+        my $count = ( $1 =~ tr/\n/\n/);
+        $parser->following_newline( $count );
 
         if(/\G $comment_rx /xmsgc) {
             redo TRY; # retry
