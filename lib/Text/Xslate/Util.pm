@@ -336,8 +336,8 @@ This is the entity of the C<dump> filter, useful for debugging.
 
 =head3  C<< html_builder { block } | \&function :CodeRef >>
 
-Wraps I<&function> with C<mark_raw> so that the new subroutine returns
-a raw string.
+Wraps a block or I<&function> with C<mark_raw> so that the new subroutine will
+return a raw string.
 
 This function is the same as what Text::Xslate exports.
 
