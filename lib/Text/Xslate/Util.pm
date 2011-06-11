@@ -96,8 +96,9 @@ sub neat {
 
 sub is_int {
     my($s) = @_;
-    # XXX: '+1' must be interpreted as a string
-    return defined($s) && $s =~ /\A -? [0-9]+ \z/xms;
+    return defined($s)
+        && $s =~ /\A -? [0-9]+ \z/xms  # '+1' is a string
+        && abs(int($s)) < 0x7FFF_FFFF; # fits  int32_t
 }
 
 sub any_in {
