@@ -114,7 +114,7 @@ $hb = html_builder {
 is $hb->(1, 2), "<3>";
 $hb = html_builder {
     my($x, $y) = @_;
-    return sprintf "%s%s", $x, $y;
+    return sprintf "%s%s", html_escape($x), html_escape($y);
 };
 is $hb->('<br>', mark_raw('<br>')), "&lt;br&gt;<br>";
 
