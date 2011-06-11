@@ -654,9 +654,10 @@ sub tokenize {
 
     my $comment_rx = $parser->comment_pattern;
     my $id_rx      = $parser->identity_pattern;
+    my $count      = 0;
     TRY: {
         /\G (\s*) /xmsgc;
-        my $count = ( $1 =~ tr/\n/\n/);
+        $count += ( $1 =~ tr/\n/\n/);
         $parser->following_newline( $count );
 
         if(/\G $comment_rx /xmsgc) {
@@ -713,7 +714,7 @@ sub advance {
         $arity = "literal";
     }
 
-    print STDOUT "[$arity => $id]\n" if _DUMP_TOKEN;
+    print STDOUT "[$arity => $id] #$line\n" if _DUMP_TOKEN;
 
     my $symbol;
     if($arity eq "literal") {
@@ -1371,7 +1372,7 @@ sub nud_current_line {
     my($self, $symbol) = @_;
     return $symbol->clone(
         arity => 'literal',
-        value => $self->line,
+        value => $symbol->line,
     );
 }
 
