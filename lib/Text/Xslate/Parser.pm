@@ -20,7 +20,7 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
 my $CODE    = qr/ (?: $STRING | [^'"] ) /xms;
-my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
+my $COMMENT = qr/\# [^\n;]* (?= [;\n] | \z)/xms;
 
 # Operator tokens that the parser recognizes.
 # All the single characters are tokenized as an operator.
