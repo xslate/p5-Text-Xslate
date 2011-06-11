@@ -19,18 +19,6 @@ use Text::Xslate::Util qw(
     uri_escape html_builder
 );
 
-# case guard
-{
-    my $pkg = __PACKAGE__;
-    $pkg =~ s{::}{.}g;
-    if(__FILE__ !~ $pkg) {
-        my(undef, $f, $l) = caller;
-        die "Incorrect use of module ", __PACKAGE__, " at $f line $l.\n";
-    }
-}
-
-
-
 our @ISA = qw(Text::Xslate::Engine);
 
 our @EXPORT_OK = qw(
