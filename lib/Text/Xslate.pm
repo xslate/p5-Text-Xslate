@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.2003';
+our $VERSION = '1.3000';
 
 use Carp              ();
 use Fcntl             ();
@@ -570,7 +570,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.2003.
+This document describes Text::Xslate version 1.3000.
 
 =head1 SYNOPSIS
 
@@ -940,13 +940,14 @@ This function is available in templates as the C<uri> filter.
 
 =head3 C<< html_builder { block } | \&function :CodeRef >>
 
-Wraps I<&function> with C<mark_raw> so that the new subroutine returns
-a raw string.
+Wraps a block or I<&function> with C<mark_raw> so that the new subroutine
+will return a raw string.
 
 This function is used to tell the xslate engine that I<&function> is an
 HTML builder that returns HTML sources. For example:
 
     sub some_html_builder {
+        my @args = @_;
         my $html;
         # build HTML ...
         return $html;

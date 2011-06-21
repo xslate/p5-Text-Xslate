@@ -20,7 +20,7 @@ use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
 my $CODE    = qr/ (?: $STRING | [^'"] ) /xms;
-my $COMMENT = qr/\# [^\n;]* (?=[;\n])?/xms;
+my $COMMENT = qr/\# [^\n;]* (?= [;\n] | \z)/xms;
 
 # Operator tokens that the parser recognizes.
 # All the single characters are tokenized as an operator.
@@ -230,7 +230,7 @@ sub parse {
 sub trim_code {
     my($parser, $s) = @_;
 
-    $s =~ s/\A \s+         //xms;
+    $s =~ s/\A [ \t]+      //xms;
     $s =~ s/   [ \t]+ \n?\z//xms;
 
     return $s;
@@ -331,11 +331,11 @@ sub split :method {
 
                 s/\A \Q$tag_end\E //xms or die "Oops!";
 
-                $in_tag = 0;
                 push @tokens, [ code => $code ];
                 if($chomp) {
                     push @tokens, [ postchomp => $chomp ];
                 }
+                $in_tag = 0;
             }
             else {
                 last; # the end tag is not found
@@ -654,12 +654,11 @@ sub tokenize {
 
     my $comment_rx = $parser->comment_pattern;
     my $id_rx      = $parser->identity_pattern;
+    my $count      = 0;
     TRY: {
-        my $i = 0;
-        while(/\G (\s) /xmsgc) {
-            $i++ if $1 eq "\n";
-        }
-        $parser->following_newline($i);
+        /\G (\s*) /xmsgc;
+        $count += ( $1 =~ tr/\n/\n/);
+        $parser->following_newline( $count );
 
         if(/\G $comment_rx /xmsgc) {
             redo TRY; # retry
@@ -715,7 +714,7 @@ sub advance {
         $arity = "literal";
     }
 
-    print STDOUT "[$arity => $id]\n" if _DUMP_TOKEN;
+    print STDOUT "[$arity => $id] #$line\n" if _DUMP_TOKEN;
 
     my $symbol;
     if($arity eq "literal") {
@@ -1373,7 +1372,7 @@ sub nud_current_line {
     my($self, $symbol) = @_;
     return $symbol->clone(
         arity => 'literal',
-        value => $self->line,
+        value => $symbol->line,
     );
 }
 

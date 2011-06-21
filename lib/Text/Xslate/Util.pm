@@ -59,7 +59,7 @@ sub escaped_string; *escaped_string = \&mark_raw;
 sub html_builder (&){
     my($code_ref) = @_;
     return sub {
-        my $ret = $code_ref->(map { unmark_raw($_) } @_);
+        my $ret = $code_ref->(@_);
         return ref($ret) eq 'CODE'
             ? html_builder(\&{$ret})
             : mark_raw($ret);
@@ -96,8 +96,9 @@ sub neat {
 
 sub is_int {
     my($s) = @_;
-    # XXX: '+1' must be interpreted as a string
-    return defined($s) && $s =~ /\A -? [0-9]+ \z/xms;
+    return defined($s)
+        && $s =~ /\A -? [0-9]+ \z/xms  # '+1' is a string
+        && abs(int($s)) < 0x7FFF_FFFF; # fits  int32_t
 }
 
 sub any_in {
@@ -335,8 +336,8 @@ This is the entity of the C<dump> filter, useful for debugging.
 
 =head3  C<< html_builder { block } | \&function :CodeRef >>
 
-Wraps I<&function> with C<mark_raw> so that the new subroutine returns
-a raw string.
+Wraps a block or I<&function> with C<mark_raw> so that the new subroutine will
+return a raw string.
 
 This function is the same as what Text::Xslate exports.
 

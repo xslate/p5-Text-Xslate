@@ -216,9 +216,6 @@ sub _build_getopt_spec {
     foreach my $attr($self->meta->get_all_attributes) {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
-        my @names   = $attr->name;
-        push @names, $attr->cmd_aliases;
-
         my $isa = $attr->type_constraint;
 
         my $type;
@@ -240,6 +237,8 @@ sub _build_getopt_spec {
         else {
             $type = '=s';
         }
+
+        my @names = ($attr->name, $attr->cmd_aliases);
         push @spec, join('|', @names) . $type;
     }
     return @spec;
@@ -327,7 +326,7 @@ sub run {
 sub process_tree {
     my ($self, $xslate, $dir) = @_;
 
-    opendir( my $fh, $dir ) or die "XXX";
+    opendir( my $fh, $dir ) or die "Could not opendir '$dir': !";
 
     while (my $e = readdir $fh) {
         next if $e =~ /^\.+$/;
@@ -423,6 +422,14 @@ sub help_message {
     foreach my $opt(@options) {
         $message .= sprintf "    %-*s  %s\n", $max_len, @{$opt};
     }
+
+    $message .= <<'EXAMPLE';
+
+Examples:
+    xslate -e "Hello, <: $ARGV[0] :> world!" Kolon
+    xslate -s TTerse -e "Hello, [% ARGV.0 %] world!" TTerse
+
+EXAMPLE
     return $message;
 }
 
