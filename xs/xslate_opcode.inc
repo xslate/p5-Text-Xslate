@@ -64,6 +64,8 @@ TXC_w_key(localize_s) {
 /* local $engine->{vars} = expr; */
 TXC(localize_vars) {
     SV* vars = sv_mortalcopy(TX_st_sa);
+    HV* original_vars = TX_st->vars;
+    HE *entry;
 
     if(!( SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV
             && !SvOBJECT(SvRV(vars)) )) {
@@ -74,6 +76,16 @@ TXC(localize_vars) {
 
     save_hptr(&(TX_st->vars));
     TX_st->vars = (HV*)SvRV(vars);
+
+    hv_iterinit(original_vars);
+    while((entry = hv_iternext(original_vars)) != NULL){
+        SV *key = hv_iterkeysv(entry);
+        if(! hv_exists_ent(TX_st->vars, key, 0U)){
+            HE *he = hv_fetch_ent(original_vars, key, FALSE, 0U);
+            SV *sv = sv_motalcopy(hv_iterval(original_vars, he));
+            hv_store_ent(TX_st->vars, key, sv, 0U);
+        }
+    }
 
     TX_RETURN_NEXT();
 }
