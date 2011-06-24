@@ -27,6 +27,10 @@ is $tx->render_string(':include "bar" { $baz }; $lang',
     { baz => { lang => 'Xslate' }, lang => '!!' }),
     'Hello, Xslate world!!!';
 
+is $tx->render_string(':include "bar" { $baz }; $lang',
+    { baz => { }, lang => '!!' }),
+    'Hello, !! world!!!';
+
 eval { $tx->render_string(': include "foo" { a => 42, "b" }' ) };
 like $@, qr/pairs/;
 
