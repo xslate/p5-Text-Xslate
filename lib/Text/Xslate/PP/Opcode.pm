@@ -80,12 +80,9 @@ sub op_localize_vars {
         $st->warn(undef, "Variable map must be a HASH reference");
     }
 
-    push @{ $st->{local_stack} }, bless sub {
-            $st->vars($old_vars);
-            return;
-        }, 'Text::Xslate::PP::Guard';
-
-    $st->vars($new_vars);
+    foreach my $key (keys %{ $new_vars }){
+        $st->localize($key, $new_vars->{$key});
+    }
 
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
