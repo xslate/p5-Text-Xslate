@@ -85,9 +85,7 @@ sub op_localize_vars {
             return;
         }, 'Text::Xslate::PP::Guard';
 
-    foreach my $key (keys %{ $new_vars }){
-        $st->localize($key, $new_vars->{$key});
-    }
+    $st->vars($new_vars);
 
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
