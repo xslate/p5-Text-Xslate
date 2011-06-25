@@ -543,6 +543,26 @@ another example to use this block filter syntax.
 
 Note that closures are not supported.
 
+=head2 Special keywords
+
+There are special keywords:
+
+=over
+
+=item __FILE__
+
+Indicates the current file name.
+
+=item __LINE__
+
+Indicates the current line number.
+
+=item __ROOT__
+
+Means the root of the parameters.
+
+=back
+
 =head2 Comments
 
 Comments start from C<#> to a new line or semicolon.

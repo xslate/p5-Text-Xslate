@@ -90,6 +90,12 @@ Examples:
 
 See also L<List::Util/"reduce">.
 
+=head3 C<$a.merge($v)>
+
+Returns a new ARRAY reference consisting of I<$a> and I<$v>.
+
+I<$v> may be an ARRAY reference or a scalar value.
+
 =head2 For HASH references
 
 The namespace of HASH references is C<hash>.
@@ -119,6 +125,12 @@ For example:
     : for $hash_ref.kv() -> $pair {
         <: $pair.key :>=<: $pair.value :>
     : }
+
+=head3 C<$h.merge($v)>
+
+Returns a new HASH reference consisting of I<$h> and I<$v>.
+
+I<$v> must be a HASH reference.
 
 =head1 LOOP VARIABLES
 
