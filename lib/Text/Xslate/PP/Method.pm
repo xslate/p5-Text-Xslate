@@ -76,6 +76,12 @@ sub _array_reduce {
     return $x;
 }
 
+sub _array_merge {
+    my($array_ref, $value) = @_;
+    return $_st->bad_arg('merge') if @_ != 2;
+    return [ @{$array_ref}, ref($value) eq 'ARRAY' ? @{$value} : $value ];
+}
+
 sub _hash_size {
     my($hash_ref) = @_;
     return $_st->bad_arg('size') if @_ != 1;
@@ -103,6 +109,13 @@ sub _hash_kv {
     ];
 }
 
+sub _hash_merge {
+    my($hash_ref, $other_hash_ref) = @_;
+    $_st->bad_arg('merge') if @_ != 2;
+
+    return { %{$hash_ref}, %{$other_hash_ref} };
+}
+
 BEGIN {
     our %builtin_method = (
         'array::size'    => \&_array_size,
@@ -111,11 +124,13 @@ BEGIN {
         'array::sort'    => \&_array_sort,
         'array::map'     => \&_array_map,
         'array::reduce'  => \&_array_reduce,
+        'array::merge'   => \&_array_merge,
 
         'hash::size'     => \&_hash_size,
         'hash::keys'     => \&_hash_keys,
         'hash::values'   => \&_hash_values,
         'hash::kv'       => \&_hash_kv,
+        'hash::merge'    => \&_hash_merge,
     );
 }
 

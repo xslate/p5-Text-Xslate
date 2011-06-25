@@ -107,6 +107,11 @@ sub op_nil {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_vars {
+    $_[0]->{sa} = $_[0]->{vars};
+
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
 
 sub op_literal {
     $_[0]->{sa} = $_[0]->op_arg;
