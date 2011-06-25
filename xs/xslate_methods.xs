@@ -331,9 +331,8 @@ TXBM(hash, values) {
         SV* const key = AvARRAY(av)[i];
         HE* const he  = hv_fetch_ent(hv, key, TRUE, 0U);
         SV* const val = hv_iterval(hv, he);
-        AvARRAY(av)[i] = val;
-        SvREFCNT_inc_simple_void_NN(val);
         SvREFCNT_dec(key);
+        AvARRAY(av)[i] = newSVsv(val);
     }
 
     sv_setsv(retval, avref);
@@ -373,6 +372,41 @@ TXBM(hash, kv) {
     LEAVE;
 }
 
+TXBM(hash, merge) {
+    dMY_CXT;
+    HV* const hv        = (HV*)SvRV(*MARK);
+    SV* const value     = *(++MARK);
+    HV* const result    = newHVhv(hv);
+    SV* const resultref = newRV_noinc((SV*)result);
+    HE* he;
+    HV* m;
+
+    if(!tx_sv_is_hash_ref(aTHX_ value)) {
+        tx_error(aTHX_ st, "Merging value is not a HASH reference");
+        sv_setsv(retval, &PL_sv_undef);
+        SvREFCNT_dec(resultref);
+        return;
+    }
+
+    m = (HV*)SvRV(value);
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
+
+    hv_iterinit(m);
+    while((he = hv_iternext(m))) {
+        (void)hv_store_ent(result,
+            hv_iterkeysv(he),
+            newSVsv(hv_iterval(hv, he)),
+            0U);
+    }
+
+    sv_setsv(retval, resultref);
+    FREETMPS;
+    LEAVE;
+}
+
 static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array,  size,    0, 0),
     TXBM_SETUP(array,  join,    1, 1),
@@ -386,6 +420,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(hash,   keys,    0, 0), /* TODO: can take a compare function */
     TXBM_SETUP(hash,   values,  0, 0), /* TODO: can take a compare function */
     TXBM_SETUP(hash,   kv,      0, 0), /* TODO: can take a compare function */
+    TXBM_SETUP(hash,   merge,   1, 1),
 };
 
 static const size_t tx_num_builtin_method

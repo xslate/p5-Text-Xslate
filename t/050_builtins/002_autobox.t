@@ -115,6 +115,19 @@ b=2
 a=1
 X
 
+    [<<'T', { h => {a => 1, b => 2, c => 3} }, <<'X', 'merge' ],
+<:
+    for $h.merge({c => 30, d => 40}).kv() -> $pair {
+        print $pair.key(), "=", $pair.value(), "\n";
+    }
+-:>
+T
+a=1
+b=2
+c=30
+d=40
+X
+
     ['<: $o.size() :>', { o => MyArray->new(size => 42) }, '42', 'object'],
 
     # register via function
