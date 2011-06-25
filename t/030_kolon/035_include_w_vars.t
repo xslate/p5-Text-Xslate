@@ -27,7 +27,11 @@ is $tx->render_string(':include "bar" { $baz }; $lang',
     { baz => { lang => 'Xslate' }, lang => '!!' }),
     'Hello, Xslate world!!!';
 
-eval { $tx->render_string(': include "foo" { a => 42, "b" }' ) };
+is $tx->render_string(':include "bar" { $baz.merge({ lang => "Xslate"}) }; $lang',
+    { baz => {  }, lang => '!!' }),
+    'Hello, Xslate world!!!';
+
+    eval { $tx->render_string(': include "foo" { a => 42, "b" }' ) };
 like $@, qr/pairs/;
 
 eval { $tx->render_string(': include "foo" { 42 }' ) };
