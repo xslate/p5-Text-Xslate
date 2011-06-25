@@ -255,6 +255,53 @@ TXBM(array, reduce) {
     LEAVE;
 }
 
+TXBM(array, merge) {
+    AV* const av        = (AV*)SvRV(*MARK);
+    SV* const value     = *(++MARK);
+    I32 const len       = av_len(av) + 1;
+    AV* const result    = newAV();
+    SV* const resultref = newRV_noinc((SV*)result);
+    AV* m = NULL;
+    I32 mlen;
+    I32 i;
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
+
+    if(tx_sv_is_array_ref(aTHX_ value)) {
+        m    = (AV*)SvRV(value);
+        mlen = av_len(m) + 1;
+    }
+    else {
+        mlen = 1;
+    }
+    av_extend(result, len + mlen - 1);
+
+    /* copy */
+    for(i = 0; i < len; i++) {
+        SV** const svp = av_fetch(av, i, FALSE);
+        SV* const sv   = svp ? *svp : &PL_sv_undef;
+        (void)av_store(result, i, newSVsv(sv));
+    }
+    /* merge */
+    if(m) {
+        for(i = 0; i < mlen; i++) {
+            SV** const svp = av_fetch(m, i, FALSE);
+            SV* const sv   = svp ? *svp : &PL_sv_undef;
+            av_push(result, newSVsv(sv));
+        }
+    }
+    else {
+        av_push(result, newSVsv(value));
+    }
+
+    /* setting retval must be here because retval is actually st->targ */
+    sv_setsv(retval, resultref);
+    FREETMPS;
+    LEAVE;
+}
+
 /* HASH */
 
 TXBM(hash, size) {
@@ -333,6 +380,7 @@ static const tx_builtin_method_t tx_builtin_method[] = {
     TXBM_SETUP(array,  sort,    0, 1), /* can take a compare function */
     TXBM_SETUP(array,  map,     1, 1),
     TXBM_SETUP(array,  reduce,  1, 1),
+    TXBM_SETUP(array,  merge,   1, 1),
 
     TXBM_SETUP(hash,   size,    0, 0),
     TXBM_SETUP(hash,   keys,    0, 0), /* TODO: can take a compare function */

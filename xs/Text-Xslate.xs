@@ -122,18 +122,16 @@ tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id);
 static SV*
 tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, int const amg_id);
 
-STATIC_INLINE int
+int
 tx_sv_is_array_ref(pTHX_ SV* const sv) {
     assert(sv);
     return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVAV && !SvOBJECT(SvRV(sv));
-    // return tx_sv_is_ref(aTHX_ sv, SVt_PVAV, to_av_amg);
 }
 
-STATIC_INLINE int
+int
 tx_sv_is_hash_ref(pTHX_ SV* const sv) {
     assert(sv);
     return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV && !SvOBJECT(SvRV(sv));
-    // return tx_sv_is_ref(aTHX_ sv, SVt_PVHV, to_hv_amg);
 }
 
 STATIC_INLINE bool

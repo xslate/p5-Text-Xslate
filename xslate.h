@@ -196,6 +196,11 @@ tx_mark_raw(pTHX_ SV* const str);
 SV*
 tx_unmark_raw(pTHX_ SV* const str);
 
+int
+tx_sv_is_array_ref(pTHX_ SV* const sv);
+
+int
+tx_sv_is_hash_ref(pTHX_ SV* const sv);
 
 /* builtin method stuff */
 
