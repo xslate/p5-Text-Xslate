@@ -31,10 +31,13 @@ is $tx->render_string(':include "bar" { $baz.merge({ lang => "Xslate"}) }; $lang
     { baz => {  }, lang => '!!' }),
     'Hello, Xslate world!!!';
 
-    eval { $tx->render_string(': include "foo" { a => 42, "b" }' ) };
+eval { $tx->render_string(': include "bar" { a => 42, "b" }' ) };
 like $@, qr/pairs/;
 
-eval { $tx->render_string(': include "foo" { 42 }' ) };
+eval { $tx->render_string(': include "bar" { 42 }' ) };
 like $@, qr/must be a HASH reference/;
+
+eval { $tx->render('foo', { baz => { }, lang => 'XXX'} ) };
+like $@, qr/nil/;
 
 done_testing;
