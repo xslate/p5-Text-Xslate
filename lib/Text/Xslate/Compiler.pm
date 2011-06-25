@@ -1086,6 +1086,11 @@ sub _generate_nil {
     return $self->opcode('nil');
 }
 
+sub _generate_vars {
+    my($self) = @_;
+    return $self->opcode('vars');
+}
+
 sub _generate_composer {
     my($self, $node) = @_;
 

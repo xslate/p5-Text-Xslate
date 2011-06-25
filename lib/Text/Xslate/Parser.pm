@@ -474,6 +474,7 @@ sub _init_basic_symbols {
     # special tokens
     $parser->symbol('__FILE__')->set_nud(\&nud_current_file);
     $parser->symbol('__LINE__')->set_nud(\&nud_current_line);
+    $parser->symbol('__ROOT__')->set_nud(\&nud_current_vars);
 
     return;
 }
@@ -1373,6 +1374,13 @@ sub nud_current_line {
     return $symbol->clone(
         arity => 'literal',
         value => $symbol->line,
+    );
+}
+
+sub nud_current_vars {
+    my($self, $symbol) = @_;
+    return $symbol->clone(
+        arity => 'vars',
     );
 }
 

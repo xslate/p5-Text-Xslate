@@ -685,6 +685,11 @@ TXC_goto(goto) {
     TX_RETURN_PC( TX_op_arg_pc );
 }
 
+TXC(vars) {
+    TX_st_sa = sv_2mortal(newRV_inc((SV*)TX_st->vars));
+    TX_RETURN_NEXT();
+}
+
 /* opcode markers (noop) */
 TXC_w_sv(depend); /* tell the vm to dependent template files */
 TXC_w_key(macro_begin);
