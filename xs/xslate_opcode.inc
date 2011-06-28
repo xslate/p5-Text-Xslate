@@ -82,7 +82,8 @@ TXC(localize_vars) {
         SV *key = hv_iterkeysv(entry);
         if(! hv_exists_ent(TX_st->vars, key, 0U)){
             HE *he = hv_fetch_ent(original_vars, key, FALSE, 0U);
-            SV *sv = sv_motalcopy(hv_iterval(original_vars, he));
+            SV *sv = hv_iterval(original_vars, he);
+            SvREFCNT_inc(sv);
             hv_store_ent(TX_st->vars, key, sv, 0U);
         }
     }
