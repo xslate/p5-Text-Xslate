@@ -74,4 +74,4 @@ ppport\.h$
 
 t/600_app/out
 
-MYMETA\.yml$
+MYMETA\.(?:json|yml)$
