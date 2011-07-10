@@ -766,8 +766,8 @@ sub _generate_for {
     if(@{$vars} != 1) {
         $self->_error("A for-loop requires single variable for each item", $node);
     }
-    local $self->{lvar}  = { %{$self->lvar} }; # new scope
-    local $self->{const} = [];                 # new scope
+    local $self->{lvar}  = { %{$self->lvar} };  # new scope
+    local $self->{const} = [ @{$self->const} ]; # new scope
     local $self->{in_loop} = _FOR_LOOP;
 
     my @code = $self->compile_ast($expr);
