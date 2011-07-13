@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.3001';
+our $VERSION = '1.3999_01';
 
 use Carp              ();
 use Fcntl             ();
@@ -30,7 +30,7 @@ our @EXPORT_OK = qw(
     html_builder
 );
 
-my $BYTECODE_VERSION = '1.4';
+my $BYTECODE_VERSION = '1.5';
 
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
@@ -570,7 +570,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.3001.
+This document describes Text::Xslate version 1.3999_01.
 
 =head1 SYNOPSIS
 
