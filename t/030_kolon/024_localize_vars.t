@@ -7,7 +7,13 @@ use Text::Xslate;
 use Text::Xslate::Util qw(p);
 use t::lib::Util;
 
-my $tx = Text::Xslate->new(path => [path], cache => 0);
+my $tx = Text::Xslate->new(
+    path  => [path],
+    cache => 0,
+    function => {
+        vars => sub { return { lang => 'Perl' } },
+    },
+);
 
 my @set = (
     # cascade
@@ -53,6 +59,21 @@ Hello, Perl world!
 Hello, Xslate world!
 X
 
+    [<<'T', { lang => 'Xslate' }, <<'X', 'vars localized'],
+: include "hello.tx" { __ROOT__.merge({ lang => 'Perl' }) }
+Hello, <: $lang :> world!
+T
+Hello, Perl world!
+Hello, Xslate world!
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X', 'vars localized'],
+: include "hello.tx" { vars() }
+Hello, <: $lang :> world!
+T
+Hello, Perl world!
+Hello, Xslate world!
+X
 );
 
 foreach my $d(@set) {
