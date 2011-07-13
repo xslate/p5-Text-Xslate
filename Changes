@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.3001 2011-07-11 00:41:48
+    [BUG FIXES]
+    * Constants (and my pseudo-vars) didn't work in foreach-loops
+      (thanks to @toritori0318)
+
 1.3000 2011-06-11 18:20:02
     [CHANGES]
     * html_builder(\&f) passes @_ as-is to &f
