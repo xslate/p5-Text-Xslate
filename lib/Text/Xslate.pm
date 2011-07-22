@@ -1080,6 +1080,8 @@ Customization of the default escaping filter
 
 WEB: L<http://xslate.org/>
 
+ML: L<http://groups.google.com/group/xslate>
+
 IRC: #xslate @ irc.perl.org
 
 REPOSITORY:
