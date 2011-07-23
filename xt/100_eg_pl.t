@@ -2,7 +2,6 @@
 # test example/*.pl
 
 use strict;
-use Test::Requires 'IPC::Run';
 use Test::More;
 
 use IPC::Run qw(run timeout);
@@ -42,10 +41,8 @@ EXAMPLE: while(defined(my $example = <example/*.pl>)) {
     foreach(1 .. 2) {
         my($out, $err) = perl($example);
 
-        if($err =~ /Can't locate / # ' for poor editors
-                or $err =~ /version \S+ required--this is only version /) {
-            $err =~ s/ \(\@INC contains: [^\)]+\)//;
-            diag("skip $example because: $err");
+        if($err) {
+            fail("Error on $example because: $err");
             next EXAMPLE;
         }
 

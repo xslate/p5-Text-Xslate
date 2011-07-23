@@ -2,15 +2,16 @@
 package HelloMojo;
 use strict;
 use warnings;
-use Mojolicious 0.999934;
+use Mojolicious 1.0;
 
 use Mojolicious::Lite;
-use MojoX::Renderer::Xslate; # this should be automatically loaded
+#use MojoX::Renderer::Xslate; # this is automatically loaded
 
-local @ARGV = qw(PSGI) unless @ARGV;
+@ARGV = qw(PSGI) unless @ARGV;
 
 plugin 'xslate_renderer';
 
+get '/'      => 'index';
 get '/:name' => 'index';
 
 app->start;
