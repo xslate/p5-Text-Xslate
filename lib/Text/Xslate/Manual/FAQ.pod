@@ -80,6 +80,26 @@ number of C<malloc()> calls required to render a template.
 
 =back
 
+=head2 Configuration
+
+=head3 How can I change instance attributes dynamically?
+
+Instance attributes, e.g. C<include_path>, C<function>, or C<syntax>,
+are immutable, so you cannot change them dynamically.
+
+Instead, you can create multiple instances by different attributes.
+instance in order to avoid conflicts with cache directories.
+
+For example:
+
+    my %common_config = ( cache_dir => $dir, module => \@module );
+    my %xslate = (
+        ja => Text::Xslate->new( path => [ $template_ja ], %common_config ),
+        en => Text::Xslate->new( path => [ $template_en ], %common_config ),
+        ro => Text::Xslate->new( path => [ $template_ro ], %common_config ),
+    );
+    $xslate{$lang}->render(...);
+
 =head2 Templates
 
 =head3 How can I changes template tags?
@@ -99,8 +119,8 @@ Note that you'd better to avoid symbols which can be used for operators.
 
 =head3 How can I iterate over HASH references?
 
-Convert HASH references into ARRAY references because C<for> methods can deal
-with ARRAY references.
+Convert HASH references into ARRAY references because C<for> methods can
+deal with just ARRAY references.
 
     : # in Kolon
     : # iterate $hash by keys
@@ -127,7 +147,7 @@ L<Text::Xslate::Bridge::TT2> provides almost all the TT methods and filters,
 but it requires Template-Toolkit installed.
 
 L<Text::Xslate::Bridge::TT2Like> provides the same features as
-C<T::X::Bridge::TT2>, but it does not require the Template-Toolkit distribution.
+C<T::X::Bridge::TT2>, and it does not require the Template-Toolkit runtime.
 
 These bridge modules are useful not only for TTerse users, but
 also for Kolon users.
@@ -147,7 +167,7 @@ hashes), you can write bridge modules. See L<Text::Xslate::Bridge> for details.
 
 =head3 How to limit while-loop like Template-Toolkit?
 
-While Template-Toolkit has a loop counter to prevent runaway WHILE loop,
+While Template-Toolkit has a loop counter to prevent runaway C<WHILE> loop,
 Xslate has no arbitrary limitation.
 
 Instead, you can use C<alarm()> to limit B<any> runaway code:
@@ -175,9 +195,10 @@ which registered functions return must be text strings.
 
 =head3 Why doesn't I cannot access $object.attr like TT2?
 
-Template-Toolkit allows objects (i.e. blessed references) to access its element, i.e. C<< [% object.attr %] >> means C<< $object->{attr} >> if the object has no C<attr> method. This behavior breaks encapsulation and hides typos, so Xslate doesn't allow such fallbacks.
+Template-Toolkit allows objects (i.e. blessed references) to access its element if the object has no accessor methods, i.e. C<< [% object.attr %] >> might mean C<< $object->{attr} >>. This behavior breaks encapsulation and hides typos, so Xslate doesn't allow such fallbacks.
 
-If you want to access hash elements, define the accessor of them, or prepare values before calling C<render()>.
+If you want to access object attributes, define the accessors of them,
+or prepare values as a non-object before calling C<render()>.
 
 =head2 Functions, filters and macros
 
@@ -205,12 +226,6 @@ they are not a I<real> CODE reference.
         { a => [ 0 .. 100 ] },
     ); # => 50
 
-=head2 Development utilities
-
-=head3 How can I colorize Xslate templates?
-
-If you are a C<vim> user, there is F<xslate.vim> for Kolon:
-L<https://github.com/motemen/xslate-vim>
 
 =head2 Web Application Frameworks
 
@@ -230,9 +245,28 @@ L<MojoX::Renderer::Xslate> for L<Mojolicious>
 
 =item *
 
-L<Tiffany> for general
+L<Tiffany> for general usage, including L<Amon2>
 
 =back
+
+=head2 Development and support
+
+=head3 How can I colorize Xslate templates?
+
+If you are a C<vim> user, there is F<xslate.vim> for Kolon:
+L<https://github.com/motemen/xslate-vim>
+
+=head3 Where can I ask questions?
+
+The mailing list is recommended to ask questions.
+
+L<http://groups.google.com/group/xslate>
+
+If you find a bug or have a request, creating github issues is better
+because those tickets are less likely to disappear than the ports in the
+mailing list.
+
+L<https://github.com/gfx/p5-Text-Xslate/issues>
 
 =head1 SEE ALSO
 

@@ -204,43 +204,47 @@ HASH references which contain C<< $file_name => $content >> mapping.
     : } # endblock body
 
 This feature is directly inspired by Text::MicroTemplate::DataSection,
-and originated from Mojo.
+and originated from Mojolicious.
 
 See also L<Data::Section::Simple>, L<Text::MicroTemplate::DataSection>,
 and L<Mojolicious>.
 
-=head2 How to assign a specific C<path> by user's environment
-
-If you want to assign a specific C<path> by users environment, namely their
-language or platform (PC or mobile), you'd better create Xslate instances
-with those C<path>s.
-
-For example:
-
-    my %common_config = ( cache_dir => $dir, module => \@module );
-    my %xslate = (
-        ja => Text::Xslate->new( path => [ $template_ja ], %common_config ),
-        en => Text::Xslate->new( path => [ $template_en ], %common_config ),
-        ro => Text::Xslate->new( path => [ $template_ro ], %common_config ),
-    );
-    $xslate{$lang}->render(...);
-
 =head2 How to interpolate data into JavaScript sections without XSS
 
-(This section is not yet completed. Example code should be provided.)
-
 Because Xslate escapes only HTML meta characters, you must escape
-JavaScript meta characters by yourself when you give data into
+JavaScript meta characters by yourself when you put data into
 C<< <script> ... </script> >> sections.
 
-It is better to use secure modules for JavaScript escaping to avoid XSS.
-L<JavaScript::Value::Escape> may help you for this aim.
+C<JSON> module is not suitable because it doesn't escape some meta
+characters such as C<< "</script>" >>.
+
+It is better to use utilities proven to be secure for JavaScript escaping
+to avoid XSS.
+L<JavaScript::Value::Escape> helps you for this aim.
+
+    my $tx = Text::Xslate->new(
+        module => ['JavaScript::Value::Escape' => [qw(js)]],
+        );
+
+    my %params = (
+        user_input => '</script><script>alert("XSS")</script>',
+        );
+
+    print $tx->render_string(<<'T', \%params);
+    <script>
+    document.write('<: $user_input | html | js :>');
+    var user_input = '<: $user_input | js :>';
+    </script>
+    T
+
+You'd better to consult the security experts on more complex cases.
 
 =head2 How to interpolate structured texts into HTML without XSS
 
-(This section is not yet completed. Example code should be provided.)
+There's no silver bullet to parse structured texts in secure ways.
+You'd better to consult the security experts to do so.
 
-See L<String::Filter>.
+Some CPAN module might hep you. See L<String::Filter> for example.
 
 =head2 How to manage localization in templates
 

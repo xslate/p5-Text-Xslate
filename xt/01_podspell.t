@@ -69,6 +69,7 @@ JavaScript
 fallbacks
 UTF
 preforking
+github
 
 # personal name
 lestrrat
