@@ -13,6 +13,11 @@ use File::Path qw(rmtree);
 rmtree '.eg_cache';
 END{ rmtree '.eg_cache' }
 
+# supress debug log
+local $ENV{MOJO_MODE} = 'production';
+local $ENV{PLACK_ENV} = 'production';
+
+
 EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
     note $example;
 
