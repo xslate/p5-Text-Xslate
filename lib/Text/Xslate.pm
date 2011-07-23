@@ -979,6 +979,14 @@ C<< %% ... >> line code, instead of C<< <: ... :> >> and C<< : ... >>.
 B<TTerse> is a syntax that is a subset of Template-Toolkit 2 (and partially TT3),
 which is explained in L<Text::Xslate::Syntax::TTerse>.
 
+=item HTMLTemplate
+
+There's HTML::Template compatible layers in CPAN.
+
+L<Text::Xslate::Syntax::HTMLTemplate> is a syntax for HTML::Template.
+
+L<HTML::Template::Parser> is a converter from HTML::Template to Text::Xslate.
+
 =back
 
 =head1 NOTES
@@ -1054,7 +1062,7 @@ the same in internals:
 
 =item *
 
-Customization of the default escaping filter
+An "too-safe" HTML escaping filter which escape all the symbolic characters
 
 =back
 
