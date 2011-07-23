@@ -2,7 +2,7 @@ Revision history for Perl extension Text::Xslate
 
 1.3999_03 2011-07-23 17:51:28
     [BUG FIXES]
-    * [% FOR x IN ... %] no longer throw errors
+    * [% FOR x IN ... %] no longer throws errors
       Using reserved words as variables is allowed if it's not ambiguous
 
     [OTHER]
