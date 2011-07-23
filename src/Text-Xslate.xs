@@ -183,7 +183,7 @@ my_save_op(pTHX) { /* copied from scope.c */
 }
 #endif
 
-#include "xs/xslate_opcode.inc"
+#include "src/xslate_opcode.inc"
 
 const char*
 tx_neat(pTHX_ SV* const sv) {
