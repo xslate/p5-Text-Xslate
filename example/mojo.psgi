@@ -7,8 +7,6 @@ use Mojolicious 1.0;
 use Mojolicious::Lite;
 #use MojoX::Renderer::Xslate; # this is automatically loaded
 
-@ARGV = qw(PSGI) unless @ARGV;
-
 plugin 'xslate_renderer';
 
 get '/'      => 'index';

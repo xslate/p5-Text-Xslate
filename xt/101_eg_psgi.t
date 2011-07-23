@@ -6,6 +6,7 @@ use Test::More;
 
 use HTTP::Request::Common;
 use Plack::Test;
+use Plack::Util;
 
 use File::Path qw(rmtree);
 
@@ -26,7 +27,7 @@ EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
         <$g>;
     };
 
-    my $app = do $example;
+    my $app = Plack::Util::load_psgi($example);
 
     if($@) {
         fail "Error on loading $example: $@";
