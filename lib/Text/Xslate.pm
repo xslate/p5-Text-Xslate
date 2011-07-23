@@ -631,38 +631,22 @@ compiled into intermediate code, and then executed by the virtual machine,
 which is highly optimized for rendering templates. Thus, Xslate is
 much faster than any other template engines.
 
-Here is a result of F<benchmark/x-rich-env.pl> to compare various template
-engines in I<rich> environment where applications are persistent and XS modules
-are available.
+The template roundup project by Sam Graham shows Text::Xslate got very
+high socres in I<instance_reuse> condition (i.e. for persistent application).
 
-    $ perl -Mblib benchmark/x-rich-env.pl
-    Perl/5.10.1 i686-linux
-    Text::Xslate/0.2002
-    Text::MicroTemplate/0.18
-    Text::MicroTemplate::Extended/0.11
-    Template/2.22
-    Text::ClearSilver/0.10.5.4
-    HTML::Template::Pro/0.9503
-    1..4
-    ok 1 - TT: Template-Toolkit
-    ok 2 - MT: Text::MicroTemplate
-    ok 3 - TCS: Text::ClearSilver
-    ok 4 - HTP: HTML::Template::Pro
-    Benchmarks with 'include' (datasize=100)
-              Rate     TT     MT    TCS    HTP Xslate
-    TT       129/s     --   -84%   -94%   -95%   -99%
-    MT       807/s   527%     --   -63%   -71%   -96%
-    TCS     2162/s  1580%   168%     --   -23%   -89%
-    HTP     2814/s  2087%   249%    30%     --   -85%
-    Xslate 19321/s 14912%  2295%   794%   587%     --
+=over
 
-According to this result, Xslate is 100+ times faster than Template-Toolkit.
-Text::MicroTemplate is a very fast template engine written in pure Perl, but
-XS-based modules, namely Text::ClearSilver, HTML::Template::Pro and Xslate
-are faster than Text::MicroTemplate. Moreover, Xslate is even faster than
-Text::ClearSilver and HTML::Template::Pro.
+=item The template roundup project
 
-There are benchmark scripts in the F<benchmark/> directory.
+L<http://illusori.co.uk/projects/Template-Roundup/>
+
+=item Perl Template Roundup October 2010 Performance vs Variant Report: instance_reuse
+
+L<http://illusori.co.uk/projects/Template-Roundup/201010/performance_vs_variant_by_feature_for_instance_reuse.html>
+
+=back
+
+Tre are some benchmarks in F<benchmark/> directory in the Xslate distribution.
 
 =head3 Smart escaping for HTML meta characters
 

@@ -70,6 +70,7 @@ fallbacks
 UTF
 preforking
 github
+Mojolicious
 
 # personal name
 lestrrat
