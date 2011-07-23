@@ -373,7 +373,6 @@ TXBM(hash, kv) {
 }
 
 TXBM(hash, merge) {
-    dMY_CXT;
     HV* const hv        = (HV*)SvRV(*MARK);
     SV* const value     = *(++MARK);
     HV* const result    = newHVhv(hv);
