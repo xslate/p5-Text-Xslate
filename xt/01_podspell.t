@@ -72,6 +72,7 @@ preforking
 github
 Mojolicious
 HTMLTemplate
+blog
 
 # personal name
 lestrrat

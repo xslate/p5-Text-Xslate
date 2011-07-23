@@ -200,6 +200,10 @@ Template-Toolkit allows objects (i.e. blessed references) to access its element 
 If you want to access object attributes, define the accessors of them,
 or prepare values as a non-object before calling C<render()>.
 
+=head3 Can I load macros in other template files?
+
+Not yet. Currently Xslate doesn't support external macros.
+
 =head2 Functions, filters and macros
 
 =head3 Where are the list of builtin functions?
@@ -248,6 +252,10 @@ L<MojoX::Renderer::Xslate> for L<Mojolicious>
 L<Tiffany> for general usage, including L<Amon2>
 
 =back
+
+=head3 Where are examples which use Xslate in Catalyst?
+
+Not yet. Please blog it and it'll be introduced here.
 
 =head2 Development and support
 
