@@ -87,7 +87,7 @@ number of C<malloc()> calls required to render a template.
 Instance attributes, e.g. C<include_path>, C<function>, or C<syntax>,
 are immutable, so you cannot change them dynamically.
 
-Instead, you can create multiple instances by different attributes.
+Instead, you can create multiple instances by different options.
 instance in order to avoid conflicts with cache directories.
 
 For example:

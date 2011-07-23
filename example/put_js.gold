@@ -1,0 +1,4 @@
+<script>
+document.write('\u0026lt\u003b/script\u0026gt\u003b\u0026lt\u003bscript\u0026gt\u003balert(\u0026quot\u003bXSS\u0026quot\u003b)\u0026lt\u003b/script\u0026gt\u003b');
+var user_input = '\u003c/script\u003e\u003cscript\u003ealert(\u0022XSS\u0022)\u003c/script\u003e';
+</script>
