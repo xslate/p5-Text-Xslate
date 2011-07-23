@@ -71,6 +71,7 @@ UTF
 preforking
 github
 Mojolicious
+HTMLTemplate
 
 # personal name
 lestrrat

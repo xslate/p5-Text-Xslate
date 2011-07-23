@@ -632,7 +632,7 @@ which is highly optimized for rendering templates. Thus, Xslate is
 much faster than any other template engines.
 
 The template roundup project by Sam Graham shows Text::Xslate got very
-high socres in I<instance_reuse> condition (i.e. for persistent application).
+high scores in I<instance_reuse> condition (i.e. for persistent application).
 
 =over
 
@@ -646,7 +646,7 @@ L<http://illusori.co.uk/projects/Template-Roundup/201010/performance_vs_variant_
 
 =back
 
-Tre are some benchmarks in F<benchmark/> directory in the Xslate distribution.
+There are some benchmarks in F<benchmark/> directory in the Xslate distribution.
 
 =head3 Smart escaping for HTML meta characters
 
