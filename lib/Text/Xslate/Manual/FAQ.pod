@@ -82,6 +82,26 @@ number of C<malloc()> calls required to render a template.
 
 =head2 Configuration
 
+=head3 When I create the Xslate instance?
+
+Xslate instances are reusable and creating the instance costs somewhat
+so you're recommended to reuse them as much as possible.
+That is, you should make the instance global.
+
+Consider a PSGI application:
+
+    # create Xslate here, not in psgi_app();
+    my $xslate = Text::Xslate->new(...);
+
+    sub psgi_app {
+        my($env) = @_;
+        # use $xslate and create $response
+        return $response;
+    }
+    return \&psgi_app; # as a PSGI app
+
+Don't create the instance in each request. It's less efficient.
+
 =head3 How can I change instance attributes dynamically?
 
 Instance attributes, e.g. C<include_path>, C<function>, or C<syntax>,
