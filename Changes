@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.3999_02 2011-07-23 13:31:09
+   [DOCUMENT]
+   * Improve FAQ and Cookbook
+   * Mention to Text::Xslate::Syntax::HTMLTemplate and
+     HTML::Template::Parser (thnaks to @shmorimo)
+
 1.3999_01 2011-07-13 23:14:05
     The bytecode version is now 1.5.
 
