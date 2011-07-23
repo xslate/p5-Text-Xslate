@@ -17,8 +17,7 @@ EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
     note $example;
 
     my $expect = do {
-        my $gold = $example;
-        $gold =~ s/\.psgi$/.gold/;
+        my $gold = $example . '.gold';
 
         -e $gold or note("skip $example because it has no $gold"), next;
 
