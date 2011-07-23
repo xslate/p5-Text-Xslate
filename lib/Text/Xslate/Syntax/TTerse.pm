@@ -119,11 +119,13 @@ sub default_nud {
     );
 }
 
+# same as default_nud, except for aliased symbols
 sub aliased_nud {
     my($parser, $symbol) = @_;
     return $symbol->clone(
-        arity => 'variale',
+        arity => 'name',
         id    => lc( $symbol->id ),
+        value => $symbol->id,
     );
 }
 
@@ -303,7 +305,7 @@ sub std_foreach {
     my $proc = $symbol->clone(arity => "for");
 
     my $var = $parser->token;
-    if($var->arity ne "variable") {
+    if(!any_in($var->arity, qw(variable name))) {
         $parser->_unexpected("a variable name", $var);
     }
     $parser->advance();
