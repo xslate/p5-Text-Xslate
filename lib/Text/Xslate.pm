@@ -262,26 +262,26 @@ sub find_file {
     foreach my $p(@{$self->{path}}) {
         $self->note("  find_file: %s / %s ...\n", $p, $file) if _DUMP_LOAD;
 
-        my $path_id;
+        my $cache_prefix;
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
             $fullpath   = \$content;
             # TODO: we should provide a way to specify this mtime
             #       (like as Template::Provider?)
             $orig_mtime = $^T;
-            $path_id    = 'HASH';
+            $cache_prefix = 'HASH';
         }
         else {
             $fullpath = File::Spec->catfile($p, $file);
             defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
                 or next;
-            $path_id    = Text::Xslate::uri_escape($p);
+            $cache_prefix = Text::Xslate::uri_escape($p);
         }
 
         # $file is found
         $cachepath = File::Spec->catfile(
             $self->{cache_dir},
-            $path_id,
+            $cache_prefix,
             $file . 'c',
         );
         $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
