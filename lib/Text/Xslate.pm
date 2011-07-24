@@ -498,14 +498,19 @@ sub _magic_token {
     ]);
 
     if(ref $fullpath) { # ref to content string
-        require 'Digest/MD5.pm';
-        my $md5 = Digest::MD5->new();
-        my $s = ${$fullpath};
-        utf8::encode($s);
-        $md5->add($s);
-        $fullpath = join ':', ref($fullpath), $md5->hexdigest();
+        $fullpath = join ':', ref($fullpath),
+            $self->_digest(${$fullpath});
     }
     return sprintf $XSLATE_MAGIC, $fullpath, $self->{serial_opt};
+}
+
+sub _digest {
+    my($self, $content) = @_;
+    require 'Digest/MD5.pm'; # we don't want to create its namespace
+    my $md5 = Digest::MD5->new();
+    utf8::encode($content);
+    $md5->add($content);
+    return $md5->hexdigest();
 }
 
 sub _extract_options {
