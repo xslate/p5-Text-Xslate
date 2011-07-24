@@ -304,6 +304,18 @@ __END__
 
 Text::Xslate::Util - A set of utilities for Xslate
 
+=head1 SYNOPSIS
+
+    use Text::Xslate::Util qw(
+        mark_raw
+        unmark_raw
+        html_escape
+        uri_escape
+        p
+        html_builder
+        hash_with_default
+    );
+
 =head1 DESCRIPTION
 
 This module provides utilities for Xslate.
