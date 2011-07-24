@@ -47,7 +47,6 @@ $ENV{MOUSE_PUREPERL} = 1;
 $Template::Config::STASH = 'Template::Stash'; # Instead of Stash::XS
 
 require Text::Xslate::PP;
-print "Xslate backend: ", Text::Xslate::PP::_PP_BACKEND(), "\n";
 
 foreach my $mod(qw(
     Text::Xslate
