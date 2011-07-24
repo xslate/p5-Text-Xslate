@@ -4,9 +4,7 @@
 # modified from https://github.com/gfx/p5-Text-Xslate/issues#issue/27
 use strict;
 use warnings;
-use Test::More
-#    skip_all => 'Not yet resolved'
-;
+use Test::More;
 use Text::Xslate;
 use Text::Xslate::Parser;
 
