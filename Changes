@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.3999_04 2011-07-24 13:07:28
+    [BUG FIXES]
+    * render() for %vpath did compile template sources at the first time
+      of the running process, but it was not required
+
 1.3999_03 2011-07-23 17:51:28
     [BUG FIXES]
     * [% FOR x IN ... %] no longer throws errors
