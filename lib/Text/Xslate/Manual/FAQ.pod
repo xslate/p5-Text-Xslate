@@ -301,6 +301,11 @@ mailing list.
 
 L<https://github.com/gfx/p5-Text-Xslate/issues>
 
+=head3 I found a bug! What can I do for you?
+
+Please make a minimal test case to show the problem clearly.
+The code is the common language both I and you speak fluently ;)
+
 =head1 SEE ALSO
 
 L<Text::Xslate>
