@@ -20,11 +20,11 @@ my %vpath = (
 Hello, <: $lang | uri :> world!
 TX
     uri_escape_pp => <<'TX' x $n,
-Hello, <: $lang | uri_escape :> world!
+Hello, <: $lang | uri_pp :> world!
 TX
 
     uri_escape_xs => <<'TX' x $n,
-Hello, <: $lang | encodeURIComponent :> world!
+Hello, <: $lang | uri_xs :> world!
 TX
 
 );
@@ -33,7 +33,10 @@ my $tx = Text::Xslate->new(
     cache_dir => '.xslate_cache',
     cache     => 2,
 
-    module => [qw(URI::Escape URI::Escape::XS)],
+    function => {
+        uri_pp => \&uri_escape,
+        uri_xs => \&encodeURIComponent,
+    },
 );
 
 my $vars = {
