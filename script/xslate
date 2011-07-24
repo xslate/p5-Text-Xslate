@@ -37,8 +37,8 @@ xslate - Process Xslate Templates
     # one liners, with $ARGV and $ENV
     xslate -e 'Hello, <: $ARGV[0] :> world!' Xslate
     # => Hello, Xslate world!
-    xslate -MURI::Escape=uri_escape -e '<: uri_escape($ARGV[0]) :>' 'foo bar'
-    # => foo%20bar
+    xslate -MDigest::MD5=md5_hex -e '<: md5_hex($ARGV[0]) :>' 'foo bar'
+    # => 327b6f07435811239bc47e1544353273
 
 =head1 DESCRIPTION
 
