@@ -64,6 +64,7 @@ use Text::Xslate::Util qw(
     dump
 );
 
+# constants
 BEGIN {
     our @ISA = qw(Exporter);
 
@@ -159,7 +160,8 @@ sub new {
 
     if($used != $nargs) {
         my @unknowns = grep { !exists $options->{$_} } keys %args;
-        warnings::warnif(misc => "$class: Unknown option(s): " . join ' ', @unknowns);
+        warnings::warnif(misc
+            => "$class: Unknown option(s): " . join ' ', @unknowns);
     }
 
     $args{path} = [
@@ -265,10 +267,13 @@ sub find_file {
         my $cache_prefix;
         if(ref $p eq 'HASH') { # virtual path
             defined(my $content = $p->{$file}) or next;
-            $fullpath   = \$content;
-            # TODO: we should provide a way to specify this mtime
-            #       (like as Template::Provider?)
-            $orig_mtime = $^T;
+            $fullpath = \$content;
+
+            # NOTE:
+            # Because contents of virtual paths include their digest,
+            # time-dependent cache verifier makes no sense.
+            $orig_mtime   = 0;
+            $cache_mtime  = 0;
             $cache_prefix = 'HASH';
         }
         else {
@@ -284,7 +289,8 @@ sub find_file {
             $cache_prefix,
             $file . 'c',
         );
-        $cache_mtime = (stat($cachepath))[_ST_MTIME]; # may fail, but doesn't matter
+        # stat() will be failed if the cache doesn't exist
+        $cache_mtime = (stat($cachepath))[_ST_MTIME];
         last;
     }
 
@@ -553,7 +559,8 @@ sub _compiler {
 
 sub compile {
     my $self = shift;
-    return $self->_compiler->compile(@_, from_include => $self->{from_include});
+    return $self->_compiler->compile(@_,
+        from_include => $self->{from_include});
 }
 
 sub _error {
