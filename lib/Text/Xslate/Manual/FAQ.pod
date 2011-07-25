@@ -274,7 +274,21 @@ L<MojoX::Renderer::Xslate> for L<Mojolicious>
 
 =item *
 
-L<Tiffany> for general usage, including L<Amon2>
+L<Tiffany> for general usage
+
+=back
+
+There are WAFs which adopt Xslate as the default template engine:
+
+=over
+
+=item *
+
+L<Amon2>
+
+=item *
+
+L<Pickles>
 
 =back
 
