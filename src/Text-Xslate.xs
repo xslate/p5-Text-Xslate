@@ -1507,6 +1507,11 @@ CODE:
         croak("Xslate: Template variables must be a HASH reference, not %s",
             tx_neat(aTHX_ vars));
     }
+    if(SvOBJECT(SvRV(vars))) {
+        Perl_warner(aTHX_ packWARN(WARN_MISC),
+            "Xslate: Template variables must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
+    }
 
     st = tx_load_template(aTHX_ self, source, FALSE);
 
