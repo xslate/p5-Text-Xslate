@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.4001 2011-07-29 09:13:00
+    [CHANGES]
+    * Forbid blessed HASH references as template parameters,
+      which could break encapsulation
+
 1.4000 2011-07-24 19:26:31
     * No code changes from 1.3999_04
     * Note that all the cache created before 1.4 will be purged
