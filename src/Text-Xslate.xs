@@ -22,7 +22,7 @@
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
     if(*svp == NULL) {
-        croak("Oops: %s is NULL at %s line %d.\n", name, f, l);
+        croak("[BUG] %s is NULL at %s line %d.\n", name, f, l);
     }
     return svp;
 }
@@ -37,12 +37,12 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     assert(SvTYPE(cframe) == SVt_PVAV);
 
     if(AvFILLp(cframe) < real_ix) {
-        croak("Oops: Refers to unallocated local variable %d (> %d)",
+        croak("[BUG] Refers to unallocated local variable %d (> %d)",
             (int)lvar_ix, (int)(AvFILLp(cframe) - TXframe_START_LVAR));
     }
 
     if(!st->pad) {
-        croak("Oops: Refers to local variable %d before initialization",
+        croak("[BUG] Refers to local variable %d before initialization",
             (int)lvar_ix);
     }
     return st->pad[lvar_ix];
