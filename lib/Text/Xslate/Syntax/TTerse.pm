@@ -49,8 +49,8 @@ sub init_symbols {
     $s->set_std(\&std_if);
     $s->can_be_modifier(1);
 
-    $parser->symbol('FOREACH') ->set_std(\&std_foreach);
-    $parser->symbol('FOR')     ->set_std(\&std_foreach);
+    $parser->symbol('FOREACH') ->set_std(\&std_for);
+    $parser->symbol('FOR')     ->set_std(\&std_for);
     $parser->symbol('WHILE')   ->set_std(\&std_while);
     $parser->symbol('SWITCH')  ->set_std(\&std_switch);
     $parser->symbol('CASE')    ->set_std(\&std_case);
@@ -299,7 +299,8 @@ sub iterator_name {
     return 'loop'; # always 'loop'
 }
 
-sub std_foreach {
+# FOR ... IN ...; ...; END
+sub std_for {
     my($parser, $symbol) = @_;
 
     my $proc = $symbol->clone(arity => "for");
@@ -312,9 +313,22 @@ sub std_foreach {
     $parser->advance("IN");
     $proc->first( $parser->expression(0) );
     $proc->second([$var]);
+
     $parser->new_scope();
     $parser->define_iterator($var);
+
     $proc->third( $parser->statements() );
+
+    # for-else
+    if($parser->token->id eq 'ELSE') {
+        $parser->reserve($parser->token);
+        $parser->advance();
+        my $else = $parser->statements();
+        $proc = $symbol->clone( arity => 'for_else',
+            first  => $proc,
+            second => $else,
+        );
+    }
     $parser->advance("END");
     $parser->pop_scope();
     return $proc;
