@@ -379,7 +379,7 @@ sub _cat_files {
     my $s = '';
     foreach my $file(@{$files}) {
         my $fullpath = $engine->find_file($file)->{fullpath};
-        $s .= $engine->slurp( $fullpath );
+        $s .= $engine->slurp_template( $self->input_layer, $fullpath );
         $self->requires($fullpath);
     }
     return $s;
