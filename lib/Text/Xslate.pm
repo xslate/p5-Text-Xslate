@@ -500,6 +500,7 @@ sub _magic_token {
         ref($self->{compiler}) || $self->{compiler},
         $self->_extract_options(\%parser_option),
         $self->_extract_options(\%compiler_option),
+        $self->input_layer,
         $self->{added_function_names},
     ]);
 
