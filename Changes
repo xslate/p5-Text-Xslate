@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.5000 2011-08-29 17:37:10
+    [BUG FIXES]
+    * Purge caches when input_layer has chagned. This fix
+      forces to purge all the caches, so the version is
+      now 1.5000, not 1.4003.
+
 1.4002 2011-08-29 16:24:13
     [FEATURES]
     * Support FOR-ELSE syntax in TTerse
