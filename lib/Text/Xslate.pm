@@ -877,6 +877,11 @@ Compiles and saves it as disk caches if needed.
 Returns the current Xslate engine while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
 
+=head3 B<< Text::Xslate->current_vars :HashRef >>
+
+Returns the current variable table, namely the second argument of
+C<render()> while executing. Otherwise returns C<undef>.
+
 =head3 B<< Text::Xslate->current_file :Str >>
 
 Returns the current file name while executing. Otherwise returns C<undef>.
