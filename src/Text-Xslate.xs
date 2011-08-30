@@ -834,6 +834,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
         SP = ORIGMARK;
         PUTBACK;
     }
+    TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR;
     TX_RETURN_PC(addr);
 }
 
