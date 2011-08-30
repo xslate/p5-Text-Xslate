@@ -293,6 +293,32 @@ Here is an example to to load all the templates which is in a given path:
 
     # fork and render ...
 
+=head2 How to hook loading templates?
+
+You can override C<slurp_template()> in Text::Xslate:
+
+    {
+        package MyTemplate;
+        use parent qw(Text::Xslate);
+
+        sub slurp_template {
+            my($self, $input_layer, $fullpath) = @_;
+
+            my $content = $self->SUPER::slurp_template(
+                            $input_layer,
+                            $fullpatth,
+            );
+            ### do something important for $content ###
+            return $content;
+        }
+    }
+
+The first argument I<$self> is an Text::Xslate instance; the second is
+the argument of C<input_layer> option (default to C<:utf8>); the third
+is the full path of a template file to load.
+
+C<slurp_template> may return both B<text strings> and C<byte strings>.
+
 =head1 SEE ALSO
 
 L<Text::Xslate>

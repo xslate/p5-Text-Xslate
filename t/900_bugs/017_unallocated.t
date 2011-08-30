@@ -1,14 +1,35 @@
 #!perl
 use strict;
 use warnings;
+use Test::More skip_all => 'not yet';
+
 use Test::Requires qw(Data::Section::Simple);
 use List::Util ();
 use Text::Xslate;
 
 
+{
+    package C;
+    use strict;
+    use warnings;
+
+
+    sub new {
+        my ($class) = @_;
+        return bless { }, $class;
+    }
+
+    sub uri_for {
+        my ($self, $path) = @_;
+        return 'http://example.com' . $path;
+    }
+
+    sub in_production { 1 }
+}
+
 my $tx = Text::Xslate->new(
-    path => Data::Section::Simple->new->get_data_section,
-    cache_dir => '/tmp/xslate',
+    cache => 0,
+    path  => Data::Section::Simple->new->get_data_section,
     function  => {
         array => sub {
             return List::Util::reduce {
@@ -24,32 +45,11 @@ my $tx = Text::Xslate->new(
     },
 );
 
-print $tx->render('index.html', {
+ok $tx->render('index.html', {
     c => C->new,
 });
 
-
-package C;
-use strict;
-use warnings;
-
-
-sub new {
-    my ($class) = @_;
-    return bless { }, $class;
-}
-
-sub uri_for {
-    my ($self, $path) = @_;
-    return 'http://example.com' . $path;
-}
-
-sub in_production { 1 }
-
-
-package main;
-
-
+done_testing;
 __DATA__
 
 @@ _tx/macros.tx

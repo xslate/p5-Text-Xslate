@@ -35,7 +35,6 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     I32 const real_ix = lvar_ix + TXframe_START_LVAR;
 
     assert(SvTYPE(cframe) == SVt_PVAV);
-
     if(AvFILLp(cframe) < real_ix) {
         croak("[BUG] Refers to unallocated local variable %d (> %d)",
             (int)lvar_ix, (int)(AvFILLp(cframe) - TXframe_START_LVAR));
@@ -834,6 +833,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
         SP = ORIGMARK;
         PUTBACK;
     }
+    TX_st->pad = AvARRAY(cframe) + TXframe_START_LVAR;
     TX_RETURN_PC(addr);
 }
 
