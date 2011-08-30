@@ -35,7 +35,6 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
     I32 const real_ix = lvar_ix + TXframe_START_LVAR;
 
     assert(SvTYPE(cframe) == SVt_PVAV);
-
     if(AvFILLp(cframe) < real_ix) {
         croak("Oops: Refers to unallocated local variable %d (> %d)",
             (int)lvar_ix, (int)(AvFILLp(cframe) - TXframe_START_LVAR));

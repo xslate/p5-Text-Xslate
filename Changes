@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.5001 2011-08-30 19:37:24
+    [BUG FIXES]
+    * Calling macros could break lexical vars;
+      Thanks to tomyhero and tokuhirom.
+
 1.5000 2011-08-29 17:37:10
     [BUG FIXES]
     * Purge caches when input_layer has chagned. This fix
