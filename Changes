@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.5002 2011-08-30 21:48:49
+    [FEATURES]
+    * Add Text::Xslate->current_vars to get the parameters of render()
+      (requested by cho45 and others)
+
 1.5001 2011-08-30 19:37:24
     [BUG FIXES]
     * Calling macros could break lexical vars;
