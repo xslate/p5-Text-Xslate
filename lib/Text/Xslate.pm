@@ -832,13 +832,9 @@ This option is passed to the compiler.
 
 Specify the callback I<&cb> which is called on warnings.
 
-This option is experimental.
-
 =item C<< die_handler => \&cb >>
 
 Specify the callback I<&cb> which is called on fatal errors.
-
-This option is experimental.
 
 =back
 
