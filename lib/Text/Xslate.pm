@@ -1181,6 +1181,8 @@ Thanks to cho45 for the bug reports.
 
 Thanks to shmorimo for the bug reports.
 
+Thanks to ueda for the suggestions.
+
 =head1 AUTHOR
 
 Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
