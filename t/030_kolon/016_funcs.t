@@ -12,6 +12,7 @@ my %funcs = (
     em      => sub{ mark_raw("<em>@_</em>") },
 
     engine  => sub{ ref(Text::Xslate->current_engine) },
+    fetch   => sub{ Text::Xslate->current_vars->{ $_[0] } },
     file    => sub{ Text::Xslate->current_file },
     line    => sub{ Text::Xslate->current_line },
 );
@@ -99,6 +100,16 @@ my @set = (
         {},
         qq{\n\n3\n\n5},
     ],
+    [
+        qq{-<: fetch('foo') :>-},
+        { foo => 'bar' },
+        qq{-bar-},
+    ],
+    [
+        qq{-<: fetch('FOO') // 'BAR' :>-},
+        { foo => 'bar' },
+        qq{-BAR-},
+    ],
 );
 
 foreach my $d(@set) {
@@ -107,6 +118,7 @@ foreach my $d(@set) {
 }
 
 is(Text::Xslate->current_engine, undef);
+is(Text::Xslate->current_vars,   undef);
 is(Text::Xslate->current_file,   undef);
 is(Text::Xslate->current_line,   undef);
 

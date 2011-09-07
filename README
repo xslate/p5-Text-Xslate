@@ -48,6 +48,11 @@ Then install it:
 
     $ make install
 
+If you want to install it from the repository, you must install authoring
+tools.
+
+    $ cpanm < author/requires.cpanm
+
 DOCUMENTATION
 
 Text::Xslate documentation is available as in POD. So you can do:

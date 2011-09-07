@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.5001';
+our $VERSION = '1.5002';
 
 use Carp              ();
 use Fcntl             ();
@@ -583,7 +583,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.5001.
+This document describes Text::Xslate version 1.5002.
 
 =head1 SYNOPSIS
 
@@ -872,6 +872,11 @@ Compiles and saves it as disk caches if needed.
 
 Returns the current Xslate engine while executing. Otherwise returns C<undef>.
 This method is significant when it is called by template functions and methods.
+
+=head3 B<< Text::Xslate->current_vars :HashRef >>
+
+Returns the current variable table, namely the second argument of
+C<render()> while executing. Otherwise returns C<undef>.
 
 =head3 B<< Text::Xslate->current_file :Str >>
 

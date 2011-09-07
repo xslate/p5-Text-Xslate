@@ -22,7 +22,7 @@
 static SV**
 tx_sv_safe(pTHX_ SV** const svp, const char* const name, const char* const f, int const l) {
     if(*svp == NULL) {
-        croak("Oops: %s is NULL at %s line %d.\n", name, f, l);
+        croak("[BUG] %s is NULL at %s line %d.\n", name, f, l);
     }
     return svp;
 }
@@ -36,12 +36,12 @@ tx_lvar_get_safe(pTHX_ tx_state_t* const st, I32 const lvar_ix) {
 
     assert(SvTYPE(cframe) == SVt_PVAV);
     if(AvFILLp(cframe) < real_ix) {
-        croak("Oops: Refers to unallocated local variable %d (> %d)",
+        croak("[BUG] Refers to unallocated local variable %d (> %d)",
             (int)lvar_ix, (int)(AvFILLp(cframe) - TXframe_START_LVAR));
     }
 
     if(!st->pad) {
-        croak("Oops: Refers to local variable %d before initialization",
+        croak("[BUG] Refers to local variable %d before initialization",
             (int)lvar_ix);
     }
     return st->pad[lvar_ix];
@@ -1546,12 +1546,17 @@ CODE:
     tx_state_t* const st = MY_CXT.current_st;
     SV* retval;
     if(st) {
-        if(ix == 0) {
+        if(ix == 0) { /* current_engine */
             retval = st->engine;
         }
-        else {
-            const tx_info_t* const info = &(st->info[ TX_PC2POS(st, st->pc) ]);
-            retval = (ix == 1)
+        else if(ix == 1) { /* current_vars */
+            retval = sv_2mortal(newRV_inc((SV*)st->vars));
+        }
+        else { /* current_file / current_line */
+            const tx_info_t* const info
+                = &(st->info[ TX_PC2POS(st, st->pc) ]);
+
+            retval = (ix == 2)
                 ? info->file
                 : sv_2mortal(newSViv(info->line));
         }
@@ -1563,8 +1568,9 @@ CODE:
 }
 ALIAS:
     current_engine = 0
-    current_file   = 1
-    current_line   = 2
+    current_vars   = 1
+    current_file   = 2
+    current_line   = 3
 
 void
 print(klass, ...)
