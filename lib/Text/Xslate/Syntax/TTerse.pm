@@ -732,7 +732,7 @@ The C<INCLUDE> statement is supported.
     [% INCLUDE "file.tt" %]
     [% INCLUDE $var %]
 
-C<< WITH variablies >> syntax is also supported, although
+C<< WITH variables >> syntax is also supported, although
 the C<WITH> keyword is optional in Template-Toolkit:
 
     [% INCLUDE "file.tt" WITH foo = 42, bar = 3.14 %]
