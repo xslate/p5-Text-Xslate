@@ -488,7 +488,7 @@ sub _process_cascade {
         foreach my $c(@{$main_code}) {
             if($c->[_OP_NAME] eq 'print_raw_s'
                     && $c->[_OP_ARG] =~ m{ [^ \t\r\n] }xms) {
-                Carp::carp("Xslate: Uselses use of text '$c->[1]'");
+                Carp::carp("Xslate: Useless use of text '$c->[1]'");
             }
         }
         @{$main_code} = @{$base_code};
