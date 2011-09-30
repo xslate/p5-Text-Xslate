@@ -306,7 +306,7 @@ You can override C<slurp_template()> in Text::Xslate:
 
             my $content = $self->SUPER::slurp_template(
                             $input_layer,
-                            $fullpatth,
+                            $fullpath,
             );
             ### do something important for $content ###
             return $content;
