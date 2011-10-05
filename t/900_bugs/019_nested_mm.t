@@ -1,5 +1,5 @@
 #!perl
-# missing base bocks
+# issues/45: nested macro modifiers
 use strict;
 use warnings;
 use utf8;
