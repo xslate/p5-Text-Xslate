@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.5003 2011-10-05 11:23:56
+    [BUG FIXES]
+    - Fix typos in docs
+    - Resolve issue/45: nested macro modifiers caused errors
+      (thanks to tokuhirom)
+
 1.5002 2011-08-30 21:48:49
     [FEATURES]
     * Add Text::Xslate->current_vars to get the parameters of render()
