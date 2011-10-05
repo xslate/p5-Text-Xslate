@@ -33,7 +33,7 @@ Text::Xslate::HashWithDefault - Helper class to fill in default values
 
     use Text::Xslate::Util qw(hash_with_default);
 
-    my $hash_ref = hash_with_default({ }, sub { "FILLME('@_')" };
+    my $hash_ref = hash_with_default({ }, sub { "FILLME('@_')" });
     print $hash_ref->{foo}; # FILLME('foo')
 
 =head1 DESCRIPTION
