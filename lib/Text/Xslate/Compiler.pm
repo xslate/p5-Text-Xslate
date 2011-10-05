@@ -511,14 +511,15 @@ sub _process_cascade_file {
 
         # macro
         my $name = $c->[_OP_ARG];
-        if($name =~ /\@/) {
-            $self->_error("[BUG] Private name ($name) is in use");
-        }
+        $name =~ s/\@.+$//;
         printf STDERR "# macro %s\n", $name if _DUMP_CAS;
 
         if(exists $mtable->{$name}) {
             my $m = $mtable->{$name};
-            #$m = $m->[0] if ref($m) eq 'ARRAY';
+            if(ref($m) ne 'HASH') {
+                $self->_error('[BUG] Unexpected macro structure: '
+                    . p($m) );
+            }
 
             $self->_error(
                 "Redefinition of macro/block $name in " . $file
