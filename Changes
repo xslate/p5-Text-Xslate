@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.5004 2011-10-13 10:24:38
+    [BUG FIXES]
+    - Small doc changes regarding escaping of HTML metacharacters (oalders)
+    - Fix a missing current_vars() method in PP
+    - Fix an error handling in Bridge.pm
+
 1.5003 2011-10-05 11:23:56
     [BUG FIXES]
     - Fix typos in docs
