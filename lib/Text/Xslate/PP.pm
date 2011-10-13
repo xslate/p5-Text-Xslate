@@ -117,6 +117,10 @@ sub current_engine {
     return defined($_current_st) ? $_current_st->engine : undef;
 }
 
+sub current_vars {
+    return defined($_current_st) ? $_current_st->vars : undef;
+}
+
 sub current_file {
     return defined($_current_st)
         ? $_current_st->code->[ $_current_st->{ pc } ]->{file}
