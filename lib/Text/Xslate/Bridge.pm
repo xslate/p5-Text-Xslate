@@ -24,7 +24,7 @@ sub methods {
     my($class, %args) = @_;
 
     if(!exists $storage{$class}) {
-        croak("$class has no methods (possibly not a bride class)");
+        Carp::croak("$class has no methods (possibly not a bride class)");
     }
 
     if(exists $args{-exclude}) {
