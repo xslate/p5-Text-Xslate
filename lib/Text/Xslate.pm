@@ -661,11 +661,11 @@ L<http://illusori.co.uk/projects/Template-Roundup/201010/performance_vs_variant_
 
 There are some benchmarks in F<benchmark/> directory in the Xslate distribution.
 
-=head3 Smart escaping for HTML meta characters
+=head3 Smart escaping for HTML metacharacters
 
-All the HTML meta characters in template expressions the engine interpolates
-into template texts are escaped automatically, so the output has no
-possibility to XSS by default.
+All HTML metacharacters in template expressions which are interpolated into
+template texts by the engine are escaped automatically. This means that, by default,
+the output is not prone to XSS.
 
 =head3 Template cascading
 
