@@ -57,7 +57,7 @@ $VERSION =~ s/_//;
 # for error messages (see T::X::Util)
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
-package Text::Xslate::Engine;
+package Text::Xslate::Engine; # XS/PP common base class
 
 use Text::Xslate::Util qw(
     make_error

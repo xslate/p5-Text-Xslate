@@ -1,4 +1,7 @@
 #!perl -w
+#
+# external macros
+#
 use strict;
 use Test::More skip_all => 'TODO';
 
