@@ -293,9 +293,10 @@ Here is an example to to load all the templates which is in a given path:
 
     # fork and render ...
 
-=head2 How to hook loading templates?
+=head2 How to pre-process templates?
 
-You can override C<slurp_template()> in Text::Xslate:
+You can override C<slurp_template()> in Text::Xslate to process contents
+before parsing them:
 
     {
         package MyTemplate;
@@ -308,7 +309,7 @@ You can override C<slurp_template()> in Text::Xslate:
                             $input_layer,
                             $fullpath,
             );
-            ### do something important for $content ###
+            ### process $content ###
             return $content;
         }
     }
@@ -318,6 +319,8 @@ the argument of C<input_layer> option (default to C<:utf8>); the third
 is the full path of a template file to load.
 
 C<slurp_template> may return both B<text strings> and C<byte strings>.
+
+Note that this hook is provided for pre-processing template contents, so you should calll C<SUPER::slurp_template> to load templates into the memory.
 
 =head1 SEE ALSO
 
