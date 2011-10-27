@@ -678,6 +678,9 @@ Loop iterators are partially supported.
         [%- END -%]
     [% END %]
 
+Unlike Template-Toolkit, C<FOREACH> doesn't accept a HASH reference, so
+you must convert HASH references to ARRAY references by C<keys()>, C<values()>, or C<kv()> methods.
+
 Template-Toolkit compatible names are also supported, but the use of them is
 discouraged because they are not easy to understand:
 
