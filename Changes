@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5005 2011-10-27 13:36:03
+    [IMPROVEMENT]
+    - Update documentations
+
 1.5004 2011-10-13 10:24:38
     [BUG FIXES]
     - Small doc changes regarding escaping of HTML metacharacters (oalders)
