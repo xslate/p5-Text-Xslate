@@ -8,7 +8,7 @@ BEGIN {
 	# author requires, or bundled modules
     my @devmods = qw(
         inc::Module::Install             1.00
-        Module::Install::XSUtil          0.36
+        Module::Install::XSUtil          0.42
         Module::Install::TestTarget      0.13
         Module::Install::AuthorTests     0.002
     );
