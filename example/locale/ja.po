@@ -1,0 +1,18 @@
+# for example/i18n.pl
+msgid ""
+msgstr ""
+"Project-Id-Version: Xslate I18N example\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2011-11-02 12:00-0900\n"
+"Last-Translator: Fuji Goro\n"
+"Language-Team: Jaapanese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Hello!"
+msgstr "こんにちは！"
+
+msgid "tokyo"
+msgstr "東京"
+
