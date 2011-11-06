@@ -24,7 +24,10 @@ my $i18n = MyApp::I18N->get_handle('ja');
 my $xslate = Text::Xslate->new(
     syntax   => 'TTerse',
     function => {
-        l => html_builder {
+        l => sub {
+            return $i18n->maketext(@_);
+        },
+        l_raw => html_builder {
             my $format = shift;
             my @args = map { html_escape($_) } @_;
             return $i18n->maketext($format, @args);
