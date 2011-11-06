@@ -10,12 +10,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "Hello!"
-msgstr "こんにちは！"
+msgid "Hello!<br />"
+msgstr "こんにちは！<br />"
 
-msgid "tokyo"
-msgstr "東京"
-
-msgid "I am in %1"
-msgstr "私は %1 にいます"
+msgid "I am in %1<br />"
+msgstr "私は %1 にいます<br />"
 

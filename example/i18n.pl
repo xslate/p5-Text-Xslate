@@ -4,6 +4,7 @@ use warnings;
 use utf8;
 
 use Text::Xslate;
+use Text::Xslate::Util qw(html_escape html_builder);
 use Encode ();
 
 {
@@ -23,14 +24,19 @@ my $i18n = MyApp::I18N->get_handle('ja');
 my $xslate = Text::Xslate->new(
     syntax   => 'TTerse',
     function => {
-        l => sub {
-            return $i18n->maketext(@_);
+        l => html_builder {
+            my $format = shift;
+            my @args = map { html_escape($_) } @_;
+            return $i18n->maketext($format, @args);
         },
     },
 );
 
-print Encode::encode_utf8($xslate->render_string(<<'TEMPLATE'));
-[% l('Hello!') %]
-[% l('I am in %1', 'tokyo') %]
+my %param = (location => '<Tokyo>'); # user inputs
+my $body = $xslate->render_string(<<'TEMPLATE', \%param);
+[% l('Hello!<br />') %]
+[% l('I am in %1<br />', $location) %]
 TEMPLATE
+
+print Encode::encode_utf8($body);
 
