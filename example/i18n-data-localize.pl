@@ -28,15 +28,15 @@ my $xslate = Text::Xslate->new(
         l_raw => html_builder {
             my $format = shift;
             my @args = map { html_escape($_) } @_;
-            return $i18n->locallize($format, @args);
+            return $i18n->localize($format, @args);
         },
     },
 );
 
 my %param = (location => '<Tokyo>'); # user inputs
 my $body = $xslate->render_string(<<'TEMPLATE', \%param);
-[% l('Hello!<br />') %]
-[% l('I am in %1<br />', $location) %]
+[% l_raw('Hello!<br />') %]
+[% l_raw('I am in %1<br />', $location) %]
 TEMPLATE
 
 print Encode::encode_utf8($body);
