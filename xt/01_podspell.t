@@ -96,4 +96,5 @@ kane
 taka
 cho
 shmorimo
+ueda
 

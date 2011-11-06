@@ -9,7 +9,7 @@ This document describes techniques for debugging templates.
 
 =head2 Setting C<< verbose => 2 >>
 
-Try C<< verbose => 2 >> in the first step. This option enables full warnings, esp. warnings related to C<undef>.
+Try C<< verbose => 2 >> in the first step. This option enables full warnings, especially warnings related to C<undef>.
 
 =head2 File names and line numbers
 
