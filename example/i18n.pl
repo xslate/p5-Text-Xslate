@@ -2,28 +2,34 @@
 use strict;
 use warnings;
 use utf8;
-use Text::Xslate;
-use FindBin qw($Bin);
-use Encode ();
-use Locale::Maketext::Lexicon;
-use Locale::Maketext::Simple
-    Style    => 'gettext',
-    Path     => "$Bin/locale",
-;
 
-loc_lang('ja');
+use Text::Xslate;
+use Encode ();
+
+{
+    package MyApp::I18N;
+    use FindBin qw($Bin);
+    use parent 'Locale::Maketext';
+    use Locale::Maketext::Lexicon {
+        '*'     => [Gettext => "$Bin/locale/*.po"],
+        _auto   => 1,
+        _decode => 1,
+        _style  => 'gettext',
+    };
+}
+
+my $i18n = MyApp::I18N->get_handle('ja');
 
 my $xslate = Text::Xslate->new(
     syntax   => 'TTerse',
     function => {
         l => sub {
-            return Encode::decode_utf8(loc(map { Encode::encode_utf8($_) } @_));
+            return $i18n->maketext(@_);
         },
     },
 );
 
-binmode STDOUT, ':utf8';
-print $xslate->render_string(<<'TEMPLATE');
+print Encode::encode_utf8($xslate->render_string(<<'TEMPLATE'));
 [% l('Hello!') %]
 [% l('I am in %1', 'tokyo') %]
 TEMPLATE
