@@ -9,10 +9,10 @@ use Carp ();
 sub _is_rx;
 BEGIN {
     if(my $code = re->can('is_regexp')) {
-        *_is_regexp = $code;
+        *_is_rx = $code;
     }
     else {
-        *_is_regexp = sub {
+        *_is_rx = sub {
             return Scalar::Util::blessed($_[0])
                 && $_[0]->isa('Regexp');
         };
