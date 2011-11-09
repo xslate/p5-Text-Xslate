@@ -281,7 +281,7 @@ sub compile {
     if(my $engine = $self->engine) {
         my $ob = $self->overridden_builtin;
         Internals::SvREADONLY($ob, 0);
-        while(my $name = each %builtin) {
+        foreach my $name(keys %builtin) {
             my $f = $engine->{function}{$name};
             $ob->{$name} = ( $builtin{$name}[1] != $f ) + 0;
         }

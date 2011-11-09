@@ -149,7 +149,7 @@ sub new {
     my $options = $class->options;
     my $used    = 0;
     my $nargs   = scalar keys %args;
-    while(my $key = each %{$options}) {
+    foreach my $key(keys %{$options}) {
         if(exists $args{$key}) {
             $used++;
         }
@@ -202,8 +202,8 @@ sub new {
 
 sub _merge_hash {
     my($self, $base, $add) = @_;
-    while(my($name, $body) = each %{$add}) {
-        $base->{$name} = $body;
+    foreach my $name(keys %{$add}) {
+        $base->{$name} = $add->{$name};
     }
     return;
 }

@@ -137,8 +137,8 @@ BEGIN {
 sub tx_register_builtin_methods {
     my($hv) = @_;
     our %builtin_method;
-    while(my($k, $v) = each %builtin_method) {
-        $hv->{$k} = $v;
+    foreach my $name(keys %builtin_method) {
+        $hv->{$name} = $builtin_method{$name};
     }
 }
 

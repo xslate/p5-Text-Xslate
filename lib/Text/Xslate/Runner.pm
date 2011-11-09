@@ -269,7 +269,7 @@ sub run {
     if($self->has_module) { # re-mapping
         my $mod = $self->module;
         my @mods;
-        while(my $name = each %{$mod}) {
+        foreach my $name(keys %{$mod}) {
             push @mods, $name, [ split /,/, $mod->{$name} ];
         }
         $args{module} = \@mods;
