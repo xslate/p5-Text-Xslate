@@ -6,7 +6,6 @@ use parent qw(Text::Xslate::Bridge);
 use Scalar::Util ();
 use Carp ();
 
-sub _is_rx;
 BEGIN {
     if(my $code = re->can('is_regexp')) {
         *_is_rx = $code;
