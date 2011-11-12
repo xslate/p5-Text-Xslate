@@ -11,6 +11,8 @@ Note that the xslate engine is not aware of B<context>, so all the
 methods and filters/functions return a single value, even when
 the equivalent of Perl's returns a list of values.
 
+Note that optional functions are defined in L<Text::Xslate::Bridge::Star>.
+
 =head1 METHODS
 
 The xslate engine supports auto-boxing, so you can call methods for
@@ -260,6 +262,8 @@ an unary operator, so you can omit the parens like C<< defined $value >>.
 L<Text::Xslate>
 
 L<Text::Xslate::Manual>
+
+L<Text::Xslate::Bridge::Star>
 
 =cut
 

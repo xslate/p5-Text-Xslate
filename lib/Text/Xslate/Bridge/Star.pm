@@ -104,21 +104,60 @@ This module provides a selection of utilities for templates.
 
 =head2 C<lc($str)>
 
+Returns a lower-cased version of I<$str>.
+The same as C<CORE::lc()>, but returns undef if I<$str> is undef.
+
+See L<perldoc/lc> for details.
+
 =head2 C<uc($str)>
+
+Returns a upper-cased version of I<$str>.
+The same as C<CORE::uc()>, but returns undef if I<$str> is undef.
+
+See L<perldoc/uc> for details.
 
 =head2 C<substr($str, $offset, $len)>
 
+Extracts a substring out of I<$str> and returns it.
+The same as C<CORE::substr()>, but returns undef if I<$str> is undef.
+
+See L<perldoc/substr> for details.
+
 =head2 C<sprintf($fmt, args...)>
+
+Returns a string formatted by the C<CORE::sprintf()>.
+L<$fmt> must be a defined value.
+
+See L<perldoc/sprintf> for details.
 
 =head2 C<rx($regex_pattern)>
 
+Compiles I<$regex_patter> as a regular expression and return the regex object. You can pass a regex object to C<match()> or C<replace()> described bellow.
+The same as C<qr//> operator in Perl.
+
+=head2 C<match($str, $pattern)>
+
+Tests if I<$str> matches I<$pattern>. I<$pattern> may be a string or a regex object.
+
+Like C<< $str =~ $pattern >> in Perl but you have to pass a regex object explicitly if you can use regular expressions.
+
+Examples:
+
+    : match("foo bar baz", "foo")     ? "true" : "false" # true
+    : match("foo bar baz", "f..")     ? "true" : "false" # false
+    : match("foo bar baz", rx("f..")) ? "true" : "false" # true
+
 =head2 C<replace($str, $pattern, $replacement)>
 
+Replaces all the I<$pattern>s in I<$str> with I<$replacement>s.
+Like as C<< $str =~ s/$pattern/$replacement/g >> but you have to pass a regex object explicitly if you can use regular expressions.
 
 =head1 SEE ALSO
 
 L<Text::Xslate>
 
 L<Text::Xslate::Bridge>
+
+L<perlfunc>
 
 =cut
