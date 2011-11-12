@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+1.5006 2011-11-12 12:54:39
+    [META]
+    - Move the repository from github.com/gfx/* to github.com/xslate/
+
+    [FEATURES]
+    - Add Text::Xslate::Bridge::Star, utilities for templates
+
 1.5005 2011-10-27 13:36:03
     [IMPROVEMENT]
     - Update documentations
