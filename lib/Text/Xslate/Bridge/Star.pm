@@ -3,14 +3,12 @@ use strict;
 use warnings;
 use parent qw(Text::Xslate::Bridge);
 
-use Scalar::Util ();
-use Carp ();
-
 BEGIN {
     if(my $code = re->can('is_regexp')) {
         *_is_rx = $code;
     }
     else {
+        require Scalar::Util;
         *_is_rx = sub {
             return Scalar::Util::blessed($_[0])
                 && $_[0]->isa('Regexp');
@@ -45,15 +43,22 @@ sub rx {
     return defined($_[0]) ? qr/$_[0]/ : undef;
 }
 
+sub match {
+    my($str, $pattern) = @_;
+    return undef unless defined $str;
+    return undef unless defined $pattern;
+
+    $pattern = quotemeta($pattern) unless _is_rx($pattern);
+    return scalar($str =~ m/$pattern/);
+}
+
 sub replace {
     my($str, $pattern, $replacement) = @_;
+    return undef unless defined $str;
     return undef unless defined $pattern;
-    if(_is_rx($pattern)) {
-        $str =~ s/$pattern/$replacement/g;
-    }
-    else {
-        $str =~ s/\Q$pattern\E/$replacement/g;
-    }
+
+    $pattern = quotemeta($pattern) unless _is_rx($pattern);
+    $str =~ s/$pattern/$replacement/g;
     return $str;
 }
 
@@ -63,6 +68,7 @@ my %scalar_methods = (
     substr  => \&substr,
     sprintf => \&sprintf,
     rx      => \&rx,
+    match   => \&match,
     replace => \&replace,
 );
 
