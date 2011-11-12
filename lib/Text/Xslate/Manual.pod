@@ -27,5 +27,7 @@ Xslate manual pages are not yet completed. Patches are welcome.
 
 L<http://xslate.org> - The Xslate web site
 
+L<http://github.com/xslate> - Xslate repositories
+
 =cut
 

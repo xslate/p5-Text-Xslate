@@ -313,7 +313,7 @@ If you find a bug or have a request, creating github issues is better
 because those tickets are less likely to disappear than the ports in the
 mailing list.
 
-L<https://github.com/gfx/p5-Text-Xslate/issues>
+L<https://github.com/xslate/p5-Text-Xslate/issues>
 
 =head3 I found a bug! What can I do for you?
 

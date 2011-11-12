@@ -54,9 +54,13 @@ if($want_xs) {
     cc_src_paths qw(src);
 }
 
-
-homepage 'http://xslate.org/';
-repository 'git://github.com/gfx/p5-Text-Xslate.git';
+resources
+    homepage    => 'http://xslate.org/',
+    bugtracker  => 'https://github.com/xslate/p5-Text-Xslate/issues',
+    repository  => 'https://github.com/xslate/p5-Text-Xslate',
+    ProjectHome => 'https://github.com/xslate',
+    MailingList => 'http://groups.google.com/group/xslate',
+;
 
 
 system "$^X tool/opcode.PL        src/xslate_opcode.inc >xslate_ops.h";

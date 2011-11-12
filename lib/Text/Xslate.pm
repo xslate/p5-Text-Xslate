@@ -743,12 +743,12 @@ For example:
 
     # for bridge modules
     my $tx = Text::Xslate->new(
-        module => ['SomeModule::Bridge::Xslate'],
+        module => ['Text::Xslate::Bridge::Star'],
     );
     print $tx->render_string(
-        '<: $x.some_method() :>',
-        { x => time() },
-    );
+        '<: uc($x) :>',
+        { x => 'foo' },
+    ); # => 'FOO'
 
 Because you can use function-based modules with the C<module> option, and
 also can invoke any object methods in templates, Xslate doesn't require
@@ -1082,7 +1082,7 @@ An "too-safe" HTML escaping filter which escape all the symbolic characters
 
 =cut
 
-=head1 SUPPORT
+=head1 RESOURCES
 
 WEB: L<http://xslate.org/>
 
@@ -1090,9 +1090,9 @@ ML: L<http://groups.google.com/group/xslate>
 
 IRC: #xslate @ irc.perl.org
 
-REPOSITORY:
-    http://github.com/gfx/p5-Text-Xslate/
-    git://github.com/gfx/p5-Text-Xslate.git
+PROJECT HOME: L<http://github.com/xslate/>
+
+REPOSITORY: L<http://github.com/xslate/p5-Text-Xslate/>
 
 =head1 BUGS
 
