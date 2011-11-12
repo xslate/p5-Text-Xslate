@@ -8,6 +8,7 @@ my $tx = Text::Xslate->new(
     cache => 0,
     module => ['Text::Xslate::Bridge::Star'],
     warn_handler => sub { die @_ },
+    verbose => 2,
 );
 
 is $tx->render_string(': uc("foo")'), 'FOO';
@@ -25,6 +26,13 @@ is $tx->render_string(': "foo".substr(1)'), 'oo';
 
 is $tx->render_string(': sprintf("a %d b", 3.14)'), 'a 3 b';
 
+is $tx->render_string(': match("foo", "o")       ? "T" : "F"'), 'T';
+is $tx->render_string(': match("foo", "f..")     ? "T" : "F"'), 'F';
+is $tx->render_string(': match("foo", rx("f..")) ? "T" : "F"'), 'T';
+is $tx->render_string(': match(nil, rx("f.."))   ? "T" : "F"'), 'F';
+is $tx->render_string(': "foo".match(rx("f.."))  ? "T" : "F"'), 'T';
+
+is $tx->render_string(': replace("foo", "o", "x")'), 'fxx';
 is $tx->render_string(<<'T'), 'fxx';
 : "foo".replace("oo", "xx")
 T
