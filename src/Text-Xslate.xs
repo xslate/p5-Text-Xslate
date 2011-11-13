@@ -1254,7 +1254,7 @@ CODE:
 }
 
 void
-_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
+_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime, bool macro_is_global)
 CODE:
 {
     dMY_CXT;
@@ -1304,11 +1304,18 @@ CODE:
     TAINT_NOT;
 
     if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
-        croak("Function table must be a HASH reference");
+        croak("[BUG] Function table must be a HASH reference");
     }
-    /* $self->{function} must be copied
-       because it might be changed per templates */
-    st.symbol = newHVhv( (HV*)SvRV(*svp) );
+
+    if(macro_is_global) {
+        st.symbol = (HV*)SvRV(*svp);
+        SvREFCNT_inc_simple_void_NN(st.symbol);
+    }
+    else {
+        /* $self->{function} must be copied
+           because it varies per templates */
+        st.symbol = newHVhv( (HV*)SvRV(*svp) );
+    }
 
     st.tmpl   = tmpl;
     st.engine = newRV_inc((SV*)self);
