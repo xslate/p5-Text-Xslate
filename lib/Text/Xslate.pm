@@ -13,22 +13,21 @@ use Exporter          ();
 use Data::MessagePack ();
 use Scalar::Util      ();
 
-use Text::Xslate::Util qw(
-    mark_raw unmark_raw
-    html_escape escaped_string
-    uri_escape html_builder
-);
+use Text::Xslate::Util ();
+BEGIN {
+    # all the exportable functions are defined in ::Util
+    our @EXPORT_OK = qw(
+        mark_raw
+        unmark_raw
+        escaped_string
+        html_escape
+        uri_escape
+        html_builder
+    );
+    Text::Xslate::Util->import(@EXPORT_OK);
+}
 
 our @ISA = qw(Text::Xslate::Engine);
-
-our @EXPORT_OK = qw(
-    mark_raw
-    unmark_raw
-    escaped_string
-    html_escape
-    uri_escape
-    html_builder
-);
 
 my $BYTECODE_VERSION = '1.5';
 
