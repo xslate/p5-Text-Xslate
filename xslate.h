@@ -74,6 +74,7 @@ enum tx_frame_ix {
 enum tx_macro_ix {
     TXm_NAME,
     TXm_ADDR,
+    TXm_EXTERN,
     TXm_NARGS,
     TXm_OUTER,
 

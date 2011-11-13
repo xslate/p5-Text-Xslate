@@ -170,7 +170,8 @@ static void
 tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv);
 
 static tx_state_t*
-tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include);
+tx_load_template(pTHX_ SV* const self, SV* const name,
+    bool const omit_augment, bool const macro_is_global);
 
 #ifndef save_op
 #define save_op() my_save_op(aTHX)
@@ -773,7 +774,7 @@ XS(XS_Text__Xslate__macrocall){
 }
 
 static void
-tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr) {
+tx_macro_enter(pTHX_ tx_state_t* txst, AV* const macro, tx_pc_t const retaddr) {
     dSP;
     dMARK;
     I32 const items    = SP - MARK;
@@ -781,6 +782,7 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
     tx_pc_t const addr = INT2PTR(tx_pc_t, SvUVX(AvARRAY(macro)[TXm_ADDR]));
     IV const nargs     = SvIVX(AvARRAY(macro)[TXm_NARGS]);
     UV const outer     = SvUVX(AvARRAY(macro)[TXm_OUTER]);
+    SV* const external = AvARRAY(macro)[TXm_EXTERN];
     AV* cframe; /* new frame */
     UV i;
     SV* tmp;
@@ -792,6 +794,10 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
         TX_RETURN_NEXT();
     }
 
+    if(SvOK(AvARRAY(macro)[TXm_EXTERN])) { /* external macros */
+        //txst = tx_load_template(aTHX_
+        //    txst->engine, AvARRAY(macro)[TXm_EXTERN], TRUE, TRUE);
+    }
     /* create a new frame */
     cframe = tx_push_frame(aTHX_ TX_st);
 
@@ -1004,7 +1010,8 @@ static MGVTBL xslate_vtbl = { /* for identity */
 
 
 static void
-tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime, bool const from_include) {
+tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime,
+        bool const omit_augment, bool const macro_is_global) {
     dSP;
     ENTER;
     SAVETMPS;
@@ -1014,7 +1021,8 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime, bool 
     PUSHs(self);
     PUSHs(name);
     PUSHs(mtime ? mtime : &PL_sv_undef);
-    PUSHs(boolSV(from_include));
+    PUSHs(boolSV(omit_augment));
+    PUSHs(boolSV(macro_is_global));
     PUTBACK;
 
     call_method("load_file", G_EVAL | G_VOID);
@@ -1066,7 +1074,8 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
 }
 
 static tx_state_t*
-tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) {
+tx_load_template(pTHX_ SV* const self, SV* const name,
+        bool const omit_augment, bool const macro_is_global) {
     HV* hv;
     const char* why = NULL;
     HE* he;
@@ -1115,7 +1124,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
     /* $tmpl = $ttable->{$name} */
     he = hv_fetch_ent(ttable, name, FALSE, 0U);
     if(!he) {
-        tx_invoke_load_file(aTHX_ self, name, NULL, from_include);
+        tx_invoke_load_file(aTHX_ self, name, NULL,
+            omit_augment, macro_is_global);
         retried++;
         goto retry;
     }
@@ -1156,7 +1166,8 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
         return (tx_state_t*)mg->mg_ptr;
     }
     else {
-        tx_invoke_load_file(aTHX_ self, name, cache_mtime, from_include);
+        tx_invoke_load_file(aTHX_ self, name, cache_mtime,
+            omit_augment, macro_is_global);
         retried++;
         goto retry;
     }
@@ -1421,9 +1432,9 @@ CODE:
 
             /* special cases */
             if(opnum == TXOP_macro_begin) {
-                SV* const name = st.code[i].u_arg.sv;
+                SV* const mname = st.code[i].u_arg.sv;
                 SV* const ent  = hv_iterval(st.symbol,
-                    hv_fetch_ent(st.symbol, name, TRUE, 0U));
+                    hv_fetch_ent(st.symbol, mname, TRUE, 0U));
 
                 if(!sv_true(ent)) {
                     SV* mref;
@@ -1434,8 +1445,11 @@ CODE:
 
                     (void)av_store(macro, TXm_OUTER, newSViv(0));
                     (void)av_store(macro, TXm_NARGS, newSViv(0));
+                    if(macro_is_global) {
+                        (void)av_store(macro, TXm_EXTERN,  newSVsv(name));
+                    }
                     (void)av_store(macro, TXm_ADDR,  newSVuv(PTR2UV(TX_POS2PC(&st, i))));
-                    (void)av_store(macro, TXm_NAME,  name);
+                    (void)av_store(macro, TXm_NAME,  mname);
                     st.code[i].u_arg.sv = NULL;
                 }
                 else { /* already defined */
@@ -1520,7 +1534,7 @@ CODE:
             tx_neat(aTHX_ vars));
     }
 
-    st = tx_load_template(aTHX_ self, source, FALSE);
+    st = tx_load_template(aTHX_ self, source, FALSE, FALSE);
 
     /* local $SIG{__WARN__} = \&warn_handler */
     if (PL_warnhook != MY_CXT.warn_handler) {

@@ -4,6 +4,8 @@
 
  *********************/
 
+/* vim: set filetype=xs : */
+
 TXC(noop) {
     TX_RETURN_NEXT();
 }
@@ -157,7 +159,8 @@ TXC_w_sv(print_raw_s) {
 
 TXC(include) {
     dMY_CXT;
-    tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa, TRUE);
+    tx_state_t* const st = tx_load_template(aTHX_ TX_st->engine, TX_st_sa,
+        TRUE, FALSE);
 
     ENTER;
     SAVETMPS;

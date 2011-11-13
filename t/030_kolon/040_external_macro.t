@@ -14,18 +14,16 @@ my %vpath = (
 Hello, world!
 : }
 
-
 : macro add -> $x, $y { $x + $y }
+: macro add10 -> $x { add($x, 10) }
 
 : my $PI = 3.1415;
 : macro PI -> { $PI }
 
-: my $CONFIG = { };
-: macro CONFIG -> { $CONFIG }
+: macro foo -> { nil }
 T
 
 'foo.tx' => <<'T',
-: my $CONFIG = [];
 : hello()
 T
 );
@@ -35,7 +33,13 @@ my $tx = Text::Xslate->new(
     macro_module => ['macro/bar.tx'],
     cache        => 0,
     verbose      => 2,
+    warn_handler => sub { die @_ },
 );
+
+if(1) {
+    $tx->{compiler} = ref($tx->{compiler});
+    note( dump($tx) );
+}
 
 is $tx->render('foo.tx'), "Hello, world!\n";
 is $tx->render('foo.tx'), "Hello, world!\n";
@@ -43,11 +47,16 @@ is $tx->render('foo.tx'), "Hello, world!\n";
 is $tx->render_string(': add($foo, $bar)', { foo => 10, bar => 5 }), 15;
 is $tx->render_string(': add($foo, $bar)', { foo =>  9, bar => 4 }), 13;
 
+is $tx->render_string(': add10(20)'), 30;
+is $tx->render_string(': add10(25)'), 35;
+
 is $tx->render_string(': PI()' ), '3.1415';
 is $tx->render_string(': PI()' ), '3.1415';
 
-# XXX: SEGV at Text-Xslate.xs:1649
-#      because CONFIG's st is different from the main
-# diag $tx->render_string(': CONFIG()');
+{
+    local $@;
+    eval{ $tx->render_string(': foo()') };
+    like $@, qr/nil/;
+}
 done_testing;
 
