@@ -36,7 +36,14 @@ sub substr {
 sub sprintf {
     my $fmt = shift;
     return undef unless defined $fmt;
-    return sprintf $fmt, @_;
+    if(@_) { # sprintf($fmt, ...)
+        return sprintf $fmt, @_;
+    }
+    else { # $x | sprintf('%.02f')
+        return sub {
+            sprintf $fmt, @_;
+        };
+    }
 }
 
 sub rx {

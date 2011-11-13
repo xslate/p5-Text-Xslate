@@ -25,6 +25,7 @@ is $tx->render_string(': substr(nil, 1, 1) // "ok"'), 'ok';
 is $tx->render_string(': "foo".substr(1)'), 'oo';
 
 is $tx->render_string(': sprintf("a %d b", 3.14)'), 'a 3 b';
+is $tx->render_string(': 3.1415 | sprintf("%.02f")'), '3.14';
 
 is $tx->render_string(': match("foo", "o")       ? "T" : "F"'), 'T';
 is $tx->render_string(': match("foo", "f..")     ? "T" : "F"'), 'F';
