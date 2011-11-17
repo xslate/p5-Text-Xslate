@@ -266,7 +266,7 @@ sub std_switch {
     local $parser->{in_given} = 1;
 
     my @cases;
-    while($parser->token->id ne "END") {
+    while(!($parser->token->id eq "END" or $parser->token->id eq '(end)')) {
         push @cases, $parser->statement();
     }
     $switch->third( \@cases );
