@@ -96,8 +96,8 @@ my %parser_option = (
 my %compiler_option = (
     syntax     => undef,
     type       => undef,
-    header     => undef,
-    footer     => undef,
+    header     => undef, # template augment
+    footer     => undef, # template agument
 );
 
 my %builtin = (
@@ -312,9 +312,9 @@ sub find_file {
 
 
 sub load_file {
-    my($self, $file, $mtime, $from_include) = @_;
+    my($self, $file, $mtime, $omit_augment) = @_;
 
-    local $self->{from_include} = $from_include;
+    local $self->{omit_augment} = $omit_augment;
 
     $self->note("load_file(%s)\n", $file) if _DUMP_LOAD;
 
@@ -560,7 +560,7 @@ sub _compiler {
 sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_,
-        from_include => $self->{from_include});
+        omit_augment => $self->{omit_augment});
 }
 
 sub _error {
