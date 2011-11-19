@@ -4,6 +4,8 @@
 
  *********************/
 
+/* vim: set filetype=xs: */
+
 TXC(noop) {
     TX_RETURN_NEXT();
 }
