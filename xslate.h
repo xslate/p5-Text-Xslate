@@ -140,15 +140,17 @@ struct tx_state_s {
 
     HV* vars;    /* template variables */
 
+    HV* symbol; /* symbol table (e.g. name => \&body | [macro object]) */
+    
     /* stack frame */
     AV* frames;        /* see enum txframeo_ix */
     I32 current_frame; /* current frame index */
     SV** pad;          /* AvARRAY(frame[current_frame]) + 3 */
 
-    HV* symbol; /* symbol table (e.g. name => \&body | [macro object]) */
-
+    /* hints */
     U32 hint_size; /* suggested template size (bytes) */
 
+    /* meta information */
     AV* tmpl;    /* template objects. see enum txtmplo_ix */
     SV* engine;  /* Text::Xslate instance */
     tx_info_t* info;  /* index -> an oinfo object */
