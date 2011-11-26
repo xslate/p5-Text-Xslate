@@ -3,14 +3,13 @@
 # global macros
 #
 use strict;
-use Test::More;
+use Test::More skip_all => 'TODO';
 
 use Text::Xslate;
-use Text::Xslate::Util qw(dump);
 
 my %vpath = (
     'macro/bar.tx' => <<'T',
-: macro hello -> {
+: our macro hello -> {
 Hello, world!
 : }
 

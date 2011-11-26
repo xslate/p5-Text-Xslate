@@ -244,7 +244,7 @@ You'd better to consult the security experts on more complex cases.
 There's no silver bullet to parse structured texts in secure ways.
 You'd better to consult the security experts to do so.
 
-Some CPAN module might hep you. See L<String::Filter> for example.
+Some CPAN module might help you. See L<String::Filter> for example.
 
 =head2 How to manage localization in templates
 

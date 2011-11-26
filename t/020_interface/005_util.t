@@ -50,6 +50,10 @@ my @set = (
     [ q{"-10"},   "-10" ],
     [ q{"-10.0"}, "-10.0" ],
 
+    [ q{"01"},   "01" ],
+    [ q{"00"},   "00" ],
+    [ q{"010"}, "010" ],
+
     [q{'test="test"'},q{test="test"}],
     [q{"test='test'"},q{test='test'}],
 );
@@ -60,6 +64,15 @@ foreach my $d(@set) {
     is $v, $out, "literal: $in";
     is literal_to_value(value_to_literal($v)), $out;
 }
+
+# 0 must be a number
+is value_to_literal( '0'), q{0};
+is value_to_literal( '1'), q{1};
+is value_to_literal('10'), q{10};
+is value_to_literal('00'), q{"00"};
+is value_to_literal('01'), q{"01"};
+
+# other utils
 
 is read_around(__FILE__, 1), <<'X', 'read_around';
 #!perl -w

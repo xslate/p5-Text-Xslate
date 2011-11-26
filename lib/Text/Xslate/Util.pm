@@ -96,8 +96,10 @@ sub neat {
 
 sub is_int {
     my($s) = @_;
+    # XXX: '+1', '1.0', '00',  must NOT be interpreted as an integer
     return defined($s)
-        && $s =~ /\A -? [0-9]+ \z/xms  # '+1' is a string
+        && $s =~ /\A -? [0-9]+ \z/xms
+        && int($s) eq $s
         && abs(int($s)) < 0x7FFF_FFFF; # fits  int32_t
 }
 
@@ -154,8 +156,7 @@ sub value_to_literal {
     my($value) = @_;
     return 'undef' if not defined $value;
 
-    # XXX: '+1', '1.0' must be interpreted as a string
-    if($value =~ /\A -? [0-9]+ \z/xmso){
+    if(is_int($value)){
         return $value;
     }
     else {

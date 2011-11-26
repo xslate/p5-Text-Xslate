@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.5007 2011-11-17 19:43:10
+    [BUG FIXES]
+    * SWITCH without an END made infinate loops (reorted by ryochin)
+    * "01" was parsed as 1, not "01" (reported by ryochin)
+
 1.5006 2011-11-12 12:54:39
     [META]
     - Move the repository from github.com/gfx/* to github.com/xslate/

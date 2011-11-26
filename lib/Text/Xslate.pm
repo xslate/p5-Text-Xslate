@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.5006';
+our $VERSION = '1.5007';
 
 use Carp              ();
 use Fcntl             ();
@@ -96,8 +96,8 @@ my %parser_option = (
 my %compiler_option = (
     syntax     => undef,
     type       => undef,
-    header     => undef,
-    footer     => undef,
+    header     => undef, # template augment
+    footer     => undef, # template agument
 );
 
 my %builtin = (
@@ -129,7 +129,6 @@ sub options { # overridable
         cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
         cache_dir    => _DEFAULT_CACHE_DIR,
         module       => undef,
-        macro_module => undef,
         function     => undef,
         compiler     => 'Text::Xslate::Compiler',
 
@@ -197,14 +196,7 @@ sub new {
     # internal data
     $args{template} = {};
 
-    my $self = bless \%args, $class;
-    if(defined $args{macro_module}) {
-        $self->_merge_hash(\%added_funcs,
-            $self->_load_macro_modules(@{$args{macro_module}}) );
-        @{ $args{added_function_names} } = (sort keys %added_funcs);
-    }
-
-    return $self;
+    return bless \%args, $class;
 }
 
 sub _merge_hash {
@@ -252,7 +244,7 @@ sub load_string { # called in render_string()
     $self->{source}{'<string>'} = $string if _SAVE_SRC;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
-    $self->_assemble($asm, '<string>', \$string, undef, undef, undef);
+    $self->_assemble($asm, '<string>', \$string, undef, undef);
     return $asm;
 }
 
@@ -318,19 +310,13 @@ sub find_file {
     };
 }
 
+
 sub load_file {
-    my($self, $file, $mtime, $omit_augment, $macro_is_global) = @_;
+    my($self, $file, $mtime, $omit_augment) = @_;
 
     local $self->{omit_augment} = $omit_augment;
 
-    if(_DUMP_LOAD) {
-        $self->note("load_file(%s)\n", dump({
-            file            => $file,
-            mtime           => $mtime,
-            omit_augment    => $omit_augment,
-            macro_is_global => $macro_is_global,
-        }));
-    }
+    $self->note("load_file(%s)\n", $file) if _DUMP_LOAD;
 
     if($file eq '<string>') { # simply reload it
         return $self->load_string($self->{string_buffer});
@@ -348,21 +334,8 @@ sub load_file {
         $cache_mtime = $fi->{cache_mtime} || 0;
     }
 
-    $self->_assemble($asm, $file,
-        $fi->{fullpath}, $fi->{cachepath},
-        $cache_mtime, $macro_is_global);
+    $self->_assemble($asm, $file, $fi->{fullpath}, $fi->{cachepath}, $cache_mtime);
     return $asm;
-}
-
-sub _load_macro_modules {
-    my($self, @files) = @_;
-    my %macros;
-
-    foreach my $file(@files) {
-        $self->load_file($file, undef, 1, 1);
-    }
-
-    return %macros;
 }
 
 sub slurp_template {
@@ -587,7 +560,7 @@ sub _compiler {
 sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_,
-        from_include => $self->{omit_augment});
+        omit_augment => $self->{omit_augment});
 }
 
 sub _error {
@@ -609,7 +582,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.5006.
+This document describes Text::Xslate version 1.5007.
 
 =head1 SYNOPSIS
 

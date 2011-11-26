@@ -30,3 +30,5 @@ Mojolicious
 MojoX::Renderer::Xslate
 JavaScript::Value::Escape
 Locale::Maketext::Lexicon
+Data::Localize
+
