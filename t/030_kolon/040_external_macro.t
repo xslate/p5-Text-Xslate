@@ -16,7 +16,7 @@ T
 
 'foo.tx' => <<'T',
 : include macro::bar;
-: macro::bar::hello()
+: ::hello()
 T
 );
 
