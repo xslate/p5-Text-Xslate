@@ -3,24 +3,26 @@
 # global macros
 #
 use strict;
-use Test::More skip_all => 'TODO';
+use Test::More;
 
 use Text::Xslate;
 
 my %vpath = (
-    'macro/bar.tx' => <<'T',
-: our macro hello -> {
+    'macro/common.tx' => <<'T',
+: macro hello -> {
 Hello, world!
-: end
+: }
 T
 
 'foo.tx' => <<'T',
-: include macro::bar;
-: ::hello()
+: import macro::common;
+: hello()
 T
 );
 
-my $tx = Text::Xslate->new( path => \%vpath );
+my $tx = Text::Xslate->new(
+    path => \%vpath,
+);
 
 is $tx->render('foo.tx'), "Hello, world!\n";
 
