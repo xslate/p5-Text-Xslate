@@ -483,11 +483,12 @@ sub _load_compiled {
 
 sub _save_compiled {
     my($self, $out, $asm, $fullpath, $is_utf8) = @_;
+    my $mp = Data::MessagePack->new();
     local $\;
     print $out $self->_magic_token($fullpath);
-    print $out Data::MessagePack->pack($is_utf8 ? 1 : 0);
+    print $out $mp->pack($is_utf8 ? 1 : 0);
     foreach my $c(@{$asm}) {
-        print $out Data::MessagePack->pack($c);
+        print $out $mp->pack($c);
     }
     return;
 }
