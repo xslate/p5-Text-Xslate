@@ -31,4 +31,6 @@ MojoX::Renderer::Xslate
 JavaScript::Value::Escape
 Locale::Maketext::Lexicon
 Data::Localize
+Amon2::Lite
+Catalyst::View::Xslate
 
