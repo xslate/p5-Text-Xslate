@@ -312,7 +312,7 @@ tx_call_sv(pTHX_ tx_state_t* const st, SV* const sv, I32 const flags, const char
     retval = TX_pop();
     if(TX_CATCH_ERROR()) {
         tx_error(aTHX_ st, "%"SVf "\n"
-            "\t... exception cought on %s", ERRSV, name);
+            "\t... exception caught on %s", ERRSV, name);
     }
     return retval;
 }
