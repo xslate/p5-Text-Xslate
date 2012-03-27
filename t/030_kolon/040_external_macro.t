@@ -3,7 +3,7 @@
 # global macros
 #
 use strict;
-use Test::More;
+use Test::More skip_all => 'external macros are not yet implemented';
 
 use Text::Xslate;
 
