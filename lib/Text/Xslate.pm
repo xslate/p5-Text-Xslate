@@ -35,12 +35,14 @@ my $BYTECODE_VERSION = '1.5';
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
 
 # load backend (XS or PP)
+my $use_xs = 0;
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
     my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
     if(!$pp) {
         eval {
             require XSLoader;
             XSLoader::load(__PACKAGE__, $VERSION);
+            $use_xs = 1;
         };
         die $@ if $@ && $Text::Xslate::Util::DEBUG =~ /\b xs \b/xms; # force XS
     }
@@ -48,6 +50,7 @@ if(!exists $INC{'Text/Xslate/PP.pm'}) {
         require 'Text/Xslate/PP.pm';
     }
 }
+sub USE_XS() { $use_xs }
 
 # workaround warnings about numeric when it is a developpers' version
 # it must be here because the bootstrap routine requires the under bar.
