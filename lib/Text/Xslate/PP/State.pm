@@ -57,6 +57,16 @@ has local_stack => (
     is => 'rw',
 );
 
+has encoding => (
+    is       => 'ro',
+    init_arg => undef,
+    lazy     => 1,
+    default  => sub {
+        require Encode;
+        return Encode::find_encoding('UTF-8');
+    },
+);
+
 sub fetch {
     # my ( $st, $var, $key, $frame, $line ) = @_;
     my $ret;
@@ -165,7 +175,10 @@ sub print {
     my($st, $sv, $frame_and_line) = @_;
     if ( ref( $sv ) eq Text::Xslate::PP::TXt_RAW ) {
         if(defined ${$sv}) {
-            $st->{output} .= ${$sv};
+            $st->{output} .=
+                (utf8::is_utf8($st->{output}) && !utf8::is_utf8(${$sv}))
+                 ? $st->encoding->decode(${$sv})
+                 : ${$sv};
         }
         else {
             $st->warn($frame_and_line, "Use of nil to print" );
@@ -173,7 +186,10 @@ sub print {
     }
     elsif ( defined $sv ) {
         $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
-        $st->{output} .= $sv;
+        $st->{output} .=
+            (utf8::is_utf8($st->{output}) && !utf8::is_utf8($sv))
+             ? $st->encoding->decode($sv)
+             : $sv;
     }
     else {
         $st->warn( $frame_and_line, "Use of nil to print" );

@@ -453,6 +453,11 @@ sub _load_compiled {
     $unpacker->utf8($is_utf8);
 
     my @asm;
+    if($is_utf8) { # TODO: move to XS?
+        my $seed = "";
+        utf8::upgrade($seed);
+        push @asm, ['print_raw_s', $seed, __LINE__, __FILE__];
+    }
     while($offset < length($data)) {
         $offset = $unpacker->execute($data, $offset);
         my $c = $unpacker->data();
