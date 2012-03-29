@@ -300,8 +300,15 @@ Not yet. Please blog it and it'll be introduced here.
 
 =head3 How can I colorize Xslate templates?
 
-If you are a C<vim> user, there is F<xslate.vim> for Kolon:
+For C<vim> user, there is F<xslate.vim> for Kolon:
+
 L<https://github.com/motemen/xslate-vim>
+
+For C<emacs> user, there are plugins:
+
+L<https://github.com/samvtran/kolon-mode>
+
+L<https://github.com/yoshiki/tx-mode>
 
 =head3 Where can I ask questions?
 
