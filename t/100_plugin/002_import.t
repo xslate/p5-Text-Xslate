@@ -7,12 +7,14 @@ use Text::Xslate::Util qw(p);
 use Data::Dumper;
 use Time::localtime qw(localtime);
 use CGI qw(span);
+use Digest::MD5 qw(md5 md5_hex);
 
 my $tx = Text::Xslate->new(
     module => [
         'Data::Dumper',
         'Time::localtime' => [qw(localtime)],
         'Scalar::Util'    => [qw(blessed)],
+        'Digest::MD5'     => [qw(md5 md5_hex)],
     ],
     function => {
         blessed => sub{ 42 }, # override
@@ -25,11 +27,19 @@ my @set = (
         '<: Dumper($d) :>',
         { d => { foo => 'bar', baz => [42] } },
         Dumper({ foo => 'bar', baz => [42] }),
+        'Data::Dumper'
     ],
     [
         '<: localtime($t).mday :>',
         { t => $^T },
         localtime($^T)->mday,
+        'Time::localtime',
+    ],
+    [
+        '<: md5_hex($x) :>',
+        { x => 'foo' },
+        md5_hex('foo'),
+        'Digest::MD5',
     ],
     [
         '<: blessed($x) :>',
@@ -43,7 +53,6 @@ my @set = (
         p(42),
         'builtins',
     ],
-
     [
         '<: span($x) :>',
         { x => 42 },

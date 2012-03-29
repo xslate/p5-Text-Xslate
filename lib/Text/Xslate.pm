@@ -742,19 +742,19 @@ For example:
 
     # for function-based modules
     my $tx = Text::Xslate->new(
-        module => ['Time::Piece'],
+        module => ['Digest::SHA1' => [qw(sha1_hex)]],
     );
     print $tx->render_string(
-        '<: localtime($x).strftime() :>',
-        { x => time() },
-    ); # => Wed, 09 Jun 2010 10:22:06 JST
+        '<: sha1_hex($x).substr(0, 6) :>',
+        { x => foo() },
+    ); # => 0beec7
 
     # for bridge modules
     my $tx = Text::Xslate->new(
         module => ['Text::Xslate::Bridge::Star'],
     );
     print $tx->render_string(
-        '<: uc($x) :>',
+        '<: $x.uc() :>',
         { x => 'foo' },
     ); # => 'FOO'
 
