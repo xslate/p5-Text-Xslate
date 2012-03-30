@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5009 2012-03-30 09:19:18
+    [IMPROVEMENT]
+    - Documentation improvement
+
 1.5008 2012-03-28 09:39:45
     [BUG FIXES]
     - Fix a typo in an error messages (issues/53, thanks to wchristian)
