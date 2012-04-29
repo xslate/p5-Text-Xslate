@@ -6,7 +6,7 @@ use Test::Requires { 'Test::LeakTrace' => 0.13 };
 use Test::More;
 use Text::Xslate;
 use Text::Xslate::Compiler;
-use t::lib::Util;
+use t::lib::UtilNoleak;
 
 #use if Text::Xslate->isa('Text::Xslate::PP'),
 #    'Test::More' => skip_all => 'PP will be safe';
