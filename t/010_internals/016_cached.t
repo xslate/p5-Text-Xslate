@@ -7,14 +7,15 @@ use Text::Xslate;
 use File::Path;
 use Config;
 
-use t::lib::Util;
+use t::lib::Util ();
 
-rmtree(cache_dir);
-END{ rmtree(cache_dir) }
-
+my $path = t::lib::Util::path();
+my $cache_dir = t::lib::Util::cache_dir;
+rmtree($cache_dir);
+END{ rmtree($cache_dir) }
 # XXX: @INC is too long to pass a command, so we need to give it via %ENV
 $ENV{PERL5LIB} = join $Config{path_sep}, @INC;
-is system($^X, "-we", <<'EOT', path, cache_dir), 0, 'compile' or die "failed to compile";
+is system($^X, "-we", <<'EOT', $path, $cache_dir), 0, 'compile' or die "failed to compile";
     #BEGIN{ ($ENV{XSLATE} ||= '') =~ s/dump//g; }
     use Text::Xslate;
     use t::lib::Util;
@@ -26,12 +27,12 @@ is system($^X, "-we", <<'EOT', path, cache_dir), 0, 'compile' or die "failed to 
    $tx->load_file('myapp/derived.tx');
    $tx->load_file('foo.tx');
 EOT
-ok -d cache_dir;
+ok -d $cache_dir;
 
 for my $cache(1 .. 2) {
     my $tx = Text::Xslate->new(
-        path      => [path, { 'foo.tx' => 'Hello' } ],
-        cache_dir => cache_dir,
+        path      => [$path, { 'foo.tx' => 'Hello' } ],
+        cache_dir => $cache_dir,
         cache     => $cache,
     );
 
