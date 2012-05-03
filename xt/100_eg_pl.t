@@ -8,8 +8,10 @@ use IPC::Run qw(run timeout);
 use File::Path qw(rmtree);
 use Config;
 
-rmtree '.eg_cache';
-END{ rmtree '.eg_cache' }
+use t::lib::Util;
+
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 $ENV{PERL5LIB} = join $Config{path_sep}, @INC;
 

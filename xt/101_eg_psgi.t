@@ -10,8 +10,10 @@ use Plack::Util;
 
 use File::Path qw(rmtree);
 
-rmtree '.eg_cache';
-END{ rmtree '.eg_cache' }
+use t::lib::Util;
+
+rmtree(cache_dir);
+END{ rmtree(cache_dir) }
 
 # supress debug log
 local $ENV{MOJO_MODE} = 'production';
