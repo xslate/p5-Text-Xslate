@@ -1972,7 +1972,12 @@ sub not_supported {
 sub _unexpected {
     my($parser, $expected, $got) = @_;
     if(defined($got) && $got ne ";") {
-        $parser->_error("Expected $expected, but got " . neat("$got"));
+        if($got eq '(end)') {
+            $parser->_error("Expected $expected, but reached EOF");
+        }
+        else {
+            $parser->_error("Expected $expected, but got " . neat("$got"));
+        }
      }
      else {
         $parser->_error("Expected $expected");
