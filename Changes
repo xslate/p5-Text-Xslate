@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5012 2012-05-21 15:52:59
+    [IMPROVEMENT]
+    - imporve error messages when the parser reaches EOF
+
 1.5011 2012-05-21 15:45:00
     [BUG FIXES]
     - add warning about https://github.com/xslate/p5-Text-Xslate/issues/55
