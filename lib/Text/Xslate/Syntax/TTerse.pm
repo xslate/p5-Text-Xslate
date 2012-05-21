@@ -238,8 +238,13 @@ sub std_if {
     }
 
     if($t->id eq "ELSE") {
+        my $else_line = $t->line;
         $parser->reserve($t);
         $t = $parser->advance(); # "ELSE"
+
+        if($t->id eq "IF" and $t->line != $else_line) {
+            Carp::carp(sprintf "%s: Parsing ELSE-IF sequense as ELSIF, but it is likely to be a misuse of ELSE-IF. Please insert semicolon as ELSE; IF, or write it in the same line (around input line %d)", ref $parser, $t->line);
+        }
 
         $if->third( $t->id eq "IF"
             ? [$parser->statement()]

@@ -233,10 +233,10 @@ sub _dump_denote {
 
     require B;
     my $cvgv = B::svref_2object($entity)->GV;
-    printf STDERR "%s: %s::%s (%s)\n",
+    printf STDERR "%s: %s::%s (%s:%s)\n",
         $type,
         $cvgv->STASH->NAME, $cvgv->NAME,
-        $self->id,
+        $self->id, $self->line,
     ;
 }
 
