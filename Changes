@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+1.5011 2012-05-21 15:45:00
+    [BUG FIXES]
+    - add warning about https://github.com/xslate/p5-Text-Xslate/issues/55
+      For backword compatibility, we don't change its behavior, but
+      it is likely to a problem so we warnn about it.
+
 1.5010 2012-05-04 01:04:47
     [TEST FIXES]
     - Make `HANRESS_OPTIONS=j9 make test` work (@punytan)
