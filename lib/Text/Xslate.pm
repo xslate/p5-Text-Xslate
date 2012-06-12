@@ -101,6 +101,7 @@ my %compiler_option = (
     type       => undef,
     header     => undef, # template augment
     footer     => undef, # template agument
+    macro      => undef, # template augment
 );
 
 my %builtin = (
