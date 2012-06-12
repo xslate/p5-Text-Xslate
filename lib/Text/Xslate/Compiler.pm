@@ -226,7 +226,7 @@ has cascade => (
     init_arg => undef,
 );
 
-has [qw(header footer)] => (
+has [qw(header footer macro)] => (
     is  => 'rw',
     isa => 'ArrayRef',
 );
@@ -275,6 +275,7 @@ sub compile {
     local $self->{cascade};
     local $self->{header}       = $self->{header};
     local $self->{footer}       = $self->{footer};
+    local $self->{macro}        = $self->{macro};
     local $self->{current_file} = '<string>'; # for opinfo
     local $self->{file}         = $args{file} || \$input;
 
@@ -292,6 +293,7 @@ sub compile {
 
     my $header = delete $self->{header};
     my $footer = delete $self->{footer};
+    my $macro = delete $self->{macro};
 
     if(!$args{omit_augment}) {
         if($header) {
@@ -299,6 +301,11 @@ sub compile {
         }
         if($footer) {
             $input .= $self->_cat_files($footer);
+        }
+    }
+    if($macro) {
+        if(!grep { $_ eq $self->current_file } @$macro) {
+            substr $input, 0, 0, $self->_cat_files($macro);
         }
     }
 
