@@ -173,7 +173,7 @@ Examples:
 Replaces all the I<$pattern>s in I<$str> with I<$replacement>s.
 Like as C<< $str =~ s/$pattern/$replacement/g >> but you have to pass a regex object explicitly if you can use regular expressions.
 
-=head2 C<split($str, $pattern[, $limit])>
+=head2 C<split($str [, $pattern [, $limit]])>
 
 Splits the string I<$str> into a list of strings and returns the list.
 
