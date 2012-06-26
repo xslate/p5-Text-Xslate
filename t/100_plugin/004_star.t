@@ -51,6 +51,7 @@ is $tx->render_string(': "foo[0-9]bar".split("[0-9]").join("/")'), 'foo/bar';
 is $tx->render_string(': "foo3bar[0-9]".split(rx("[0-9]")).join("/")'), 'foo/bar[/-/]';
 is $tx->render_string(': "foo/bar/baz".split("/", 2).join("--")'), 'foo--bar/baz';
 is $tx->render_string(': "h o k".split(" ").join("-")'), 'h-o-k';
+is $tx->render_string(': "h o k".split().join("-")'), 'h-o-k';
 
 done_testing;
 
