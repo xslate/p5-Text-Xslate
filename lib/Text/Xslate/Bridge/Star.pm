@@ -69,6 +69,19 @@ sub replace {
     return $str;
 }
 
+sub split {
+    my($str,$pattern,$limit) = @_;
+    if (!defined $pattern) {
+        $pattern = ' ';
+    }
+    $pattern = quotemeta($pattern) unless _is_rx($pattern);
+    if (defined $limit) {
+        return [CORE::split($pattern, $str, $limit)];
+    } else {
+        return [CORE::split($pattern, $str)];
+    }
+}
+
 my %scalar_methods = (
     lc      => \&lc,
     uc      => \&uc,
@@ -77,6 +90,7 @@ my %scalar_methods = (
     rx      => \&rx,
     match   => \&match,
     replace => \&replace,
+    split   => \&split,
 );
 
 __PACKAGE__->bridge(
@@ -158,6 +172,10 @@ Examples:
 
 Replaces all the I<$pattern>s in I<$str> with I<$replacement>s.
 Like as C<< $str =~ s/$pattern/$replacement/g >> but you have to pass a regex object explicitly if you can use regular expressions.
+
+=head2 C<split($str, $pattern[, $limit])>
+
+Splits the string I<$str> into a list of strings and returns the list.
 
 =head1 SEE ALSO
 
