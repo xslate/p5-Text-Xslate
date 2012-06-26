@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5014 2012-06-26 19:41:20
+    [IMPROVEMENT]
+    - Add scalar::split() to Bridge::Star (tokuhirom)
+
 1.5013 2012-06-12 23:46:44
     [IMPROVEMENT]
     - Add "macro" option to Text::Xslate->new() (gunyoki)
