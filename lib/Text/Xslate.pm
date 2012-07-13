@@ -123,6 +123,19 @@ my %builtin = (
 
 sub default_functions { +{} } # overridable
 
+sub parser_option { # overridable
+    \%parser_option;
+}
+
+sub compiler_option { # overridable
+    \%compiler_option;
+}
+
+sub replace_option_value_for_magic_token { # overridable
+    my($self, $name, $value) = @_;
+    $value;
+}
+
 sub options { # overridable
     my($self) = @_;
     return {
@@ -140,8 +153,8 @@ sub options { # overridable
         warn_handler => undef,
         die_handler  => undef,
 
-        %parser_option,
-        %compiler_option,
+        %{ $self->parser_option },
+        %{ $self->compiler_option },
     };
 }
 
@@ -507,8 +520,8 @@ sub _magic_token {
 
     $self->{serial_opt} ||= Data::MessagePack->pack([
         ref($self->{compiler}) || $self->{compiler},
-        $self->_extract_options(\%parser_option),
-        $self->_extract_options(\%compiler_option),
+        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
+        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
         $self->input_layer,
         [sort keys %{ $self->{function} }],
     ]);
@@ -540,6 +553,19 @@ sub _extract_options {
     return @options;
 }
 
+sub _filter_options_for_magic_token {
+    my($self, @options) = @_;
+    my @filterd_options;
+    while (@options) {
+        my $name  = shift @options;
+        my $value = $self->replace_option_value_for_magic_token($name, shift @options);
+        push(@filterd_options, $name => $value);
+    }
+    @filterd_options;
+}
+
+
+
 sub _compiler {
     my($self) = @_;
     my $compiler = $self->{compiler};
@@ -552,10 +578,10 @@ sub _compiler {
         $compiler = $compiler->new(
             engine      => $self,
             input_layer => $input_layer,
-            $self->_extract_options(\%compiler_option),
+            $self->_extract_options($self->compiler_option),
             parser_option => {
                 input_layer => $input_layer,
-                $self->_extract_options(\%parser_option),
+                $self->_extract_options($self->parser_option),
             },
         );
 
