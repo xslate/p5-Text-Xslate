@@ -124,16 +124,17 @@ my %builtin = (
 sub default_functions { +{} } # overridable
 
 sub parser_option { # overridable
-    \%parser_option;
+    return \%parser_option;
 }
 
 sub compiler_option { # overridable
-    \%compiler_option;
+    return \%compiler_option;
 }
 
 sub replace_option_value_for_magic_token { # overridable
-    my($self, $name, $value) = @_;
-    $value;
+    #my($self, $name, $value) = @_;
+    #$value;
+    return $_[2];
 }
 
 sub options { # overridable
