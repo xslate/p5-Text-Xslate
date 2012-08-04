@@ -407,8 +407,11 @@ sub _load_source {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
                  unlink $cachepath;
             }
-            else {
-                $fi->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
+            elsif(! ref $fullpath) {
+                my $mtime = (stat $fullpath)[_ST_MTIME];
+                utime($mtime, $mtime, $cachepath)
+                    or Carp::carp("Xslate: Cannot utime $cachepath (ignored): $!");;
+                $fi->{cache_mtime} = $mtime;
             }
         }
         else {
