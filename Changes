@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5017 2012-08-04 19:31:59
+    [BUG FIXES]
+    - Fix a problem on Win32
+
 1.5016 2012-08-04 19:19:15
     [BUG FIXES]
     - Fix a bug that reloading templates could fail on deploying
