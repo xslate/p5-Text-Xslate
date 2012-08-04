@@ -298,6 +298,10 @@ sub find_file {
             defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
                 or next;
             $cache_prefix = Text::Xslate::uri_escape($p);
+            if (length $cache_prefix > 127) {
+                # some filesystems refuse a path part with length > 127
+                $cache_prefix = $self->_digest($cache_prefix);
+            }
         }
 
         # $file is found
@@ -394,7 +398,7 @@ sub _load_source {
         if(not -e $cachedir) {
             require File::Path;
             eval { File::Path::mkpath($cachedir) }
-                or Carp::carp("Xslate: Cannot make directory $cachepath (ignored): $@");
+                or Carp::croak("Xslate: Cannot prepare the cache directory $cachepath (ignored): $@");
         }
 
         if(sysopen my($out), $cachepath, Fcntl::O_WRONLY() | Fcntl::O_CREAT()) {
