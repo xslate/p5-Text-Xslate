@@ -82,7 +82,7 @@ my $tx;
         my_compiler_option => 'foo',
         my_parser_option => 'bar',
     );
-    like($stderr, qr/Unknown option\(s\): my_parser_option my_compiler_option/, 'detect unknown option');
+    like($stderr, qr/Unknown option\(s\): my_compiler_option my_parser_option/, 'detect unknown option');
 
     $stderr = '';
     $tx = MyXslate->new(

@@ -176,7 +176,7 @@ sub new {
     }
 
     if($used != $nargs) {
-        my @unknowns = grep { !exists $options->{$_} } keys %args;
+        my @unknowns = sort grep { !exists $options->{$_} } keys %args;
         warnings::warnif(misc
             => "$class: Unknown option(s): " . join ' ', @unknowns);
     }
