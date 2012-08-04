@@ -178,7 +178,7 @@ TXC_w_var(for_start) {
     SV* tmpsv;
 
     SvGETMAGIC(avref);
-    if((tmpsv = tx_sv_is_ref(aTHX_ avref, SVt_PVAV, to_av_amg))) {
+    if((tmpsv = tx_sv_to_ref(aTHX_ avref, SVt_PVAV, to_av_amg))) {
         avref = tmpsv;
     }
     else {

@@ -47,8 +47,11 @@ foreach my $pair(@data) {
     } for 1 .. 2;
 }
 
-is $tx->render_string(': for $foo -> $i { $i }',
-    { foo => defer { 42 } }), '';
+ok ! eval {
+    $tx->render_string(': for $foo -> $i { $i }',
+        { foo => defer { 42 } }), '';
+}, "broken overloading object";
+
 is $tx->render_string(': for $foo -> $i { $i }',
     { foo => bless {}, '_str'}), '';
 

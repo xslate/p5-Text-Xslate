@@ -114,12 +114,8 @@ tx_funcall(pTHX_ tx_state_t* const st, SV* const func, const char* const name);
 static SV*
 tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key);
 
-static bool
-tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id);
-
-/* tx_sv_is_ref() respects overloading */
 static SV*
-tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, int const amg_id);
+tx_sv_to_ref(pTHX_ SV* const sv, svtype const svt, int const amg_id);
 
 int
 tx_sv_is_array_ref(pTHX_ SV* const sv) {
@@ -413,29 +409,35 @@ tx_fetch(pTHX_ tx_state_t* const st, SV* const var, SV* const key) {
     return retval ? retval : &PL_sv_undef;
 }
 
+#ifndef amagic_deref_call
+#define amagic_deref_call(ref, method) my_amagic_deref_call(aTHX_ ref, method)
+/* portability */
+static SV*
+my_amagic_deref_call(pTHX_ SV* ref, const int method) {
+    SV* tmpsv = NULL;
 
-static bool
-tx_sv_has_amg(pTHX_ SV* const sv, const int amg_id) {
-    if(SvAMAGIC(sv)) {
-        const MAGIC* const mg = mg_find((SV*)SvSTASH(SvRV(sv)),
-            PERL_MAGIC_overload_table);
-        const AMT* const amt  = (AMT*)mg->mg_ptr;
-        assert(amt);
-        assert(AMT_AMAGIC(amt));
-        return amt->table[amg_id] ? TRUE : FALSE;
+    while (SvAMAGIC(ref) &&
+       (tmpsv = amagic_call(ref, &PL_sv_undef, method,
+                AMGf_noright | AMGf_unary))) {
+        if (!SvROK(tmpsv))
+            Perl_croak(aTHX_ "Overloaded dereference did not return a reference");
+        if (tmpsv == ref || SvRV(tmpsv) == SvRV(ref)) {
+            /* Bail out if it returns us the same reference.  */
+            return tmpsv;
+        }
+        ref = tmpsv;
     }
-    return FALSE;
+    return tmpsv ? tmpsv : ref;
 }
+#endif
 
 static SV*
-tx_sv_is_ref(pTHX_ SV* const sv, svtype const svt, const int amg_id) {
+tx_sv_to_ref(pTHX_ SV* const sv, svtype const svt, const int amg_id) {
     if(SvROK(sv)) {
         SV* const r = SvRV(sv);
         if(SvOBJECT(r)) {
-            if(tx_sv_has_amg(aTHX_ sv, amg_id)) {
-                /* AMG_CALLunary() */
-                SV* const tmpsv = amagic_call(sv,
-                    &PL_sv_undef, amg_id, AMGf_noright | AMGf_unary);
+            if(SvAMAGIC(sv)) {
+                SV* const tmpsv = amagic_deref_call(sv, amg_id);
                 if(SvROK(tmpsv)
                         && SvTYPE(SvRV(tmpsv)) == svt
                         && !SvOBJECT(SvRV(tmpsv))) {
