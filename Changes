@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.5016 2012-08-04 19:19:15
+    [BUG FIXES]
+    - Fix a bug that reloading templates could fail on deploying
+    - Fix a problem on 5.17
+
 1.5015 2012-07-13 19:31:53
     [IMPROVEMENT]
     - Enhance extensibility for custom parsers (shmorimo)
