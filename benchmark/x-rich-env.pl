@@ -22,6 +22,7 @@ GetOptions(
 
     'size=i'     => \my $n,
     'template=s' => \my $tmpl,
+    'first-time' => \my $first_time,
     'help'       => \my $help,
 );
 
@@ -66,35 +67,61 @@ foreach my $mod(qw(
 
 my $path = "$Bin/template";
 
-my $tx = Text::Xslate->new(
-    path       => [$path],
-    cache_dir  =>  '.xslate_cache',
-    cache      => 2,
-);
-my $mt = Text::MicroTemplate::Extended->new(
-    include_path => [$path],
-    use_cache    => 2,
-);
-my $tt = Template->new(
-    INCLUDE_PATH => [$path],
-    COMPILE_EXT  => '.out',
-);
+sub xslate {
+    return Text::Xslate->new(
+        path       => [$path],
+        cache_dir  =>  '.xslate_cache',
+        cache      => 2,
+    );
+}
 
-my $htp;
-if($has_htp) {
-    $htp = HTML::Template::Pro->new(
+sub mt {
+    return Text::MicroTemplate::Extended->new(
+        include_path => [$path],
+        use_cache    => 2,
+    );
+}
+
+sub tt {
+    return Template->new(
+        INCLUDE_PATH => [$path],
+        COMPILE_EXT  => '.out',
+    );
+}
+
+sub htp {
+    return HTML::Template::Pro->new(
         path           => [$path],
         filename       => "$tmpl.ht",
         case_sensitive => 1,
     );
 }
 
-my $tcs;
-if($has_tcs) {
-    $tcs = Text::ClearSilver->new(
+sub tcs {
+    return Text::ClearSilver->new(
         VarEscapeMode => 'html',
         load_path     => [$path],
     );
+}
+
+sub tenjin {
+    return Tenjin->new({
+        path => [$path],
+        strict => 1,
+    });
+}
+
+my $tx = xslate();
+my $mt = mt();
+my $tt = tt();
+my $htp;
+if($has_htp) {
+    $htp = htp();
+}
+
+my $tcs;
+if($has_tcs) {
+    $tcs = tcs();
 }
 
 my $mst_in  = "$Bin/template/list.mst";
@@ -105,10 +132,7 @@ if($has_mst) {
 
 my $tenjin;
 if($has_tenjin) {
-    $tenjin = Tenjin->new({
-        path => [$path],
-        strict => 1,
-    });
+    $tenjin = tenjin();
 }
 
 my $vars = {
@@ -168,14 +192,17 @@ my $vars_tenjin = Storable::dclone($vars);
 print "Benchmarks with '$tmpl' (datasize=$n)\n";
 cmpthese -1 => {
     Xslate => sub {
+        $tx = xslate() if $first_time;
         my $body = $tx->render("$tmpl.tx", $vars);
         return;
     },
     MT => sub {
+        $mt = mt() if $first_time;
         my $body = $mt->render_file($tmpl, $vars);
         return;
     },
     TT => sub {
+        $tt = tt() if $first_time;
         my $body;
         $tt->process("$tmpl.tt", $vars, \$body) or die $tt->error;
         return;
@@ -183,6 +210,7 @@ cmpthese -1 => {
 
     $has_tcs ? (
         TCS => sub {
+            $tcs = tcs() if $first_time;
             my $body;
             $tcs->process("$tmpl.cs", $vars, \$body);
             return;
@@ -196,6 +224,7 @@ cmpthese -1 => {
     ) : (),
     $has_htp ? (
         HTP => sub {
+            $htp = htp() if $first_time;
             $htp->param($vars);
             my $body = $htp->output();
             return;
@@ -203,6 +232,7 @@ cmpthese -1 => {
     ) : (),
     $has_tenjin ? (
         Tenjin => sub {
+            $tenjin = tenjin() if $first_time;
             my $body = $tenjin->render("$tmpl.tj", $vars_tenjin);
             return;
         },
