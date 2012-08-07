@@ -26,7 +26,7 @@ Text::Xslate::Syntax::Kolon - The default template syntax
 
 =head1 DESCRIPTION
 
-Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line code. In this syntax all the futures in Xslate are available.
+Kolon is the default syntax, using C<< <: ... :> >> tags and C<< : ... >> line code. In this syntax all the features in Xslate are available.
 
 =head1 SYNTAX
 
@@ -412,7 +412,7 @@ The result is something like this:
         --------------
 
         Before body!
-        My template tody!
+        My template body!
         After body!
 
 You can also cascade templates just like Moose's roles:
