@@ -1,12 +1,10 @@
 #!perl -w
 use strict;
-use Text::Xslate qw(html_builder);
-use HTML::FillInForm::Lite 1.09 qw(fillinform);
+use Text::Xslate;
+use HTML::FillInForm::Lite 1.09;
 
 my $tx  = Text::Xslate->new(
-    function => {
-        fillinform => html_builder(\&fillinform),
-    },
+    html_builder_module => [ 'HTML::FillInForm::Lite' => [qw(fillinform)] ],
     cache_dir => '.eg_cache',
 );
 

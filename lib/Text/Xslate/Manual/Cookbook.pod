@@ -70,11 +70,18 @@ Output:
 Because L<HTML::FillInForm::Lite> provides C<fillinform> function,
 it becomes more simple:
 
-    use HTML::FillInForm qw(fillinform);
+    use HTML::FillInForm::Lite qw(fillinform);
 
     my $tx = Text::Xslate->new(
         function => { fillinform => html_builder(\&fillinform) },
     );
+
+From 1.5018 on, C<html_builder_module> are supported for HTML builder modules like C<HTML::FillInForm>. Just import HTML builder functions with C<html_builder_module> option.
+
+    my $tx = Text::Xslate->new(
+        html_builder_module => [ 'HTML::FillInForm::Lite' => [qw(fillinform)] ],
+    );
+
 
 See also L<HTML::FillInForm> or L<HTML::FillInForm::Lite> for details.
 
