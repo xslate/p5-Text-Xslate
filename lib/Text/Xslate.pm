@@ -833,6 +833,10 @@ Because you can use function-based modules with the C<module> option, and
 also can invoke any object methods in templates, Xslate doesn't require
 specific namespaces for plugins.
 
+=item C<< html_builder_module => [$module => ?\@import_args, ...] >>
+
+Imports functions from I<$module>, wrapping each function with C<html_builder()>.
+
 =item C<< input_layer => $perliolayers // ':utf8' >>
 
 Specifies PerlIO layers to open template files.
