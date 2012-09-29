@@ -148,6 +148,7 @@ sub options { # overridable
         cache_dir    => _DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
+        html_builder_module => undef,
         compiler     => 'Text::Xslate::Compiler',
 
         verbose      => 1,
@@ -208,6 +209,17 @@ sub new {
     if(defined $args{module}) {
         $self->_merge_hash(\%funcs,
             Text::Xslate::Util::import_from(@{$args{module}}));
+    }
+
+    # user-defined html builder functions
+    if(defined $args{html_builder_module}) {
+        my $raw = Text::Xslate::Util::import_from(@{$args{html_builder_module}});
+        my $html_builders = +{
+            map {
+                ($_ => &Text::Xslate::Util::html_builder($raw->{$_}))
+            } keys %$raw
+        };
+        $self->_merge_hash(\%funcs, $html_builders);
     }
 
     $self->_merge_hash(\%funcs, $arg_function);
