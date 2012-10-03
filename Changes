@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+1.5019 2012-10-03 12:28:20
+	[BUG FIXES]
+	- Revert 1.5016's bugfix which introduced a more serious problem.
+	  The complete bufix will be applied to 1.5020.
+
 1.5018 2012-09-30 13:41:13
     [FEATURES]
     - "html_builder_module" option to import HTML builders;
