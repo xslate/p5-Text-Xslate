@@ -291,10 +291,11 @@ tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     SV** const ary = AvARRAY(top);
 
     assert( st->current_frame > 0 );
-
-    /* switch the pad */
-    st->pad = AvARRAY(TX_frame_at(st, --st->current_frame))
-                + TXframe_START_LVAR;
+    if (--st->current_frame >= 0) {
+        /* switch the pad */
+        st->pad = AvARRAY(TX_frame_at(st, st->current_frame))
+                    + TXframe_START_LVAR;
+    }
 
     if(replace_output) {
         SV* const tmp       = ary[TXframe_OUTPUT];
@@ -1287,7 +1288,6 @@ CODE:
     AV* tmpl;
     SV* tobj;
     SV** svp;
-    AV* mainframe;
     AV* macro = NULL;
 
     TAINT_NOT; /* All the SVs we'll create here are safe */
@@ -1340,10 +1340,6 @@ CODE:
     /* stack frame */
     st.frames        = newAV();
     st.current_frame = -1;
-
-    mainframe = tx_push_frame(aTHX_ &st);
-    av_store(mainframe, TXframe_NAME,    newSVpvs_share("main"));
-    av_store(mainframe, TXframe_RETADDR, newSVuv(len));
 
     Newxz(st.info, len + 1, tx_info_t);
     st.info[len].line = (U16)-1; /* invalid value */
@@ -1487,7 +1483,6 @@ CODE:
 {
     dMY_CXT;
     tx_state_t* st;
-    SV* result;
 
     TAINT_NOT; /* All the SVs we'll create here are safe */
 
@@ -1546,13 +1541,18 @@ CODE:
         PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
     }
 
-    result = sv_newmortal();
-    sv_grow(result, st->hint_size + TX_HINT_SIZE);
-    SvPOK_on(result);
+    {
+        AV* mainframe = tx_push_frame(aTHX_ st); // frame[0]
+        SV* result = sv_newmortal();
+        sv_grow(result, st->hint_size + TX_HINT_SIZE);
+        SvPOK_on(result);
 
-    tx_execute(aTHX_ aMY_CXT_ st, result, (HV*)SvRV(vars));
-
-    ST(0) = result;
+        av_store(mainframe, TXframe_NAME,    SvREFCNT_inc_simple_NN(source));
+        av_store(mainframe, TXframe_RETADDR, newSVuv(st->code_len));
+        tx_execute(aTHX_ aMY_CXT_ st, result, (HV*)SvRV(vars));
+        tx_pop_frame(aTHX_ st, FALSE);
+        ST(0) = result;
+    }
 }
 
 void
