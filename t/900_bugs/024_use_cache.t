@@ -59,7 +59,6 @@ utime($t3, $t3, "$tmplpath/includes/footer.inc");
 {
     rmtree($cache_dir);
     my $tx_macro = My::Xslate->new(
-        module => [ 'Text::Xslate::Bridge::TT2Like' ],
         macro => [ 'macro.inc' ],
         syntax => 'TTerse',
         path => [ "$tmplpath/includes", $tmplpath ],
@@ -79,7 +78,6 @@ utime($t3, $t3, "$tmplpath/includes/footer.inc");
 {
     rmtree($cache_dir);
     my $tx_header = My::Xslate->new(
-        module => [ 'Text::Xslate::Bridge::TT2Like' ],
         header => [ 'macro.inc' ],
         syntax => 'TTerse',
         path => [ "$tmplpath/includes", $tmplpath ],
@@ -99,7 +97,6 @@ utime($t3, $t3, "$tmplpath/includes/footer.inc");
 {
     rmtree($cache_dir);
     my $tx_footer = My::Xslate->new(
-        module => [ 'Text::Xslate::Bridge::TT2Like' ],
         footer => [ 'footer.inc' ],
         syntax => 'TTerse',
         path => [ "$tmplpath/includes", $tmplpath ],
