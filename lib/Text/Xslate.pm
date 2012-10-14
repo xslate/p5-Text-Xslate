@@ -377,7 +377,6 @@ sub slurp_template {
 
     open my($source), '<' . $input_layer, $fullpath
         or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
-    flock($source, Fcntl::LOCK_SH());
     local $/;
     return scalar <$source>;
 }
@@ -410,22 +409,20 @@ sub _load_source {
         if(not -e $cachedir) {
             require File::Path;
             eval { File::Path::mkpath($cachedir) }
-                or Carp::croak("Xslate: Cannot prepare the cache directory $cachepath (ignored): $@");
+                or Carp::croak("Xslate: Cannot prepare cache directory $cachepath (ignored): $@");
         }
 
-        if(sysopen my($out), $cachepath, Fcntl::O_WRONLY() | Fcntl::O_CREAT()) {
-            flock $out, Fcntl::LOCK_EX();
-            truncate $out, 0 or Carp::croak("Xslate: failed to truncate: $!");
-            binmode($out);
+        my $tmpfile = sprintf('%s.%d.d', $cachepath, $$, $self);
+
+        if (open my($out), ">:raw", $tmpfile) {
             my $mtime = $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                 unlink $cachepath;
+                 unlink $tmpfile;
             }
-            else {
+            elsif (rename($tmpfile => $cachepath)) {
                 # set the newest mtime of all the related files to cache mtime
-
                 if (not ref $fullpath) {
                     my $main_mtime = (stat $fullpath)[_ST_MTIME];
                     if (defined($main_mtime) && $main_mtime > $mtime) {
@@ -437,6 +434,10 @@ sub _load_source {
                 else {
                     $fi->{cache_mtime} = (stat $cachepath)[_ST_MTIME];
                 }
+            }
+            else {
+                Carp::carp("Xslate: Cannot rename cache file $cachepath (ignored): $!");
+                unlink $tmpfile;
             }
         }
         else {
@@ -475,7 +476,6 @@ sub _load_compiled {
     my $cachepath = $fi->{cachepath};
     open my($in), '<:raw', $cachepath
         or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
-    flock($in, Fcntl::LOCK_SH());
 
     my $magic = $self->_magic_token($fi->{fullpath});
     my $data;
