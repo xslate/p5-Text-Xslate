@@ -417,14 +417,26 @@ sub _load_source {
             flock $out, Fcntl::LOCK_EX();
             truncate $out, 0 or Carp::croak("Xslate: failed to truncate: $!");
             binmode($out);
-            $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
+            my $mtime = $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
 
             if(!close $out) {
                  Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
                  unlink $cachepath;
             }
             else {
-                $fi->{cache_mtime} = ( stat $cachepath )[_ST_MTIME];
+                # set the newest mtime of all the related files to cache mtime
+
+                if (not ref $fullpath) {
+                    my $main_mtime = (stat $fullpath)[_ST_MTIME];
+                    if (defined($main_mtime) && $main_mtime > $mtime) {
+                        $mtime = $main_mtime;
+                    }
+                    utime $mtime, $mtime, $cachepath;
+                    $fi->{cache_mtime} = $mtime;
+                }
+                else {
+                    $fi->{cache_mtime} = (stat $cachepath)[_ST_MTIME];
+                }
             }
         }
         else {
@@ -526,10 +538,19 @@ sub _save_compiled {
     local $\;
     print $out $self->_magic_token($fullpath);
     print $out $mp->pack($is_utf8 ? 1 : 0);
+
+    my $newest_mtime = 0;
     foreach my $c(@{$asm}) {
         print $out $mp->pack($c);
+
+        if ($c->[0] eq 'depend') {
+            my $dep_mtime = (stat $c->[1])[_ST_MTIME];
+            if ($newest_mtime < $dep_mtime) {
+                $newest_mtime = $dep_mtime;
+            }
+        }
     }
-    return;
+    return $newest_mtime;
 }
 
 sub _magic_token {
