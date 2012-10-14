@@ -1,8 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+1.5023 2012-10-15 08:22:14
+    [TEST]
+    - Apply issue #66 again
+    - 1.5022 was identical to 1.5021 (thanks to @doy)
+
 1.5022 2012-10-15 00:15:18
     [TEST]
-    - Do not depend on extra modules in tests (@nihen).
+    - Do not depend on extra modules in tests (issue #66, @nihen).
 
 1.5021 2012-10-15 00:07:54
     [BUG FIXES]
