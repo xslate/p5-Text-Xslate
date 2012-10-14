@@ -4,10 +4,9 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '1.5019';
+our $VERSION = '1.5020';
 
 use Carp              ();
-use Fcntl             ();
 use File::Spec        ();
 use Exporter          ();
 use Data::MessagePack ();
@@ -656,7 +655,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version 1.5019.
+This document describes Text::Xslate version 1.5020.
 
 =head1 SYNOPSIS
 

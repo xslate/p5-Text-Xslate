@@ -1,9 +1,16 @@
 Revision history for Perl extension Text::Xslate
 
+1.5020 2012-10-14 23:06:49
+    [BUG FIXES]
+    - Fix deploying issues reported at 1.5017, again.
+      thanks to @woremacx for reporting it.
+    - Fix a bug that calling macro which encloses outer variables,
+      may clobber other variables, thanks to @ktat for reporting it.
+
 1.5019 2012-10-03 12:28:20
-	[BUG FIXES]
-	- Revert 1.5016's bugfix which introduced a more serious problem.
-	  The complete bufix will be applied to 1.5020.
+    [BUG FIXES]
+    - Revert 1.5016's bugfix which introduced a more serious problem.
+      The complete bufix will be applied to 1.5020.
 
 1.5018 2012-09-30 13:41:13
     [FEATURES]
