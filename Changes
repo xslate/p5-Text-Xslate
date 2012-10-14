@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5022 2012-10-15 00:15:18
+    [TEST]
+    - Do not depend on extra modules in tests (@nihen).
+
 1.5021 2012-10-15 00:07:54
     [BUG FIXES]
     - Fix a segv that recursive call of render() may cause SETV

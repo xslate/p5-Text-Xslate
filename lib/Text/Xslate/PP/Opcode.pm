@@ -2,7 +2,7 @@ package Text::Xslate::PP::Opcode;
 use Any::Moose;
 extends qw(Text::Xslate::PP::State);
 
-our $VERSION = '1.5021';
+our $VERSION = '1.5022';
 
 use Carp ();
 use Scalar::Util ();
