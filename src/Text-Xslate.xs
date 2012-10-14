@@ -16,6 +16,8 @@
 
 #include "xslate_ops.h"
 
+static bool dump_load = FALSE;
+
 #ifdef DEBUGGING
 #define TX_st_sa  *tx_sv_safe(aTHX_ &(TX_st->sa),  "TX_st->sa",  __FILE__, __LINE__)
 #define TX_st_sb  *tx_sv_safe(aTHX_ &(TX_st->sb),  "TX_st->sb",  __FILE__, __LINE__)
@@ -1037,7 +1039,7 @@ static bool
 tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
     I32 const len = AvFILLp(tmpl) + 1;
     I32 i;
-    Stat_t f;
+    Stat_t st;
 
     for(i = TXo_FULLPATH; i < len; i++) {
         SV* const deppath = AvARRAY(tmpl)[i];
@@ -1047,8 +1049,8 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
         }
 
         //PerlIO_stdoutf("check deps: %"SVf" ...\n", deppath); // */
-        if(PerlLIO_stat(SvPV_nolen_const(deppath), &f) < 0
-               || f.st_mtime > cache_mtime) {
+        if(PerlLIO_stat(SvPV_nolen_const(deppath), &st) < 0
+               || st.st_mtime > cache_mtime) {
             SV* const main_cache = AvARRAY(tmpl)[TXo_CACHEPATH];
             /* compiled caches are no longer fresh, so it must be discarded */
 
@@ -1057,11 +1059,19 @@ tx_all_deps_are_fresh(pTHX_ AV* const tmpl, Time_t const cache_mtime) {
             }
             //PerlLIO_unlink(SvPV_nolen_const(AvARRAY(tmpl);
 
-            //PerlIO_stdoutf("%"SVf": too old (%d > %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
+            if (dump_load) {
+                PerlIO_printf(PerlIO_stderr(),
+                    "#[XS]   %"SVf": too old (%d < %d)\n",
+                    deppath, (int)cache_mtime, (int)st.st_mtime);
+            }
             return FALSE;
         }
         else {
-            //PerlIO_stdoutf("%"SVf": fresh enough (%d <= %d)\n", deppath, (int)f.st_mtime, (int)cache_mtime); // */
+            if (dump_load) {
+                PerlIO_printf(PerlIO_stderr(),
+                    "#[XS]   %"SVf": fresh enough (%d >= %d)\n",
+                    deppath, (int)cache_mtime, (int)st.st_mtime);
+            }
         }
     }
     return TRUE;
@@ -1080,7 +1090,10 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
     SV* cache_mtime;
     int retried = 0;
 
-    //PerlIO_stdoutf("load_template(%"SVf")\n", name);
+    if (dump_load) {
+        PerlIO_printf(PerlIO_stderr(),
+            "#[XS] load_template(%"SVf")\n", name);
+    }
 
     if(!SvOK(name)) {
         why = "template name is invalid";
@@ -1151,7 +1164,10 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
         return (tx_state_t*)mg->mg_ptr;
     }
 
-    //PerlIO_stdoutf("###%d %d\n", (int)retried, (int)SvIVX(cache_mtime));
+    if (dump_load) {
+        PerlIO_printf(PerlIO_stderr(),
+            "#[XS]   %"SVf" mtime=%"SVf"\n", name, cache_mtime);
+    }
 
     if(retried > 0 /* if already retried, it should be valid */
             || tx_all_deps_are_fresh(aTHX_ tmpl, SvIVX(cache_mtime))) {
@@ -1803,6 +1819,17 @@ BOOT:
     sv_setsv_mg(
         (SV*)gv_fetchpvs( TX_MACRO_CLASS "::(&{}", GV_ADDMULTI, SVt_PVCV),
         code_ref);
+
+    // debug flag
+    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( "Text::Xslate::Engine::_DUMP_LOAD", GV_ADD)));
+    {
+        dSP;
+        PUSHMARK(SP);
+        call_sv(code_ref, G_SCALAR);
+        SPAGAIN;
+        dump_load = sv_true(POPs);
+        PUTBACK;
+    }
 }
 
 CV*
