@@ -819,14 +819,13 @@ tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const reta
         for(NOOP; i < outer; i++) {
             IV const real_ix = i + TXframe_START_LVAR;
             /* XXX: macros can refer to unallocated lvars */
-            SV* const sv     = AvFILLp(oframe) >= real_ix
-                ? AvARRAY(oframe)[real_ix]
+            SV* const sv = AvFILLp(oframe) >= real_ix
+                ? sv_mortalcopy(AvARRAY(oframe)[real_ix])
                 : &PL_sv_undef;
             av_store(cframe, real_ix , sv);
             SvREFCNT_inc_simple_void_NN(sv);
         }
     }
-
     if(items > 0) { /* has arguments */
         dORIGMARK;
         MARK++;
