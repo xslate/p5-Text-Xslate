@@ -31,7 +31,7 @@ my $t = Text::Xslate->new(
 );
 
 my $text = $t->render("test.tt");
-diag $text;
+note $text;
 like $text, qr/^42 \s+ should \s+ be \s+ 42\.$/xms;
 
 done_testing;
