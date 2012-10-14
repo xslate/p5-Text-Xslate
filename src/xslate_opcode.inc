@@ -471,6 +471,13 @@ TXC(builtin_html_escape) {
     TX_RETURN_NEXT();
 }
 
+TXC(is_code_ref) {
+    SV* const sv = TX_st_sa;
+    SvGETMAGIC(sv);
+    TX_st_sa = boolSV( tx_sv_is_code_ref(aTHX_ sv) );
+    TX_RETURN_NEXT();
+}
+
 TXC(match) {
     TX_st_sa = boolSV( tx_sv_match(aTHX_ TX_st_sb, TX_st_sa) );
     TX_RETURN_NEXT();

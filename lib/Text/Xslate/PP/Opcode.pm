@@ -387,6 +387,11 @@ sub op_builtin_is_hash_ref {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_is_code_ref {
+    $_[0]->{sa} = Text::Xslate::Util::is_code_ref($_[0]->{sa});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
 sub op_match {
     $_[0]->{sa} = Text::Xslate::PP::tx_match($_[0]->{sb}, $_[0]->{sa});
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };

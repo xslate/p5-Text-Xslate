@@ -131,6 +131,12 @@ tx_sv_is_hash_ref(pTHX_ SV* const sv) {
     return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV && !SvOBJECT(SvRV(sv));
 }
 
+int
+tx_sv_is_code_ref(pTHX_ SV* const sv) {
+    assert(sv);
+    return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVCV && !SvOBJECT(SvRV(sv));
+}
+
 STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv); /* doesn't handle magics */
 
@@ -1751,6 +1757,13 @@ is_hash_ref(SV* sv)
 CODE:
 {
     ST(0) = boolSV( tx_sv_is_hash_ref(aTHX_ sv));
+}
+
+void
+is_code_ref(SV* sv)
+CODE:
+{
+    ST(0) = boolSV( tx_sv_is_code_ref(aTHX_ sv));
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw

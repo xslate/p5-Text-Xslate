@@ -202,6 +202,9 @@ tx_sv_is_array_ref(pTHX_ SV* const sv);
 int
 tx_sv_is_hash_ref(pTHX_ SV* const sv);
 
+int
+tx_sv_is_code_ref(pTHX_ SV* const sv);
+
 /* builtin method stuff */
 
 SV*
