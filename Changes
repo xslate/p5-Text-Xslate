@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+1.5024 2012-10-15 18:02:29
+    [BUG FIXES]
+    - Fix false assertion failure
+
 1.5023 2012-10-15 08:22:14
     [TEST]
     - Apply issue #66 again
