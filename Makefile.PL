@@ -7,9 +7,9 @@ BEGIN {
     unshift @INC, 'inc';
 	# author requires, or bundled modules
     my @devmods = qw(
-        inc::Module::Install             1.00
-        Module::Install::XSUtil          0.42
-        Module::Install::TestTarget      0.13
+        inc::Module::Install             1.06
+        Module::Install::XSUtil          0.43
+        Module::Install::TestTarget      0.19
         Module::Install::AuthorTests     0.002
     );
     my @not_available;
