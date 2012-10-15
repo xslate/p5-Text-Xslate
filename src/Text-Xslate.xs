@@ -290,7 +290,7 @@ tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     AV* const top  = TX_frame_at(st, st->current_frame);
     SV** const ary = AvARRAY(top);
 
-    assert( st->current_frame > 0 );
+    assert( st->current_frame >= 0 );
     if (--st->current_frame >= 0) {
         /* switch the pad */
         st->pad = AvARRAY(TX_frame_at(st, st->current_frame))
