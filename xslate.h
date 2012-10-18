@@ -210,5 +210,8 @@ tx_sv_is_code_ref(pTHX_ SV* const sv);
 SV*
 tx_methodcall(pTHX_ tx_state_t* const st, SV* const method);
 
+SV*
+tx_merge_hash(pTHX_ tx_state_t* const st, SV* base, SV* value);
+
 void
 tx_register_builtin_methods(pTHX_ HV* const hv);

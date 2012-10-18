@@ -478,6 +478,15 @@ TXC(is_code_ref) {
     TX_RETURN_NEXT();
 }
 
+TXC(merge_hash) {
+    SV* const base = TX_st_sa;
+    SV* const value = TX_st_sb;
+    SvGETMAGIC(base);
+    SvGETMAGIC(value);
+    TX_st_sa = tx_merge_hash(TX_st, base, value);
+    TX_RETURN_NEXT();
+}
+
 TXC(match) {
     TX_st_sa = boolSV( tx_sv_match(aTHX_ TX_st_sb, TX_st_sa) );
     TX_RETURN_NEXT();

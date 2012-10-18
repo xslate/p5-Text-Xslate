@@ -542,6 +542,11 @@ sub op_make_hash {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+sub op_merge_hash {
+    $_[0]->{sa} = Text::Xslate::Util::merge_hash($_[0]->{sa}, $_[0]->{sb});
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
 
 sub op_enter {
     push @{$_[0]->{save_local_stack} ||= []}, delete $_[0]->{local_stack};

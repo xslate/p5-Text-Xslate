@@ -373,37 +373,7 @@ TXBM(hash, kv) {
 }
 
 TXBM(hash, merge) {
-    HV* const hv        = (HV*)SvRV(*MARK);
-    SV* const value     = *(++MARK);
-    HV* const result    = newHVhv(hv);
-    SV* const resultref = newRV_noinc((SV*)result);
-    HE* he;
-    HV* m;
-
-    if(!tx_sv_is_hash_ref(aTHX_ value)) {
-        tx_error(aTHX_ st, "Merging value is not a HASH reference");
-        sv_setsv(retval, &PL_sv_undef);
-        SvREFCNT_dec(resultref);
-        return;
-    }
-
-    m = (HV*)SvRV(value);
-
-    ENTER;
-    SAVETMPS;
-    sv_2mortal(resultref);
-
-    hv_iterinit(m);
-    while((he = hv_iternext(m))) {
-        (void)hv_store_ent(result,
-            hv_iterkeysv(he),
-            newSVsv(hv_iterval(hv, he)),
-            0U);
-    }
-
-    sv_setsv(retval, resultref);
-    FREETMPS;
-    LEAVE;
+    sv_setsv(retval, tx_merge_hash(st, *MARK, *(MARK + 1)));
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
