@@ -183,6 +183,16 @@ sub op_include {
     goto $st->{ code }->[ ++$st->{ pc } ]->{ exec_code };
 }
 
+sub op_find_file {
+    $_[0]->{sa} = eval { $_[0]->engine->find_file($_[0]->{sa}); 1 };
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
+sub op_suffix {
+    $_[0]->{sa} = $_[0]->engine->{suffix};
+    goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
+}
+
 sub op_for_start {
     my($st) = @_;
     my $id = $st->op_arg;

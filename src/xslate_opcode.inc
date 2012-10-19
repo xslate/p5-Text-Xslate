@@ -172,6 +172,40 @@ TXC(include) {
     TX_RETURN_NEXT();
 }
 
+TXC(find_file) {
+    dSP;
+
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    XPUSHs(TX_st->engine);
+    XPUSHs(TX_st_sa);
+    PUTBACK;
+
+    call_method("find_file", G_SCALAR|G_EVAL);
+
+    SPAGAIN;
+    if (SvTRUE(ERRSV)) {
+        sv_setsv(TX_st_sa, &PL_sv_no);
+    }
+    else {
+        sv_setsv(TX_st_sa, &PL_sv_yes);
+    }
+    (void)POPs;
+    PUTBACK;
+
+    FREETMPS;
+    LEAVE;
+
+    TX_RETURN_NEXT();
+}
+
+TXC(suffix) {
+    TX_st_sa = *hv_fetchs((HV*)SvRV(TX_st->engine), "suffix", 0);
+    TX_RETURN_NEXT();
+}
+
 TXC_w_var(for_start) {
     SV* avref    = TX_st_sa;
     IV  const id = TX_op_arg_iv;
