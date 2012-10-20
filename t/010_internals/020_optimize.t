@@ -2,6 +2,7 @@
 # Ensure that the optimization works correctly
 use strict;
 use Test::More;
+BEGIN { eval "use Test::Difflet qw(is_deeply)"; }
 
 use Text::Xslate;
 use Text::Xslate::Compiler;
