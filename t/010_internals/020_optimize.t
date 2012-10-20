@@ -41,7 +41,13 @@ asm_eq '(1 + 1) * (1 + 3)', '8';
 
 asm_eq '"foo" ~ "bar"', '"foobar"';
 
+asm_eq '+ 1', +1;
+asm_eq '- 1', -1;
 asm_eq '+^ 1', ~1;
+
+asm_eq '+  (1+1)', +2;
+asm_eq '-  (1+1)', -2;
+asm_eq '+^ (1+1)', ~2;
 
 asm_eq '10 min 20', '10';
 asm_eq '10 max 20', '20';
