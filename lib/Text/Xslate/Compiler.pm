@@ -1123,11 +1123,12 @@ sub _generate_unary {
 
     my $id = $node->id;
     if(exists $unary{$id}) {
+        my @operand = $self->compile_ast($node->first);
         my @code = (
-            $self->compile_ast($node->first),
+            @operand,
             $self->opcode( $unary{$id} )
         );
-        if( $OPTIMIZE and $self->_code_is_literal(@code) ) {
+        if( $OPTIMIZE and $self->_code_is_literal(@operand) ) {
             $self->_fold_constants(\@code);
         }
         return @code;
@@ -1418,7 +1419,9 @@ sub can_be_in_list_context {
 
 sub _code_is_literal {
     my($self, @code) = @_;
-    return @code == 1 && $code[0][_OP_NAME] eq 'literal';
+    return @code == 1
+        && (    $code[0][_OP_NAME] eq 'literal'
+             || $code[0][_OP_NAME] eq 'literal_i');
 }
 
 sub _fold_constants {
