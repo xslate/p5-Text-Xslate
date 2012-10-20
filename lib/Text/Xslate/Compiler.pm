@@ -1127,7 +1127,7 @@ sub _generate_unary {
             $self->compile_ast($node->first),
             $self->opcode( $unary{$id} )
         );
-        if( $OPTIMIZE and $self->_code_is_literal($code[0]) ) {
+        if( $OPTIMIZE and $self->_code_is_literal(@code) ) {
             $self->_fold_constants(\@code);
         }
         return @code;
