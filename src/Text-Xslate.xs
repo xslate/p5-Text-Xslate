@@ -131,6 +131,53 @@ tx_sv_is_hash_ref(pTHX_ SV* const sv) {
     return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVHV && !SvOBJECT(SvRV(sv));
 }
 
+int
+tx_sv_is_code_ref(pTHX_ SV* const sv) {
+    assert(sv);
+    return SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVCV && !SvOBJECT(SvRV(sv));
+}
+
+SV*
+tx_merge_hash(pTHX_ tx_state_t* const st, SV* base, SV* value) {
+    SV* const retval    = newSV(0);
+    HV* const hv        = (HV*)SvRV(base);
+    HV* const result    = newHVhv(hv);
+    SV* const resultref = newRV_noinc((SV*)result);
+    HE* he;
+    HV* m;
+
+    if(!tx_sv_is_hash_ref(aTHX_ value)) {
+        if (st) {
+            tx_error(aTHX_ st, "Merging value is not a HASH reference");
+        }
+        else {
+            die("Merging value is not a HASH reference");
+        }
+        SvREFCNT_dec(resultref);
+        return retval;
+    }
+
+    m = (HV*)SvRV(value);
+
+    ENTER;
+    SAVETMPS;
+    sv_2mortal(resultref);
+
+    hv_iterinit(m);
+    while((he = hv_iternext(m))) {
+        (void)hv_store_ent(result,
+            hv_iterkeysv(he),
+            newSVsv(hv_iterval(hv, he)),
+            0U);
+    }
+
+    sv_setsv(retval, resultref);
+    FREETMPS;
+    LEAVE;
+
+    return retval;
+}
+
 STATIC_INLINE bool
 tx_str_is_raw(pTHX_ pMY_CXT_ SV* const sv); /* doesn't handle magics */
 
@@ -1751,6 +1798,20 @@ is_hash_ref(SV* sv)
 CODE:
 {
     ST(0) = boolSV( tx_sv_is_hash_ref(aTHX_ sv));
+}
+
+void
+is_code_ref(SV* sv)
+CODE:
+{
+    ST(0) = boolSV( tx_sv_is_code_ref(aTHX_ sv));
+}
+
+void
+merge_hash(SV* base, SV* value)
+CODE:
+{
+    ST(0) = sv_2mortal(tx_merge_hash(aTHX_ NULL, base, value));
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw

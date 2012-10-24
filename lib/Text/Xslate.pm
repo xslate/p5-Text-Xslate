@@ -230,9 +230,7 @@ sub new {
 
 sub _merge_hash {
     my($self, $base, $add) = @_;
-    foreach my $name(keys %{$add}) {
-        $base->{$name} = $add->{$name};
-    }
+    %$base = %{ Text::Xslate::Util::merge_hash($base, $add || {}) };
     return;
 }
 
