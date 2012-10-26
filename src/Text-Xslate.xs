@@ -1207,7 +1207,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
 
     if (dump_load) {
         PerlIO_printf(PerlIO_stderr(),
-            "#[XS]   %"SVf" mtime=%"SVf"\n", name, cache_mtime);
+            "#[XS]   %"SVf" (mtime=%"SVf")\n", name, cache_mtime);
     }
 
     if(retried > 0 /* if already retried, it should be valid */

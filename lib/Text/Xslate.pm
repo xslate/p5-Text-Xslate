@@ -290,7 +290,7 @@ sub find_file {
     my $orig_mtime;
     my $cache_mtime;
     foreach my $p(@{$self->{path}}) {
-        $self->note("  find_file: %s / %s ...\n", $p, $file) if _DUMP_LOAD;
+        $self->note("  find_file: %s in  %s ...\n", $file, $p) if _DUMP_LOAD;
 
         my $cache_prefix;
         if(ref $p eq 'HASH') { # virtual path
@@ -330,7 +330,7 @@ sub find_file {
         $self->_error("LoadError: Cannot find '$file' (path: @{$self->{path}})");
     }
 
-    $self->note("  find_file: %s (%d)\n",
+    $self->note("  find_file: %s (mtime=%d)\n",
         $fullpath, $cache_mtime || 0) if _DUMP_LOAD;
 
     return {
@@ -349,7 +349,7 @@ sub load_file {
 
     local $self->{omit_augment} = $omit_augment;
 
-    $self->note("load_file(%s)\n", $file) if _DUMP_LOAD;
+    $self->note("%s->load_file(%s)\n", $self, $file) if _DUMP_LOAD;
 
     if($file eq '<string>') { # simply reload it
         return $self->load_string($self->{string_buffer});
@@ -444,7 +444,7 @@ sub _load_source {
         }
     }
     if(_DUMP_LOAD) {
-        $self->note("  _load_source: cache(%s)\n",
+        $self->note("  _load_source: cache(mtime=%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef');
     }
 
@@ -524,7 +524,7 @@ sub _load_compiled {
     }
 
     if(_DUMP_LOAD) {
-        $self->note("  _load_compiled: cache(%s)\n",
+        $self->note("  _load_compiled: cache(mtime=%s)\n",
             defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef');
     }
 
