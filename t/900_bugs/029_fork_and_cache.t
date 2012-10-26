@@ -38,7 +38,8 @@ T
     write_file("$service/main.tx", $content_main);
     write_file("$service/base.tx", $content_base);
 
-    my $tx  = MyXslate->new(
+    # emulate fork() (tow instances with the same options)
+    my $tx1  = MyXslate->new(
         cache_dir => "$service/cache",
         path      => [$service],
     );
@@ -47,24 +48,25 @@ T
         path      => [$service],
     );
 
-    is $tx->render("main.tx"), $content_base;
+    note 'first time';
+    is $tx1->render("main.tx"), $content_base;
     is $tx2->render("main.tx"), $content_base;
 
-    is $tx->{_load_source_count}{"$service/main.tx"} => 1;
+    is $tx1->{_load_source_count}{"$service/main.tx"} => 1;
     is $tx2->{_load_source_count}{"$service/main.tx"} => undef;
 
     sleep 1; # time goes
+    note 'template was modified and time went';
 
     $content_base .= '2';
     write_file("$service/base.tx", $content_base);
 
-    is $tx->render("main.tx"), $content_base;
-    is $tx->{_load_source_count}{"$service/main.tx"} => 2;
+    is $tx1->render("main.tx"), $content_base;
+    is $tx1->{_load_source_count}{"$service/main.tx"} => 2;
 
     # render() should use cache without recompiling
     is $tx2->render("main.tx"), $content_base;
-    is $tx2->{_load_source_count}{"$service/main.tx"}, undef, 'did not re-compile';
-
+    is $tx2->{_load_source_count}{"$service/main.tx"} => undef, 'did not re-compile';
 }
 
 done_testing;
