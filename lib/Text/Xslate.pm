@@ -28,7 +28,7 @@ BEGIN {
 
 our @ISA = qw(Text::Xslate::Engine);
 
-my $BYTECODE_VERSION = '1.5';
+my $BYTECODE_VERSION = '1.6';
 
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};

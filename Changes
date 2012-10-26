@@ -1,6 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
 NEXT
+    - The bytecode version is now 1.6. So all the cache will be discarded.
+
     [FEATURES]
     - Add opcodes: find_file, suffix, is_code_ref, merge_file (doy)
 
