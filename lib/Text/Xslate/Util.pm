@@ -55,6 +55,7 @@ sub unmark_raw;  # XS
 sub html_escape; # XS
 sub uri_escape;  # XS
 sub escaped_string; *escaped_string = \&mark_raw;
+sub merge_hash;  # XS
 
 sub html_builder (&){
     my($code_ref) = @_;

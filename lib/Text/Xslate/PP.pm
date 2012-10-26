@@ -347,6 +347,9 @@ sub _assemble {
 
     sub is_array_ref { ref($_[0]) eq 'ARRAY' }
     sub is_hash_ref  { ref($_[0]) eq 'HASH'  }
+    sub is_code_ref  { ref($_[0]) eq 'CODE'  }
+
+    sub merge_hash { +{ %{ $_[0] }, %{ $_[1] } } }
 }
 
 #
