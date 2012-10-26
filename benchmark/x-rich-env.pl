@@ -19,6 +19,7 @@ use Config; printf "Perl/%vd %s\n", $^V, $Config{archname};
 GetOptions(
     'mst'        => \my $try_mst,
     'tenjin'     => \my $try_tenjin,
+    'clearsilver'=> \my $try_cs,
 
     'size=i'     => \my $n,
     'template=s' => \my $tmpl,
@@ -40,7 +41,7 @@ $tmpl = 'include' if not defined $tmpl;
 $n    = 100       if not defined $n;
 
 
-my $has_tcs = eval q{ use Text::ClearSilver 0.10.5.4; 1 };
+my $has_tcs = ($try_cs && eval q{ use Text::ClearSilver 0.10.5.4; 1 });
 warn "Text::ClearSilver is not available ($@)\n" if $@;
 
 my $has_mst = ($tmpl eq 'list' && $try_mst && eval q{ use MobaSiF::Template; 1 });
