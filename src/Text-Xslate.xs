@@ -139,29 +139,27 @@ tx_sv_is_code_ref(pTHX_ SV* const sv) {
 
 SV*
 tx_merge_hash(pTHX_ tx_state_t* const st, SV* base, SV* value) {
-    SV* const retval    = newSV(0);
     HV* const hv        = (HV*)SvRV(base);
     HV* const result    = newHVhv(hv);
     SV* const resultref = newRV_noinc((SV*)result);
     HE* he;
     HV* m;
+    sv_2mortal((SV*)resultref);
+
+    SvGETMAGIC(base);
+    SvGETMAGIC(value);
 
     if(!tx_sv_is_hash_ref(aTHX_ value)) {
         if (st) {
             tx_error(aTHX_ st, "Merging value is not a HASH reference");
         }
         else {
-            die("Merging value is not a HASH reference");
+            Perl_croak(aTHX_ "Merging value is not a HASH reference");
         }
-        SvREFCNT_dec(resultref);
-        return retval;
+        return resultref;
     }
 
     m = (HV*)SvRV(value);
-
-    ENTER;
-    SAVETMPS;
-    sv_2mortal(resultref);
 
     hv_iterinit(m);
     while((he = hv_iternext(m))) {
@@ -171,11 +169,7 @@ tx_merge_hash(pTHX_ tx_state_t* const st, SV* base, SV* value) {
             0U);
     }
 
-    sv_setsv(retval, resultref);
-    FREETMPS;
-    LEAVE;
-
-    return retval;
+    return resultref;
 }
 
 STATIC_INLINE bool
@@ -1811,7 +1805,7 @@ void
 merge_hash(SV* base, SV* value)
 CODE:
 {
-    ST(0) = sv_2mortal(tx_merge_hash(aTHX_ NULL, base, value));
+    ST(0) = tx_merge_hash(aTHX_ NULL, base, value);
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Type::Raw

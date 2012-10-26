@@ -515,9 +515,7 @@ TXC(is_code_ref) {
 TXC(merge_hash) {
     SV* const base = TX_st_sa;
     SV* const value = TX_st_sb;
-    SvGETMAGIC(base);
-    SvGETMAGIC(value);
-    TX_st_sa = tx_merge_hash(TX_st, base, value);
+    TX_st_sa = tx_merge_hash(aTHX_ TX_st, base, value);
     TX_RETURN_NEXT();
 }
 

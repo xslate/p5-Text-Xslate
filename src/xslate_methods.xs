@@ -373,7 +373,7 @@ TXBM(hash, kv) {
 }
 
 TXBM(hash, merge) {
-    sv_setsv(retval, tx_merge_hash(st, *MARK, *(MARK + 1)));
+    sv_setsv(retval, tx_merge_hash(aTHX_ st, *MARK, *(MARK + 1)));
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
