@@ -48,7 +48,7 @@ T
         path      => [$service],
     );
     write_file("$service/main.tx", $content_main);
-    sleep 1; # time goes
+    sleep 2; # time goes
     write_file("$service/base.tx", $content_base);
 
     is $tx->render("main.tx"), $content_base;
