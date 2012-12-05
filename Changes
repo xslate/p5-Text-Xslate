@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-NEXT
+1.6001 2012-12-05 10:03:13
     [BUG FIXES]
     - Resolve issue #71: SV leaks in VM frames
 
