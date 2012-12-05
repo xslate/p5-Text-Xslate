@@ -1,6 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
-1.6000_01
+NEXT
+    [BUG FIXES]
+    - Resolve issue #71: SV leaks in VM frames
+
+1.6000_01 2012-11-04 09:56:45
     - The bytecode version is now 1.6. So all the cache will be discarded.
 
     [FEATURES]
