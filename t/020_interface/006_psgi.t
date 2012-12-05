@@ -1,7 +1,7 @@
 #!perl -w
 
 use strict;
-use Test::Requires { 'Plack' => 0.99, 'Devel::StackTrace' => 1.25 };
+use Test::Requires { 'Plack' => 0.99, 'Devel::StackTrace' => 1.30 };
 use Test::More;
 
 use HTTP::Request;
