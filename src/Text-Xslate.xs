@@ -329,7 +329,8 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
 static void
 tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     AV* const top  = TX_frame_at(st, st->current_frame);
-    SV** const ary = AvARRAY(top);
+
+    av_fill(top, TXframe_START_LVAR - 1);
 
     assert( st->current_frame >= 0 );
     if (--st->current_frame >= 0) {
@@ -339,6 +340,7 @@ tx_pop_frame(pTHX_ tx_state_t* const st, bool const replace_output) {
     }
 
     if(replace_output) {
+        SV** const ary      = AvARRAY(top);
         SV* const tmp       = ary[TXframe_OUTPUT];
         ary[TXframe_OUTPUT] = st->output;
         st->output          = tmp;
