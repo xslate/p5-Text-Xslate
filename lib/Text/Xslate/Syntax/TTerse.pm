@@ -204,6 +204,10 @@ sub std_if {
     my($parser, $symbol, $expr) = @_;
     my $if = $symbol->clone(arity => "if");
 
+    my $is_modifier = defined $expr;
+
+    $parser->new_scope() unless $is_modifier; # whole if block
+
     my $cond = $parser->expression(0);
 
     if($symbol->id eq 'UNLESS') {
@@ -214,12 +218,17 @@ sub std_if {
     }
     $if->first($cond);
 
-    if(defined $expr) { # statement modifier
+    if($is_modifier) {
         $if->second([ $expr ]);
         return $if;
     }
 
-    $if->second( $parser->statements() );
+    # then block
+    {
+        $parser->new_scope();
+        $if->second( $parser->statements() );
+        $parser->pop_scope();
+    }
 
     my $t = $parser->token;
 
@@ -231,7 +240,13 @@ sub std_if {
 
         my $elsif = $t->clone(arity => "if");
         $elsif->first(  $parser->expression(0) );
-        $elsif->second( $parser->statements() );
+
+        {
+            $parser->new_scope();
+            $elsif->second( $parser->statements() );
+            $parser->pop_scope();
+        }
+
         $if->third([$elsif]);
         $if = $elsif;
         $t  = $parser->token;
@@ -246,13 +261,17 @@ sub std_if {
             Carp::carp(sprintf "%s: Parsing ELSE-IF sequense as ELSIF, but it is likely to be a misuse of ELSE-IF. Please insert semicolon as ELSE; IF, or write it in the same line (around input line %d)", ref $parser, $t->line);
         }
 
-        $if->third( $t->id eq "IF"
-            ? [$parser->statement()]
-            :  $parser->statements());
+        {
+            $parser->new_scope();
+            $if->third( $t->id eq "IF"
+                ? [$parser->statement()]
+                :  $parser->statements());
+            $parser->pop_scope();
+        }
     }
 
-
     $parser->advance("END");
+    $parser->pop_scope();
     return $top_if;
 }
 
