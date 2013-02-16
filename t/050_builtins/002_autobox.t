@@ -10,7 +10,7 @@ use t::lib::Util;
 use utf8;
 {
     package MyArray;
-    use Any::Moose;
+    use Mouse;
 
     has size => (
         is      => 'rw',

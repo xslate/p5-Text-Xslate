@@ -8,7 +8,7 @@ my $tx = Text::Xslate->new(syntax => 'TTerse');
 
 {
     package Obj;
-    use Any::Moose;
+    use Mouse;
 
     sub join :method {
         my($self, $sep, @args) = @_;

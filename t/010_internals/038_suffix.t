@@ -7,7 +7,7 @@ use Text::Xslate;
 
 BEGIN {
     package Text::Xslate::Syntax::Custom;
-    use Any::Moose;
+    use Mouse;
     extends 'Text::Xslate::Parser';
 
     sub init_symbols {
@@ -26,7 +26,7 @@ BEGIN {
     }
 
     package Text::Xslate::Compiler::Custom;
-    use Any::Moose;
+    use Mouse;
     extends 'Text::Xslate::Compiler';
 
     sub _generate_suffix {

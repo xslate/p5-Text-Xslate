@@ -29,9 +29,6 @@ use inc::Module::Install;
 
 all_from 'lib/Text/Xslate.pm';
 
-requires 'Any::Moose' => '0.13';
-
-# XXX we don't handle Moose stuff here
 requires 'Mouse'                => '0.61';
 requires 'Data::MessagePack'    => '0.38';
 requires 'parent'               => '0.221';
@@ -77,12 +74,6 @@ xslate_ops.h :: src/xslate_opcode.inc tool/opcode.PL
 lib/Text/Xslate/PP/Const.pm :: src/xslate_opcode.inc tool/opcode_for_pp.PL
 	$(PERLRUNINST) tool/opcode_for_pp.PL src/xslate_opcode.inc > lib/Text/Xslate/PP/Const.pm
 M
-
-if(eval q{ use Moose 1.05 (); 1}) {
-    test_target test_moose => (
-        env    => { ANY_MOOSE => 'Moose' },
-    );
-}
 
 my @testall;
 if($Module::Install::AUTHOR) {

@@ -1,5 +1,5 @@
 package Text::Xslate::PP::State; # implement tx_state_t
-use Any::Moose;
+use Mouse;
 
 use Text::Xslate::Util qw(neat p $DEBUG);
 use Text::Xslate::PP;
@@ -234,7 +234,7 @@ sub bad_arg {
     return $st->error($context, "Wrong number of arguments for %s", $name);
 }
 
-no Any::Moose;
+no Mouse;
 __PACKAGE__->meta->make_immutable;
 1;
 __END__

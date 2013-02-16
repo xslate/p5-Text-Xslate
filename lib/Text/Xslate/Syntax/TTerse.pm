@@ -1,5 +1,5 @@
 package Text::Xslate::Syntax::TTerse;
-use Any::Moose;
+use Mouse;
 use Text::Xslate::Util qw(p any_in);
 use Scalar::Util ();
 
@@ -602,7 +602,7 @@ sub std_filter {
     return( $proc, $parser->print($callfilter) );
 }
 
-no Any::Moose;
+no Mouse;
 __PACKAGE__->meta->make_immutable();
 __END__
 

@@ -1,5 +1,5 @@
 package Text::Xslate::PP::Type::Macro;
-use Any::Moose;
+use Mouse;
 use warnings FATAL => 'recursion';
 
 use overload
@@ -53,7 +53,7 @@ sub as_code_ref {
     };
 }
 
-no Any::Moose;
+no Mouse;
 __PACKAGE__->meta->make_immutable;
 __END__
 

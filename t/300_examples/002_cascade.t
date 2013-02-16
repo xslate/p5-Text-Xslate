@@ -7,7 +7,7 @@ use t::lib::Util;
 
 {
     package BlogEntry;
-    use Any::Moose;
+    use Mouse;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }

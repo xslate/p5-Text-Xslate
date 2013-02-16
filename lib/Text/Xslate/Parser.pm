@@ -1,5 +1,5 @@
 package Text::Xslate::Parser;
-use Any::Moose;
+use Mouse;
 
 use Scalar::Util ();
 
@@ -1995,7 +1995,7 @@ sub _error {
         $parser->file, $line || $parser->line);
 }
 
-no Any::Moose;
+no Mouse;
 __PACKAGE__->meta->make_immutable;
 __END__
 

@@ -1,5 +1,5 @@
 package Text::Xslate::Symbol;
-use Any::Moose;
+use Mouse;
 
 use Text::Xslate::Util qw(p $DEBUG);
 
@@ -45,7 +45,7 @@ has value => (
         return;
     },
 #    default => sub{
-#        if(!defined $_[0]) { #XXX: Any::Moose::XS's bug
+#        if(!defined $_[0]) { #XXX: Mouse::XS's bug
 #            my(undef, $file, $line) = caller;
 #            warn "[bug] no invocant at $file line $line.\n";
 #            return '(null)';
@@ -240,7 +240,7 @@ sub _dump_denote {
     ;
 }
 
-no Any::Moose;
+no Mouse;
 __PACKAGE__->meta->make_immutable;
 
 __END__

@@ -33,7 +33,7 @@ my @data = (
 
 {
     package A;
-    use Any::Moose;
+    use Mouse;
 
     has foo => (
         is => 'rw',

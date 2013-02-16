@@ -1,6 +1,6 @@
 package Text::Xslate::Runner;
-use Any::Moose;
-use Any::Moose '::Util::TypeConstraints';
+use Mouse;
+use Mouse::Util::TypeConstraints;
 
 use List::Util     ();
 use File::Spec     ();
@@ -10,7 +10,7 @@ use Getopt::Long   ();
 {
     package
         Text::Xslate::Runner::Getopt;
-    use Any::Moose 'Role';
+    use Mouse::Role;
 
     has cmd_aliases => (
         is         => 'ro',
@@ -19,7 +19,7 @@ use Getopt::Long   ();
         auto_deref => 1,
     );
 
-    no Any::Moose 'Role';
+    no Mouse::Role;
 }
 
 my $getopt = Getopt::Long::Parser->new(
@@ -293,7 +293,7 @@ sub run {
         return;
     }
 
-    Any::Moose::load_class($self->engine);
+    Mouse::load_class($self->engine);
     my $xslate = $self->engine->new(%args);
 
     if($self->has_eval) {
@@ -446,8 +446,8 @@ sub _encode {
     }
 }
 
-no Any::Moose;
-no Any::Moose '::Util::TypeConstraints';
+no Mouse;
+no Mouse::Util::TypeConstraints;
 __PACKAGE__->meta->make_immutable;
 
 __END__

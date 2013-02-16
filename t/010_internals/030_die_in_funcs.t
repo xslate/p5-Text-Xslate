@@ -5,7 +5,7 @@ use Text::Xslate;
 
 {
     package Foo;
-    use Any::Moose;
+    use Mouse;
 
     has bar => (
         is  => 'rw',

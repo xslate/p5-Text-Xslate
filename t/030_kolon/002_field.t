@@ -50,7 +50,7 @@ my @data = (
 
 {
     package A;
-    use Any::Moose;
+    use Mouse;
     use overload '""' => sub{ "as_string" };
 
     has foo => (

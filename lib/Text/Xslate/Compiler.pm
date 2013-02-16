@@ -1,7 +1,6 @@
 package Text::Xslate::Compiler;
-use warnings FATAL => 'recursion';
-use Any::Moose;
-use Any::Moose '::Util::TypeConstraints';
+use Mouse;
+use Mouse::Util::TypeConstraints;
 
 use Scalar::Util ();
 use Carp         ();
@@ -209,7 +208,7 @@ sub _build_parser {
         return $syntax;
     }
     else {
-        my $parser_class = Any::Moose::load_first_existing_class(
+        my $parser_class = Mouse::Util::load_first_existing_class(
             "Text::Xslate::Syntax::" . $syntax,
             $syntax,
         );
@@ -1595,8 +1594,8 @@ sub _error {
     die $self->make_error($message, $self->file, $line);
 }
 
-no Any::Moose;
-no Any::Moose '::Util::TypeConstraints';
+no Mouse;
+no Mouse::Util::TypeConstraints;
 
 __PACKAGE__->meta->make_immutable;
 __END__
