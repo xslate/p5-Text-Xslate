@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+2.0000 2013-02-20 09:21:08
+    - No code change from 1.9999_01
+
 1.9999_01 2013-02-16 15:44:31
     [CHANGES]
     - Migrate from Any::Moose to Mouse because Any::Moose is deprecated
