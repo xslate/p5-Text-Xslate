@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+2.0001 2013-04-24 16:24:22
+    [FEATURES]
+    - Support PUREPERL_ONLY build
+      See the Lancaster Consensu:
+      https://github.com/sjn/toolchain-site/blob/219db464af9b2f19b04fec05547ac10180a469f3/lancaster-consensus.md#specifying-pure-perl-builds
+
 2.0000 2013-02-20 09:21:08
     - No code change from 1.9999_01
 
