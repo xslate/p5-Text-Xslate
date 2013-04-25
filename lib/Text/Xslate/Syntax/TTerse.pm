@@ -695,8 +695,8 @@ Loop iterators are partially supported.
         * [% loop.body      # alias to arrayref %]
         * [% loop.size      # loop.body.size %]
         * [% loop.max_index # loop.size - 1 %]
-        * [% loop.peek_next # loop.body[ loop.index - 1 ]
-        * [% loop.peek_prev # loop.body[ loop.index + 1 ]
+        * [% loop.peek_next # loop.body[ loop.index + 1 ]
+        * [% loop.peek_prev # loop.body[ loop.index - 1 ]
         [%- IF loop.is_last -%]
         <last>
         [%- END -%]
