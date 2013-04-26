@@ -39,6 +39,14 @@ C<syntax> option to the Text::Xslate constructor.
 
 Xslate is tested on perl v5.8.1. No special settings should be required.
 
+=head3 How can I install the pure-Perl version of Xslate?
+
+Pass C<< PUREPERL_ONLY=1 >> to F<Makefile.PL>, which requests
+the Xslate build system not to make XS parts.
+
+Note that C<< cpanm 1.7 >> supports C<--pp> option to install pure-Perl
+alternatives, so you can type C<< cpanm --pp Text::Xslate >>.
+
 =head3 What optimizations does Xslate employs?
 
 Here are some optimizations worth noting that makes Text::Xslate run so fast,
