@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+2.0002 2013-04-26 12:51:47
+    [BUG FIXES]
+    - Support perl-blead (5.17.11)
+
 2.0001 2013-04-24 16:24:22
     [FEATURES]
     - Support PUREPERL_ONLY build
