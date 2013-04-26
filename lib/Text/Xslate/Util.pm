@@ -267,6 +267,12 @@ sub read_around { # for error messages
 
     defined($file) && defined($line) or return '';
 
+    if (ref $file) { # if $file is a scalar ref, it must contain text strings
+        my $content = $$file;
+        utf8::encode($content);
+        $file = \$content;
+    }
+
     $around      = 1  if not defined $around;
     $input_layer = '' if not defined $input_layer;
 

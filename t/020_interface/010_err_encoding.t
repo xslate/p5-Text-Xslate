@@ -5,6 +5,10 @@ use Text::Xslate;
 use t::lib::Util;
 use utf8;
 
+binmode Test::More->builder->output, ":utf8";
+binmode Test::More->builder->failure_output, ":utf8";
+binmode Test::More->builder->todo_output, ":utf8";
+
 my $warn = '';
 
 my $tx = Text::Xslate->new(
@@ -20,9 +24,10 @@ like $tx->render('hello_utf8.tx'), qr/こんにちは/;
 like $warn,                        qr/こんにちは/;
 
 eval {
-    $tx->render_string('<: こんにちは');
+    $tx->render_string('<: こんにちは'); # syntax error
 };
-like $@, qr/<: こんにちは/;
+note $@;
+like $@, qr/\<\: こんにちは/, 'wide characters in error messages';
 
 done_testing;
 

@@ -8,7 +8,7 @@ Module::Install::Repository
 # for testing
 Test::Vars
 Test::Synopsis
-Test::Spelling
+Test::Spellunker
 Test::LeakTrace
 Plack
 IPC::Run
@@ -31,6 +31,8 @@ MojoX::Renderer::Xslate
 JavaScript::Value::Escape
 Locale::Maketext::Lexicon
 Data::Localize
+Any::Moose
+File::Which
 Amon2::Lite
 Catalyst::View::Xslate
 
