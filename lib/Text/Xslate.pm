@@ -678,7 +678,7 @@ This document describes Text::Xslate version 2.0001.
     # for files
     print $tx->render('hello.tx', \%vars);
 
-    # for strings
+    # for strings (easy but slow)
     my $template = q{
         <h1><: $title :></h1>
         <ul>
@@ -697,8 +697,9 @@ safe as an HTML generator, and with rich features.
 
 There are a lot of template engines in CPAN, for example Template-Toolkit,
 Text::MicroTemplate, HTML::Template, and so on, but all of them have
-demerits at some points. This is why Xslate is developed and now it is
-well-honed as the standard template engine for web applications.
+some weak points: a full-featured template engine may be slow,
+while a fast template engine may be too simple to use. This is why Xslate is
+developed, which is the best template engine for web applications.
 
 The concept of Xslate is strongly influenced by Text::MicroTemplate
 and Template-Toolkit 2, but the central philosophy of Xslate is different
@@ -716,8 +717,9 @@ compiled into intermediate code, and then executed by the virtual machine,
 which is highly optimized for rendering templates. Thus, Xslate is
 much faster than any other template engines.
 
-The template roundup project by Sam Graham shows Text::Xslate got very
-high scores in I<instance_reuse> condition (i.e. for persistent application).
+The template roundup project by Sam Graham shows Text::Xslate got
+amazingly high scores in I<instance_reuse> condition
+(i.e. for persistent applications).
 
 =over
 
@@ -731,18 +733,19 @@ L<http://illusori.co.uk/projects/Template-Roundup/201010/performance_vs_variant_
 
 =back
 
-There are some benchmarks in F<benchmark/> directory in the Xslate distribution.
+There are also benchmarks in F<benchmark/> directory in the Xslate distribution.
 
 =head3 Smart escaping for HTML metacharacters
 
-All HTML metacharacters in template expressions which are interpolated into
-template texts by the engine are escaped automatically. This means that, by default,
-the output is not prone to XSS.
+Xslate employs the B<smart escaping strategy>, where a template engine
+escapes all the HTML metacharacters in template expressionsi unless users
+mark values as B<raw>.
+That is, the output is unlikely to prone to XSS.
 
 =head3 Template cascading
 
-Xslate supports B<template cascading>, which allows you to extend
-templates with block modifiers. It is like traditional template inclusion,
+Xslate supports the B<template cascading>, which allows you to extend
+templates with block modifiers. It is like a traditional template inclusion,
 but is more powerful.
 
 This mechanism is also called as template inheritance.
@@ -756,9 +759,9 @@ engine and even add a new syntax via extending the parser.
 
 =head2 Methods
 
-=head3 B<< Text::Xslate->new(%options) :XslateEngine >>
+=head3 B<< Text::Xslate->new(%options) >>
 
-Creates a new xslate template engine with options. You can reuse the instance
+Creates a new Xslate template engine with options. You can reuse the instance
 for multiple call of C<render()>.
 
 Possible options are:
@@ -1176,7 +1179,7 @@ the same in internals:
 
 =item *
 
-An "too-safe" HTML escaping filter which escape all the symbolic characters
+A "too-safe" HTML escaping filter which escape all the symbolic characters
 
 =back
 
@@ -1290,7 +1293,7 @@ Thanks to ueda for the suggestions.
 
 =head1 AUTHOR
 
-Fuji, Goro (gfx) E<lt>gfuji(at)cpan.orgE<gt>
+Fuji, Goro (gfx) E<lt>gfuji@cpan.orgE<gt>.
 
 Makamaka Hannyaharamitu (makamaka) (Text::Xslate::PP)
 
@@ -1298,7 +1301,7 @@ Maki, Daisuke (lestrrat) (Text::Xslate::Runner)
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010, Fuji, Goro (gfx). All rights reserved.
+Copyright (c) 2010-2013, Fuji, Goro (gfx). All rights reserved.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
