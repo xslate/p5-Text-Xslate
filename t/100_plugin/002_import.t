@@ -9,6 +9,8 @@ use Time::localtime qw(localtime);
 use CGI qw(span);
 use Digest::MD5 qw(md5 md5_hex);
 
+$Data::Dumper::Sortkeys = 1;
+
 my $tx = Text::Xslate->new(
     module => [
         'Data::Dumper',
