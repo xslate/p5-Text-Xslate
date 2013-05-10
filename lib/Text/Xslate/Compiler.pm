@@ -401,7 +401,7 @@ sub compile_ast {
 
     my @code;
     foreach my $node(ref($ast) eq 'ARRAY' ? @{$ast} : $ast) {
-        blessed($node) or Carp::confess("[BUG] Not a node object: " . p($node));
+        Scalar::Util::blessed($node) or Carp::confess("[BUG] Not a node object: " . p($node));
 
         printf STDERR "%s"."generate %s (%s)\n", "." x $_lv, $node->arity, $node->id if _DUMP_GEN;
 
