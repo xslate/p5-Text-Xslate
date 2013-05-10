@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+2.0003 2013-05-10 12:59:11
+    [BUG FIXES]
+    - Fix a crash on compiling templates (#77)
+
 2.0002 2013-04-26 12:51:47
     [BUG FIXES]
     - Support perl-blead (5.17.11)
