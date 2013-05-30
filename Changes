@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+2.0004 2013-05-29 20:27:07
+    [TEST FIXES]
+    - Template string must be bytes (#78)
+
 2.0003 2013-05-10 12:59:11
     [BUG FIXES]
     - Fix a crash on compiling templates (#77)
