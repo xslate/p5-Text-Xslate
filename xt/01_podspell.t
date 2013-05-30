@@ -3,13 +3,12 @@
 use strict;
 use Test::More;
 
-eval q{ use Test::Spelling; system("which", "spell") == 0 or die };
+eval q{ use Test::Spellunker };
 
-plan skip_all => q{Test::Spelling and spell(1) are not available.}
+plan skip_all => q{Test::Spellunker are not available.}
 	if $@;
 
 add_stopwords(map { split /[\s\:\-]/ } <DATA>);
-$ENV{LANG} = 'C';
 all_pod_files_spelling_ok('lib');
 
 __DATA__
@@ -97,4 +96,16 @@ taka
 cho
 shmorimo
 ueda
-
+parens
+opcodes
+ing
+vs
+metacharacters
+metacharacters
+expressionsi
+name-coderef
+cb
+cb
+render
+render_string
+tx

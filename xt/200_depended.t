@@ -18,7 +18,6 @@ my @modules = qw(
     Text::Xslate::Bridge::TT2Like
     Catalyst::View::Xslate
     MojoX::Renderer::Xslate
-    Amon2
 );
 
 foreach my $mod(@modules) {
