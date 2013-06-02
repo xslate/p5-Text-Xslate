@@ -8,6 +8,8 @@ use t::lib::Util;
 use File::Copy qw(copy move);
 use File::Path qw(rmtree);
 
+use Fatal qw(utime);
+
 my @files  = (path."/hello.tx",  path."/for.tx");
 my @caches;
 
