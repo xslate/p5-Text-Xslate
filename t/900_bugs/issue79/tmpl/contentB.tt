@@ -1,0 +1,3 @@
+[% WRAPPER 'wrapperB.tt' %]
+CONTENT B
+[% END %]
