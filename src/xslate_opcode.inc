@@ -163,7 +163,6 @@ TXC(include) {
     SAVETMPS;
     tx_push_frame(aTHX_ st);
     tx_execute(aTHX_ aMY_CXT_ st, TX_st->output, TX_st->vars);
-    tx_pop_frame(aTHX_ st, FALSE);
     FREETMPS;
     LEAVE;
 
