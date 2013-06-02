@@ -1307,7 +1307,7 @@ my $lambda_id = 0;
 sub lambda {
     my($parser, $proto) = @_;
     my $name = $parser->symbol('(name)')->clone(
-        id   => sprintf('lambda@%d', $lambda_id++),
+        id   => sprintf('lambda@%s:%d', $parser->file, $lambda_id++),
     );
 
     return $parser->symbol('(name)')->clone(
