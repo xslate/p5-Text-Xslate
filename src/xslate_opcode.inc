@@ -4,8 +4,6 @@
 
  *********************/
 
-/* vim: set filetype=xs: */
-
 TXC(noop) {
     TX_RETURN_NEXT();
 }
@@ -753,3 +751,4 @@ TXC(end) {
     //assert(TX_st->current_frame == 0);
 }
 
+/* vim: set filetype=xs: */
