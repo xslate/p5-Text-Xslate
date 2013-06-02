@@ -35,10 +35,10 @@ for(1 .. 10) {
     );
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
-        "Hello, Xslate world!\n", "file (preload)";
+        "Hello, Xslate world!\n", "file (preload $_)";
 
     is $tx->render('for.tx', { books => [ { title => "Foo" }, { title => "Bar" } ]}),
-        "[Foo]\n[Bar]\n", "file (preload)";
+        "[Foo]\n[Bar]\n", "file (preload $_)";
 
     ok -e $_, "$_ exists" for @caches;
 
@@ -52,10 +52,10 @@ for(1 .. 10) {
     my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
-        "Hello, Xslate world!\n", "file (on demand)";
+        "Hello, Xslate world!\n", "file (on demand $_)";
 
     is $tx->render('for.tx', { books => [ { title => "Foo" }, { title => "Bar" } ]}),
-        "[Foo]\n[Bar]\n", "file (on demand)";
+        "[Foo]\n[Bar]\n", "file (on demand $_)";
 
     if(($_ % 3) == 0) {
         my $t = time() + $_*10;
@@ -76,7 +76,7 @@ copy "$x.mod" =>  $x;
 utime $^T+10, $^T+10, $x;
 
 is $tx->render('hello.tx', { lang => 'Perl' }),
-    "Hi, Perl.\n", "auto reload" for 1 .. 2;
+    "Hi, Perl.\n", "auto reload $_" for 1 .. 2;
 
 move "$x.save" => $x or diag "cannot move $x.save to $x: $!";
 
