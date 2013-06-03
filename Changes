@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+2.0006 2013-06-02 22:58:27
+    [BUG FIXES]
+    - Fix an issue that the state of VM broke on exception
+      reported by nihen
+
 2.0005 2013-06-02 12:23:15
     [BUG FIXES]
     - Fix a Multiplexed WRAPPER issue reportedy by @kawamuray (#79)
