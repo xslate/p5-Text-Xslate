@@ -28,7 +28,7 @@ my $tx = Text::Xslate->new(
     },
 );
 
-
+ok $tx->render('recurse.tt', { recurse_count => MyCounter->new(count => 101) });
 eval {
     $tx->render('recurse.tt', { recurse_count => MyCounter->new(count => 102) });
 };

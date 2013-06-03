@@ -919,16 +919,16 @@ tx_execute(pTHX_ pMY_CXT_ tx_state_t* const base, SV* const output, HV* const hv
     /* finally */
     MY_CXT.depth--;
 
-    tx_pop_frame(aTHX_ base, FALSE); // pushed before tx_execute()
-
     XCPT_CATCH {
         I32 const start = base->current_frame;
         /* unwind the stack frames */
         while(st.current_frame > start) {
             tx_pop_frame(aTHX_ &st, TRUE);
         }
+        tx_pop_frame(aTHX_ base, FALSE); // pushed before tx_execute()
         XCPT_RETHROW;
     }
+    tx_pop_frame(aTHX_ base, FALSE); // pushed before tx_execute()
 
     /* clear temporary buffers */
     sv_setsv(st.targ, NULL);
