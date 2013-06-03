@@ -571,8 +571,19 @@ sub tx_execute {
     local $st->{sa};
     local $st->{sb};
     local $st->{output} = '';
-    $st->{code}->[0]->{ exec_code }->( $st );
+
+    local $st->{current_frame} = $st->{current_frame};
+
+    eval {
+        $st->{code}->[0]->{ exec_code }->( $st );
+    };
+
     @{$st->{frame}->[-1]} = Text::Xslate::PP::TXframe_START_LVAR - 1;
+
+    if ($@) {
+        my $e = $@;
+        die $e;
+    }
     return $st->{output};
 }
 
