@@ -543,6 +543,10 @@ another example to use this block filter syntax.
 
 Note that closures are not supported.
 
+=head2 Chomping newlines
+
+You can add C<-> to the immediate start or end of a directive tag to control the newline chomping options to keep the output clean. The starting C<-> removes leading newlines and the ending C<-> removes trailing ones.
+
 =head2 Special keywords
 
 There are special keywords:
