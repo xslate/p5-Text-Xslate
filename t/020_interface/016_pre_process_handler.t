@@ -11,24 +11,13 @@ use t::lib::Util;
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }
 
-{
-    package MyTemplate;
-    our @ISA = qw(Text::Xslate);
-
-    sub slurp_template {
-        my($self, $input_layer, $fullpath) = @_;
-
-        my $content = $self->SUPER::slurp_template($input_layer, $fullpath);
-        return Encode::encode('cp932', $content);
-    }
-}
-
 my $p = Encode::encode('cp932', 'エクスレート');
 
 for(1 .. 2) {
-    my $tx =  MyTemplate->new(
+    my $tx =  Text::Xslate->new(
         path => [path],
         cache_dir => cache_dir,
+        pre_process_handler => sub { Encode::encode('cp932', $_[0]) },
     );
 
 
@@ -39,5 +28,3 @@ for(1 .. 2) {
         Encode::encode('cp932', "こんにちは！ エクスレート！\n");
 }
 done_testing;
-
-
