@@ -153,6 +153,7 @@ sub options { # overridable
         verbose      => 1,
         warn_handler => undef,
         die_handler  => undef,
+        pre_process_handler => undef,
 
         %{ $self->parser_option },
         %{ $self->compiler_option },
@@ -395,6 +396,7 @@ sub _load_source {
     }
 
     my $source = $self->slurp_template($self->input_layer, $fullpath);
+    $source = $self->{pre_process_handler}->($source) if $self->{pre_process_handler};
     $self->{source}{$fi->{name}} = $source if _SAVE_SRC;
 
     my $asm = $self->compile($source,
@@ -938,6 +940,24 @@ Specify the callback I<&cb> which is called on warnings.
 =item C<< die_handler => \&cb >>
 
 Specify the callback I<&cb> which is called on fatal errors.
+
+=item C<< pre_process_handler => \&cb >>
+
+Specify the callback I<&cb> which is called after templates are loaded from the disk
+in order to pre-process template.
+
+For example:
+
+    # Remove withespace from templates
+    my $tx = Text::Xslate->new(
+        pre_process_handler => sub {
+            my $text = shift;
+            $text=~s/\s+//g;
+            return $text;
+        }
+    );
+
+The first argument is the template text string, which can be both B<text strings> and C<byte strings>.
 
 =back
 
