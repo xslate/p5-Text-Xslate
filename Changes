@@ -1,5 +1,12 @@
 Revision history for Perl extension Text::Xslate
 
+2.0007 2013-06-21 13:16:16-0700
+    [DOCUMENTS]
+    - Add doc about chomping newlines (<:- ... -:>)
+
+    [NEW FEATURES]
+    - Add pre_process_handler to pre-process template content (bluescreen)
+
 2.0006 2013-06-02 22:58:27
     [BUG FIXES]
     - Fix an issue that the state of VM broke on exception
