@@ -153,6 +153,7 @@ sub options { # overridable
         verbose      => 1,
         warn_handler => undef,
         die_handler  => undef,
+        pre_process_handler => undef,
 
         %{ $self->parser_option },
         %{ $self->compiler_option },
@@ -955,6 +956,8 @@ For example:
             return $text;
         }
     );
+
+The first argument is the template text string, which can be both B<text strings> and C<byte strings>.
 
 =back
 
