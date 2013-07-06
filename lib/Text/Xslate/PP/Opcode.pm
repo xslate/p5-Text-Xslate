@@ -2,7 +2,7 @@ package Text::Xslate::PP::Opcode;
 use Mouse;
 extends qw(Text::Xslate::PP::State);
 
-our $VERSION = '2.0007';
+our $VERSION = '2.0008';
 
 use Carp ();
 use Scalar::Util ();

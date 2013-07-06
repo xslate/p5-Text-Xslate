@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+2.0008 2013-07-06 00:09:43-0700
+    [BUG FIXES]
+    - Fix a chache issue that UTF8 flags were not turned on
+      as expected (#82)
+    - Fix Metakolon doc (#83)
+
 2.0007 2013-06-21 13:16:16-0700
     [DOCUMENTS]
     - Add doc about chomping newlines (<:- ... -:>)
