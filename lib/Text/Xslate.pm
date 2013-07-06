@@ -522,6 +522,10 @@ sub _load_compiled {
                 return undef; # purge the cache
             }
         }
+        elsif($c->[0] eq 'literal') {
+            # force upgrade to avoid UTF-8 key issues
+            utf8::upgrade($c->[1]);
+        }
         push @asm, $c;
     }
 
