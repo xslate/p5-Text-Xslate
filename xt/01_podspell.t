@@ -109,3 +109,4 @@ cb
 render
 render_string
 tx
+newlines
