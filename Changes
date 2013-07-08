@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+2.0009 2013-07-08 10:49:47-0700
+    [BUG FIXES]
+    - Fix a tied hash issue on string concat, thanks to zxchris (#81)
+
 2.0008 2013-07-06 00:09:43-0700
     [BUG FIXES]
     - Fix a chache issue that UTF8 flags were not turned on
