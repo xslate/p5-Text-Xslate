@@ -314,6 +314,9 @@ TXC_w_sv(concat) {
     SV* const lhs = TX_st_sb;
     SV* const rhs = TX_st_sa;
 
+    SvGETMAGIC(lhs);
+    SvGETMAGIC(rhs);
+
     if(tx_str_is_raw(aTHX_ aMY_CXT_ lhs)) {
         sv_setsv_nomg(sv, TX_UNMARK_RAW(lhs));
 
