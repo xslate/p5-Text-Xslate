@@ -5,7 +5,7 @@ use FindBin qw($Bin);
 
 {
     package BlogEntry;
-    use Any::Moose;
+    use Mouse;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }

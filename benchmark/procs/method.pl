@@ -16,7 +16,7 @@ my $n = shift(@ARGV) || 10;
 
 {
     package Pair;
-    use Any::Moose;
+    use Mouse;
 
     has [qw(key value)] => (
         is => 'rw',
