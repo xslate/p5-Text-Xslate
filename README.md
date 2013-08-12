@@ -1,4 +1,4 @@
-NAME [![Build Status](https://secure.travis-ci.org/xslate/p5-Text-Xslate.png)](http://travis-ci.org/xslate/p5-Text-Xslate)
+# NAME [![Build Status](https://secure.travis-ci.org/xslate/p5-Text-Xslate.png)](http://travis-ci.org/xslate/p5-Text-Xslate)
 
 Text::Xslate - Scalable template engine for Perl5
 

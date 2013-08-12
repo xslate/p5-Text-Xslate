@@ -783,6 +783,19 @@ tx_sv_is_macro(pTHX_ SV* const sv) {
     return FALSE;
 }
 
+XS(XS_Text__Xslate__macrocall); /* -Wmissing-prototype */
+XS(XS_Text__Xslate__macrocall){
+    dVAR; dSP; /* macrocall routine do dMARK, so we don't it here */
+    dMY_CXT;
+    SV* const macro = (SV*)CvXSUBANY(cv).any_ptr;
+    if(!(MY_CXT.current_st && macro)) {
+        croak("Macro is not callable outside of templates");
+    }
+    XPUSHs( tx_proccall(aTHX_ MY_CXT.current_st, macro, "macro") );
+    PUTBACK;
+    return;
+}
+
 /* called by tx_methodcall() */
 /* proc may be a Xslate macro or a Perl subroutine (code ref) */
 SV*
@@ -802,23 +815,19 @@ tx_proccall(pTHX_ tx_state_t* const txst, SV* const proc, const char* const name
 
         return TX_st_sa;
     }
+    else if (tx_sv_is_code_ref(aTHX_ proc) && CvXSUB((CV*)SvRV(proc)) == XS_Text__Xslate__macrocall) {
+        /* macro wrapper XSUB created by Text::Xslate::Type::as_code_ref() */
+        SV* const m = CvXSUBANY((CV*)SvRV(proc)).any_ptr;
+        sv_dump(proc);
+        sv_dump(m);
+        Perl_croak(aTHX_ "xxx");
+        return tx_proccall(aTHX_ TX_st, m, name);
+    }
     else {
         return tx_funcall(aTHX_ TX_st, proc, name);
     }
 }
 
-XS(XS_Text__Xslate__macrocall); /* -Wmissing-prototype */
-XS(XS_Text__Xslate__macrocall){
-    dVAR; dSP; /* macrocall routine do dMARK, so we don't it here */
-    dMY_CXT;
-    SV* const macro = (SV*)CvXSUBANY(cv).any_ptr;
-    if(!(MY_CXT.current_st && macro)) {
-        croak("Macro is not callable outside of templates");
-    }
-    XPUSHs( tx_proccall(aTHX_ MY_CXT.current_st, macro, "macro") );
-    PUTBACK;
-    return;
-}
 
 static void
 tx_macro_enter(pTHX_ tx_state_t* const txst, AV* const macro, tx_pc_t const retaddr) {
