@@ -3,6 +3,7 @@ Text-Xslate-*
 !.gitignore
 !.shipit
 !.proverc
+!.travis.yml
 *~
 *.o
 *.obj
