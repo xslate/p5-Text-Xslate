@@ -2,7 +2,7 @@ language: perl
 install: cpanm --installdeps --notest --verbose .
 before_install:
   - perlbrew install-cpanm -f
-  - perl Makefile.PL | cpanm -f
+  - perl Makefile.PL | cpanm --notest
 perl:
   - "5.8"
   - "5.10"
