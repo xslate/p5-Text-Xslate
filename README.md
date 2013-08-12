@@ -1,10 +1,8 @@
-This is Perl module Text::Xslate.
-
-NAME
+NAME [![Build Status](https://secure.travis-ci.org/xslate/p5-Text-Xslate.png)](http://travis-ci.org/xslate/p5-Text-Xslate)
 
 Text::Xslate - Scalable template engine for Perl5
 
-SYNOPSIS
+# SYNOPSIS
 
     use Text::Xslate;
 
@@ -30,7 +28,7 @@ SYNOPSIS
 
     print $tx->render_string($template, \%vars);
 
-INSTALLATION
+# INSTALLATION
 
 Install cpanm (App::cpanminus) and then run the following command to install
 Xslate:
@@ -53,7 +51,7 @@ tools.
 
     $ cpanm < author/requires.cpanm
 
-DOCUMENTATION
+# DOCUMENTATION
 
 Text::Xslate documentation is available as in POD. So you can do:
 
@@ -61,14 +59,14 @@ Text::Xslate documentation is available as in POD. So you can do:
 
 to read the documentation online with your favorite pager.
 
-RESOURCE
+# RESOURCE
 
     web site:     http://xslate.org/
     repositories: http://github.com/xslate
     mailing list: http://groups.google.com/group/xslate
     irc         : irc://irc.perl.org/#xslate
 
-LICENSE AND COPYRIGHT
+# LICENSE AND COPYRIGHT
 
 Copyright (c) 2010, Fuji, Goro (gfx). All rights reserved.
 
