@@ -15,7 +15,6 @@ Makefile*
 META.yml
 MYMETA.*
 inc/
-MANIFEST
 *.out
 *.bak
 ppport.h
