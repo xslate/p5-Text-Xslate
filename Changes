@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+2.0010 2013-10-07 21:56:12+0900
+    [BUG FIXES]
+    - Fix an issue that vpath with text-strings raised errors
+      on newer perls due to specification changes in PerlIO::scalar (#90)
+    - Documentation tweaks (#84, #86)
+
 2.0009 2013-07-08 10:49:47-0700
     [BUG FIXES]
     - Fix a tied hash issue on string concat, thanks to zxchris (#81)
