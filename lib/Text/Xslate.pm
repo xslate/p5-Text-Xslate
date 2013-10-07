@@ -785,7 +785,7 @@ i.e. HASH references which contain C<< $file_name => $content >> pairs.
 
 Note that if you use taint mode (C<-T>), you have to give absolute paths
 to C<path> and C<cache_dir>. Otherwise you'll get errors because they
-depend on the current working directry which might not be secure.
+depend on the current working directory which might not be secure.
 
 =item C<< cache => $level // 1 >>
 
