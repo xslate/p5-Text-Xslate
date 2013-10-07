@@ -375,10 +375,14 @@ sub load_file {
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
 
-    open my($source), '<' . $input_layer, $fullpath
-        or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
-    local $/;
-    return scalar <$source>;
+    if (ref $fullpath eq 'SCALAR') {
+        return $$fullpath;
+    } else {
+        open my($source), '<' . $input_layer, $fullpath
+            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+        local $/;
+        return scalar <$source>;
+    }
 }
 
 sub _load_source {
