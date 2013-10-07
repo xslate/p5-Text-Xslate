@@ -202,7 +202,7 @@ via the dot-name syntax.
         : else {
             odd
         : }
-        : $i~.cycle("even", "odd") # => "even" -> "odd" -> "even" -> "odd" ...
+        : $~i.cycle("even", "odd") # => "even" -> "odd" -> "even" -> "odd" ...
     : }
 
 Supported iterator elements are C<index :Int>, C<count :Int>,
