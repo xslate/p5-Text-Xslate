@@ -302,7 +302,15 @@ L<Pickles>
 
 =head3 Where are examples which use Xslate in Catalyst?
 
-Not yet. Please blog it and it'll be introduced here.
+There is a real-world project that uses Xslate with Catalyst.
+
+L<https://github.com/duckduckgo/community-platform>
+
+Initializing Xslate: L<https://github.com/duckduckgo/community-platform/blob/master/lib/DDGC.pm#L268>
+
+Working on: L<https://dukgo.com/>
+
+Enjoy!
 
 =head2 Development and support
 
