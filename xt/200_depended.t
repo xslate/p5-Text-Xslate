@@ -17,7 +17,6 @@ my $cpanm = which('cpanm') or plan skip_all => 'no cpanm';
 my @modules = qw(
     Text::Xslate::Bridge::TT2Like
     Catalyst::View::Xslate
-    MojoX::Renderer::Xslate
 );
 
 foreach my $mod(@modules) {
