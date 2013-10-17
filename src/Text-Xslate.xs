@@ -1436,7 +1436,7 @@ CODE:
                 if(tx_oparg[opnum] & TXARGf_KEY) { /* shared sv */
                     STRLEN len;
                     const char* const pv = SvPV_const(*arg, len);
-                    st.code[i].u_arg.sv = newSVpvn_share(pv, len, 0U);
+                    st.code[i].u_arg.sv = newSVpvn_share(pv, SvUTF8(*arg) ? -len : len, 0U);
                 }
                 else if(tx_oparg[opnum] & TXARGf_INT) { /* sviv */
                     SvIV_please(*arg);
