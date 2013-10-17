@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '2.1.0';
+use version (); our $VERSION = version->declare('v2.1.0');
 
 use Carp              ();
 use File::Spec        ();
@@ -50,10 +50,6 @@ if(!exists $INC{'Text/Xslate/PP.pm'}) {
     }
 }
 sub USE_XS() { $use_xs }
-
-# workaround warnings about numeric when it is a developpers' version
-# it must be here because the bootstrap routine requires the under bar.
-$VERSION =~ s/_//;
 
 # for error messages (see T::X::Util)
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
