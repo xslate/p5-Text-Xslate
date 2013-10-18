@@ -1,9 +1,14 @@
 Revision history for Perl extension Text::Xslate
 
+3.0.0 2013-10-18 08:59:22+0900
+    - No code changes from 2.1.0, just re-packaging for package managers
+
 2.1.0 2013-10-17 22:18:21+0900
     [BUG FIXES]
     - Fix an issue that multi-bytes string literals used for a hash key
       was not dealt as a text string (@Niratama++)
+      WARNING: this change could break your code if you use multi-byte
+               text string as a hash key.
 
 2.0010 2013-10-07 21:56:12+0900
     [BUG FIXES]
