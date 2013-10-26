@@ -347,6 +347,7 @@ Template inclusion is a traditional way to extend templates.
 
     : include "foo.tx";
     : include "foo.tx" { var1 => value1, var2 => value2, ... };
+    : include "foo.tx" {$vars}; # use $vars as the params
 
 As C<cascade> does, C<include> allows barewords:
 
@@ -555,15 +556,15 @@ There are special keywords:
 
 =item __FILE__
 
-Indicates the current file name.
+Indicates the current file name. Equivalent to C<< Text::Xslate->current_file >>.
 
 =item __LINE__
 
-Indicates the current line number.
+Indicates the current line number. Equivalent to C<< Text::Xslate->current_line >>.
 
 =item __ROOT__
 
-Means the root of the parameters.
+Means the root of the parameters. Equivalent to C<< Text::Xslate->current_vars >>.
 
 =back
 
