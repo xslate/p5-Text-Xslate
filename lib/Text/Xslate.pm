@@ -787,13 +787,13 @@ depend on the current working directory which might not be secure.
 
 Sets the cache level.
 
-If I<$level> == 1 (default), Xslate caches compiled templates on the disk, and
+If C<< $level == 1 >> (default), Xslate caches compiled templates on the disk, and
 checks the freshness of the original templates every time.
 
-If I<$level> E<gt>= 2, caches will be created but the freshness
+If C<< $level >= 2 >>, caches will be created but the freshness
 will not be checked.
 
-I<$level> == 0 uses no caches, which is provided for testing.
+C<< $level == 0 >> uses no caches, which is provided for testing.
 
 =item C<< cache_dir => $dir // "$ENV{HOME}/.xslate_cache" >>
 
@@ -877,7 +877,7 @@ Specifies the verbose level.
 
 If C<< $level == 0 >>, all the possible errors will be ignored.
 
-If C<< $level> >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
+If C<< $level >= 1 >> (default), trivial errors (e.g. to print nil) will be ignored,
 but severe errors (e.g. for a method to throw the error) will be warned.
 
 If C<< $level >= 2 >>, all the possible errors will be warned.
