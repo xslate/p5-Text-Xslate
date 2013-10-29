@@ -303,7 +303,7 @@ sub split :method {
     my $lex_tag_start = qr/\A \Q$tag_start\E ($CHOMP_FLAGS?)/xms;
 
     # 'text' is a something without newlines
-    # follwoing a newline, $tag_start, or end of the input
+    # following a newline, $tag_start, or end of the input
     my $lex_text = qr/\A ( [^\n]*? (?: \n | (?= \Q$tag_start\E ) | \z ) ) /xms;
 
     my $lex_comment = $parser->comment_pattern;
