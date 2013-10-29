@@ -967,6 +967,8 @@ For example:
 
 The first argument is the template text string, which can be both B<text strings> and C<byte strings>.
 
+This filter is applied only to files, not a string template for C<render_string>.
+
 =back
 
 =head3 B<< $tx->render($file, \%vars) :Str >>
