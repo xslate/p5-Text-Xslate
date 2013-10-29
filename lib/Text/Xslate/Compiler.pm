@@ -124,14 +124,14 @@ my %builtin = (
                         \&Text::Xslate::Util::is_hash_ref],
 );
 
-has lvar_id => ( # local varialbe id
+has lvar_id => ( # local variable id
     is  => 'rw',
     isa => 'Int',
 
     init_arg => undef,
 );
 
-has lvar => ( # local varialbe id table
+has lvar => ( # local variable id table
     is  => 'rw',
     isa => 'HashRef[Int]',
 
