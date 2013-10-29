@@ -83,7 +83,7 @@ BEGIN {
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
-# the real defaults are dfined in the parser
+# the real defaults are defined in the parser
 my %parser_option = (
     line_start => undef,
     tag_start  => undef,
@@ -95,7 +95,7 @@ my %compiler_option = (
     syntax     => undef,
     type       => undef,
     header     => undef, # template augment
-    footer     => undef, # template agument
+    footer     => undef, # template augment
     macro      => undef, # template augment
 );
 
@@ -237,7 +237,7 @@ sub _resolve_function_aliases {
     my($self, $funcs) = @_;
 
     foreach my $f(values %{$funcs}) {
-        my %seen; # to avoid infinate loops
+        my %seen; # to avoid infinite loops
         while(!( ref($f) or Scalar::Util::looks_like_number($f) )) {
             my $v = $funcs->{$f} or $self->_error(
                "Cannot resolve a function alias '$f',"
@@ -744,7 +744,7 @@ There are also benchmarks in F<benchmark/> directory in the Xslate distribution.
 =head3 Smart escaping for HTML metacharacters
 
 Xslate employs the B<smart escaping strategy>, where a template engine
-escapes all the HTML metacharacters in template expressionsi unless users
+escapes all the HTML metacharacters in template expressions unless users
 mark values as B<raw>.
 That is, the output is unlikely to prone to XSS.
 
