@@ -33,7 +33,7 @@ require Text::Xslate;
 
 my $state_class = 'Text::Xslate::PP::Opcode';
 
-$VERSION =~ s/_//; # for developpers versions
+$VERSION =~ s/_//; # for developers versions
 
 if(_PP_ERROR_VERBOSE) {
     Carp->import('verbose');
