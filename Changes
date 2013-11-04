@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.0.1 2013-11-04 12:27:51+0900
+    - Fix a test that might fail on a slow machine like Raspberry Pi
+      (Getty++)
+
 3.0.0 2013-10-18 08:59:22+0900
     - No code changes from 2.1.0, just re-packaging for package managers
 
