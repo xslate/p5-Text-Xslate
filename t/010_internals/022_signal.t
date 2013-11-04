@@ -5,6 +5,7 @@ use Test::More;
 use Text::Xslate;
 
 my $tx = Text::Xslate->new();
+$tx->render_string(''); # load related modules
 
 eval {
     local $SIG{ALRM} = sub { die "TIMEOUT" };
