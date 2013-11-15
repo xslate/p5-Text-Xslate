@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.0.2 2013-11-15 21:56:53+0900
+    - Fix a mojibake issue where utf8::upgrade() was always called when
+      loading caches (hanabukuro++)
+
 3.0.1 2013-11-04 12:27:51+0900
     - Fix a test that might fail on a slow machine like Raspberry Pi
       (Getty++)
