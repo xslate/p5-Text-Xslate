@@ -524,7 +524,7 @@ sub _load_compiled {
         }
         elsif($c->[0] eq 'literal') {
             # force upgrade to avoid UTF-8 key issues
-            utf8::upgrade($c->[1]);
+            utf8::upgrade($c->[1]) if($is_utf8);
         }
         push @asm, $c;
     }
