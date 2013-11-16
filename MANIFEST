@@ -176,6 +176,7 @@ t/020_interface/013_slurp_template.t
 t/020_interface/014_customize_option.t
 t/020_interface/015_render_recursion.t
 t/020_interface/016_pre_process_handler.t
+t/020_interface/017_validate.t
 t/030_kolon/001_interpolate.t
 t/030_kolon/002_field.t
 t/030_kolon/003_for.t
@@ -301,6 +302,7 @@ t/900_bugs/035_issue81_tiedhash.t
 t/900_bugs/036_vpath_utf8.t
 t/900_bugs/037_text_str_key.t
 t/900_bugs/038_conbine_flaged_utf8_and_other.t
+t/900_bugs/039_issue95.t
 t/900_bugs/issue79/tmpl/contentA.tt
 t/900_bugs/issue79/tmpl/contentB.tt
 t/900_bugs/issue79/tmpl/wrapperA.tt
