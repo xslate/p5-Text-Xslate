@@ -281,7 +281,7 @@ sub auto_chomp {
         #       \n        <:- ...  :>
         #       ^^^^^^^^^^
         $p->[1] = '';
-        $nl += chomp ${$s_ref};
+        $nl += (${$s_ref} =~ s/\n\z//xms);
     }
     return $nl;
 }
@@ -412,7 +412,7 @@ sub preprocess {
             if($s =~ /\A \s* [}] \s* \z/xms){
                 $code .= $s;
             }
-            elsif(chomp $s) {
+            elsif($s =~ s/\n\z//xms) {
                 $code .= qq{$s\n};
             }
             else {
