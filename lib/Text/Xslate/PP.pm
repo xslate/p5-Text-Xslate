@@ -113,6 +113,24 @@ sub render {
     return tx_execute( $st, $vars );
 }
 
+sub validate {
+    my ( $self, $name ) = @_;
+
+    Carp::croak("Usage: Text::Xslate::render(self, name)")
+        if !( @_ == 2 );
+    unless ( ref $self ) {
+        Carp::croak( "Invalid xslate instance" );
+    }
+
+    if ( !defined $name ) {
+        Carp::croak("Xslate: Template name is not given");
+    }
+
+    local $self->{cache} = 0; # do not touch the cache
+    $self->tx_load_template( $name, 0 );
+    return;
+}
+
 sub current_engine {
     return defined($_current_st) ? $_current_st->engine : undef;
 }

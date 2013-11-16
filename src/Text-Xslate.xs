@@ -1609,6 +1609,26 @@ CODE:
 }
 
 void
+validate(SV* self, SV* source)
+CODE:
+{
+    TAINT_NOT; /* All the SVs we'll create here are safe */
+
+    /* $_[0]: engine */
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Xslate: Invalid xslate instance: %s",
+            tx_neat(aTHX_ self));
+    }
+
+    SvGETMAGIC(source);
+    if(!SvOK(source)) {
+        croak("Xslate: Template name is not given");
+    }
+
+    tx_load_template(aTHX_ self, source, FALSE);
+}
+
+void
 current_engine(klass)
 CODE:
 {
