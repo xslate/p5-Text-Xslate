@@ -15,13 +15,22 @@ use Text::Xslate;
 
 my @read_files;
 {
+    package My::Xslate::Provider;
+    our @ISA = qw(Text::Xslate::Provider::Default);
+
+    sub slurp_template {
+        my($self, $engine, $input_layer, $file) = @_;
+        push @read_files, $file;
+        return $self->SUPER::slurp_template($engine, $input_layer, $file);
+    }
+
     package My::Xslate;
     our @ISA = qw(Text::Xslate);
 
-    sub slurp_template {
-        my($self, $input_layer, $file) = @_;
-        push @read_files, $file;
-        return $self->SUPER::slurp_template($input_layer, $file);
+    sub options {
+        my $options = $_[0]->SUPER::options();
+        $options->{provider} = 'My::Xslate::Provider';
+        return $options;
     }
 }
 
@@ -57,6 +66,7 @@ utime($t,  $t,  "$tmplpath/hello2.tt");
 utime($t3, $t3, "$tmplpath/includes/footer.inc");
 
 {
+  note "Removing directory $cache_dir...";
     rmtree($cache_dir);
     my $tx_macro = My::Xslate->new(
         macro => [ 'macro.inc' ],

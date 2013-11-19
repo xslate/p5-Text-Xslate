@@ -16,13 +16,13 @@ my $tx = Text::Xslate->new(
 
 note 'from file';
 is $tx->render('hello.tx', { lang => 'Xslate' } ), "Hello, Xslate world!\n";
-is $tx->{source}{File::Spec->catfile(path, 'hello.tx')},
+is $tx->{provider}{source}{File::Spec->catfile(path, 'hello.tx')},
     "Hello, <:= \$lang :> world!\n"
     or diag(explain($tx->{source}));
 
 note 'from hash';
 is $tx->render('foo'), 'Hello, world!';
-is $tx->{source}{foo}, 'Hello, <: "" :>world!'
+is $tx->{provider}{source}{foo}, 'Hello, <: "" :>world!'
     or diag(explain($tx->{source}));
 
 note 'from <string>';
