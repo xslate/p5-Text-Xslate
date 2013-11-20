@@ -15,13 +15,13 @@ use Text::Xslate;
 
 my @read_files;
 {
-    package My::Xslate::Provider;
-    our @ISA = qw(Text::Xslate::Provider::Default);
+    package My::Xslate::Loader;
+    use parent qw(Text::Xslate::Loader::File);
 
-    sub slurp_template {
-        my($self, $engine, $input_layer, $file) = @_;
+    sub locate_file {
+        my($self, $file) = @_;
         push @read_files, $file;
-        return $self->SUPER::slurp_template($engine, $input_layer, $file);
+        return $self->SUPER::locate_file($file);
     }
 
     package My::Xslate;
@@ -29,7 +29,7 @@ my @read_files;
 
     sub options {
         my $options = $_[0]->SUPER::options();
-        $options->{provider} = 'My::Xslate::Provider';
+        $options->{loader} = 'My::Xslate::Loader';
         return $options;
     }
 }
