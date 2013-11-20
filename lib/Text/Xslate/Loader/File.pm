@@ -152,7 +152,7 @@ my $updir = File::Spec->updir;
 sub locate_file {
     my ($self, $name) = @_;
 
-    debugf("locate_file: looking for %s", $name);
+    debugf("locate_file: looking for '%s'", $name);
 
     if($name =~ /\Q$updir\E/xmso) {
         die("LoadError: Forbidden component (updir: '$updir') found in file name '$name'");
@@ -243,7 +243,9 @@ sub load_file {
 
     my $filename = $fi->fullpath;
     my $data;
-    {
+    if (ref $filename eq 'SCALAR') {
+        $data = $$filename;
+    } else {
         open my $source, '<' . $self->input_layer, $filename
 #        or $engine->_error("LoadError: Cannot open $fullpath for reading: $!");
             or Carp::confess("LoadError: Cannot open $filename for reading: $!");
