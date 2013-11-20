@@ -17,25 +17,17 @@ use Text::Xslate;
 # 4. render main.tx
 # 5. render main.tx again, but don't use cache
 
-my %load_count;
 {
-    package My::Xslate::Provider;
-    use parent qw(Text::Xslate::Provider::Default);
+    package MyXslate;
+    use parent qw(Text::Xslate);
 
     sub _load_source {
-        my ($self, $engine, $fi) = @_;
+        my ($self, $fi) = @_;
         my $fullpath  = $fi->{fullpath};
-        $load_count{$fullpath}++;
-        $self->SUPER::_load_source($engine, $fi);
-    }
 
-    package My::Xslate;
-    use parent qw(Text::Xslate)
+        $self->{_load_source_count}{$fullpath}++;
 
-    sub options {
-        my $options = $_[0]->SUPER::options();
-        $options->{provider} = 'My::Xslate::Provider';
-        return $options;
+        $self->SUPER::_load_source($fi);
     }
 }
 
@@ -51,7 +43,7 @@ T
 {
     my $service = tempdir(CLEANUP => 1);
 
-    my $tx  = My::Xslate->new(
+    my $tx  = MyXslate->new(
         cache_dir => "$service/cache",
         path      => [$service],
     );
