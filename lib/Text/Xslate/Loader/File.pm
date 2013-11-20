@@ -172,7 +172,7 @@ sub locate_file {
                 next;
             }
 
-            $cache_prefix = Text::Xslate::Util::uri_escape($name);
+            $cache_prefix = Text::Xslate::Util::uri_escape($dir);
             if (length $cache_prefix > 127) {
                 # some filesystems refuse a path part with length > 127
                 $cache_prefix = $self->_digest($cache_prefix);
