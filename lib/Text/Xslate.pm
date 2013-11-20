@@ -56,6 +56,7 @@ sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
 package Text::Xslate::Engine; # XS/PP common base class
 use Mouse;
+use File::Spec;
 
 use Text::Xslate::Util qw(
     make_error
@@ -74,13 +75,8 @@ BEGIN {
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
-    my $cache_dir = '.xslate_cache';
-    foreach my $d($ENV{HOME}, File::Spec->tmpdir) {
-        if(defined($d) and -d $d and -w _) {
-            $cache_dir = File::Spec->catfile($d, '.xslate_cache');
-            last;
-        }
-    }
+    my $temp_base = $ENV{TEMPDIR} || File::Spec->tmpdir;
+    my $cache_dir = File::Spec->catdir($temp_base, 'xslate_cache');
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
