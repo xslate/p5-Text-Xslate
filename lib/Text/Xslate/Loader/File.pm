@@ -2,6 +2,7 @@ package Text::Xslate::Loader::File;
 use Mouse;
 use Data::MessagePack;
 use Digest::MD5 ();
+use File::Copy ();
 use File::Spec;
 use File::Temp ();
 use Log::Minimal;
@@ -68,6 +69,8 @@ sub build {
 sub load {
     my ($self, $name) = @_;
 
+    debugf("Loading %s", $name);
+
     # On a file system, we need to check for
     # 1) does the file exist in fs?
     # 2) if so, keep it's mtime
@@ -85,30 +88,35 @@ sub load {
     # $cached_ent is an object with mtime and asm
     my $cached_ent;
     my $cache_strategy = $self->cache_strategy;
+    debugf("Cache strategy is %d", $cache_strategy);
     if ($cache_strategy > 0) {
         # It's okay to fail
-        my $cachepath = $fi->cachepath;
         $cached_ent = eval { $self->load_cached($fi) };
         if (my $e = $@) {
             warnf("Failed to load compiled cache from %s (%s)",
-                $cachepath,
+                $fi->cachepath,
                 $e
             );
         }
     }
 
+    my $asm;
     if ($cached_ent) {
         if ($cache_strategy > 1) {
             # We're careless! We just want to use the cached
             # version! Go! Go! Go!
-            return $cached_ent->asm;
+            debugf("Freshness check disabled, and cache exists. Just use it");
+            $asm = $cached_ent->asm;
+            goto ASSEMBLE_AND_RETURN;
         }
 
         # Otherwise check for freshness 
         if ($cached_ent->is_fresher_than($fi)) {
             # Hooray, our cached version is newer than the 
             # source file! cheers! jubilations! 
-            return $cached_ent->asm;
+            debugf("Freshness check passed, returning asm");
+            $asm = $cached_ent->asm;
+            goto ASSEMBLE_AND_RETURN;
         }
 
         # if you got here, too bad: cache is invalid.
@@ -119,7 +127,7 @@ sub load {
 
     # If you got here, either the cache_strategy was 0 or the cache
     # was invalid. load from source
-    my $asm = $self->load_file($fi);
+    $asm = $self->load_file($fi);
 
     # store cache, if necessary
     my $cache_mtime; # XXX Should this be here?
@@ -127,6 +135,7 @@ sub load {
         $cache_mtime = $self->store_cache($fi, $asm);
     }
 
+ASSEMBLE_AND_RETURN:
     $self->assemble($asm, $name, $fi->fullpath, $fi->cachepath, $cache_mtime);
     return $asm;
 }
@@ -143,6 +152,8 @@ my $updir = File::Spec->updir;
 sub locate_file {
     my ($self, $name) = @_;
 
+    debugf("locate_file: looking for %s", $name);
+
     if($name =~ /\Q$updir\E/xmso) {
         die("LoadError: Forbidden component (updir: '$updir') found in file name '$name'");
     }
@@ -150,6 +161,7 @@ sub locate_file {
     my $dirs = $self->include_dirs;
     my ($fullpath, $mtime, $cache_prefix);
     foreach my $dir (@$dirs) {
+        debugf("Checking in %s", $dir);
         if (ref $dir eq 'HASH') {
             # XXX need to implement virtual paths
             my $content = $dir->{$name};
@@ -204,9 +216,12 @@ sub load_cached {
     my ($self, $fi) = @_;
 
     my $filename = $fi->cachepath;
+
+    debugf("load_cached: %s", $filename);
     my $mtime = (stat($filename))[ST_MTIME()];
     if (! defined $mtime) {
         # stat failed. cache isn't there. sayonara
+        debugf("load_cached: file %s does not exist", $filename);
         return;
     }
 
@@ -247,21 +262,26 @@ sub store_cache {
     my ($self, $fi, $asm) = @_;
 
     my $path          = $fi->cachepath;
+    debugf("Storing cache in %s", $path);
     my($volume, $dir) = File::Spec->splitpath($path);
     my $cachedir      = File::Spec->catpath($volume, $dir, '');
 
     if(!-e $cachedir) {
+        debugf("Directory %s does not exist", $cachedir);
         require File::Path;
-        eval { File::Path::mkpath($cachedir) }
-            or Carp::croak("Xslate: Cannot prepare cache directory $path (ignored): $@");
+        if (! File::Path::make_path($cachedir) || ! -d $cachedir) {
+            Carp::croak("Xslate: Cannot prepare cache directory $path (ignored): $@");
+        }
     }
 
     my $temp = File::Temp->new(
-        TEMPLATE => "xslateXXXX",
+        TEMPLATE => "xslate-XXXX",
         DIR => $cachedir,
         UNLINK => 0,
     );
     binmode($temp, ':raw');
+
+    debugf("Temporary file in %s", $temp);
 
     my $newest_mtime = 0;
     eval {
@@ -278,6 +298,7 @@ sub store_cache {
                 }
             }
         }
+        $temp->flush;
         $temp->close;
     };
     if (my $e = $@) {
@@ -285,9 +306,11 @@ sub store_cache {
         die $e;
     }
 
-    if (! rename($temp->filename, $path)) {
+    if (! File::Copy::move($temp->filename, $path)) {
         Carp::carp("Xslate: Cannot rename cache file $path (ignored): $!");
     }
+
+    debugf("Stored cache in %s", $path);
     return $newest_mtime;
 }
 
@@ -317,8 +340,9 @@ sub build_magic {
 package 
     Text::Xslate::Loader::File::CachedEntity;
 use Mouse;
+use Log::Minimal;
 
-has asm => (is => 'rw');
+has asm => (is => 'rw', builder => 'build_asm', lazy => 1);
 has filename => (is => 'ro', required => 1);
 has magic => (is => 'ro', required => 1);
 has mtime => (is => 'ro', required => 1); # Main file's mtime
@@ -326,9 +350,20 @@ has mtime => (is => 'ro', required => 1); # Main file's mtime
 sub is_fresher_than {
     my ($self, $threshold) = @_;
 
-    if ($self->mtime < $threshold) {
+    debugf("CachedEntity mtime (%d), threshold (%d)",
+            $self->mtime, $threshold);
+    if ($self->mtime <= $threshold) {
         return;
     }
+
+    $self->build_asm( check_freshness => $threshold );
+}
+
+sub build_asm {
+    my ($self, %args) = @_;
+
+    my $check_freshness = exists $args{check_freshness};
+    my $threshold       = $args{check_freshness};
 
     my $filename = $self->filename;
     open my($in), '<:raw', $filename
@@ -341,7 +376,7 @@ sub is_fresher_than {
     my $magic = $self->magic;
     read $in, $data, length($magic);
     if (! defined $data || $data ne $magic) {
-        warnf("Magic mismatch %x != %x", $data, $magic);
+#        warnf("Magic mismatch %x != %x", $data, $magic);
         return;
     }
 
@@ -358,13 +393,12 @@ sub is_fresher_than {
 
     # The first token is the metadata
     my $offset  = $unpacker->execute($data);
-    my $meta    = $unpacker->data();
-    my $is_utf8 = $meta->{utf8};
+    my $meta_op = $unpacker->data();
+    my $is_utf8 = $meta_op->[1]->{utf8};
     $unpacker->reset();
-
     $unpacker->utf8($is_utf8);
 
-    my @asm;
+    my @asm = ($meta_op);
     if($is_utf8) { # TODO: move to XS?
         my $seed = "";
         utf8::upgrade($seed);
@@ -376,7 +410,7 @@ sub is_fresher_than {
         $unpacker->reset();
 
         # my($name, $arg, $line, $file, $symbol) = @{$c};
-        if($c->[0] eq 'depend') {
+        if($check_freshness && $c->[0] eq 'depend') {
             my $dep_mtime = (stat $c->[1])[Text::Xslate::Engine::_ST_MTIME()];
             if(!defined $dep_mtime) {
                 Carp::carp("Xslate: Failed to stat $c->[1] (ignored): $!");
@@ -398,6 +432,7 @@ sub is_fresher_than {
     }
 
     $self->asm(\@asm);
+    return \@asm;
 }
 
 1;
