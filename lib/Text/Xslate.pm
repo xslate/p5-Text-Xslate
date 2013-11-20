@@ -29,7 +29,7 @@ BEGIN {
 
 our @ISA = qw(Text::Xslate::Engine);
 
-my $BYTECODE_VERSION = '1.6';
+my $BYTECODE_VERSION = '2.0';
 
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 our $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
@@ -56,6 +56,7 @@ sub USE_XS() { $use_xs }
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
 package Text::Xslate::Engine; # XS/PP common base class
+use Mouse;
 
 use Text::Xslate::Util qw(
     make_error
@@ -146,7 +147,7 @@ sub options { # overridable
         function     => undef,
         html_builder_module => undef,
         compiler     => 'Text::Xslate::Compiler',
-        provider     => 'Text::Xslate::Provider::Default',
+        loader       => 'Text::Xslate::Loader::File',
 
         verbose      => 1,
         warn_handler => undef,
@@ -262,6 +263,26 @@ sub _resolve_function_aliases {
     return;
 }
 
+has magic_template => (
+    is => 'ro',
+    lazy => 1,
+    builder => 'build_magic_template',
+);
+
+sub build_magic_template {
+    my $self = shift;
+    # You need to add some instance specific magic
+    my @options = (
+        ref($self->{compiler}) || $self->{compiler},
+        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
+        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
+        $self->input_layer,
+        [sort keys %{ $self->{function} }],
+    );
+    return sprintf qq{xslate;$BYTECODE_VERSION;%%s;%s;},
+        Data::MessagePack->pack([@options])
+}
+
 sub load_string { # called in render_string()
     my($self, $string) = @_;
     if(not defined $string) {
@@ -278,17 +299,20 @@ sub load_string { # called in render_string()
 
 sub find_file {
     my ($self, $file) = @_;
-    $self->_provider->find_file($self, $file);
+    $self->_loader->locate_file($file);
 }
 
+# XXX To be deprecated ?
+# The interface is too specific for file-based templates
 sub load_file {
     my($self, $file, $mtime, $omit_augment) = @_;
-    $self->_provider->load_file($self, $file, $mtime, $omit_augment);
+    my $asm = $self->_loader->load($file);
+    return $asm;
 }
 
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
-    $self->_provider->slurp_template($self, $input_layer, $fullpath);
+    $self->_loader->slurp_template($input_layer, $fullpath);
 }
 
 sub _digest {
@@ -322,16 +346,16 @@ sub _filter_options_for_magic_token {
     @filterd_options;
 }
 
-sub _provider {
+sub _loader {
     my $self = shift;
-    my $provider = $self->{provider};
-    if (!ref $provider) {
+    my $loader = $self->{loader};
+    if (!ref $loader) {
         require Mouse;
-        Mouse::load_class($provider);
-        $provider = $provider->build($self);
-        $self->{provider} = $provider;
+        Mouse::load_class($loader);
+        $loader = $loader->build($self);
+        $self->{loader} = $loader;
     }
-    return $provider;
+    return $loader;
 }
 
 sub _compiler {
@@ -374,11 +398,6 @@ sub _error {
 sub _magic_token_arguments {
     my $self = shift;
     return (
-        ref($self->{compiler}) || $self->{compiler},
-        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
-        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
-        $self->input_layer,
-        [sort keys %{ $self->{function} }],
     );
 }
 

@@ -36,6 +36,7 @@ sub op_noop {
     goto $_[0]->{ code }->[ ++$_[0]->{ pc } ]->{ exec_code };
 }
 
+*op_meta = \&op_noop;
 
 sub op_move_to_sb {
     $_[0]->{sb} = $_[0]->{sa};

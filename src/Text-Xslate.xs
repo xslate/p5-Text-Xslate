@@ -11,6 +11,7 @@
 #define TXCODE_macro_begin TXCODE_noop
 #define TXCODE_macro_nargs TXCODE_noop
 #define TXCODE_macro_outer TXCODE_noop
+#define TXCODE_meta        TXCODE_noop
 #define TXCODE_set_opinfo  TXCODE_noop
 #define TXCODE_super       TXCODE_noop
 

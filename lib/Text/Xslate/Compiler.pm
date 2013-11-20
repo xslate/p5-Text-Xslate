@@ -313,6 +313,7 @@ sub compile {
         my $ast = $parser->parse($input, %args);
         print STDERR p($ast) if _DUMP_AST;
         @code = (
+            $self->opcode(meta => { utf8 => utf8::is_utf8($input) }),
             $self->opcode(set_opinfo => undef, file => $self->current_file, line => 1),
             $self->compile_ast($ast),
             $self->opcode('end'),
