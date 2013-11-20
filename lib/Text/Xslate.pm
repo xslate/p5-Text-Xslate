@@ -13,7 +13,6 @@ use Data::MessagePack ();
 use Scalar::Util      ();
 
 use Text::Xslate::Util ();
-use Text::Xslate::Provider::Default;
 BEGIN {
     # all the exportable functions are defined in ::Util
     our @EXPORT_OK = qw(
@@ -312,7 +311,15 @@ sub load_file {
 
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
-    $self->_loader->slurp_template($input_layer, $fullpath);
+
+    if (ref $fullpath eq 'SCALAR') {
+        return $$fullpath;
+    } else {
+        open my($source), '<' . $input_layer, $fullpath
+            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+        local $/;
+        return scalar <$source>;
+    }
 }
 
 sub _digest {
