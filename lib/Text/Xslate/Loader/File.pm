@@ -53,7 +53,9 @@ sub build {
     my ($class, $engine) = @_;
     my $self = $class->new(
         assemble_cb     => sub { $engine->_assemble(@_) },
-        cache_dir       => Cwd::abs_path($engine->{cache_dir}),
+        # XXX Cwd::abs_path would stat() the directory, so we need to
+        # to use File::Spec->rel2abs
+        cache_dir       => File::Spec->rel2abs($engine->{cache_dir}),
         cache_strategy  => $engine->{cache},
         compiler        => $engine->_compiler,
         include_dirs    => $engine->{path},
