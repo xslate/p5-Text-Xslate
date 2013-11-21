@@ -66,9 +66,6 @@ BEGIN {
     my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
     *_DUMP_LOAD = sub(){ $dump_load };
 
-    my $save_src = scalar($Text::Xslate::Util::DEBUG =~ /\b save_src \b/xms);
-    *_SAVE_SRC  = sub() { $save_src };
-
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
     my $temp_base = $ENV{TEMPDIR} || File::Spec->tmpdir;
@@ -286,7 +283,6 @@ sub load_string { # called in render_string()
     }
     $self->note('  _load_string: %s', join '\n', split /\n/, $string)
         if _DUMP_LOAD;
-    $self->{source}{'<string>'} = $string if _SAVE_SRC;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
     $self->_assembler->assemble($asm, '<string>', \$string, undef, undef);
