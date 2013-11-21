@@ -544,5 +544,10 @@ __END__
         my $asm = $loader->load($file);
     }
 
+=head1 NOTES
 
-$loader は必ず $tx->byte_code_version() を考慮したキャッシュ等の保存先を担保すべき
+Loaders must save data (i.e. cache) in locations that are uniquely
+distinguishable by the bytecode version used. This allows you to seamlessly
+upgrade between versions of Text::Xslate with differing bytecode versions
+
+=cut
