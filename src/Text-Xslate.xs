@@ -1580,10 +1580,7 @@ CODE:
             tx_neat(aTHX_ vars));
     }
 
-    MY_CXT.depth++;
-    PerlIO_printf(PerlIO_stderr(), "render -> calling tx_load_template\n");
     st = tx_load_template(aTHX_ self, source, FALSE);
-    MY_CXT.depth--;
 
     /* local $SIG{__WARN__} = \&warn_handler */
     if (PL_warnhook != MY_CXT.warn_handler) {

@@ -342,11 +342,9 @@ sub compile {
             grep { !ref($_) and !$uniq{$_}++ } @{$self->dependencies};
     }
 
-    if ($engine && $engine->current_depth() == 0) {
+#    if ($engine && $engine->current_depth() == 0) {
         unshift @code, $self->opcode(meta => { utf8 => utf8::is_utf8($input) });
-    }
-
-print STDERR Text::Xslate::Util::dump_op(\@code);
+#    }
 
     return \@code;
 }
@@ -424,7 +422,6 @@ sub compile_ast {
 sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
     printf STDERR "# cascade %s %s", $self->file, $cascade->dump if _DUMP_CAS;
-print STDERR Text::Xslate::Util::dump_op($main_code);
     my $engine = $self->engine
         || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 
@@ -1400,8 +1397,6 @@ sub _localize_vars {
             $self->opcode( localize_s => $key->value, symbol => $key );
     }
 
-  print STDERR "localize vars\n";
-  print STDERR Text::Xslate::Util::dump_op(\@localize);
     return @localize;
 }
 

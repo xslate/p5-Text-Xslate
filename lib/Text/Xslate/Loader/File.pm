@@ -174,8 +174,6 @@ LOAD_FROM_SOURCE:
     }
 
 ASSEMBLE_AND_RETURN:
-    print STDERR "ASSEMBLE_AND_RETURN\n";
-    print STDERR Text::Xslate::Util::dump_op($asm);
     $self->assemble($asm, $name, $fi->fullpath, $fi->cachepath, $cache_mtime);
     return $asm;
 }
@@ -540,3 +538,7 @@ __END__
         my ($self, $file) = @_;
         my $asm = $loader->load($file);
     }
+
+
+$tx->byte_code_version();
+$loader は必ず $tx->byte_code_version() を考慮したキャッシュ等の保存先を担保すべき

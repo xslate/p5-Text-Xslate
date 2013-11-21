@@ -28,11 +28,6 @@ BEGIN {
 
 our @ISA = qw(Text::Xslate::Engine);
 
-my $BYTECODE_VERSION = '2.0';
-
-# $bytecode_version + $fullpath + $compiler_and_parser_options
-our $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
-
 # load backend (XS or PP)
 my $use_xs = 0;
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
@@ -113,6 +108,8 @@ my %builtin = (
     uri          => 'uri_escape',
 );
 
+sub bytecode_version { '2.0' };
+
 sub default_functions { +{} } # overridable
 
 sub parser_option { # overridable
@@ -127,6 +124,28 @@ sub replace_option_value_for_magic_token { # overridable
     #my($self, $name, $value) = @_;
     #$value;
     return $_[2];
+}
+
+has magic_template => (
+    is => 'ro',
+    lazy => 1,
+    builder => 'build_magic_template',
+);
+
+sub build_magic_template {
+    my $self = shift;
+    # You need to add some instance specific magic
+    my @options = (
+        ref($self->{compiler}) || $self->{compiler},
+        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
+        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
+        $self->input_layer,
+        [sort keys %{ $self->{function} }],
+    );
+    # $bytecode_version + $fullpath + $compiler_and_parser_options
+    return sprintf qq{xslate;%s;%%s;%s;},
+        $self->bytecode_version(),
+        Data::MessagePack->pack([@options])
 }
 
 sub options { # overridable
@@ -256,26 +275,6 @@ sub _resolve_function_aliases {
     }
 
     return;
-}
-
-has magic_template => (
-    is => 'ro',
-    lazy => 1,
-    builder => 'build_magic_template',
-);
-
-sub build_magic_template {
-    my $self = shift;
-    # You need to add some instance specific magic
-    my @options = (
-        ref($self->{compiler}) || $self->{compiler},
-        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
-        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
-        $self->input_layer,
-        [sort keys %{ $self->{function} }],
-    );
-    return sprintf qq{xslate;$BYTECODE_VERSION;%%s;%s;},
-        Data::MessagePack->pack([@options])
 }
 
 sub load_string { # called in render_string()
