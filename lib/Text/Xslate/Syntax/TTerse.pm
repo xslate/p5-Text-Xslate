@@ -523,6 +523,8 @@ sub std_macro {
 sub std_wrapper {
     my($parser, $symbol) = @_;
 
+warn "called std_wrapper";
+
     my $base  = $parser->barename();
     my $into;
     if($parser->token->id eq "INTO") {

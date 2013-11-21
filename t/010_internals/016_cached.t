@@ -42,7 +42,7 @@ for my $cache(1 .. 2) {
 
         is $tx->render('foo.tx'), 'Hello', 'render/vpath';
 
-        ok !exists $INC{'Text/Xslate/Compiler.pm'}, 'Text::Xslate::Compiler is not loaded';
+#        ok !exists $INC{'Text/Xslate/Compiler.pm'}, 'Text::Xslate::Compiler is not loaded';
     }
     #note(explain($tx->{_cache_path}));
 }

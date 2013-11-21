@@ -18,16 +18,14 @@ use Text::Xslate;
 # 5. render main.tx again, but don't use cache
 
 {
-    package MyXslate;
-    use parent qw(Text::Xslate);
+    package My::Xslate::Loader;
+    use parent qw(Text::Xslate::Loader::File);
 
-    sub _load_source {
+    sub load_file {
         my ($self, $fi) = @_;
-        my $fullpath  = $fi->{fullpath};
-
-        $self->{_load_source_count}{$fullpath}++;
-
-        $self->SUPER::_load_source($fi);
+        my $fullpath  = $fi->fullpath;
+        $self->engine->{_load_source_count}{$fullpath}++;
+        $self->SUPER::load_file($fi);
     }
 }
 
@@ -43,9 +41,10 @@ T
 {
     my $service = tempdir(CLEANUP => 1);
 
-    my $tx  = MyXslate->new(
+    my $tx  = Text::Xslate->new(
         cache_dir => "$service/cache",
         path      => [$service],
+        loader    => 'My::Xslate::Loader',
     );
     write_file("$service/main.tx", $content_main);
     sleep 2; # time goes

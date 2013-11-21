@@ -1147,7 +1147,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
 
     if (dump_load) {
         PerlIO_printf(PerlIO_stderr(),
-            "#[XS] load_template(%"SVf")\n", name);
+            "#[XS] load_template(%"SVf", from_include = %s)\n", name, from_include ? "YES" : "NO");
     }
 
     if(!SvOK(name)) {
@@ -1580,7 +1580,10 @@ CODE:
             tx_neat(aTHX_ vars));
     }
 
+    MY_CXT.depth++;
+    PerlIO_printf(PerlIO_stderr(), "render -> calling tx_load_template\n");
     st = tx_load_template(aTHX_ self, source, FALSE);
+    MY_CXT.depth--;
 
     /* local $SIG{__WARN__} = \&warn_handler */
     if (PL_warnhook != MY_CXT.warn_handler) {
@@ -1629,6 +1632,16 @@ CODE:
     tx_load_template(aTHX_ self, source, FALSE);
 }
 
+int
+current_depth(klass)
+CODE:
+{
+    dMY_CXT;
+    RETVAL = MY_CXT.depth;
+}
+OUTPUT:
+    RETVAL
+
 void
 current_engine(klass)
 CODE:
@@ -1636,6 +1649,7 @@ CODE:
     dMY_CXT;
     tx_state_t* const st = MY_CXT.current_st;
     SV* retval;
+
     if(st) {
         if(ix == 0) { /* current_engine */
             retval = st->engine;
@@ -1662,6 +1676,7 @@ ALIAS:
     current_vars   = 1
     current_file   = 2
     current_line   = 3
+
 
 void
 print(klass, ...)

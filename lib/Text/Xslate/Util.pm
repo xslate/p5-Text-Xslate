@@ -305,6 +305,26 @@ sub p { # for debugging, the guts of dump()
 
 sub dump :method { goto &p }
 
+sub dump_op {
+    my $asm = shift;
+    my $i = 0;
+    my $dump = '';
+    require 'Data/Dumper.pm';
+    foreach my $op (@$asm) {
+        my $dd = Data::Dumper->new($op);
+        $dd->Indent(0);
+        $dd->Sortkeys(1);
+        $dd->Terse(1);
+        $dd->Quotekeys(0);
+        $dd->Useqq(1);
+        $dump .= sprintf "(%05d) [%s]\n",
+            $i++,
+            join ", ", $dd->Dump()
+        ;
+    }
+    return $dump;
+}
+
 1;
 __END__
 

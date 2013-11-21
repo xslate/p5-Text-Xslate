@@ -301,12 +301,18 @@ sub find_file {
 # The interface is too specific for file-based templates
 sub load_file {
     my($self, $file, $mtime, $omit_augment) = @_;
-    my $asm = $self->_loader->load($file);
+    local $self->{omit_augment} = $omit_augment;
+    my $asm = $self->_loader->load($file, $mtime);
     return $asm;
 }
 
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
+
+    if (_DUMP_LOAD) {
+$self->note("slurp_template: input_layer(%s), fullpath(%s)\n",
+$input_layer, $fullpath);
+    }
 
     if (ref $fullpath eq 'SCALAR') {
         return $$fullpath;

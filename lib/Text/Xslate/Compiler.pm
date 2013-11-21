@@ -278,7 +278,8 @@ sub compile {
     local $self->{current_file} = '<string>'; # for opinfo
     local $self->{file}         = $args{file} || \$input;
 
-    if(my $engine = $self->engine) {
+    my $engine = $self->engine;
+    if ($engine) {
         my $ob = $self->overridden_builtin;
         Internals::SvREADONLY($ob, 0);
         foreach my $name(keys %builtin) {
@@ -313,7 +314,6 @@ sub compile {
         my $ast = $parser->parse($input, %args);
         print STDERR p($ast) if _DUMP_AST;
         @code = (
-            $self->opcode(meta => { utf8 => utf8::is_utf8($input) }),
             $self->opcode(set_opinfo => undef, file => $self->current_file, line => 1),
             $self->compile_ast($ast),
             $self->opcode('end'),
@@ -341,6 +341,12 @@ sub compile {
             map  { [ depend => $_ ] }
             grep { !ref($_) and !$uniq{$_}++ } @{$self->dependencies};
     }
+
+    if ($engine && $engine->current_depth() == 0) {
+        unshift @code, $self->opcode(meta => { utf8 => utf8::is_utf8($input) });
+    }
+
+print STDERR Text::Xslate::Util::dump_op(\@code);
 
     return \@code;
 }
@@ -418,6 +424,7 @@ sub compile_ast {
 sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
     printf STDERR "# cascade %s %s", $self->file, $cascade->dump if _DUMP_CAS;
+print STDERR Text::Xslate::Util::dump_op($main_code);
     my $engine = $self->engine
         || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
 

@@ -61,8 +61,9 @@ foreach my $i(1 .. 2) {
     my $tx = Text::Xslate->new(\%opts);
 
     for my $j(1 .. 2) {
-    is $tx->render(foo => \%vars),
-        $expected, "process $i, render $j";
+        note explain \%opts;
+        is $tx->render(foo => \%vars),
+            $expected, "process $i, render $j";
     }
 }
 
@@ -74,7 +75,7 @@ foreach my $i(1 .. 2) {
     my $tx = Text::Xslate->new(\%opts);
 
     for my $j(1 .. 2) {
-    is $tx->render(foo => \%vars),
+        is $tx->render(foo => \%vars),
         $expected, "process $i, render $j";
     }
 }
