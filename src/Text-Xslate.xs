@@ -1327,209 +1327,6 @@ CODE:
 }
 
 void
-_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
-CODE:
-{
-    dMY_CXT;
-    dTX_optable;
-    MAGIC* mg;
-    HV* hv;
-    HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
-    U32 const len = av_len(proto) + 1;
-    U32 i;
-    U16 oi_line; /* opinfo.line */
-    SV* oi_file;
-    tx_state_t st;
-    AV* tmpl;
-    SV* tobj;
-    SV** svp;
-    AV* macro = NULL;
-
-    TAINT_NOT; /* All the SVs we'll create here are safe */
-
-    Zero(&st, 1, tx_state_t);
-
-    svp = hv_fetchs(self, "template", FALSE);
-    if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
-        croak("The xslate instance has no template table");
-    }
-    hv = (HV*)SvRV(*svp);
-
-    if(!SvOK(name)) {
-        croak("Undefined template name is invalid");
-    }
-
-    /* fetch the template object from $self->{template}{$name} */
-    tobj = hv_iterval(hv, hv_fetch_ent(hv, name, TRUE, 0U));
-
-    tmpl = newAV();
-    /* store the template object to $self->{template}{$name} */
-    sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
-    av_extend(tmpl, TXo_least_size - 1);
-
-    sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
-    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
-    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
-
-    /* prepare function table */
-    svp = hv_fetchs(self, "function", FALSE);
-    TAINT_NOT;
-
-    if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
-        croak("Function table must be a HASH reference");
-    }
-    /* $self->{function} must be copied
-       because it might be changed per templates */
-    st.symbol = newHVhv( (HV*)SvRV(*svp) );
-
-    st.tmpl   = tmpl;
-    st.engine = newRV_inc((SV*)self);
-    sv_rvweaken(st.engine);
-
-    st.hint_size = TX_HINT_SIZE;
-
-    st.sa       = &PL_sv_undef;
-    st.sb       = &PL_sv_undef;
-    st.targ     = newSV(0);
-
-    /* stack frame */
-    st.frames        = newAV();
-    st.current_frame = -1;
-
-    Newxz(st.info, len + 1, tx_info_t);
-    st.info[len].line = (U16)-1; /* invalid value */
-    st.info[len].file = SvREFCNT_inc_simple_NN(name);
-
-    Newxz(st.code, len, tx_code_t);
-
-    st.code_len = len;
-    st.pc       = &st.code[0];
-
-    mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext,
-        &xslate_vtbl, (char*)&st, sizeof(st));
-    mg->mg_flags |= MGf_DUP;
-
-    oi_line = 0;
-    oi_file = name;
-
-    for(i = 0; i < len; i++) {
-        SV* const code = *av_fetch(proto, i, TRUE);
-        if(SvROK(code) && SvTYPE(SvRV(code)) == SVt_PVAV) {
-            AV* const av     = (AV*)SvRV(code);
-            SV* const opname = *av_fetch(av, 0, TRUE);
-            SV** const arg   =  av_fetch(av, 1, FALSE);
-            SV** const line  =  av_fetch(av, 2, FALSE);
-            SV** const file  =  av_fetch(av, 3, FALSE);
-            HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
-            IV  opnum;
-
-            if(!he){
-                croak("Oops: Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
-            }
-
-            opnum                = SvIVx(hv_iterval(ops, he));
-            st.code[i].exec_code = tx_optable[opnum];
-            if(tx_oparg[opnum] & TXARGf_SV) {
-                if(!arg) {
-                    croak("Oops: Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
-                }
-
-                if(tx_oparg[opnum] & TXARGf_KEY) { /* shared sv */
-                    STRLEN len;
-                    const char* const pv = SvPV_const(*arg, len);
-                    st.code[i].u_arg.sv = newSVpvn_share(pv, SvUTF8(*arg) ? -len : len, 0U);
-                }
-                else if(tx_oparg[opnum] & TXARGf_INT) { /* sviv */
-                    SvIV_please(*arg);
-                    st.code[i].u_arg.sv = SvIsUV(*arg)
-                        ? newSVuv(SvUV(*arg))
-                        : newSViv(SvIV(*arg));
-                }
-                else { /* normal sv */
-                    st.code[i].u_arg.sv = newSVsv(*arg);
-                }
-            }
-            else if(tx_oparg[opnum] & TXARGf_INT) {
-                st.code[i].u_arg.iv = SvIV(*arg);
-            }
-            else if(tx_oparg[opnum] & TXARGf_PC) {
-                /* calculate relational addresses to absolute addresses */
-                UV const abs_pos       = (UV)(i + SvIV(*arg));
-
-                if(abs_pos >= (UV)len) {
-                    croak("Oops: goto address %"IVdf" is out of range (must be 0 <= addr <= %"IVdf")",
-                        SvIV(*arg), (IV)len);
-                }
-                st.code[i].u_arg.pc = TX_POS2PC(&st, abs_pos);
-            }
-            else {
-                if(arg && SvOK(*arg)) {
-                    croak("Oops: Opcode %"SVf" has an extra argument %s on [%d]",
-                        opname, tx_neat(aTHX_ *arg), (int)i);
-                }
-            }
-
-            /* setup opinfo */
-            if(line && SvOK(*line)) {
-                oi_line = (U16)SvUV(*line);
-            }
-            if(file && SvOK(*file) && !sv_eq(*file, oi_file)) {
-                oi_file = sv_mortalcopy(*file);
-            }
-            st.info[i].optype = (U16)opnum;
-            st.info[i].line   = oi_line;
-            st.info[i].file   = SvREFCNT_inc_simple_NN(oi_file);
-
-            /* special cases */
-            if(opnum == TXOP_macro_begin) {
-                SV* const name = st.code[i].u_arg.sv;
-                SV* const ent  = hv_iterval(st.symbol,
-                    hv_fetch_ent(st.symbol, name, TRUE, 0U));
-
-                if(!sv_true(ent)) {
-                    SV* mref;
-                    macro = newAV();
-                    mref  = sv_2mortal(newRV_noinc((SV*)macro));
-                    sv_bless(mref, MY_CXT.macro_stash);
-                    sv_setsv(ent, mref);
-
-                    (void)av_store(macro, TXm_OUTER, newSViv(0));
-                    (void)av_store(macro, TXm_NARGS, newSViv(0));
-                    (void)av_store(macro, TXm_ADDR,  newSVuv(PTR2UV(TX_POS2PC(&st, i))));
-                    (void)av_store(macro, TXm_NAME,  name);
-                    st.code[i].u_arg.sv = NULL;
-                }
-                else { /* already defined */
-                    macro = NULL;
-                }
-            }
-            else if(opnum == TXOP_macro_nargs) {
-                if(macro) {
-                    /* the number of outer lexical variables */
-                    (void)av_store(macro, TXm_NARGS, st.code[i].u_arg.sv);
-                    st.code[i].u_arg.sv = NULL;
-                }
-            }
-            else if(opnum == TXOP_macro_outer) {
-                if(macro) {
-                    /* the number of outer lexical variables */
-                    (void)av_store(macro, TXm_OUTER, st.code[i].u_arg.sv);
-                    st.code[i].u_arg.sv = NULL;
-                }
-            }
-            else if(opnum == TXOP_depend) {
-                /* add a dependent file to the tmpl object */
-                av_push(tmpl, st.code[i].u_arg.sv);
-                st.code[i].u_arg.sv = NULL;
-            }
-        }
-        else {
-            croak("Oops: Broken code found on [%d]", (int)i);
-        }
-    } /* end for each code */
-}
-
-void
 render(SV* self, SV* source, SV* vars = &PL_sv_undef)
 ALIAS:
     render        = 0
@@ -1792,6 +1589,211 @@ CODE:
         croak("%"SVf, full_message); /* must die */
         /* not reached */
     }
+}
+
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Assembler
+
+void
+_assemble(SV* self, HV* engine, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
+CODE:
+{
+    dMY_CXT;
+    dTX_optable;
+    MAGIC* mg;
+    HV* hv;
+    HV* const ops = get_hv("Text::Xslate::OPS", GV_ADD);
+    U32 const len = av_len(proto) + 1;
+    U32 i;
+    U16 oi_line; /* opinfo.line */
+    SV* oi_file;
+    tx_state_t st;
+    AV* tmpl;
+    SV* tobj;
+    SV** svp;
+    AV* macro = NULL;
+
+    TAINT_NOT; /* All the SVs we'll create here are safe */
+
+    Zero(&st, 1, tx_state_t);
+
+    svp = hv_fetchs(engine, "template", FALSE);
+    if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
+        croak("The xslate instance has no template table");
+    }
+    hv = (HV*)SvRV(*svp);
+
+    if(!SvOK(name)) {
+        croak("Undefined template name is invalid");
+    }
+
+    /* fetch the template object from $engine->{template}{$name} */
+    tobj = hv_iterval(hv, hv_fetch_ent(hv, name, TRUE, 0U));
+
+    tmpl = newAV();
+    /* store the template object to $engine->{template}{$name} */
+    sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
+    av_extend(tmpl, TXo_least_size - 1);
+
+    sv_setsv(*av_fetch(tmpl, TXo_MTIME,     TRUE),  mtime);
+    sv_setsv(*av_fetch(tmpl, TXo_CACHEPATH, TRUE),  cachepath);
+    sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
+
+    /* prepare function table */
+    svp = hv_fetchs(engine, "function", FALSE);
+    TAINT_NOT;
+
+    if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
+        croak("Function table must be a HASH reference");
+    }
+    /* $engine->{function} must be copied
+       because it might be changed per templates */
+    st.symbol = newHVhv( (HV*)SvRV(*svp) );
+
+    st.tmpl   = tmpl;
+    st.engine = newRV_inc((SV*)engine);
+    sv_rvweaken(st.engine);
+
+    st.hint_size = TX_HINT_SIZE;
+
+    st.sa       = &PL_sv_undef;
+    st.sb       = &PL_sv_undef;
+    st.targ     = newSV(0);
+
+    /* stack frame */
+    st.frames        = newAV();
+    st.current_frame = -1;
+
+    Newxz(st.info, len + 1, tx_info_t);
+    st.info[len].line = (U16)-1; /* invalid value */
+    st.info[len].file = SvREFCNT_inc_simple_NN(name);
+
+    Newxz(st.code, len, tx_code_t);
+
+    st.code_len = len;
+    st.pc       = &st.code[0];
+
+    mg = sv_magicext((SV*)tmpl, NULL, PERL_MAGIC_ext,
+        &xslate_vtbl, (char*)&st, sizeof(st));
+    mg->mg_flags |= MGf_DUP;
+
+    oi_line = 0;
+    oi_file = name;
+
+    for(i = 0; i < len; i++) {
+        SV* const code = *av_fetch(proto, i, TRUE);
+        if(SvROK(code) && SvTYPE(SvRV(code)) == SVt_PVAV) {
+            AV* const av     = (AV*)SvRV(code);
+            SV* const opname = *av_fetch(av, 0, TRUE);
+            SV** const arg   =  av_fetch(av, 1, FALSE);
+            SV** const line  =  av_fetch(av, 2, FALSE);
+            SV** const file  =  av_fetch(av, 3, FALSE);
+            HE* const he     = hv_fetch_ent(ops, opname, FALSE, 0U);
+            IV  opnum;
+
+            if(!he){
+                croak("Oops: Unknown opcode '%"SVf"' on [%d]", opname, (int)i);
+            }
+
+            opnum                = SvIVx(hv_iterval(ops, he));
+            st.code[i].exec_code = tx_optable[opnum];
+            if(tx_oparg[opnum] & TXARGf_SV) {
+                if(!arg) {
+                    croak("Oops: Opcode %"SVf" must have an argument on [%d]", opname, (int)i);
+                }
+
+                if(tx_oparg[opnum] & TXARGf_KEY) { /* shared sv */
+                    STRLEN len;
+                    const char* const pv = SvPV_const(*arg, len);
+                    st.code[i].u_arg.sv = newSVpvn_share(pv, SvUTF8(*arg) ? -len : len, 0U);
+                }
+                else if(tx_oparg[opnum] & TXARGf_INT) { /* sviv */
+                    SvIV_please(*arg);
+                    st.code[i].u_arg.sv = SvIsUV(*arg)
+                        ? newSVuv(SvUV(*arg))
+                        : newSViv(SvIV(*arg));
+                }
+                else { /* normal sv */
+                    st.code[i].u_arg.sv = newSVsv(*arg);
+                }
+            }
+            else if(tx_oparg[opnum] & TXARGf_INT) {
+                st.code[i].u_arg.iv = SvIV(*arg);
+            }
+            else if(tx_oparg[opnum] & TXARGf_PC) {
+                /* calculate relational addresses to absolute addresses */
+                UV const abs_pos       = (UV)(i + SvIV(*arg));
+
+                if(abs_pos >= (UV)len) {
+                    croak("Oops: goto address %"IVdf" is out of range (must be 0 <= addr <= %"IVdf")",
+                        SvIV(*arg), (IV)len);
+                }
+                st.code[i].u_arg.pc = TX_POS2PC(&st, abs_pos);
+            }
+            else {
+                if(arg && SvOK(*arg)) {
+                    croak("Oops: Opcode %"SVf" has an extra argument %s on [%d]",
+                        opname, tx_neat(aTHX_ *arg), (int)i);
+                }
+            }
+
+            /* setup opinfo */
+            if(line && SvOK(*line)) {
+                oi_line = (U16)SvUV(*line);
+            }
+            if(file && SvOK(*file) && !sv_eq(*file, oi_file)) {
+                oi_file = sv_mortalcopy(*file);
+            }
+            st.info[i].optype = (U16)opnum;
+            st.info[i].line   = oi_line;
+            st.info[i].file   = SvREFCNT_inc_simple_NN(oi_file);
+
+            /* special cases */
+            if(opnum == TXOP_macro_begin) {
+                SV* const name = st.code[i].u_arg.sv;
+                SV* const ent  = hv_iterval(st.symbol,
+                    hv_fetch_ent(st.symbol, name, TRUE, 0U));
+
+                if(!sv_true(ent)) {
+                    SV* mref;
+                    macro = newAV();
+                    mref  = sv_2mortal(newRV_noinc((SV*)macro));
+                    sv_bless(mref, MY_CXT.macro_stash);
+                    sv_setsv(ent, mref);
+
+                    (void)av_store(macro, TXm_OUTER, newSViv(0));
+                    (void)av_store(macro, TXm_NARGS, newSViv(0));
+                    (void)av_store(macro, TXm_ADDR,  newSVuv(PTR2UV(TX_POS2PC(&st, i))));
+                    (void)av_store(macro, TXm_NAME,  name);
+                    st.code[i].u_arg.sv = NULL;
+                }
+                else { /* already defined */
+                    macro = NULL;
+                }
+            }
+            else if(opnum == TXOP_macro_nargs) {
+                if(macro) {
+                    /* the number of outer lexical variables */
+                    (void)av_store(macro, TXm_NARGS, st.code[i].u_arg.sv);
+                    st.code[i].u_arg.sv = NULL;
+                }
+            }
+            else if(opnum == TXOP_macro_outer) {
+                if(macro) {
+                    /* the number of outer lexical variables */
+                    (void)av_store(macro, TXm_OUTER, st.code[i].u_arg.sv);
+                    st.code[i].u_arg.sv = NULL;
+                }
+            }
+            else if(opnum == TXOP_depend) {
+                /* add a dependent file to the tmpl object */
+                av_push(tmpl, st.code[i].u_arg.sv);
+                st.code[i].u_arg.sv = NULL;
+            }
+        }
+        else {
+            croak("Oops: Broken code found on [%d]", (int)i);
+        }
+    } /* end for each code */
 }
 
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Util

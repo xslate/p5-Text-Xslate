@@ -10,6 +10,11 @@ use Text::Xslate::Util ();
 use constant ST_MTIME => 9;
 use constant TRACE_LOAD => Text::Xslate::Engine::_DUMP_LOAD();
 
+has assembler => (
+    is => 'ro',
+    required => 1,
+);
+
 has cache_dir => (
     is => 'ro',
     required => 1,
@@ -48,6 +53,7 @@ has magic_template => (
 sub build {
     my ($class, $engine) = @_;
     my $self = $class->new(
+        assembler       => $engine->_assembler,
         # XXX Cwd::abs_path would stat() the directory, so we need to
         # to use File::Spec->rel2abs
         cache_dir       => File::Spec->rel2abs($engine->{cache_dir}),
@@ -178,7 +184,7 @@ ASSEMBLE_AND_RETURN:
     return $asm;
 }
 
-sub assemble { shift->engine->_assemble(@_) }
+sub assemble { shift->assembler->assemble(@_) }
 sub compile  { shift->engine->compile(@_) }
 sub slurp_template { shift->engine->slurp_template(@_) }
 
@@ -530,7 +536,6 @@ __END__
             compiler        => $self->compiler,
             include_dirs    => [ "/path/to/dir1", "/path/to/dir2" ],
             input_layer     => $self->input_layer,
-            # serial_optってのがあったけど、あとでやる
         );
     }
 
@@ -540,5 +545,4 @@ __END__
     }
 
 
-$tx->byte_code_version();
 $loader は必ず $tx->byte_code_version() を考慮したキャッシュ等の保存先を担保すべき

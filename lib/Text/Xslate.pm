@@ -53,6 +53,7 @@ package Text::Xslate::Engine; # XS/PP common base class
 use Mouse;
 use File::Spec;
 
+use Text::Xslate::Assembler;
 use Text::Xslate::Util qw(
     make_error
     dump
@@ -162,6 +163,7 @@ sub options { # overridable
         html_builder_module => undef,
         compiler     => 'Text::Xslate::Compiler',
         loader       => 'Text::Xslate::Loader::File',
+        assembler    => 'Text::Xslate::Assembler',
 
         verbose      => 1,
         warn_handler => undef,
@@ -287,7 +289,7 @@ sub load_string { # called in render_string()
     $self->{source}{'<string>'} = $string if _SAVE_SRC;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
-    $self->_assemble($asm, '<string>', \$string, undef, undef);
+    $self->_assembler->assemble($asm, '<string>', \$string, undef, undef);
     return $asm;
 }
 
@@ -364,6 +366,24 @@ sub _loader {
         $self->{loader} = $loader;
     }
     return $loader;
+}
+
+sub _assembler {
+    my $self = shift;
+    my $assembler = $self->{assembler};
+    if (!ref $assembler) {
+        # XXX ::Assembler has a function defined in XS, which gets loaded
+        # along with the main Xslate functions. So when the code gets here
+        # ::Assembler seems as if it's loaded already, and it's no XS
+        # methods don't get loaded properly. To prevent this, although we
+        # check to see if we need to load it here, ::Assembler is already
+        # "use"d at the top of ::Engine
+        require Mouse;
+        Mouse::load_class($assembler);
+        $assembler = $assembler->build($self);
+        $self->{assembler} = $assembler;
+    }
+    return $assembler;
 }
 
 sub _compiler {
