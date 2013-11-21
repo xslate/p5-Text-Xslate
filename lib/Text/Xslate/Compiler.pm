@@ -496,7 +496,15 @@ print STDERR Text::Xslate::Util::dump_op($main_code);
     if(defined $base) { # pure cascade
         $self->_process_cascade_file($base_file, $base_code);
         if(defined $vars) {
+            # meta opcode MUST be at the beginning.
+            my $meta;
+            if ($base_code->[0]->[0] eq 'meta') {
+                $meta = shift @$base_code;
+            }
             unshift @{$base_code}, $self->_localize_vars($vars);
+            if ($meta) {
+                unshift @{$base_code}, $meta;
+            }
         }
 
         foreach my $c(@{$main_code}) {
@@ -1391,6 +1399,9 @@ sub _localize_vars {
             $self->compile_ast($expr),
             $self->opcode( localize_s => $key->value, symbol => $key );
     }
+
+  print STDERR "localize vars\n";
+  print STDERR Text::Xslate::Util::dump_op(\@localize);
     return @localize;
 }
 
