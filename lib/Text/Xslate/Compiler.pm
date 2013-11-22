@@ -2,6 +2,8 @@ package Text::Xslate::Compiler;
 use Mouse;
 use Mouse::Util::TypeConstraints;
 
+with 'Text::Xslate::MakeError';
+
 use Scalar::Util ();
 use Carp         ();
 
@@ -10,7 +12,6 @@ use Text::Xslate::Util qw(
     $DEBUG
     value_to_literal
     is_int any_in
-    make_error
     p
 );
 
@@ -386,7 +387,7 @@ sub push_expr {
 
 sub _cat_files {
     my($self, $files) = @_;
-    my $engine = $self->engine || $self->_error("No Xslate engine which header/footer requires");
+    my $engine = $self->engine || $self->throw_error("No Xslate engine which header/footer requires");
     my $s = '';
     foreach my $file(@{$files}) {
         my $fullpath = $engine->find_file($file)->{fullpath};
@@ -423,7 +424,7 @@ sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
     printf STDERR "# cascade %s %s", $self->file, $cascade->dump if _DUMP_CAS;
     my $engine = $self->engine
-        || $self->_error("Cannot cascade templates without Xslate engine", $cascade);
+        || $self->throw_error("Cannot cascade templates without Xslate engine", $cascade);
 
     my($base_file, $base_code);
     my $base       = $cascade->first;
@@ -536,11 +537,11 @@ sub _process_cascade_file {
         if(exists $mtable->{$name}) {
             my $m = $mtable->{$name};
             if(ref($m) ne 'HASH') {
-                $self->_error('[BUG] Unexpected macro structure: '
+                $self->throw_error('[BUG] Unexpected macro structure: '
                     . p($m) );
             }
 
-            $self->_error(
+            $self->throw_error(
                 "Redefinition of macro/block $name in " . $file
                 . " (you must use block modifiers to override macros/blocks)",
                 $m->{line}
@@ -638,7 +639,7 @@ sub _generate_operator {
     my($self, $node) = @_;
     # This method is called when an operators is used as an expression,
     # e.g. <: + :>, so simply throws the error
-    $self->_error("Invalid expression", $node);
+    $self->throw_error("Invalid expression", $node);
 }
 
 sub _can_optimize_print {
@@ -705,7 +706,7 @@ sub _generate_print {
     }
 
     if(!@code) {
-        $self->_error("$node requires at least one argument", $node);
+        $self->throw_error("$node requires at least one argument", $node);
     }
     return @code;
 }
@@ -740,14 +741,14 @@ sub _bare_to_file {
         return $file->value;
     }
     else {
-        $self->_error("Expected a name or string literal", $file);
+        $self->throw_error("Expected a name or string literal", $file);
     }
 }
 
 sub _generate_cascade {
     my($self, $node) = @_;
     if(defined $self->cascade) {
-        $self->_error("Cannot cascade twice in a template", $node);
+        $self->throw_error("Cannot cascade twice in a template", $node);
     }
     $self->cascade( $node );
     return;
@@ -790,7 +791,7 @@ sub _generate_for {
     my $block = $node->third;
 
     if(@{$vars} != 1) {
-        $self->_error("A for-loop requires single variable for each item", $node);
+        $self->throw_error("A for-loop requires single variable for each item", $node);
     }
     local $self->{lvar}  = { %{$self->lvar} };  # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
@@ -847,7 +848,7 @@ sub _generate_while {
     my $block = $node->third;
 
     if(@{$vars} > 1) {
-        $self->_error("A while-loop requires one or zero variable for each items", $node);
+        $self->throw_error("A while-loop requires one or zero variable for each items", $node);
     }
 
     (my $cond_op, undef, $expr) = $self->_prepare_cond_expr($expr);
@@ -884,17 +885,17 @@ sub _generate_loop_control {
     my $type = $node->id;
 
     any_in($type, qw(last next))
-        or $self->_error("[BUG] Unknown loop control statement '$type'");
+        or $self->throw_error("[BUG] Unknown loop control statement '$type'");
 
     if(not $self->{in_loop}) {
-        $self->_error("Use of loop control statement ($type) outside of loops");
+        $self->throw_error("Use of loop control statement ($type) outside of loops");
     }
 
     my @cleanup;
     if( $self->{in_loop} == _FOR_LOOP && $type eq 'last' ) {
         my $lvar_id = $self->lvar->{'($_)'};
         defined($lvar_id)
-            or $self->_error('[BUG] Undefined loop iterator');
+            or $self->throw_error('[BUG] Undefined loop iterator');
 
         @cleanup = (
             $self->opcode( 'nil', undef,
@@ -945,7 +946,7 @@ sub _generate_proc { # definition of macro, block, before, around, after
         if(exists $self->macro_table->{$name}) {
             my $m = $self->macro_table->{$name};
             if(p(\%macro) ne p($m)) {
-                $self->_error("Redefinition of $type $name is forbidden", $node);
+                $self->throw_error("Redefinition of $type $name is forbidden", $node);
             }
         }
         $self->macro_table->{$name} = \%macro;
@@ -1061,7 +1062,7 @@ sub _generate_given {
     my $block = $node->third;
 
     if(@{$vars} > 1) {
-        $self->_error("A given block requires one or zero variables", $node);
+        $self->throw_error("A given block requires one or zero variables", $node);
     }
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
@@ -1090,7 +1091,7 @@ sub _generate_variable {
     else {
         my $name = $self->_variable_to_value($node);
         if($name =~ /~/) {
-            $self->_error("Undefined iterator variable $node", $node);
+            $self->throw_error("Undefined iterator variable $node", $node);
         }
         return $self->opcode( fetch_s => $name, line => $node->line );
     }
@@ -1146,7 +1147,7 @@ sub _generate_unary {
         return @code;
     }
     else {
-        $self->_error("Unary operator $id is not implemented", $node);
+        $self->throw_error("Unary operator $id is not implemented", $node);
     }
 }
 
@@ -1226,14 +1227,14 @@ sub _generate_binary {
             @rhs;
     }
 
-    $self->_error("Binary operator $id is not implemented", $node);
+    $self->throw_error("Binary operator $id is not implemented", $node);
 }
 
 sub _generate_range {
     my($self, $node) = @_;
 
     $self->can_be_in_list_context
-        or $self->_error("Range operator must be in list context");
+        or $self->throw_error("Range operator must be in list context");
 
     my @lhs  = $self->compile_ast($node->first);
 
@@ -1268,7 +1269,7 @@ sub _generate_call {
 
     if(my $intern = $builtin{$callable->id} and !$self->overridden_builtin->{$callable->id}) {
         if(@{$args} != 1) {
-            $self->_error("Wrong number of arguments for $callable", $node);
+            $self->throw_error("Wrong number of arguments for $callable", $node);
         }
 
         return $self->compile_ast($args->[0]),
@@ -1290,7 +1291,7 @@ sub _generate_iterator {
     my $item_var = $node->first;
     my $lvar_id  = $self->lvar->{$item_var};
     if(!defined($lvar_id)) {
-        $self->_error("Refer to iterator $node, but $item_var is not defined",
+        $self->throw_error("Refer to iterator $node, but $item_var is not defined",
             $node);
     }
 
@@ -1307,7 +1308,7 @@ sub _generate_iterator_body {
     my $item_var = $node->first;
     my $lvar_id  = $self->lvar->{$item_var};
     if(!defined($lvar_id)) {
-        $self->_error("Refer to iterator $node.body, but $item_var is not defined",
+        $self->throw_error("Refer to iterator $node.body, but $item_var is not defined",
             $node);
     }
 
@@ -1327,7 +1328,7 @@ sub _generate_assign {
     my $lvar_name = $lhs->id;
 
     if($node->id ne "=") {
-        $self->_error("Assignment ($node) is not supported", $node);
+        $self->throw_error("Assignment ($node) is not supported", $node);
     }
 
     my @expr = $self->compile_ast($rhs);
@@ -1338,7 +1339,7 @@ sub _generate_assign {
     }
 
     if(!exists $lvar->{$lvar_name} or $lhs->arity ne "variable") {
-        $self->_error("Cannot modify $lhs, which is not a lexical variable", $node);
+        $self->throw_error("Cannot modify $lhs, which is not a lexical variable", $node);
     }
 
     return
@@ -1384,13 +1385,13 @@ sub _localize_vars {
                 $self->opcode( 'localize_vars' );
         }
         else {
-            $self->_error("You must pass pairs of expressions to include");
+            $self->throw_error("You must pass pairs of expressions to include");
         }
     }
 
     while(my($key, $expr) = splice @pairs, 0, 2) {
         if(!any_in($key->arity, qw(literal variable))) {
-            $self->_error("You must pass a simple name to localize variables", $key);
+            $self->throw_error("You must pass a simple name to localize variables", $key);
         }
         push @localize,
             $self->compile_ast($expr),
@@ -1601,12 +1602,12 @@ sub as_assembly {
     return $asm;
 }
 
-sub _error {
-    my($self, $message, $node) = @_;
+around throw_error => sub {
+    my($next, $self, $message, $node) = @_;
 
     my $line = ref($node) ? $node->line : $node;
-    die $self->make_error($message, $self->file, $line);
-}
+    $self->$next($message, $self->file, $line);
+};
 
 no Mouse;
 no Mouse::Util::TypeConstraints;

@@ -55,9 +55,10 @@ use File::Spec;
 
 use Text::Xslate::Assembler;
 use Text::Xslate::Util qw(
-    make_error
     dump
 );
+
+with 'Text::Xslate::MakeError';
 
 # constants
 BEGIN {
@@ -256,7 +257,7 @@ sub _resolve_function_aliases {
     foreach my $f(values %{$funcs}) {
         my %seen; # to avoid infinite loops
         while(!( ref($f) or Scalar::Util::looks_like_number($f) )) {
-            my $v = $funcs->{$f} or $self->_error(
+            my $v = $funcs->{$f} or $self->throw_error(
                "Cannot resolve a function alias '$f',"
                . " which refers nothing",
             );
@@ -266,7 +267,7 @@ sub _resolve_function_aliases {
                 last;
             }
             else {
-                $seen{$v}++ and $self->_error(
+                $seen{$v}++ and $self->throw_error(
                     "Cannot resolve a function alias '$f',"
                     . " which makes circular references",
                 );
@@ -280,7 +281,7 @@ sub _resolve_function_aliases {
 sub load_string { # called in render_string()
     my($self, $string) = @_;
     if(not defined $string) {
-        $self->_error("LoadError: Template string is not given");
+        $self->throw_error("LoadError: Template string is not given");
     }
     $self->note('  _load_string: %s', join '\n', split /\n/, $string)
         if _DUMP_LOAD;
@@ -317,7 +318,7 @@ $input_layer, $fullpath);
         return $$fullpath;
     } else {
         open my($source), '<' . $input_layer, $fullpath
-            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+            or $self->throw_error("LoadError: Cannot open $fullpath for reading: $!");
         local $/;
         return scalar <$source>;
     }
@@ -404,10 +405,6 @@ sub compile {
     my $self = shift;
     return $self->_compiler->compile(@_,
         omit_augment => $self->{omit_augment});
-}
-
-sub _error {
-    die make_error(@_);
 }
 
 sub _magic_token_arguments {

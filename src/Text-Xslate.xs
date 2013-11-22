@@ -89,7 +89,6 @@ typedef struct {
     /* original error handlers */
     SV* orig_warn_handler;
     SV* orig_die_handler;
-    SV* make_error;
 } my_cxt_t;
 START_MY_CXT
 
@@ -1272,8 +1271,6 @@ tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
         (SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADD));
     MY_CXT.die_handler   = SvREFCNT_inc_NN(
         (SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADD));
-    MY_CXT.make_error    = SvREFCNT_inc_NN(
-        (SV*)get_cv("Text::Xslate::Engine::make_error",  GV_ADD));
 }
 
 /* Because overloading stuff of old xsubpp didn't work,
@@ -1546,7 +1543,7 @@ CODE:
         }
     }
     /* TODO: append the stack info to msg */
-    /* $full_message = make_error(engine, msg, file, line, vm_pos) */
+    /* $full_message = engine->make_error(msg, file, line, vm_pos) */
     PUSHMARK(SP);
     EXTEND(SP, 6);
     PUSHs(sv_mortalcopy(engine)); /* XXX: avoid premature free */
@@ -1560,7 +1557,7 @@ CODE:
         mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
     }
     PUTBACK;
-    call_sv(MY_CXT.make_error, G_SCALAR);
+    call_method("make_error", G_SCALAR);
     SPAGAIN;
     full_message = POPs;
     PUTBACK;

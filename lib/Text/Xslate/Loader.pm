@@ -1,6 +1,8 @@
 package Text::Xslate::Loader;
 use Mouse;
 
+with 'Text::Xslate::MakeError';
+
 has assembler => (
     is => 'rw',
 );

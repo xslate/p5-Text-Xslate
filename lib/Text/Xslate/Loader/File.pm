@@ -181,7 +181,7 @@ sub locate_file {
     }
 
     if($name =~ /\Q$updir\E/xmso) {
-        die("LoadError: Forbidden component (updir: '$updir') found in file name '$name'");
+        $self->throw_error("LoadError: Forbidden component (updir: '$updir') found in file name '$name'");
     }
 
     my $dirs = $self->include_dirs;
@@ -238,8 +238,7 @@ sub locate_file {
         );
     }
 
-#    $engine->_error("LoadError: Cannot find '$file' (path: @{$self->{path}})");
-    die "LoadError: Cannot find '$name' (include dirs: @$dirs)";
+    $self->throw_error("LoadError: Cannot find '$name' (include dirs: @$dirs)");
 }
 
 # Loads the compiled code from cache. Requires the full path
@@ -345,7 +344,7 @@ sub store_cache {
     };
     if (my $e = $@) {
         $temp->unlink_on_destroy(1);
-        die $e;
+        $self->throw_error("LoadError: Failed to create file cache: $e");
     }
 
     if (! File::Copy::move($temp->filename, $path)) {
@@ -421,8 +420,7 @@ sub build_asm {
 
     my $filename = $self->filename;
     open my($in), '<:raw', $filename
-        or die "LoadError: Cannot open $filename for reading: $!";
-#        or $engine->_error("LoadError: Cannot open $filename for reading: $!");
+        or $self->throw_error("LoadError: Cannot open $filename for reading: $!");
 
     my $data;
 

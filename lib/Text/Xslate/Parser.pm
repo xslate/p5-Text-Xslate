@@ -10,9 +10,10 @@ use Text::Xslate::Util qw(
     is_int any_in
     neat
     literal_to_value
-    make_error
     p
 );
+
+with 'Text::Xslate::MakeError';
 
 use constant _DUMP_PROTO => scalar($DEBUG =~ /\b dump=proto \b/xmsi);
 use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
@@ -220,7 +221,7 @@ sub parse {
 
     if(my $input_pos = pos $parser->{input}) {
         if($input_pos != length($parser->{input})) {
-            $parser->_error("Syntax error", $parser->token);
+            $parser->throw_error("Syntax error", $parser->token);
         }
     }
 
@@ -368,7 +369,7 @@ sub split :method {
         my $orig_src = $_[0];
         substr $orig_src, -length($_), length($_), '';
         my $line = ($orig_src =~ tr/\n/\n/);
-        $parser->_error("Malformed templates detected",
+        $parser->throw_error("Malformed templates detected",
             neat((split /\n/, $_)[0]), ++$line,
         );
     }
@@ -426,7 +427,7 @@ sub preprocess {
             # noop, just a marker
         }
         else {
-            $parser->_error("Oops: Unknown token: $s ($type)");
+            $parser->throw_error("Oops: Unknown token: $s ($type)");
         }
     }
     print STDOUT $code, "\n" if _DUMP_PROTO;
@@ -727,7 +728,7 @@ sub advance {
     elsif($arity eq "operator") {
         $symbol = $stash->{$id};
         if(not defined $symbol) {
-            $parser->_error("Unknown operator '$id'");
+            $parser->throw_error("Unknown operator '$id'");
         }
         $symbol = $symbol->clone(
             arity => $arity, # to make error messages clearer
@@ -775,7 +776,7 @@ sub default_nud {
 sub default_led {
     my($parser, $symbol) = @_;
     $parser->near_token($parser->token);
-    $parser->_error(
+    $parser->throw_error(
         sprintf 'Missing operator (%s): %s',
         $symbol->arity, $symbol->id);
 }
@@ -783,7 +784,7 @@ sub default_led {
 sub default_std {
     my($parser, $symbol) = @_;
     $parser->near_token($parser->token);
-    $parser->_error(
+    $parser->throw_error(
         sprintf 'Not a statement (%s): %s',
         $symbol->arity, $symbol->id);
 }
@@ -872,7 +873,7 @@ sub nud_prefix {
 sub led_assignment {
     my($parser, $symbol, $left) = @_;
 
-    $parser->_error("Assignment ($symbol) is forbidden", $left);
+    $parser->throw_error("Assignment ($symbol) is forbidden", $left);
 }
 
 sub assignment {
@@ -1075,7 +1076,7 @@ sub reserve { # reserve a name to the scope
             return $symbol;
         }
         if($t->arity eq "name") {
-           $parser->_error("Already defined: $symbol");
+           $parser->throw_error("Already defined: $symbol");
         }
     }
     $top->{$symbol->id} = $symbol;
@@ -1090,7 +1091,7 @@ sub define { # define a name to the scope
 
     my $t = $top->{$symbol->id};
     if(defined $t) {
-        $parser->_error($t->is_reserved ? "Already is_reserved: $t" : "Already defined: $t");
+        $parser->throw_error($t->is_reserved ? "Already is_reserved: $t" : "Already defined: $t");
     }
 
     $top->{$symbol->id} = $symbol;
@@ -1261,7 +1262,7 @@ sub nud_iterator {
 
         my $generator = $parser->iterator_element->{$t->value};
         if(!$generator) {
-            $parser->_error("Undefined iterator element: $t");
+            $parser->throw_error("Undefined iterator element: $t");
         }
 
         $parser->advance(); # element name
@@ -1386,7 +1387,7 @@ sub nud_current_vars {
 
 sub nud_separator {
     my($self, $symbol) = @_;
-    $self->_error("Invalid expression found", $symbol);
+    $self->throw_error("Invalid expression found", $symbol);
 }
 
 # -> VARS { STATEMENTS }
@@ -1622,7 +1623,7 @@ sub std_when {
     my($parser, $symbol) = @_;
 
     if(!$parser->in_given) {
-        $parser->_error("You cannot use $symbol blocks outside given blocks");
+        $parser->throw_error("You cannot use $symbol blocks outside given blocks");
     }
     my $proc = $symbol->clone(arity => 'when');
     if($symbol->id eq "when") {
@@ -1816,7 +1817,7 @@ sub std_last {
 
 sub bad_iterator_args {
     my($parser, $iterator) = @_;
-    $parser->_error("Wrong number of arguments for $iterator." . $iterator->second);
+    $parser->throw_error("Wrong number of arguments for $iterator." . $iterator->second);
 }
 
 sub iterator_index {
@@ -1966,34 +1967,34 @@ sub make_alias { # alas(from => to)
 
 sub not_supported {
     my($parser, $symbol) = @_;
-    $parser->_error("'$symbol' is not supported");
+    $parser->throw_error("'$symbol' is not supported");
 }
 
 sub _unexpected {
     my($parser, $expected, $got) = @_;
     if(defined($got) && $got ne ";") {
         if($got eq '(end)') {
-            $parser->_error("Expected $expected, but reached EOF");
+            $parser->throw_error("Expected $expected, but reached EOF");
         }
         else {
-            $parser->_error("Expected $expected, but got " . neat("$got"));
+            $parser->throw_error("Expected $expected, but got " . neat("$got"));
         }
      }
      else {
-        $parser->_error("Expected $expected");
+        $parser->throw_error("Expected $expected");
      }
 }
 
-sub _error {
-    my($parser, $message, $near, $line) = @_;
+around throw_error => sub {
+    my($next, $parser, $message, $near, $line) = @_;
 
     $near ||= $parser->near_token || ";";
     if($near ne ";" && $message !~ /\b \Q$near\E \b/xms) {
         $message .= ", near $near";
     }
-    die $parser->make_error($message . ", while parsing templates",
+    $parser->$next($message . ", while parsing templates",
         $parser->file, $line || $parser->line);
-}
+};
 
 no Mouse;
 __PACKAGE__->meta->make_immutable;
