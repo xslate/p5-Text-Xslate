@@ -62,26 +62,8 @@ sub note {
     $self->engine->note($fmt, @_, "\n");
 }
 
-sub load {
-    my ($self, $name) = @_;
-
-    my $note_guard;
-    if (TRACE_LOAD) {
-        $self->note("load: Loading %s", $name);
-        $note_guard = $self->indent_note();
-    }
-
-    # On a file system, we need to check for
-    # 1) does the file exist in fs?
-    # 2) if so, keep it's mtime
-    # 3) check against mtime of the cache
-
-    # XXX if the file cannot be located in the filesystem,
-    # then we go kapot, so no check for defined $fi
-    my $fi = $self->locate_file($name);
-    if (TRACE_LOAD) {
-        $self->note("load: Located file %s", $fi->fullpath);
-    }
+sub load_cached_asm {
+    my ($self, $fi) = @_;
 
     # Okay, the source exists. Now consider the cache.
     #   $cache_strategy >= 2, use cache w/o checking for freshness
@@ -105,61 +87,81 @@ sub load {
         }
     }
 
-    my $asm;
-    if ($cached_ent) {
-        if ($cache_strategy > 1) {
-            # We're careless! We just want to use the cached
-            # version! Go! Go! Go!
-            if (TRACE_LOAD) {
-                $self->note("Freshness check disabled, and cache exists. Just use it");
-            }
+    if (! $cached_ent) {
+        return;
+    }
 
-            # $cache_strategy > 1 is wicked. It claims to only
-            # consider the cache, and yet it still checks for
-            # the cache validity. 
-            if ($asm = $cached_ent->asm) {
-                goto ASSEMBLE_AND_RETURN;
-            }
-
-            if (TRACE_LOAD) {
-                $self->note("Cached template's validation failed (probably a magic mismatch)");
-            }
-            goto LOAD_FROM_SOURCE;
+    if ($cache_strategy > 1) {
+        # We're careless! We just want to use the cached
+        # version! Go! Go! Go!
+        if (TRACE_LOAD) {
+            $self->note("Freshness check disabled, and cache exists. Just use it");
         }
 
-        # Otherwise check for freshness 
-        if ($cached_ent->is_fresher_than($fi)) {
-            # Hooray, our cached version is newer than the 
-            # source file! cheers! jubilations! 
-            if (TRACE_LOAD) {
-                $self->note("Freshness check passed, returning asm");
-            }
-
-            $asm = $cached_ent->asm;
-            goto ASSEMBLE_AND_RETURN;
+        # $cache_strategy > 1 is wicked. It claims to only
+        # consider the cache, and yet it still checks for
+        # the cache validity. 
+        if (my $asm = $cached_ent->asm) {
+            return $asm;
         }
 
         if (TRACE_LOAD) {
-            $self->note("Freshness check failed.");
+            $self->note("Cached template's validation failed (probably a magic mismatch)");
         }
-        # if you got here, too bad: cache is invalid.
-        # it doesn't mean anything, but we say bye-bye
-        # to the cached entity just to console our broken hearts
-        undef $cached_ent;
+        return;
     }
 
-LOAD_FROM_SOURCE:
-    # If you got here, either the cache_strategy was 0 or the cache
-    # was invalid. load from source
-    $asm = $self->load_file($fi);
+    # Otherwise check for freshness 
+    if ($cached_ent->is_fresher_than($fi)) {
+        # Hooray, our cached version is newer than the 
+        # source file! cheers! jubilations! 
+        if (TRACE_LOAD) {
+            $self->note("Freshness check passed, returning asm");
+        }
 
-    # store cache, if necessary
+        return $cached_ent->asm;
+    }
+
+    if (TRACE_LOAD) {
+        $self->note("Freshness check failed.");
+    }
+    # if you got here, too bad: cache is invalid.
+}
+
+sub load {
+    my ($self, $name) = @_;
+
+    my $note_guard;
+    if (TRACE_LOAD) {
+        $self->note("load: Loading %s", $name);
+        $note_guard = $self->indent_note();
+    }
+
+    # On a file system, we need to check for
+    # 1) does the file exist in fs?
+    # 2) if so, keep it's mtime
+    # 3) check against mtime of the cache
+
+    # XXX if the file cannot be located in the filesystem,
+    # then we go kapot, so no check for defined $fi
+    my $fi = $self->locate_file($name);
+    if (TRACE_LOAD) {
+        $self->note("load: Located file %s", $fi->fullpath);
+    }
+
     my $cache_mtime; # XXX Should this be here?
-    if ($cache_strategy > 0) {
-        $cache_mtime = $self->store_cache($fi, $asm);
+    my $asm = $self->load_cached_asm($fi);
+    if (! $asm) {
+        # If you got here, either the cache_strategy was 0 or the cache
+        # was invalid. load from source
+        $asm = $self->load_file($fi);
+
+        # store cache, if necessary
+        if ($self->cache_strategy > 0) {
+            $cache_mtime = $self->store_cache($fi, $asm);
+        }
     }
 
-ASSEMBLE_AND_RETURN:
     $self->assemble($asm, $name, $fi->fullpath, $fi->cachepath, $cache_mtime);
     return $asm;
 }
