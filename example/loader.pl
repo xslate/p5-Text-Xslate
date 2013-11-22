@@ -44,6 +44,12 @@ sub build {
     );
 }
 
+sub BUILD {
+    my $self = shift;
+    $self->memd->flush_all();
+    return $self;
+}
+
 sub build_tempdir { File::Temp->newdir() }
 sub build_db {
     my $self = shift;
@@ -65,8 +71,13 @@ EOSQL
 
     my %templates = (
         hello => 'Hello, <: $lang :> world!',
-        hello_foo => 'Hello, <: $foo :> world!',
+        hello_include => <<'EOM',
+Hello, <: $lang :> world!
+:include "footer"
+EOM
+        footer => "\n-- Created with Xslate",
     );
+
     foreach my $name (keys %templates) {
         $dbh->do(<<EOSQL, undef, $name, $templates{$name}, time());
             INSERT INTO template (name, body, updated_on) VALUES (?, ?, ?)
@@ -125,4 +136,5 @@ $xslate->{loader} = $loader;
 
 foreach (1..10) {
     print $xslate->render('hello' => { lang => "Xslate" }), "\n";
+    print $xslate->render('hello_include' => { lang => "Xslate" }), "\n";
 }
