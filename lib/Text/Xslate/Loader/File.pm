@@ -232,6 +232,7 @@ sub locate_file {
             fullpath    => $fullpath,
             cachepath   => File::Spec->catfile(
                 $self->cache_dir,
+                $self->engine->bytecode_version,
                 $cache_prefix,
                 $name . 'c',
             ),

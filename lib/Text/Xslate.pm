@@ -70,7 +70,7 @@ BEGIN {
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
 
     my $temp_base = $ENV{TEMPDIR} || File::Spec->tmpdir;
-    my $cache_dir = File::Spec->catdir($temp_base, 'xslate_cache');
+    my $cache_dir = File::Spec->catdir($temp_base, 'xslate_cache', $>);
     *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
 }
 
