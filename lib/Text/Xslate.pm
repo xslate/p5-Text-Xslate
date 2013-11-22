@@ -12,6 +12,7 @@ use Scalar::Util      ();
 our ($VERSION, @ISA, @EXPORT_OK);
 
 use Text::Xslate::Constants();
+use XSLoader;
 BEGIN {
     $VERSION = '3.1.0';
 
@@ -25,37 +26,18 @@ BEGIN {
         html_builder
     );
 
-    my $use_xs = 0;
+    XSLoader::load(__PACKAGE__, $VERSION);
 
-    # load backend (XS or PP)
-    my $DEBUG = $ENV{XSLATE} || '';
-    if(!exists $INC{'Text/Xslate/PP.pm'}) {
-        my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
-        if(!$pp) {
-            eval {
-                require XSLoader;
-                XSLoader::load(__PACKAGE__, $VERSION);
-                $use_xs = 1;
-            };
-            die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
-        }
-
-        @ISA = qw(Text::Xslate::Engine);
-
-        if(!__PACKAGE__->can('render')) {
-            require 'Text/Xslate/PP.pm';
-        }
-    }
-    eval 'sub USE_XS() { $use_xs }';
-    die if $@;
+    @ISA = qw(Text::Xslate::Engine);
 }
 use Text::Xslate::Util @EXPORT_OK;
 
+sub USE_XS { 1 } # deprecated.
 
 # for error messages (see T::X::Util)
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
-package Text::Xslate::Engine; # XS/PP common base class
+package Text::Xslate::Engine; # base class
 use Mouse;
 use File::Spec;
 use Text::Xslate::Constants qw(DUMP_LOAD DEFAULT_CACHE_DIR);
@@ -934,8 +916,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 Perl 5.8.1 or later.
 
-If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
-backend will be used.
+C compiler
 
 =head1 TODO
 

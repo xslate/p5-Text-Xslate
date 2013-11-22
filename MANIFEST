@@ -94,14 +94,6 @@ lib/Text/Xslate/Manual/Cookbook.pod
 lib/Text/Xslate/Manual/Debugging.pod
 lib/Text/Xslate/Manual/FAQ.pod
 lib/Text/Xslate/Parser.pm
-lib/Text/Xslate/PP.pm
-lib/Text/Xslate/PP/Const.pm
-lib/Text/Xslate/PP/Method.pm
-lib/Text/Xslate/PP/Opcode.pm
-lib/Text/Xslate/PP/State.pm
-lib/Text/Xslate/PP/Type/Macro.pm
-lib/Text/Xslate/PP/Type/Pair.pm
-lib/Text/Xslate/PP/Type/Raw.pm
 lib/Text/Xslate/Runner.pm
 lib/Text/Xslate/Symbol.pm
 lib/Text/Xslate/Syntax/Kolon.pm
@@ -159,7 +151,6 @@ t/010_internals/038_suffix.t
 t/010_internals/039_taint_issue84.t
 t/010_internals/100_threads.t
 t/010_internals/200_leaktrace.t
-t/010_internals/300_explicit_pp.t
 t/020_interface/001_parser_option.t
 t/020_interface/002_myparser.t
 t/020_interface/003_encoding.t

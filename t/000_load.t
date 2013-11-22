@@ -12,11 +12,5 @@ BEGIN { use_ok 'Text::Xslate::Syntax::TTerse' }
 BEGIN { use_ok 'Text::Xslate::Type::Raw' }
 
 diag "Testing Text::Xslate/$Text::Xslate::VERSION";
-if(Text::Xslate->isa('Text::Xslate::PP')) {
-    diag "Backend: PP";
-}
-else {
-    diag "Backend: XS";
-}
 diag '$ENV{XSLATE}=', $ENV{XSLATE} || '';
 

@@ -9,7 +9,6 @@ BEGIN {
     my @devmods = qw(
         inc::Module::Install             1.06
         Module::Install::XSUtil          0.44
-        Module::Install::TestTarget      0.19
         Module::Install::AuthorTests     0.002
     );
     my @not_available;
@@ -78,13 +77,6 @@ M
 my @testall;
 if($Module::Install::AUTHOR) {
     @testall = (alias => 'test');
-}
-
-if($want_xs) {
-    test_target test_pp => (
-        env    => { PERL_ONLY => 1 },
-        @testall,
-    );
 }
 
 clean_files qw(
