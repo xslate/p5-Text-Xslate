@@ -10,62 +10,42 @@ use Text::Xslate::Util ();
 use constant ST_MTIME => 9;
 use constant TRACE_LOAD => Text::Xslate::Engine::_DUMP_LOAD();
 
-has assembler => (
-    is => 'ro',
-    required => 1,
-);
+extends 'Text::Xslate::Loader';
 
 has cache_dir => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
 );
 
 has cache_strategy => (
-    is => 'ro',
-    default => 1,
-);
-
-has engine => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
 );
 
 has include_dirs => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
 );
 
 has input_layer => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
     default => ':utf8',
 );
 
-has pre_process_handler => (
-    is => 'ro',
-);
-
 has magic_template => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
 );
 
-sub build {
-    my ($class, $engine) = @_;
-    my $self = $class->new(
-        assembler       => $engine->_assembler,
+around extract_config_from_engine => sub {
+    my ($next, $class, $engine) = @_;
+    my @config = $class->$next($engine);
+    return (
+        @config,
         # XXX Cwd::abs_path would stat() the directory, so we need to
         # to use File::Spec->rel2abs
         cache_dir       => File::Spec->rel2abs($engine->{cache_dir}),
         cache_strategy  => $engine->{cache},
-        engine          => $engine,
         include_dirs    => $engine->{path},
         input_layer     => $engine->input_layer,
-        magic_template  => $engine->magic_template,
-        pre_process_handler => $engine->{pre_process_handler},
     );
-    return $self;
-}
+};
 
 use Scope::Guard;
 my $INDENT_LEVEL = 0;

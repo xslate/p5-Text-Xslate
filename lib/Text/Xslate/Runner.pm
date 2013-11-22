@@ -312,12 +312,13 @@ sub run {
         # path in the xslate object
         if ( -d $target ) {
             local $self->{__process_base} = scalar(File::Spec->splitdir($target));
-            local $xslate->{path} = [ $target, @{ $xslate->{path} || [] } ];
+            # XXX modifying {path} like this is way too icky
+            local $xslate->{loader}->{include_dirs} = [ $target, @{ $xslate->{path} || [] } ];
             $self->process_tree( $xslate, $target );
         } else {
             my $dirname = File::Basename::dirname($target);
             local $self->{__process_base} = scalar(File::Spec->splitdir($dirname));
-            local $xslate->{path} = [ $dirname, @{ $xslate->{path} || [] } ];
+            local $xslate->{loader}->{include_dirs} = [ $dirname, @{ $xslate->{path} || [] } ];
             $self->process_file( $xslate, $target );
         }
     }

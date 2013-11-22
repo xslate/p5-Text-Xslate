@@ -2,13 +2,20 @@ package Text::Xslate::Assembler;
 use Mouse;
 
 has engine => (
-    is => 'ro',
-    required => 1,
+    is => 'rw',
 );
 
 sub build {
     my ($class, $engine) = @_;
-    $class->new(engine => $engine);
+    my $self = $class->new();
+    $self->configure($engine);
+    return $self;
+}
+
+sub configure {
+    my ($self, $engine) = @_;
+    $self->engine($engine);
+    return $self;
 }
 
 sub assemble {

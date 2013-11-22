@@ -238,6 +238,7 @@ sub new {
 
     $self->_resolve_function_aliases(\%funcs);
 
+    $self->_setup_components();
     return $self;
 }
 
@@ -299,7 +300,8 @@ sub find_file {
 sub load_file {
     my($self, $file, $mtime, $omit_augment) = @_;
     local $self->{omit_augment} = $omit_augment;
-    my $asm = $self->_loader->load($file, $mtime);
+    my $loader = $self->_loader;
+    my $asm = $loader->load($file, $mtime);
     return $asm;
 }
 
@@ -352,36 +354,25 @@ sub _filter_options_for_magic_token {
     @filterd_options;
 }
 
-sub _loader {
+sub _setup_components {
     my $self = shift;
-    my $loader = $self->{loader};
-    if (!ref $loader) {
-        require Mouse;
-        Mouse::load_class($loader);
-        $loader = $loader->build($self);
-        $self->{loader} = $loader;
+
+    # MUST BE IN THIS ORDER, b.c. loader uses assembler
+    foreach my $name (qw(assembler loader)) {
+        my $component = $self->{$name};
+        if (ref $component) {
+            $component->configure($self);
+        } else {
+            require Mouse;
+            Mouse::load_class($component);
+            $component = $component->build($self);
+        }
+        $self->{$name} = $component;
     }
-    return $loader;
 }
 
-sub _assembler {
-    my $self = shift;
-    my $assembler = $self->{assembler};
-    if (!ref $assembler) {
-        # XXX ::Assembler has a function defined in XS, which gets loaded
-        # along with the main Xslate functions. So when the code gets here
-        # ::Assembler seems as if it's loaded already, and it's no XS
-        # methods don't get loaded properly. To prevent this, although we
-        # check to see if we need to load it here, ::Assembler is already
-        # "use"d at the top of ::Engine
-        require Mouse;
-        Mouse::load_class($assembler);
-        $assembler = $assembler->build($self);
-        $self->{assembler} = $assembler;
-    }
-    return $assembler;
-}
-
+sub _loader { $_[0]->{loader} }
+sub _assembler { $_[0]->{assembler} }
 sub _compiler {
     my($self) = @_;
     my $compiler = $self->{compiler};
