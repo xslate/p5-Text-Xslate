@@ -1,5 +1,7 @@
 Revision history for Perl extension Text::Xslate
 
+{{$NEXT}}
+
 3.1.0 2013-11-16 16:46:35+0900
     [BUG FIXES]
     - Close #95; $/ affected the parse() method
