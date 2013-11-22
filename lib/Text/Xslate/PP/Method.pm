@@ -7,11 +7,12 @@ use warnings;
 use Scalar::Util ();
 use Carp         ();
 
+use Text::Xslate::Constants qw(PP_ERROR_VERBOSE);
 require Text::Xslate::PP;
 require Text::Xslate::PP::State;
 require Text::Xslate::PP::Type::Pair;
 
-if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+if(!PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate::PP::Opcode
     );

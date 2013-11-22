@@ -4,18 +4,19 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '3.1.0';
-
 use Carp              ();
 use File::Spec        ();
-use Exporter          ();
 use Data::MessagePack ();
 use Scalar::Util      ();
 
-use Text::Xslate::Util ();
+our ($VERSION, @ISA, @EXPORT_OK);
+
+use Text::Xslate::Constants();
 BEGIN {
+    $VERSION = '3.1.0';
+
     # all the exportable functions are defined in ::Util
-    our @EXPORT_OK = qw(
+    @EXPORT_OK = qw(
         mark_raw
         unmark_raw
         escaped_string
@@ -23,28 +24,33 @@ BEGIN {
         uri_escape
         html_builder
     );
-    Text::Xslate::Util->import(@EXPORT_OK);
-}
 
-our @ISA = qw(Text::Xslate::Engine);
+    my $use_xs = 0;
 
-# load backend (XS or PP)
-my $use_xs = 0;
-if(!exists $INC{'Text/Xslate/PP.pm'}) {
-    my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
-    if(!$pp) {
-        eval {
-            require XSLoader;
-            XSLoader::load(__PACKAGE__, $VERSION);
-            $use_xs = 1;
-        };
-        die $@ if $@ && $Text::Xslate::Util::DEBUG =~ /\b xs \b/xms; # force XS
+    # load backend (XS or PP)
+    my $DEBUG = $ENV{XSLATE} || '';
+    if(!exists $INC{'Text/Xslate/PP.pm'}) {
+        my $pp = ($DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
+        if(!$pp) {
+            eval {
+                require XSLoader;
+                XSLoader::load(__PACKAGE__, $VERSION);
+                $use_xs = 1;
+            };
+            die $@ if $@ && $DEBUG =~ /\b xs \b/xms; # force XS
+        }
+
+        @ISA = qw(Text::Xslate::Engine);
+
+        if(!__PACKAGE__->can('render')) {
+            require 'Text/Xslate/PP.pm';
+        }
     }
-    if(!__PACKAGE__->can('render')) {
-        require 'Text/Xslate/PP.pm';
-    }
+    eval 'sub USE_XS() { $use_xs }';
+    die if $@;
 }
-sub USE_XS() { $use_xs }
+use Text::Xslate::Util @EXPORT_OK;
+
 
 # for error messages (see T::X::Util)
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
@@ -52,27 +58,15 @@ sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 package Text::Xslate::Engine; # XS/PP common base class
 use Mouse;
 use File::Spec;
-
+use Text::Xslate::Constants qw(DUMP_LOAD DEFAULT_CACHE_DIR);
 use Text::Xslate::Assembler;
 use Text::Xslate::Util qw(
     dump
 );
 
+extends 'Exporter';
+
 with 'Text::Xslate::MakeError';
-
-# constants
-BEGIN {
-    our @ISA = qw(Exporter);
-
-    my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
-    *_DUMP_LOAD = sub(){ $dump_load };
-
-    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
-
-    my $temp_base = $ENV{TEMPDIR} || File::Spec->tmpdir;
-    my $cache_dir = File::Spec->catdir($temp_base, 'xslate_cache', $>);
-    *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
-}
 
 # the real defaults are defined in the parser
 my %parser_option = (
@@ -155,7 +149,7 @@ sub options { # overridable
         path         => ['.'],
         input_layer  => $self->input_layer,
         cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
-        cache_dir    => _DEFAULT_CACHE_DIR,
+        cache_dir    => DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
         html_builder_module => undef,
@@ -284,7 +278,7 @@ sub load_string { # called in render_string()
         $self->throw_error("LoadError: Template string is not given");
     }
     $self->note('  _load_string: %s', join '\n', split /\n/, $string)
-        if _DUMP_LOAD;
+        if DUMP_LOAD;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
     $self->_assembler->assemble($asm, '<string>', \$string, undef, undef);
@@ -309,7 +303,7 @@ sub load_file {
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
 
-    if (_DUMP_LOAD) {
+    if (DUMP_LOAD) {
 $self->note("slurp_template: input_layer(%s), fullpath(%s)\n",
 $input_layer, $fullpath);
     }

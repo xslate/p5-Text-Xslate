@@ -3,9 +3,9 @@ use Mouse;
 
 use Scalar::Util ();
 
+use Text::Xslate::Constants qw(DUMP_PROTO DUMP_TOKEN);
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
-    $DEBUG
     $STRING $NUMBER
     is_int any_in
     neat
@@ -14,9 +14,6 @@ use Text::Xslate::Util qw(
 );
 
 with 'Text::Xslate::MakeError';
-
-use constant _DUMP_PROTO => scalar($DEBUG =~ /\b dump=proto \b/xmsi);
-use constant _DUMP_TOKEN => scalar($DEBUG =~ /\b dump=token \b/xmsi);
 
 our @CARP_NOT = qw(Text::Xslate::Compiler Text::Xslate::Symbol);
 
@@ -430,7 +427,7 @@ sub preprocess {
             $parser->throw_error("Oops: Unknown token: $s ($type)");
         }
     }
-    print STDOUT $code, "\n" if _DUMP_PROTO;
+    print STDOUT $code, "\n" if DUMP_PROTO;
     return $code;
 }
 
@@ -716,7 +713,7 @@ sub advance {
         $arity = "literal";
     }
 
-    print STDOUT "[$arity => $id] #$line\n" if _DUMP_TOKEN;
+    print STDOUT "[$arity => $id] #$line\n" if DUMP_TOKEN;
 
     my $symbol;
     if($arity eq "literal") {

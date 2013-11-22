@@ -7,8 +7,7 @@ use File::Spec;
 use File::Temp ();
 use Text::Xslate ();
 use Text::Xslate::Util ();
-use constant ST_MTIME => 9;
-use constant TRACE_LOAD => Text::Xslate::Engine::_DUMP_LOAD();
+use Text::Xslate::Constants qw(ST_MTIME DUMP_LOAD);
 
 extends 'Text::Xslate::Loader';
 
@@ -73,7 +72,7 @@ sub load_cached_asm {
     # $cached_ent is an object with mtime and asm
     my $cached_ent;
     my $cache_strategy = $self->cache_strategy;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("load: Cache strategy is %d", $cache_strategy);
     }
     if ($cache_strategy > 0) {
@@ -94,7 +93,7 @@ sub load_cached_asm {
     if ($cache_strategy > 1) {
         # We're careless! We just want to use the cached
         # version! Go! Go! Go!
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("Freshness check disabled, and cache exists. Just use it");
         }
 
@@ -105,7 +104,7 @@ sub load_cached_asm {
             return $asm;
         }
 
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("Cached template's validation failed (probably a magic mismatch)");
         }
         return;
@@ -115,14 +114,14 @@ sub load_cached_asm {
     if ($cached_ent->is_fresher_than($fi)) {
         # Hooray, our cached version is newer than the 
         # source file! cheers! jubilations! 
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("Freshness check passed, returning asm");
         }
 
         return $cached_ent->asm;
     }
 
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("Freshness check failed.");
     }
     # if you got here, too bad: cache is invalid.
@@ -132,7 +131,7 @@ sub load {
     my ($self, $name) = @_;
 
     my $note_guard;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("load: Loading %s", $name);
         $note_guard = $self->indent_note();
     }
@@ -145,7 +144,7 @@ sub load {
     # XXX if the file cannot be located in the filesystem,
     # then we go kapot, so no check for defined $fi
     my $fi = $self->locate_file($name);
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("load: Located file %s", $fi->fullpath);
     }
 
@@ -177,7 +176,7 @@ sub locate_file {
     my ($self, $name) = @_;
 
     my $note_guard;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("locate_file: looking for '%s'", $name);
         $note_guard = $self->indent_note();
     }
@@ -189,7 +188,7 @@ sub locate_file {
     my $dirs = $self->include_dirs;
     my ($fullpath, $mtime, $cache_prefix);
     foreach my $dir (@$dirs) {
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("locate_file: checking in %s", $dir);
         }
         if (ref $dir eq 'HASH') {
@@ -221,7 +220,7 @@ sub locate_file {
             }
         }
 
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("Found source in %s", ref($fullpath) ? $name : $fullpath);
         }
 
@@ -252,14 +251,14 @@ sub load_cached {
     my $filename = $fi->cachepath;
 
     my $note_guard;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("load_cached: %s", $filename);
         $note_guard = $self->indent_note();
     }
     my $mtime = (stat($filename))[ST_MTIME()];
     if (! defined $mtime) {
         # stat failed. cache isn't there. sayonara
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("load_cached: file %s does not exist", $filename);
         }
         return;
@@ -285,13 +284,13 @@ sub load_file {
     my $filename = $fi->fullpath;
 
     my $note_guard;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("load_file: Loading %s", $filename);
         $note_guard = $self->indent_note();
     }
     my $data = $self->slurp_template($self->input_layer, $filename);
     if (my $cb = $self->pre_process_handler) {
-        if (TRACE_LOAD) {
+        if (DUMP_LOAD) {
             $self->note("Preprocess handler called");
         }
         $data = $cb->($data);
@@ -306,7 +305,7 @@ sub store_cache {
 
     my $path          = $fi->cachepath;
     my $note_guard;
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("store_cache: Storing cache in %s (%s)", $path, $fi->fullpath);
         $note_guard = $self->indent_note();
     }
@@ -354,7 +353,7 @@ sub store_cache {
         Carp::carp("Xslate: Cannot rename cache file $path (ignored): $!");
     }
 
-    if (TRACE_LOAD) {
+    if (DUMP_LOAD) {
         $self->note("stored cache in %s", $path);
     }
     return $newest_mtime;
@@ -399,7 +398,7 @@ sub is_fresher_than {
     my ($self, $fi) = @_;
 
     if ($self->mtime <= $fi->mtime) {
-        if (Text::Xslate::Loader::File::TRACE_LOAD) {
+        if (Text::Xslate::Loader::File::DUMP_LOAD) {
             $self->note("is_fresher_than: mtime (%s) <= threshold (%s)",
                 $self->mtime, $fi->mtime);
         }
@@ -414,7 +413,7 @@ sub is_fresher_than {
 sub build_asm {
     my ($self, %args) = @_;
 
-    if (Text::Xslate::Loader::File::TRACE_LOAD) {
+    if (Text::Xslate::Loader::File::DUMP_LOAD) {
         $self->note("build_asm: fullpath = %s", $self->filename);
     }
 
@@ -431,7 +430,7 @@ sub build_asm {
     my $magic = $self->magic;
     read $in, $data, length($magic);
     if (! defined $data || $data ne $magic) {
-        if (Text::Xslate::Loader::File::TRACE_LOAD) {
+        if (Text::Xslate::Loader::File::DUMP_LOAD) {
             $self->note("build_asm: magic mismatch ('%s' != '%s')", $data, $magic);
         }
         return;
@@ -470,13 +469,13 @@ sub build_asm {
 
         # XXX if this is a vpath, 
         if($c->[0] eq 'depend') {
-            my $dep_mtime = (stat $c->[1])[Text::Xslate::Engine::_ST_MTIME()];
+            my $dep_mtime = (stat $c->[1])[Text::Xslate::Constants::ST_MTIME()];
             if(!defined $dep_mtime) {
                 Carp::carp("Xslate: Failed to stat $c->[1] (ignored): $!");
                 return undef; # purge the cache
             }
             if($check_freshness && $dep_mtime > $threshold){
-                if (Text::Xslate::Loader::File::TRACE_LOAD) {
+                if (Text::Xslate::Loader::File::DUMP_LOAD) {
                     $self->note("  _load_compiled: %s(%s) is newer than %s(%s)\n",
                         $c->[1],    scalar localtime($dep_mtime),
                         $filename, scalar localtime($threshold) )

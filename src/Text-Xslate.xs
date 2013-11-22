@@ -1919,7 +1919,7 @@ BOOT:
         code_ref);
 
     // debug flag
-    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( "Text::Xslate::Engine::_DUMP_LOAD", GV_ADD)));
+    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( "Text::Xslate::Constants::DUMP_LOAD", GV_ADD)));
     {
         dSP;
         PUSHMARK(SP);

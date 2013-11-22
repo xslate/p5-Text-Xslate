@@ -7,20 +7,18 @@ our $VERSION = '3.1.0';
 use Carp ();
 use Scalar::Util ();
 
+use Text::Xslate::Constants qw(DUMP_PP PP_ERROR_VERBOSE);
 use Text::Xslate::PP;
 use Text::Xslate::PP::Const;
 use Text::Xslate::PP::Method;
 use Text::Xslate::Util qw(
     p neat
     mark_raw unmark_raw html_escape uri_escape
-    $DEBUG
 );
-
-use constant _DUMP_PP => scalar($DEBUG =~ /\b dump=pp \b/xms);
 
 no warnings 'recursion';
 
-if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+if(!PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate
     );
@@ -471,7 +469,7 @@ sub tx_macro_enter {
     my $outer  = $macro->outer;
     my $args   = pop @{ $st->{SP} };
 
-    print STDERR " " x $st->current_frame, "tx_macro_enter($name) to $retaddr\n" if _DUMP_PP;
+    print STDERR " " x $st->current_frame, "tx_macro_enter($name) to $retaddr\n" if DUMP_PP;
 
     if(@{$args} != $nargs) {
         $st->error(undef, "Wrong number of arguments for %s (%d %s %d)",
@@ -512,7 +510,7 @@ sub op_macro_end {
     my($st) = @_;
 
     my $top = $st->frame->[ $st->current_frame ];
-    printf STDERR "%stx_macro_end(%s)]\n", ' ' x $st->current_frame - 1, $top->[ TXframe_NAME ] if _DUMP_PP;
+    printf STDERR "%stx_macro_end(%s)]\n", ' ' x $st->current_frame - 1, $top->[ TXframe_NAME ] if DUMP_PP;
 
     $st->{sa} = mark_raw( $st->{ output } );
     $st->pop_frame(1);
@@ -578,7 +576,7 @@ sub op_goto {
 
 sub op_end {
     my($st) = @_;
-    printf STDERR "op_end at %d\n", $st->{pc} if _DUMP_PP;
+    printf STDERR "op_end at %d\n", $st->{pc} if DUMP_PP;
     $st->{ pc } = $st->code_len;
 
     if($st->current_frame != 0) {

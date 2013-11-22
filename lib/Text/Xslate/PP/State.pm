@@ -1,13 +1,13 @@
 package Text::Xslate::PP::State; # implement tx_state_t
 use Mouse;
 
-use Text::Xslate::Util qw(neat p $DEBUG);
+use Text::Xslate::Util qw(neat p);
 use Text::Xslate::PP;
 use Text::Xslate::PP::Const qw(
     TXframe_NAME TXframe_RETADDR TXframe_OUTPUT
     TX_VERBOSE_DEFAULT);
 
-if(!Text::Xslate::PP::_PP_ERROR_VERBOSE()) {
+if(!Text::Xslate::PP::PP_ERROR_VERBOSE()) {
     our @CARP_NOT = qw(
         Text::Xslate::PP::Opcode
         Text::Xslate::PP::Booter

@@ -9,14 +9,10 @@ BEGIN{
     $ENV{XSLATE} = ($ENV{XSLATE} || '') . '[pp]';
 }
 
+use Text::Xslate::Constants qw(DUMP_LOAD PP_ERROR_VERBOSE);
 use Text::Xslate::Util qw(
-    $DEBUG
     p
 );
-
-use constant _PP_ERROR_VERBOSE => scalar($DEBUG =~ /\b pp=verbose \b/xms);
-
-use constant _DUMP_LOAD => scalar($DEBUG =~ /\b dump=load \b/xms);
 
 use Text::Xslate::PP::Const qw(:all);
 use Text::Xslate::PP::State;
@@ -33,7 +29,7 @@ require Text::Xslate;
 
 $VERSION =~ s/_//; # for developers versions
 
-if(_PP_ERROR_VERBOSE) {
+if(PP_ERROR_VERBOSE) {
     Carp->import('verbose');
 }
 
@@ -402,7 +398,7 @@ sub tx_all_deps_are_fresh {
             if ( $i != TXo_FULLPATH and $main_cache ) {
                 unlink $main_cache or warn $!;
             }
-            if(_DUMP_LOAD) {
+            if(DUMP_LOAD) {
                 printf STDERR "  tx_all_depth_are_fresh: %s is too old (%d > %d)\n",
                     $deppath, $mtime, $cache_mtime;
             }
@@ -421,7 +417,7 @@ sub tx_execute {
     if ( $_depth > 100 ) {
         Carp::croak("Execution is too deep (> 100)");
     }
-    if(_PP_ERROR_VERBOSE and ref $st->{code}->[0]->{ exec_code } ne 'CODE') {
+    if(PP_ERROR_VERBOSE and ref $st->{code}->[0]->{ exec_code } ne 'CODE') {
         Carp::croak("Oops: Not a CODE reference: "
             . Text::Xslate::Util::neat($st->{code}->[0]->{ exec_code }));
     }
@@ -462,7 +458,7 @@ sub _error_handler {
     local $SIG{__WARN__} = $_orig_warn_handler;
     local $SIG{__DIE__}  = $_orig_die_handler;
 
-    if(!_PP_ERROR_VERBOSE && $str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
+    if(!PP_ERROR_VERBOSE && $str =~ s/at .+Text.Xslate.PP.+ line \d+\.\n$//) {
         $str = Carp::shortmess($str);
     }
 

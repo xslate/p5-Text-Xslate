@@ -5,7 +5,9 @@ use warnings;
 use Carp ();
 
 use parent qw(Exporter);
-our @EXPORT_OK = qw(
+our @EXPORT_OK;
+BEGIN {
+    @EXPORT_OK = qw(
     mark_raw unmark_raw
     html_escape escaped_string
     uri_escape
@@ -19,12 +21,9 @@ our @EXPORT_OK = qw(
     is_int any_in
     read_around
     make_error
-    $DEBUG
     $STRING $NUMBER
 );
-
-our $DEBUG;
-defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
+}
 
 # cf. http://swtch.com/~rsc/regexp/regexp1.html
 my $dquoted = qr/"  [^"\\]* (?: \\. [^"\\]* )* "/xms;

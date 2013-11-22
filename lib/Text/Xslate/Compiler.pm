@@ -7,37 +7,18 @@ with 'Text::Xslate::MakeError';
 use Scalar::Util ();
 use Carp         ();
 
+use Text::Xslate::Constants qw(
+    DUMP_ADDIX DUMP_ASM DUMP_AST DUMP_GEN DUMP_CAS
+    OP_NAME OP_ARG OP_LINE OP_FILE OP_LABEL OP_COMMENT
+    OPTIMIZE
+    FOR_LOOP WHILE_LOOP
+);
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
-    $DEBUG
     value_to_literal
     is_int any_in
     p
 );
-
-#use constant _VERBOSE  => scalar($DEBUG =~ /\b verbose \b/xms);
-use constant {
-    _DUMP_ASM => scalar($DEBUG =~ /\b dump=asm \b/xms),
-    _DUMP_AST => scalar($DEBUG =~ /\b dump=ast \b/xms),
-    _DUMP_GEN => scalar($DEBUG =~ /\b dump=gen \b/xms),
-    _DUMP_CAS => scalar($DEBUG =~ /\b dump=cascade \b/xms),
-
-    _OP_NAME    => 0,
-    _OP_ARG     => 1,
-    _OP_LINE    => 2,
-    _OP_FILE    => 3,
-    _OP_LABEL   => 4,
-    _OP_COMMENT => 5,
-
-    _FOR_LOOP   => 1,
-    _WHILE_LOOP => 2,
-};
-
-
-our $OPTIMIZE = scalar(($DEBUG =~ /\b optimize=(\d+) \b/xms)[0]);
-if(not defined $OPTIMIZE) {
-    $OPTIMIZE = 1; # enable optimization by default
-}
 
 our @CARP_NOT = qw(Text::Xslate Text::Xslate::Parser);
 
@@ -313,7 +294,7 @@ sub compile {
     my @code; # main code
     {
         my $ast = $parser->parse($input, %args);
-        print STDERR p($ast) if _DUMP_AST;
+        print STDERR p($ast) if DUMP_AST;
         @code = (
             $self->opcode(set_opinfo => undef, file => $self->current_file, line => 1),
             $self->compile_ast($ast),
@@ -328,13 +309,13 @@ sub compile {
 
     push @code, $self->_flush_macro_table() if $self->has_macro_table;
 
-    if($OPTIMIZE) {
+    if(OPTIMIZE) {
         $self->_optimize_vmcode(\@code) for 1 .. 3;
     }
 
     print STDERR "// ", $self->filename, "\n",
-        $self->as_assembly(\@code, scalar($DEBUG =~ /\b ix \b/xms))
-            if _DUMP_ASM;
+        $self->as_assembly(\@code, DUMP_ADDIX)
+            if DUMP_ASM;
 
     {
         my %uniq;
@@ -403,13 +384,13 @@ sub compile_ast {
     my($self, $ast) = @_;
     return if not defined $ast;
 
-    local $_lv = $_lv + 1 if _DUMP_GEN;
+    local $_lv = $_lv + 1 if DUMP_GEN;
 
     my @code;
     foreach my $node(ref($ast) eq 'ARRAY' ? @{$ast} : $ast) {
         Scalar::Util::blessed($node) or Carp::confess("[BUG] Not a node object: " . p($node));
 
-        printf STDERR "%s"."generate %s (%s)\n", "." x $_lv, $node->arity, $node->id if _DUMP_GEN;
+        printf STDERR "%s"."generate %s (%s)\n", "." x $_lv, $node->arity, $node->id if DUMP_GEN;
 
         my $generator = $self->can('_generate_' . $node->arity)
             || Carp::confess("[BUG] Unexpected node:  " . p($node));
@@ -422,7 +403,7 @@ sub compile_ast {
 
 sub _process_cascade {
     my($self, $cascade, $args, $main_code) = @_;
-    printf STDERR "# cascade %s %s", $self->file, $cascade->dump if _DUMP_CAS;
+    printf STDERR "# cascade %s %s", $self->file, $cascade->dump if DUMP_CAS;
     my $engine = $self->engine
         || $self->throw_error("Cannot cascade templates without Xslate engine", $cascade);
 
@@ -459,32 +440,32 @@ sub _process_cascade {
             # $c = [name, arg, line, file, symbol ]
 
             # retrieve macros from assembly code
-            if($c->[_OP_NAME] eq 'macro_begin' .. $c->[_OP_NAME] eq 'macro_end') {
-                if($c->[_OP_NAME] eq 'macro_begin') {
+            if($c->[OP_NAME] eq 'macro_begin' .. $c->[OP_NAME] eq 'macro_end') {
+                if($c->[OP_NAME] eq 'macro_begin') {
                     $macro = [];
                     $macro = {
-                        name  => $c->[_OP_ARG],
-                        line  => $c->[_OP_LINE],
-                        file  => $c->[_OP_FILE],
+                        name  => $c->[OP_ARG],
+                        line  => $c->[OP_LINE],
+                        file  => $c->[OP_FILE],
                         body  => [],
                     };
-                    push @{ $mtable->{$c->[_OP_ARG]} ||= [] }, $macro;
+                    push @{ $mtable->{$c->[OP_ARG]} ||= [] }, $macro;
                 }
-                elsif($c->[_OP_NAME] eq 'macro_nargs') {
-                    $macro->{nargs} = $c->[_OP_ARG];
+                elsif($c->[OP_NAME] eq 'macro_nargs') {
+                    $macro->{nargs} = $c->[OP_ARG];
                 }
-                elsif($c->[_OP_NAME] eq 'macro_outer') {
-                    $macro->{outer} = $c->[_OP_ARG];
+                elsif($c->[OP_NAME] eq 'macro_outer') {
+                    $macro->{outer} = $c->[OP_ARG];
                 }
-                elsif($c->[_OP_NAME] eq 'macro_end') {
+                elsif($c->[OP_NAME] eq 'macro_end') {
                     # noop
                 }
                 else {
                     push @{$macro->{body}}, $c;
                 }
             }
-            elsif($c->[_OP_NAME] eq 'depend') {
-                $self->requires($c->[_OP_ARG]);
+            elsif($c->[OP_NAME] eq 'depend') {
+                $self->requires($c->[OP_ARG]);
             }
         }
         $self->requires($fullpath);
@@ -506,8 +487,8 @@ sub _process_cascade {
         }
 
         foreach my $c(@{$main_code}) {
-            if($c->[_OP_NAME] eq 'print_raw_s'
-                    && $c->[_OP_ARG] =~ m{ [^ \t\r\n] }xms) {
+            if($c->[OP_NAME] eq 'print_raw_s'
+                    && $c->[OP_ARG] =~ m{ [^ \t\r\n] }xms) {
                 Carp::carp("Xslate: Useless use of text '$c->[1]'");
             }
         }
@@ -520,19 +501,19 @@ sub _process_cascade {
 
 sub _process_cascade_file {
     my($self, $file, $base_code) = @_;
-    printf STDERR "# cascade file %s\n", p($file) if _DUMP_CAS;
+    printf STDERR "# cascade file %s\n", p($file) if DUMP_CAS;
     my $mtable = $self->macro_table;
 
     for(my $i = 0; $i < @{$base_code}; $i++) {
         my $c = $base_code->[$i];
-        if($c->[_OP_NAME] ne 'macro_begin') {
+        if($c->[OP_NAME] ne 'macro_begin') {
             next;
         }
 
         # macro
-        my $name = $c->[_OP_ARG];
+        my $name = $c->[OP_ARG];
         $name =~ s/\@.+$//;
-        printf STDERR "# macro %s\n", $name if _DUMP_CAS;
+        printf STDERR "# macro %s\n", $name if DUMP_CAS;
 
         if(exists $mtable->{$name}) {
             my $m = $mtable->{$name};
@@ -561,7 +542,7 @@ sub _process_cascade_file {
         }
 
         my $macro_start = $i+1;
-        $i++ while($base_code->[$i][_OP_NAME] ne 'macro_end'); # move to the end
+        $i++ while($base_code->[$i][OP_NAME] ne 'macro_end'); # move to the end
 
         if(defined $around) {
             my @original = splice @{$base_code}, $macro_start, ($i - $macro_start);
@@ -572,7 +553,7 @@ sub _process_cascade_file {
                 push @body, @{$m->{body}};
             }
             for(my $j = 0; $j < @body; $j++) {
-                if($body[$j][_OP_NAME] eq 'super') {
+                if($body[$j][OP_NAME] eq 'super') {
                     splice @body, $j, 1, @original;
                 }
             }
@@ -645,7 +626,7 @@ sub _generate_operator {
 sub _can_optimize_print {
     my($self, $name, $node) = @_;
 
-    return 0 if !$OPTIMIZE;
+    return 0 if !OPTIMIZE;
     return 0 if !($name eq 'print' or $name eq 'print_raw');
 
     my $maybe_name = $node->first;
@@ -760,7 +741,7 @@ sub _compile_loop_block {
     my @block_code = $self->compile_ast($block);
 
     foreach my $op(@block_code) {
-        if(any_in( $op->[_OP_NAME], qw(pushmark loop_control))) {
+        if(any_in( $op->[OP_NAME], qw(pushmark loop_control))) {
             # pushmark ... funcall (or something) may create mortal SVs
             # so surround the block with ENTER and LEAVE
             unshift @block_code, $self->opcode('enter');
@@ -771,13 +752,13 @@ sub _compile_loop_block {
 
     foreach my $i(1 .. (@block_code-1)) {
         my $op = $block_code[$i];
-        if($op->[_OP_NAME] eq 'loop_control') {
-            my $type = $op->[_OP_ARG];
-            $op->[_OP_NAME] = 'goto';
+        if($op->[OP_NAME] eq 'loop_control') {
+            my $type = $op->[OP_ARG];
+            $op->[OP_NAME] = 'goto';
 
-            $op->[_OP_ARG] = (@block_code - $i);
+            $op->[OP_ARG] = (@block_code - $i);
 
-            $op->[_OP_ARG] += 1 if $type eq 'last';
+            $op->[OP_ARG] += 1 if $type eq 'last';
         }
     }
 
@@ -795,7 +776,7 @@ sub _generate_for {
     }
     local $self->{lvar}  = { %{$self->lvar} };  # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-    local $self->{in_loop} = _FOR_LOOP;
+    local $self->{in_loop} = FOR_LOOP;
 
     my @code = $self->compile_ast($expr);
 
@@ -856,7 +837,7 @@ sub _generate_while {
     # TODO: combine all the loop contexts into single one
     local $self->{lvar}  = { %{$self->lvar}  }; # new scope
     local $self->{const} = [ @{$self->const} ]; # new scope
-    local $self->{in_loop} = _WHILE_LOOP;
+    local $self->{in_loop} = WHILE_LOOP;
 
     my @code = $self->compile_ast($expr);
 
@@ -892,7 +873,7 @@ sub _generate_loop_control {
     }
 
     my @cleanup;
-    if( $self->{in_loop} == _FOR_LOOP && $type eq 'last' ) {
+    if( $self->{in_loop} == FOR_LOOP && $type eq 'last' ) {
         my $lvar_id = $self->lvar->{'($_)'};
         defined($lvar_id)
             or $self->throw_error('[BUG] Undefined loop iterator');
@@ -1018,9 +999,9 @@ sub _generate_if {
         $self->compile_ast($third);
     };
 
-    if($OPTIMIZE) {
+    if(OPTIMIZE) {
         if($self->_code_is_literal(@cond)) {
-            my $value = $cond[0][_OP_ARG];
+            my $value = $cond[0][OP_ARG];
             if($cond_true eq 'and' ? $value : !$value) {
                 return @then;
             }
@@ -1030,7 +1011,7 @@ sub _generate_if {
         }
     }
 
-    if( (@then and @else) or !$OPTIMIZE) {
+    if( (@then and @else) or !OPTIMIZE) {
         return(
             @cond,
             $self->opcode( $cond_true => scalar(@then) + 2, comment => $node->id . ' (then)' ),
@@ -1141,7 +1122,7 @@ sub _generate_unary {
             @operand,
             $self->opcode( $unary{$id} )
         );
-        if( $OPTIMIZE and $self->_code_is_literal(@operand) ) {
+        if( OPTIMIZE and $self->_code_is_literal(@operand) ) {
             $self->_fold_constants(\@code);
         }
         return @code;
@@ -1168,7 +1149,7 @@ sub _generate_field {
     else {
         local $self->{lvar_id} = $self->lvar_use(1);
         my @rhs = $self->compile_ast($field);
-        if($OPTIMIZE and $self->_code_is_literal(@rhs)) {
+        if(OPTIMIZE and $self->_code_is_literal(@rhs)) {
             return
                 @lhs,
                 $self->opcode( fetch_field_s => $rhs[0][1] );
@@ -1212,7 +1193,7 @@ sub _generate_binary {
                 $self->opcode( 'move_from_sb' ), # on false
         }
 
-        if($OPTIMIZE) {
+        if(OPTIMIZE) {
             if( $self->_code_is_literal(@lhs) and $self->_code_is_literal(@rhs) ){
                 $self->_fold_constants(\@code);
             }
@@ -1360,10 +1341,10 @@ sub _generate_constant {
     $lvar->{$lvar_name} = $lvar_id;
     $self->{lvar_id}    = $self->lvar_use(1); # don't use local()
 
-    if($OPTIMIZE) {
+    if(OPTIMIZE) {
         if(@expr == 1
-                && any_in($expr[0][_OP_NAME], qw(literal load_lvar))) {
-            $expr[0][_OP_COMMENT] = "constant $lvar_name";
+                && any_in($expr[0][OP_NAME], qw(literal load_lvar))) {
+            $expr[0][OP_COMMENT] = "constant $lvar_name";
             $self->const->[$lvar_id] = \@expr;
             return @expr; # no real definition
         }
@@ -1434,8 +1415,8 @@ sub can_be_in_list_context {
 sub _code_is_literal {
     my($self, @code) = @_;
     return @code == 1
-        && (    $code[0][_OP_NAME] eq 'literal'
-             || $code[0][_OP_NAME] eq 'literal_i');
+        && (    $code[0][OP_NAME] eq 'literal'
+             || $code[0][OP_NAME] eq 'literal_i');
 }
 
 sub _fold_constants {
@@ -1486,8 +1467,8 @@ sub _optimize_vmcode {
 
     my @goto_addr;
     for(my $i = 0; $i < @{$c}; $i++) {
-        if(exists $goto_family{ $c->[$i][_OP_NAME] }) {
-            my $addr = $c->[$i][_OP_ARG]; # relational addr
+        if(exists $goto_family{ $c->[$i][OP_NAME] }) {
+            my $addr = $c->[$i][OP_ARG]; # relational addr
 
             # mark ragens that goto family have its effects
             my @range = $addr > 0
@@ -1501,15 +1482,15 @@ sub _optimize_vmcode {
     }
 
     for(my $i = 0; $i < @{$c}; $i++) {
-        my $name = $c->[$i][_OP_NAME];
+        my $name = $c->[$i][OP_NAME];
         if($name eq 'print_raw_s') {
             # merge a chain of print_raw_s into single command
             my $j = $i + 1; # from the next op
             while($j < @{$c}
-                    && $c->[$j][_OP_NAME] eq 'print_raw_s'
+                    && $c->[$j][OP_NAME] eq 'print_raw_s'
                     && "@{$goto_addr[$i] || []}" eq "@{$goto_addr[$j] || []}") {
 
-                $c->[$i][_OP_ARG] .= $c->[$j][_OP_ARG];
+                $c->[$i][OP_ARG] .= $c->[$j][OP_ARG];
 
                 $self->_noop($c->[$j]);
                 $j++;
@@ -1528,24 +1509,24 @@ sub _optimize_vmcode {
             my $it = $c->[$i];
             my $nn = $c->[$i+2]; # next next
             if(defined($nn)
-                && $nn->[_OP_NAME] eq 'load_lvar_to_sb'
-                && $nn->[_OP_ARG] == $it->[_OP_ARG]) {
+                && $nn->[OP_NAME] eq 'load_lvar_to_sb'
+                && $nn->[OP_ARG] == $it->[OP_ARG]) {
                 @{$it} = @{$self->opcode( move_to_sb => undef, comment => "ex-$it->[0]" )};
 
                 $self->_noop($nn);
             }
         }
         elsif($name eq 'literal') {
-            if(is_int($c->[$i][_OP_ARG])) {
-                $c->[$i][_OP_NAME] = 'literal_i';
-                $c->[$i][_OP_ARG]  = int($c->[$i][_OP_ARG]); # force int
+            if(is_int($c->[$i][OP_ARG])) {
+                $c->[$i][OP_NAME] = 'literal_i';
+                $c->[$i][OP_ARG]  = int($c->[$i][OP_ARG]); # force int
             }
         }
         elsif($name eq 'fetch_field') {
             my $prev = $c->[$i-1];
-            if($prev->[_OP_NAME] =~ /^literal/) { # literal or literal_i
-                $c->[$i][_OP_NAME] = 'fetch_field_s';
-                $c->[$i][_OP_ARG] = $prev->[_OP_ARG]; # arg
+            if($prev->[OP_NAME] =~ /^literal/) { # literal or literal_i
+                $c->[$i][OP_NAME] = 'fetch_field_s';
+                $c->[$i][OP_ARG] = $prev->[OP_ARG]; # arg
 
                 $self->_noop($prev);
             }
@@ -1554,7 +1535,7 @@ sub _optimize_vmcode {
 
     # remove noop
     for(my $i = 0; $i < @{$c}; $i++) {
-        if($c->[$i][_OP_NAME] eq 'noop') {
+        if($c->[$i][OP_NAME] eq 'noop') {
             if(defined $goto_addr[$i]) {
                 foreach my $goto(@{ $goto_addr[$i] }) {
                     # reduce its absolute value

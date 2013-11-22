@@ -1,7 +1,8 @@
 package Text::Xslate::Symbol;
 use Mouse;
 
-use Text::Xslate::Util qw(p $DEBUG);
+use Text::Xslate::Constants qw(DUMP_DENOTE);
+use Text::Xslate::Util qw(p);
 
 use overload
     bool => sub() { 1 },
@@ -10,8 +11,6 @@ use overload
 ;
 
 our @CARP_NOT = qw(Text::Xslate::Parser);
-
-use constant _DUMP_DENOTE => scalar($DEBUG =~ /\b dump=denote \b/xmsi);
 
 has id => (
     is       => 'rw',
@@ -202,19 +201,19 @@ sub _std_default {
 
 sub nud {
     my($self, $parser, @args) = @_;
-    $self->_dump_denote('nud', $parser) if _DUMP_DENOTE;
+    $self->_dump_denote('nud', $parser) if DUMP_DENOTE;
     return $self->get_nud()->($parser, $self, @args);
 }
 
 sub led {
     my($self, $parser, @args) = @_;
-    $self->_dump_denote('led', $parser) if _DUMP_DENOTE;
+    $self->_dump_denote('led', $parser) if DUMP_DENOTE;
     return $self->get_led()->($parser, $self, @args);
 }
 
 sub std {
     my($self, $parser, @args) = @_;
-    $self->_dump_denote('std', $parser) if _DUMP_DENOTE;
+    $self->_dump_denote('std', $parser) if DUMP_DENOTE;
     return $self->get_std()->($parser, $self, @args);
 }
 

@@ -1,14 +1,9 @@
 package Text::Xslate::MakeError;
 use Mouse::Role;
 use Carp ();
+use Text::Xslate::Constants qw(DEFAULT_DISPLAY_WIDTH);
 
-our $DEBUG;
-defined($DEBUG) or $DEBUG = $ENV{XSLATE} || '';
-
-our $DisplayWidth = 76;
-if($DEBUG =~ /display_width=(\d+)/) {
-    $DisplayWidth = $1;
-}
+our $DisplayWidth;
 
 sub throw_error {
     die shift->make_error(@_);
@@ -46,6 +41,8 @@ sub read_around { # for error messages
 
 sub make_error {
     my($self, $message, $file, $line, @extra) = @_;
+
+    $DisplayWidth ||= DEFAULT_DISPLAY_WIDTH;
     if(ref $message eq 'SCALAR') { # re-thrown form virtual machines
         return ${$message};
     }
