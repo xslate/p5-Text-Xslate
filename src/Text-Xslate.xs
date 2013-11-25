@@ -1609,6 +1609,8 @@ CODE:
     SV** svp;
     AV* macro = NULL;
 
+    PERL_UNUSED_VAR(self);
+
     TAINT_NOT; /* All the SVs we'll create here are safe */
 
     Zero(&st, 1, tx_state_t);
