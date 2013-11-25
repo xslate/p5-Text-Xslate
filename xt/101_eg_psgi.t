@@ -22,6 +22,10 @@ local $ENV{PLACK_ENV} = 'production';
 
 EXAMPLE: while(defined(my $example = <example/*.psgi>)) {
     note $example;
+    if ($example =~ /mojo.psgi\z/ && $] < 5.010_000) {
+        diag "Mojolicious doesn't support Perl 5.8";
+        next EXAMPLE;
+    }
 
     my $expect = do {
         my $gold = $example . '.gold';
