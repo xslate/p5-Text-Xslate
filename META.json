@@ -75,7 +75,7 @@
          "web" : "https://github.com/xslate/p5-Text-Xslate"
       }
    },
-   "version" : "3.1.0",
+   "version" : "v3.1.0",
    "x_contributors" : [
       "Yoshiki Kurihara <kurihara@cpan.org>",
       "makamaka <makamaka.donzoko@gmail.com>",

@@ -14,7 +14,7 @@ our ($VERSION, @ISA, @EXPORT_OK);
 use Text::Xslate::Constants();
 use XSLoader;
 BEGIN {
-    $VERSION = '3.1.0';
+    use version; $VERSION = version->declare("v3.1.0");
 
     # all the exportable functions are defined in ::Util
     @EXPORT_OK = qw(
