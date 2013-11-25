@@ -15,6 +15,8 @@ if(!scalar grep { $_ eq '--install' } @ARGV) {
 my $cpanm = which('cpanm') or plan skip_all => 'no cpanm';
 
 my @modules = qw(
+    Test::Pod::Coverage
+    Catalyst::View::Xslate
     Text::Xslate::Bridge::TT2Like
 );
 
