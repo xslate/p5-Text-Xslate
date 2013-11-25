@@ -499,30 +499,12 @@ __END__
 
 =head1 SYNOPSIS
 
-    package Text::Xslate;
-    ...
+    use Text::Xslate;
     use Text::Xslate::Loader::File;
 
-    has loader => (
-        is => 'ro',
-        lazy => 1,
-        builder => 'build_loader',
+    Text::Xslate->new(
+      loader => 'Text::Xslate::Loader::File',
     );
-
-    sub build_loader {
-        my $loader = Text::Xslate::Loader::File->new(
-            cache_dir       => "/path/to/cache",
-            cache_strategy  => 1,
-            compiler        => $self->compiler,
-            include_dirs    => [ "/path/to/dir1", "/path/to/dir2" ],
-            input_layer     => $self->input_layer,
-        );
-    }
-
-    sub load_file {
-        my ($self, $file) = @_;
-        my $asm = $loader->load($file);
-    }
 
 =head1 NOTES
 
