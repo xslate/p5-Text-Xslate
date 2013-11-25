@@ -83,7 +83,7 @@ my %builtin = (
     uri          => 'uri_escape',
 );
 
-sub bytecode_version { '2.0' };
+sub bytecode_version { 2 };
 
 sub default_functions { +{} } # overridable
 
