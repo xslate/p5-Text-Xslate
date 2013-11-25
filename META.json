@@ -4,7 +4,7 @@
       "Fuji, Goro (gfx) <gfuji@cpan.org>."
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.8.4, CPAN::Meta::Converter version 2.132830",
+   "generated_by" : "Minilla/v0.9.0, CPAN::Meta::Converter version 2.132830",
    "license" : [
       "perl_5"
    ],
@@ -99,7 +99,7 @@
       "David Steinbrunner <dsteinbrunner@pobox.com>",
       "Shigeki Morimoto <github@morimo.to>",
       "Fuji, Goro <goro-fuji@cookpad.com>",
-      "Daisuke Maki <lestrrat+github@gmail.com>",
-      "tokuhirom <tokuhirom@gmail.com>"
+      "tokuhirom <tokuhirom@gmail.com>",
+      "Daisuke Maki <lestrrat+github@gmail.com>"
    ]
 }

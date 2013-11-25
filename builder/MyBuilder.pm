@@ -12,7 +12,7 @@ sub new {
         xs_files => {
             'src/Text-Xslate.xs' => 'lib/Text/Xslate.xs',
         },
-        c_source => ['src/xslate_methods.c'],
+        c_source => ['src'],
         generate_xshelper_h => 'xshelper.h',
         meta_merge     => {
             resources => {
