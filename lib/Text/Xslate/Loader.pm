@@ -70,4 +70,24 @@ your own Loader: You just need to provide a "load()" method for it to work.
 This class is here because there are a few initialization-related methods
 that are mostly common for Loaders.
 
+=head1 CREATING YOUR LOADER
+
+Text::Xslate by default takes a class name as loader and instantiates it
+but if you are building a new loader we recommend you don't rely on this
+feature.
+
+Instead, instantiate an object yourself and pass it to Text::Xslate:
+
+    Text::Xslate->new(
+        loader => MyAwesome::Loader->new()
+    );
+
+Your Loader class may need some configuration using the main Text::Xslate
+object instance. For that, provide a method named C<configure()>:
+
+    sub configure {
+        my ($loader, $engine) = @_;
+        # Make whatever necessary change to $loader using $engine
+    }
+
 =cut
