@@ -32,7 +32,7 @@
             "CPAN::Meta::Prereqs" : "0",
             "Devel::PPPort" : "3.19",
             "ExtUtils::MakeMaker" : "6.59",
-            "ExtUtils::ParseXS" : "2.21",
+            "ExtUtils::ParseXS" : "3.21",
             "File::Copy::Recursive" : "0",
             "Module::Build" : "0.38",
             "Module::Build::XSUtil" : "0"
