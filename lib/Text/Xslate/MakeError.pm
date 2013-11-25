@@ -9,6 +9,8 @@ sub throw_error {
     die shift->make_error(@_);
 }
 
+sub log_prefix { ref($_[0]) }
+
 sub read_around { # for error messages
     my($file, $line, $around, $input_layer) = @_;
 
@@ -56,7 +58,7 @@ sub make_error {
     }
 
     local $Carp::CarpLevel = $Carp::CarpLevel + 1;
-    my $class = ref($self) || $self;
+    my $class = ref($self) ? $self->log_prefix() : $self;
     $message =~ s/\A \Q$class: \E//xms and $message .= "\t...";
 
     if(defined $file) {

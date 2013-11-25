@@ -359,6 +359,8 @@ sub store_cache {
     return $newest_mtime;
 }
 
+around log_prefix => sub { "Xslate" }; # Fool old tools
+
 package
     Text::Xslate::Loader::File::FileInfo;
 use Mouse;
