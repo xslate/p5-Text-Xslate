@@ -51,7 +51,7 @@ sub compile { shift->engine->compile(@_) }
 sub assemble { shift->assembler->assemble(@_) }
 sub load {
     require Carp;
-    Carp::confess("$_[0]->compile() not declared");
+    Carp::confess($_[0] . "->compile() not declared");
 }
 
 1;
