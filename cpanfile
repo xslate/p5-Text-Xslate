@@ -17,3 +17,9 @@ on test => sub {
     requires 'Test::More', '0.88';
     requires 'Test::Requires';
 };
+
+on 'develop' => sub {
+    requires 'IPC::Run';    # xt/100_eg_pl.t
+    requires 'Plack::Test'; # xt/101_eg_psgi.t
+};
+
