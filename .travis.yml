@@ -1,5 +1,5 @@
 language: perl
-before_script: cpanm --installdeps --with-develop --with-recommends --with-suggests .
+before_script: cpanm --quiet --installdeps --with-develop --with-recommends --with-suggests  --notest .
 perl:
   - "5.8"
   - "5.10"
