@@ -39,7 +39,24 @@
          }
       },
       "develop" : {
+         "recommends" : {
+            "Amon2::Lite" : "0",
+            "Catalyst::View::Xslate" : "0",
+            "Data::Localize" : "0",
+            "Data::Section::Simple" : "0",
+            "File::Which" : "0",
+            "HTML::FillInForm" : "0",
+            "HTML::FillInForm::Lite" : "0",
+            "HTML::Shakan" : "0",
+            "JavaScript::Value::Escape" : "0",
+            "Locale::Maketext::Lexicon" : "0",
+            "MojoX::Renderer::Xslate" : "0",
+            "Mojolicious" : "0",
+            "URI::Find" : "0"
+         },
          "requires" : {
+            "IPC::Run" : "0",
+            "Plack::Test" : "0",
             "Test::CPAN::Meta" : "0",
             "Test::MinimumVersion" : "0.10108",
             "Test::Pod" : "1.41",

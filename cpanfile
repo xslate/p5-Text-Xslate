@@ -21,5 +21,19 @@ on test => sub {
 on 'develop' => sub {
     requires 'IPC::Run';    # xt/100_eg_pl.t
     requires 'Plack::Test'; # xt/101_eg_psgi.t
+
+    recommends 'Data::Section::Simple';
+    recommends 'HTML::FillInForm';
+    recommends 'HTML::FillInForm::Lite';
+    recommends 'HTML::Shakan';
+    recommends 'URI::Find';
+    recommends 'Mojolicious';
+    recommends 'MojoX::Renderer::Xslate';
+    recommends 'JavaScript::Value::Escape';
+    recommends 'Locale::Maketext::Lexicon';
+    recommends 'Data::Localize';
+    recommends 'File::Which';
+    recommends 'Amon2::Lite';
+    recommends 'Catalyst::View::Xslate';
 };
 
