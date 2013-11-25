@@ -20,7 +20,9 @@ has pre_process_handler => (
 );
 
 sub extract_config_from_engine {
-    my ($class, $engine) = @_;
+    # XXX Test::Vars complains if we do ($class, $engine) and not use it
+    my (undef, $engine) = @_;
+    
     return (
         engine              => $engine,
         assembler           => $engine->_assembler,
