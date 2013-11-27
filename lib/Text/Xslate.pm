@@ -355,7 +355,6 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        require Mouse;
         Mouse::load_class($compiler);
 
         my $input_layer = $self->input_layer;

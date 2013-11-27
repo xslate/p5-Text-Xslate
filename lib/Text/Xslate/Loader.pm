@@ -22,7 +22,7 @@ has pre_process_handler => (
 sub extract_config_from_engine {
     # XXX Test::Vars complains if we do ($class, $engine) and not use it
     my (undef, $engine) = @_;
-    
+
     return (
         engine              => $engine,
         assembler           => $engine->_assembler,
@@ -49,9 +49,9 @@ sub configure {
 
 sub compile { shift->engine->compile(@_) }
 sub assemble { shift->assembler->assemble(@_) }
-sub load {
-    require Carp;
-    Carp::confess("$_[0]->compile() not declared");
+sub load { # must be override
+    my($self) = @_;
+    Carp::confess("$self->compile() not declared");
 }
 
 1;

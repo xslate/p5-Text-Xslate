@@ -37,8 +37,8 @@ around extract_config_from_engine => sub {
     my @config = $class->$next($engine);
     return (
         @config,
-        # XXX Cwd::abs_path would stat() the directory, so we need to
-        # to use File::Spec->rel2abs
+        # XXX Cwd::abs_path calls stat() for the directory and raises errors if not exists,
+        # so we have to use File::Spec->rel2abs instead
         cache_dir       => File::Spec->rel2abs($engine->{cache_dir}),
         cache_strategy  => $engine->{cache},
         include_dirs    => $engine->{path},
@@ -46,9 +46,10 @@ around extract_config_from_engine => sub {
     );
 };
 
-use Scope::Guard;
 my $INDENT_LEVEL = 0;
-sub indent_note { 
+sub indent_note { # for logging
+    require Scope::Guard;
+
     $INDENT_LEVEL++;
     return Scope::Guard->new(sub {
         $INDENT_LEVEL--
@@ -57,7 +58,7 @@ sub indent_note {
 sub note {
     my $self = shift;
     my $fmt = sprintf "%s%s\n", "  " x $INDENT_LEVEL, shift;
-    
+
     $self->engine->note($fmt, @_, "\n");
 }
 
@@ -66,7 +67,7 @@ sub load_cached_asm {
 
     # Okay, the source exists. Now consider the cache.
     #   $cache_strategy >= 2, use cache w/o checking for freshness
-    #   $cache_strategy == 1, use cache if cache is fresh 
+    #   $cache_strategy == 1, use cache if cache is fresh
     #   $cache_strategy == 0, ignore cache
 
     # $cached_ent is an object with mtime and asm
@@ -99,7 +100,7 @@ sub load_cached_asm {
 
         # $cache_strategy > 1 is wicked. It claims to only
         # consider the cache, and yet it still checks for
-        # the cache validity. 
+        # the cache validity.
         if (my $asm = $cached_ent->asm) {
             return $asm;
         }
@@ -110,10 +111,10 @@ sub load_cached_asm {
         return;
     }
 
-    # Otherwise check for freshness 
+    # Otherwise check for freshness
     if ($cached_ent->is_fresher_than($fi)) {
-        # Hooray, our cached version is newer than the 
-        # source file! cheers! jubilations! 
+        # Hooray, our cached version is newer than the
+        # source file! cheers! jubilations!
         if (DUMP_LOAD) {
             $self->note("Freshness check passed, returning asm");
         }
@@ -385,7 +386,7 @@ sub build_magic {
     return sprintf $self->magic_template, $fullpath;
 }
 
-package 
+package
     Text::Xslate::Loader::File::CachedEntity;
 use Mouse;
 
@@ -469,7 +470,7 @@ sub build_asm {
 
         # my($name, $arg, $line, $file, $symbol) = @{$c};
 
-        # XXX if this is a vpath, 
+        # XXX if this is a vpath,
         if($c->[0] eq 'depend') {
             my $dep_mtime = (stat $c->[1])[Text::Xslate::Constants::ST_MTIME()];
             if(!defined $dep_mtime) {
