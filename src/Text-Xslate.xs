@@ -11,6 +11,7 @@
 #define TXCODE_macro_begin TXCODE_noop
 #define TXCODE_macro_nargs TXCODE_noop
 #define TXCODE_macro_outer TXCODE_noop
+#define TXCODE_meta        TXCODE_noop
 #define TXCODE_set_opinfo  TXCODE_noop
 #define TXCODE_super       TXCODE_noop
 
@@ -88,7 +89,6 @@ typedef struct {
     /* original error handlers */
     SV* orig_warn_handler;
     SV* orig_die_handler;
-    SV* make_error;
 } my_cxt_t;
 START_MY_CXT
 
@@ -1146,7 +1146,7 @@ tx_load_template(pTHX_ SV* const self, SV* const name, bool const from_include) 
 
     if (dump_load) {
         PerlIO_printf(PerlIO_stderr(),
-            "#[XS] load_template(%"SVf")\n", name);
+            "#[XS] load_template(%"SVf", from_include = %s)\n", name, from_include ? "YES" : "NO");
     }
 
     if(!SvOK(name)) {
@@ -1271,8 +1271,6 @@ tx_my_cxt_init(pTHX_ pMY_CXT_ bool const cloning PERL_UNUSED_DECL) {
         (SV*)get_cv("Text::Xslate::Engine::_warn", GV_ADD));
     MY_CXT.die_handler   = SvREFCNT_inc_NN(
         (SV*)get_cv("Text::Xslate::Engine::_die",  GV_ADD));
-    MY_CXT.make_error    = SvREFCNT_inc_NN(
-        (SV*)get_cv("Text::Xslate::Engine::make_error",  GV_ADD));
 }
 
 /* Because overloading stuff of old xsubpp didn't work,
@@ -1326,7 +1324,274 @@ CODE:
 }
 
 void
-_assemble(HV* self, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
+render(SV* self, SV* source, SV* vars = &PL_sv_undef)
+ALIAS:
+    render        = 0
+    render_string = 1
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* st;
+
+    TAINT_NOT; /* All the SVs we'll create here are safe */
+
+    /* $_[0]: engine */
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Xslate: Invalid xslate instance: %s",
+            tx_neat(aTHX_ self));
+    }
+
+    /* $_[1]: template source */
+    if(ix == 1) { /* render_string() */
+        dXSTARG;
+        PUSHMARK(SP);
+        EXTEND(SP, 2);
+        PUSHs(self);
+        PUSHs(source);
+        PUTBACK;
+        call_method("load_string", G_VOID | G_DISCARD);
+        SPAGAIN;
+        source = TARG;
+        sv_setpvs(source, "<string>");
+    }
+
+    SvGETMAGIC(source);
+    if(!SvOK(source)) {
+        croak("Xslate: Template name is not given");
+    }
+
+    /* $_[2]: template variable */
+    if(!SvOK(vars)) {
+        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
+    }
+    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
+        croak("Xslate: Template variables must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
+    }
+    if(SvOBJECT(SvRV(vars))) {
+        Perl_warner(aTHX_ packWARN(WARN_MISC),
+            "Xslate: Template variables must be a HASH reference, not %s",
+            tx_neat(aTHX_ vars));
+    }
+
+    st = tx_load_template(aTHX_ self, source, FALSE);
+
+    /* local $SIG{__WARN__} = \&warn_handler */
+    if (PL_warnhook != MY_CXT.warn_handler) {
+        SAVEGENERICSV(PL_warnhook);
+        MY_CXT.orig_warn_handler = PL_warnhook;
+        PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
+    }
+
+    /* local $SIG{__DIE__}  = \&die_handler */
+    if (PL_diehook != MY_CXT.die_handler) {
+        SAVEGENERICSV(PL_diehook);
+        MY_CXT.orig_die_handler = PL_diehook;
+        PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
+    }
+
+    {
+        AV* mainframe = tx_push_frame(aTHX_ st); // frame[0]
+        SV* result = sv_newmortal();
+        sv_grow(result, st->hint_size + TX_HINT_SIZE);
+        SvPOK_on(result);
+
+        av_store(mainframe, TXframe_NAME,    SvREFCNT_inc_simple_NN(source));
+        av_store(mainframe, TXframe_RETADDR, newSVuv(st->code_len));
+        tx_execute(aTHX_ aMY_CXT_ st, result, (HV*)SvRV(vars));
+        ST(0) = result;
+    }
+}
+
+void
+validate(SV* self, SV* source)
+CODE:
+{
+    TAINT_NOT; /* All the SVs we'll create here are safe */
+
+    /* $_[0]: engine */
+    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
+        croak("Xslate: Invalid xslate instance: %s",
+            tx_neat(aTHX_ self));
+    }
+
+    SvGETMAGIC(source);
+    if(!SvOK(source)) {
+        croak("Xslate: Template name is not given");
+    }
+
+    tx_load_template(aTHX_ self, source, FALSE);
+}
+
+int
+current_depth(klass)
+CODE:
+{
+    dMY_CXT;
+    RETVAL = MY_CXT.depth;
+}
+OUTPUT:
+    RETVAL
+
+void
+current_engine(klass)
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* const st = MY_CXT.current_st;
+    SV* retval;
+
+    if(st) {
+        if(ix == 0) { /* current_engine */
+            retval = st->engine;
+        }
+        else if(ix == 1) { /* current_vars */
+            retval = sv_2mortal(newRV_inc((SV*)st->vars));
+        }
+        else { /* current_file / current_line */
+            const tx_info_t* const info
+                = &(st->info[ TX_PC2POS(st, st->pc) ]);
+
+            retval = (ix == 2)
+                ? info->file
+                : sv_2mortal(newSViv(info->line));
+        }
+    }
+    else {
+        retval = &PL_sv_undef;
+    }
+    ST(0) = retval;
+}
+ALIAS:
+    current_engine = 0
+    current_vars   = 1
+    current_file   = 2
+    current_line   = 3
+
+
+void
+print(klass, ...)
+CODE:
+{
+    dMY_CXT;
+    int i;
+    tx_state_t* const st = MY_CXT.current_st;
+    if(!st) {
+        croak("You cannot call print() method outside render()");
+    }
+
+    for(i = 1; i < items; i++) {
+        tx_print(aTHX_ st, ST(i));
+    }
+    XSRETURN_NO; /* return false as an empty string */
+}
+
+void
+_warn(SV* msg)
+ALIAS:
+    _warn = 0
+    _die  = 1
+CODE:
+{
+    dMY_CXT;
+    tx_state_t* const st = MY_CXT.current_st;
+    SV* engine;
+    AV* cframe;
+    SV* name;
+    SV* full_message;
+    SV** svp;
+    CV*  handler;
+    UV pc_pos;
+    SV* file;
+
+
+    /* restore error handlers to avoid recursion */
+    SAVESPTR(PL_warnhook);
+    SAVESPTR(PL_diehook);
+    PL_warnhook = MY_CXT.orig_warn_handler;
+    PL_diehook  = MY_CXT.orig_die_handler;
+    msg = sv_mortalcopy(msg);
+
+    if(!st) {
+        croak("%"SVf, msg);
+    }
+
+
+    engine = st->engine;
+    cframe = TX_current_framex(st);
+    name   = AvARRAY(cframe)[TXframe_NAME];
+
+    svp = (ix == 0)
+        ? hv_fetchs((HV*)SvRV(engine), "warn_handler", FALSE)
+        : hv_fetchs((HV*)SvRV(engine), "die_handler",  FALSE);
+
+    if(svp && SvOK(*svp)) {
+        HV* stash;
+        GV* gv;
+        handler = sv_2cv(*svp, &stash, &gv, 0);
+    }
+    else {
+        handler = NULL;
+    }
+
+    pc_pos = TX_PC2POS(st, st->pc);
+    file   = st->info[ pc_pos ].file;
+    if(strEQ(SvPV_nolen_const(file), "<string>")) {
+        svp = hv_fetchs((HV*)SvRV(engine), "string_buffer", FALSE);
+        if(svp) {
+            file = sv_2mortal(newRV_inc(*svp));
+        }
+    }
+    /* TODO: append the stack info to msg */
+    /* $full_message = engine->make_error(msg, file, line, vm_pos) */
+    PUSHMARK(SP);
+    EXTEND(SP, 6);
+    PUSHs(sv_mortalcopy(engine)); /* XXX: avoid premature free */
+    PUSHs(msg);
+    PUSHs(file);
+    mPUSHi(st->info[ pc_pos ].line);
+    if(tx_verbose(aTHX_ st) >= 3) {
+        if(!SvOK(name)) { // FIXME: something's wrong
+            name = newSVpvs_flags("(oops)", SVs_TEMP);
+        }
+        mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
+    }
+    PUTBACK;
+    call_method("make_error", G_SCALAR);
+    SPAGAIN;
+    full_message = POPs;
+    PUTBACK;
+
+    if(ix == 0) { /* warn */
+        /* handler can ignore warnings */
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+            /* handler can ignore errors */
+        }
+        else {
+            warn("%"SVf, full_message);
+        }
+    }
+    else {
+        if(handler) {
+            PUSHMARK(SP);
+            XPUSHs(full_message);
+            PUTBACK;
+            call_sv((SV*)handler, G_VOID | G_DISCARD);
+            /* handler cannot ignore errors */
+        }
+        croak("%"SVf, full_message); /* must die */
+        /* not reached */
+    }
+}
+
+MODULE = Text::Xslate    PACKAGE = Text::Xslate::Assembler
+
+void
+_assemble(SV* self, HV* engine, AV* proto, SV* name, SV* fullpath, SV* cachepath, SV* mtime)
 CODE:
 {
     dMY_CXT;
@@ -1344,11 +1609,13 @@ CODE:
     SV** svp;
     AV* macro = NULL;
 
+    PERL_UNUSED_VAR(self);
+
     TAINT_NOT; /* All the SVs we'll create here are safe */
 
     Zero(&st, 1, tx_state_t);
 
-    svp = hv_fetchs(self, "template", FALSE);
+    svp = hv_fetchs(engine, "template", FALSE);
     if(!(svp && SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV)) {
         croak("The xslate instance has no template table");
     }
@@ -1358,11 +1625,11 @@ CODE:
         croak("Undefined template name is invalid");
     }
 
-    /* fetch the template object from $self->{template}{$name} */
+    /* fetch the template object from $engine->{template}{$name} */
     tobj = hv_iterval(hv, hv_fetch_ent(hv, name, TRUE, 0U));
 
     tmpl = newAV();
-    /* store the template object to $self->{template}{$name} */
+    /* store the template object to $engine->{template}{$name} */
     sv_setsv(tobj, sv_2mortal(newRV_noinc((SV*)tmpl)));
     av_extend(tmpl, TXo_least_size - 1);
 
@@ -1371,18 +1638,18 @@ CODE:
     sv_setsv(*av_fetch(tmpl, TXo_FULLPATH,  TRUE),  fullpath);
 
     /* prepare function table */
-    svp = hv_fetchs(self, "function", FALSE);
+    svp = hv_fetchs(engine, "function", FALSE);
     TAINT_NOT;
 
     if(!( SvROK(*svp) && SvTYPE(SvRV(*svp)) == SVt_PVHV )) {
         croak("Function table must be a HASH reference");
     }
-    /* $self->{function} must be copied
+    /* $engine->{function} must be copied
        because it might be changed per templates */
     st.symbol = newHVhv( (HV*)SvRV(*svp) );
 
     st.tmpl   = tmpl;
-    st.engine = newRV_inc((SV*)self);
+    st.engine = newRV_inc((SV*)engine);
     sv_rvweaken(st.engine);
 
     st.hint_size = TX_HINT_SIZE;
@@ -1528,259 +1795,6 @@ CODE:
     } /* end for each code */
 }
 
-void
-render(SV* self, SV* source, SV* vars = &PL_sv_undef)
-ALIAS:
-    render        = 0
-    render_string = 1
-CODE:
-{
-    dMY_CXT;
-    tx_state_t* st;
-
-    TAINT_NOT; /* All the SVs we'll create here are safe */
-
-    /* $_[0]: engine */
-    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Xslate: Invalid xslate instance: %s",
-            tx_neat(aTHX_ self));
-    }
-
-    /* $_[1]: template source */
-    if(ix == 1) { /* render_string() */
-        dXSTARG;
-        PUSHMARK(SP);
-        EXTEND(SP, 2);
-        PUSHs(self);
-        PUSHs(source);
-        PUTBACK;
-        call_method("load_string", G_VOID | G_DISCARD);
-        SPAGAIN;
-        source = TARG;
-        sv_setpvs(source, "<string>");
-    }
-
-    SvGETMAGIC(source);
-    if(!SvOK(source)) {
-        croak("Xslate: Template name is not given");
-    }
-
-    /* $_[2]: template variable */
-    if(!SvOK(vars)) {
-        vars = sv_2mortal(newRV_noinc((SV*)newHV()));
-    }
-    else if(!(SvROK(vars) && SvTYPE(SvRV(vars)) == SVt_PVHV)) {
-        croak("Xslate: Template variables must be a HASH reference, not %s",
-            tx_neat(aTHX_ vars));
-    }
-    if(SvOBJECT(SvRV(vars))) {
-        Perl_warner(aTHX_ packWARN(WARN_MISC),
-            "Xslate: Template variables must be a HASH reference, not %s",
-            tx_neat(aTHX_ vars));
-    }
-
-    st = tx_load_template(aTHX_ self, source, FALSE);
-
-    /* local $SIG{__WARN__} = \&warn_handler */
-    if (PL_warnhook != MY_CXT.warn_handler) {
-        SAVEGENERICSV(PL_warnhook);
-        MY_CXT.orig_warn_handler = PL_warnhook;
-        PL_warnhook              = SvREFCNT_inc_NN(MY_CXT.warn_handler);
-    }
-
-    /* local $SIG{__DIE__}  = \&die_handler */
-    if (PL_diehook != MY_CXT.die_handler) {
-        SAVEGENERICSV(PL_diehook);
-        MY_CXT.orig_die_handler = PL_diehook;
-        PL_diehook              = SvREFCNT_inc_NN(MY_CXT.die_handler);
-    }
-
-    {
-        AV* mainframe = tx_push_frame(aTHX_ st); // frame[0]
-        SV* result = sv_newmortal();
-        sv_grow(result, st->hint_size + TX_HINT_SIZE);
-        SvPOK_on(result);
-
-        av_store(mainframe, TXframe_NAME,    SvREFCNT_inc_simple_NN(source));
-        av_store(mainframe, TXframe_RETADDR, newSVuv(st->code_len));
-        tx_execute(aTHX_ aMY_CXT_ st, result, (HV*)SvRV(vars));
-        ST(0) = result;
-    }
-}
-
-void
-validate(SV* self, SV* source)
-CODE:
-{
-    TAINT_NOT; /* All the SVs we'll create here are safe */
-
-    /* $_[0]: engine */
-    if(!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)) {
-        croak("Xslate: Invalid xslate instance: %s",
-            tx_neat(aTHX_ self));
-    }
-
-    SvGETMAGIC(source);
-    if(!SvOK(source)) {
-        croak("Xslate: Template name is not given");
-    }
-
-    tx_load_template(aTHX_ self, source, FALSE);
-}
-
-void
-current_engine(klass)
-CODE:
-{
-    dMY_CXT;
-    tx_state_t* const st = MY_CXT.current_st;
-    SV* retval;
-    if(st) {
-        if(ix == 0) { /* current_engine */
-            retval = st->engine;
-        }
-        else if(ix == 1) { /* current_vars */
-            retval = sv_2mortal(newRV_inc((SV*)st->vars));
-        }
-        else { /* current_file / current_line */
-            const tx_info_t* const info
-                = &(st->info[ TX_PC2POS(st, st->pc) ]);
-
-            retval = (ix == 2)
-                ? info->file
-                : sv_2mortal(newSViv(info->line));
-        }
-    }
-    else {
-        retval = &PL_sv_undef;
-    }
-    ST(0) = retval;
-}
-ALIAS:
-    current_engine = 0
-    current_vars   = 1
-    current_file   = 2
-    current_line   = 3
-
-void
-print(klass, ...)
-CODE:
-{
-    dMY_CXT;
-    int i;
-    tx_state_t* const st = MY_CXT.current_st;
-    if(!st) {
-        croak("You cannot call print() method outside render()");
-    }
-
-    for(i = 1; i < items; i++) {
-        tx_print(aTHX_ st, ST(i));
-    }
-    XSRETURN_NO; /* return false as an empty string */
-}
-
-void
-_warn(SV* msg)
-ALIAS:
-    _warn = 0
-    _die  = 1
-CODE:
-{
-    dMY_CXT;
-    tx_state_t* const st = MY_CXT.current_st;
-    SV* engine;
-    AV* cframe;
-    SV* name;
-    SV* full_message;
-    SV** svp;
-    CV*  handler;
-    UV pc_pos;
-    SV* file;
-
-
-    /* restore error handlers to avoid recursion */
-    SAVESPTR(PL_warnhook);
-    SAVESPTR(PL_diehook);
-    PL_warnhook = MY_CXT.orig_warn_handler;
-    PL_diehook  = MY_CXT.orig_die_handler;
-    msg = sv_mortalcopy(msg);
-
-    if(!st) {
-        croak("%"SVf, msg);
-    }
-
-
-    engine = st->engine;
-    cframe = TX_current_framex(st);
-    name   = AvARRAY(cframe)[TXframe_NAME];
-
-    svp = (ix == 0)
-        ? hv_fetchs((HV*)SvRV(engine), "warn_handler", FALSE)
-        : hv_fetchs((HV*)SvRV(engine), "die_handler",  FALSE);
-
-    if(svp && SvOK(*svp)) {
-        HV* stash;
-        GV* gv;
-        handler = sv_2cv(*svp, &stash, &gv, 0);
-    }
-    else {
-        handler = NULL;
-    }
-
-    pc_pos = TX_PC2POS(st, st->pc);
-    file   = st->info[ pc_pos ].file;
-    if(strEQ(SvPV_nolen_const(file), "<string>")) {
-        svp = hv_fetchs((HV*)SvRV(engine), "string_buffer", FALSE);
-        if(svp) {
-            file = sv_2mortal(newRV_inc(*svp));
-        }
-    }
-    /* TODO: append the stack info to msg */
-    /* $full_message = make_error(engine, msg, file, line, vm_pos) */
-    PUSHMARK(SP);
-    EXTEND(SP, 6);
-    PUSHs(sv_mortalcopy(engine)); /* XXX: avoid premature free */
-    PUSHs(msg);
-    PUSHs(file);
-    mPUSHi(st->info[ pc_pos ].line);
-    if(tx_verbose(aTHX_ st) >= 3) {
-        if(!SvOK(name)) { // FIXME: something's wrong
-            name = newSVpvs_flags("(oops)", SVs_TEMP);
-        }
-        mPUSHs(newSVpvf("&%"SVf"[%"UVuf"]", name, pc_pos));
-    }
-    PUTBACK;
-    call_sv(MY_CXT.make_error, G_SCALAR);
-    SPAGAIN;
-    full_message = POPs;
-    PUTBACK;
-
-    if(ix == 0) { /* warn */
-        /* handler can ignore warnings */
-        if(handler) {
-            PUSHMARK(SP);
-            XPUSHs(full_message);
-            PUTBACK;
-            call_sv((SV*)handler, G_VOID | G_DISCARD);
-            /* handler can ignore errors */
-        }
-        else {
-            warn("%"SVf, full_message);
-        }
-    }
-    else {
-        if(handler) {
-            PUSHMARK(SP);
-            XPUSHs(full_message);
-            PUTBACK;
-            call_sv((SV*)handler, G_VOID | G_DISCARD);
-            /* handler cannot ignore errors */
-        }
-        croak("%"SVf, full_message); /* must die */
-        /* not reached */
-    }
-}
-
 MODULE = Text::Xslate    PACKAGE = Text::Xslate::Util
 
 void
@@ -1907,7 +1921,7 @@ BOOT:
         code_ref);
 
     // debug flag
-    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( "Text::Xslate::Engine::_DUMP_LOAD", GV_ADD)));
+    code_ref = sv_2mortal(newRV_inc((SV*)get_cv( "Text::Xslate::Constants::DUMP_LOAD", GV_ADD)));
     {
         dSP;
         PUSHMARK(SP);

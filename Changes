@@ -1,5 +1,29 @@
 Revision history for Perl extension Text::Xslate
 
+{{$NEXT}}
+    [CHANGES]
+    - Portions of Text::Xslate guts have been ripped out of Xslate.pm and
+      have been moved to Text::Xslate::Loader and Text::Xslate::Loader::File.
+      By providing your own Loader class, you will be able to load templates
+      from a database, and cache them in Memcached, for example.
+      See example/loader.pl for an exampl using SQLite + Memcached (lestrrat)
+    - Some parts were moved into Text::Xslate::Assembler (lestrrat)
+    - File-based caches are now stored in directory names containing the
+      byte code version (lestrrat)
+    - Bump up the byte code version. The new byte code now has a "meta"
+      opcode that can contain arbitrary information on the generated
+      bytecode, such as "utf8" flag (which previously was part of the
+      cached byte code /file/, but not part of the bytecode) (lestrrat)
+    - Error generation has been refactored into a role (lestrrat)
+    - The default cache directory, previously located under 
+        $ENV{HOME}/.xslate_cache
+      has been moved to 
+        "$ENV{TEMPDIR}/xslate_cache/$>"
+      If $ENV{TEMPDIR} is empty, File::Spec->tmpdir is used.
+    - Pure-Perl version of Text::Xslate have been ripped out, and is no
+      longer supported (tokuhirom)
+    - The distribution is now based on Minilla (tokuhirom)
+
 3.1.0 2013-11-16 16:46:35+0900
     [BUG FIXES]
     - Close #95; $/ affected the parse() method

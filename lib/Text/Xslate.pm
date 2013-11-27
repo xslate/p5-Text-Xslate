@@ -4,18 +4,20 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '3.1.0';
-
 use Carp              ();
 use File::Spec        ();
-use Exporter          ();
 use Data::MessagePack ();
 use Scalar::Util      ();
 
-use Text::Xslate::Util ();
+our ($VERSION, @ISA, @EXPORT_OK);
+
+use Text::Xslate::Constants();
+use XSLoader;
 BEGIN {
+    $VERSION = '3.1.0';
+
     # all the exportable functions are defined in ::Util
-    our @EXPORT_OK = qw(
+    @EXPORT_OK = qw(
         mark_raw
         unmark_raw
         escaped_string
@@ -23,65 +25,30 @@ BEGIN {
         uri_escape
         html_builder
     );
-    Text::Xslate::Util->import(@EXPORT_OK);
+
+    XSLoader::load(__PACKAGE__, $VERSION);
+
+    @ISA = qw(Text::Xslate::Engine);
 }
+use Text::Xslate::Util @EXPORT_OK;
 
-our @ISA = qw(Text::Xslate::Engine);
-
-my $BYTECODE_VERSION = '1.6';
-
-# $bytecode_version + $fullpath + $compiler_and_parser_options
-my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
-
-# load backend (XS or PP)
-my $use_xs = 0;
-if(!exists $INC{'Text/Xslate/PP.pm'}) {
-    my $pp = ($Text::Xslate::Util::DEBUG =~ /\b pp \b/xms or $ENV{PERL_ONLY});
-    if(!$pp) {
-        eval {
-            require XSLoader;
-            XSLoader::load(__PACKAGE__, $VERSION);
-            $use_xs = 1;
-        };
-        die $@ if $@ && $Text::Xslate::Util::DEBUG =~ /\b xs \b/xms; # force XS
-    }
-    if(!__PACKAGE__->can('render')) {
-        require 'Text/Xslate/PP.pm';
-    }
-}
-sub USE_XS() { $use_xs }
+sub USE_XS { 1 } # deprecated.
 
 # for error messages (see T::X::Util)
 sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
-package Text::Xslate::Engine; # XS/PP common base class
-
+package Text::Xslate::Engine; # base class
+use Mouse;
+use File::Spec;
+use Text::Xslate::Constants qw(DUMP_LOAD DEFAULT_CACHE_DIR);
+use Text::Xslate::Assembler;
 use Text::Xslate::Util qw(
-    make_error
     dump
 );
 
-# constants
-BEGIN {
-    our @ISA = qw(Exporter);
+extends 'Exporter';
 
-    my $dump_load = scalar($Text::Xslate::Util::DEBUG =~ /\b dump=load \b/xms);
-    *_DUMP_LOAD = sub(){ $dump_load };
-
-    my $save_src = scalar($Text::Xslate::Util::DEBUG =~ /\b save_src \b/xms);
-    *_SAVE_SRC  = sub() { $save_src };
-
-    *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
-
-    my $cache_dir = '.xslate_cache';
-    foreach my $d($ENV{HOME}, File::Spec->tmpdir) {
-        if(defined($d) and -d $d and -w _) {
-            $cache_dir = File::Spec->catfile($d, '.xslate_cache');
-            last;
-        }
-    }
-    *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
-}
+with 'Text::Xslate::MakeError';
 
 # the real defaults are defined in the parser
 my %parser_option = (
@@ -116,6 +83,8 @@ my %builtin = (
     uri          => 'uri_escape',
 );
 
+sub bytecode_version { 2 };
+
 sub default_functions { +{} } # overridable
 
 sub parser_option { # overridable
@@ -132,6 +101,28 @@ sub replace_option_value_for_magic_token { # overridable
     return $_[2];
 }
 
+has magic_template => (
+    is => 'ro',
+    lazy => 1,
+    builder => 'build_magic_template',
+);
+
+sub build_magic_template {
+    my $self = shift;
+    # You need to add some instance specific magic
+    my @options = (
+        ref($self->{compiler}) || $self->{compiler},
+        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
+        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
+        $self->input_layer,
+        [sort keys %{ $self->{function} }],
+    );
+    # $bytecode_version + $fullpath + $compiler_and_parser_options
+    return sprintf qq{xslate;%s;%%s;%s;},
+        $self->bytecode_version(),
+        Data::MessagePack->pack([@options])
+}
+
 sub options { # overridable
     my($self) = @_;
     return {
@@ -140,11 +131,13 @@ sub options { # overridable
         path         => ['.'],
         input_layer  => $self->input_layer,
         cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
-        cache_dir    => _DEFAULT_CACHE_DIR,
+        cache_dir    => DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
         html_builder_module => undef,
         compiler     => 'Text::Xslate::Compiler',
+        loader       => 'Text::Xslate::Loader::File',
+        assembler    => 'Text::Xslate::Assembler',
 
         verbose      => 1,
         warn_handler => undef,
@@ -222,6 +215,7 @@ sub new {
 
     $self->_resolve_function_aliases(\%funcs);
 
+    $self->_setup_components();
     return $self;
 }
 
@@ -239,7 +233,7 @@ sub _resolve_function_aliases {
     foreach my $f(values %{$funcs}) {
         my %seen; # to avoid infinite loops
         while(!( ref($f) or Scalar::Util::looks_like_number($f) )) {
-            my $v = $funcs->{$f} or $self->_error(
+            my $v = $funcs->{$f} or $self->throw_error(
                "Cannot resolve a function alias '$f',"
                . " which refers nothing",
             );
@@ -249,7 +243,7 @@ sub _resolve_function_aliases {
                 last;
             }
             else {
-                $seen{$v}++ and $self->_error(
+                $seen{$v}++ and $self->throw_error(
                     "Cannot resolve a function alias '$f',"
                     . " which makes circular references",
                 );
@@ -263,317 +257,47 @@ sub _resolve_function_aliases {
 sub load_string { # called in render_string()
     my($self, $string) = @_;
     if(not defined $string) {
-        $self->_error("LoadError: Template string is not given");
+        $self->throw_error("LoadError: Template string is not given");
     }
     $self->note('  _load_string: %s', join '\n', split /\n/, $string)
-        if _DUMP_LOAD;
-    $self->{source}{'<string>'} = $string if _SAVE_SRC;
+        if DUMP_LOAD;
     $self->{string_buffer} = $string;
     my $asm = $self->compile($string);
-    $self->_assemble($asm, '<string>', \$string, undef, undef);
+    $self->_assembler->assemble($asm, '<string>', \$string, undef, undef);
     return $asm;
 }
 
-my $updir = File::Spec->updir;
 sub find_file {
-    my($self, $file) = @_;
-
-    if($file =~ /\Q$updir\E/xmso) {
-        $self->_error("LoadError: Forbidden component (updir: '$updir') found in file name '$file'");
-    }
-
-    my $fullpath;
-    my $cachepath;
-    my $orig_mtime;
-    my $cache_mtime;
-    foreach my $p(@{$self->{path}}) {
-        $self->note("  find_file: %s in  %s ...\n", $file, $p) if _DUMP_LOAD;
-
-        my $cache_prefix;
-        if(ref $p eq 'HASH') { # virtual path
-            defined(my $content = $p->{$file}) or next;
-            $fullpath = \$content;
-
-            # NOTE:
-            # Because contents of virtual paths include their digest,
-            # time-dependent cache verifier makes no sense.
-            $orig_mtime   = 0;
-            $cache_mtime  = 0;
-            $cache_prefix = 'HASH';
-        }
-        else {
-            $fullpath = File::Spec->catfile($p, $file);
-            defined($orig_mtime = (stat($fullpath))[_ST_MTIME])
-                or next;
-            $cache_prefix = Text::Xslate::uri_escape($p);
-            if (length $cache_prefix > 127) {
-                # some filesystems refuse a path part with length > 127
-                $cache_prefix = $self->_digest($cache_prefix);
-            }
-        }
-
-        # $file is found
-        $cachepath = File::Spec->catfile(
-            $self->{cache_dir},
-            $cache_prefix,
-            $file . 'c',
-        );
-        # stat() will be failed if the cache doesn't exist
-        $cache_mtime = (stat($cachepath))[_ST_MTIME];
-        last;
-    }
-
-    if(not defined $orig_mtime) {
-        $self->_error("LoadError: Cannot find '$file' (path: @{$self->{path}})");
-    }
-
-    $self->note("  find_file: %s (mtime=%d)\n",
-        $fullpath, $cache_mtime || 0) if _DUMP_LOAD;
-
-    return {
-        name        => ref($fullpath) ? $file : $fullpath,
-        fullpath    => $fullpath,
-        cachepath   => $cachepath,
-
-        orig_mtime  => $orig_mtime,
-        cache_mtime => $cache_mtime,
-    };
+    my ($self, $file) = @_;
+    $self->_loader->locate_file($file);
 }
 
-
+# XXX To be deprecated ?
+# The interface is too specific for file-based templates
 sub load_file {
     my($self, $file, $mtime, $omit_augment) = @_;
-
     local $self->{omit_augment} = $omit_augment;
-
-    $self->note("%s->load_file(%s)\n", $self, $file) if _DUMP_LOAD;
-
-    if($file eq '<string>') { # simply reload it
-        return $self->load_string($self->{string_buffer});
-    }
-
-    my $fi = $self->find_file($file);
-
-    my $asm = $self->_load_compiled($fi, $mtime) || $self->_load_source($fi, $mtime);
-
-    # $cache_mtime is undef : uses caches without any checks
-    # $cache_mtime > 0      : uses caches with mtime checks
-    # $cache_mtime == 0     : doesn't use caches
-    my $cache_mtime;
-    if($self->{cache} < 2) {
-        $cache_mtime = $fi->{cache_mtime} || 0;
-    }
-
-    $self->_assemble($asm, $file, $fi->{fullpath}, $fi->{cachepath}, $cache_mtime);
+    my $loader = $self->_loader;
+    my $asm = $loader->load($file, $mtime);
     return $asm;
 }
 
 sub slurp_template {
     my($self, $input_layer, $fullpath) = @_;
 
+    if (DUMP_LOAD) {
+$self->note("slurp_template: input_layer(%s), fullpath(%s)\n",
+$input_layer, $fullpath);
+    }
+
     if (ref $fullpath eq 'SCALAR') {
         return $$fullpath;
     } else {
         open my($source), '<' . $input_layer, $fullpath
-            or $self->_error("LoadError: Cannot open $fullpath for reading: $!");
+            or $self->throw_error("LoadError: Cannot open $fullpath for reading: $!");
         local $/;
         return scalar <$source>;
     }
-}
-
-sub _load_source {
-    my($self, $fi) = @_;
-    my $fullpath  = $fi->{fullpath};
-    my $cachepath = $fi->{cachepath};
-
-    $self->note("  _load_source: try %s ...\n", $fullpath) if _DUMP_LOAD;
-
-    # This routine is called when the cache is no longer valid (or not created yet)
-    # so it should be ensured that the cache, if exists, does not exist
-    if(-e $cachepath) {
-        unlink $cachepath
-            or Carp::carp("Xslate: cannot unlink $cachepath (ignored): $!");
-    }
-
-    my $source = $self->slurp_template($self->input_layer, $fullpath);
-    $source = $self->{pre_process_handler}->($source) if $self->{pre_process_handler};
-    $self->{source}{$fi->{name}} = $source if _SAVE_SRC;
-
-    my $asm = $self->compile($source,
-        file => $fullpath,
-        name => $fi->{name},
-    );
-
-    if($self->{cache} >= 1) {
-        my($volume, $dir) = File::Spec->splitpath($fi->{cachepath});
-        my $cachedir      = File::Spec->catpath($volume, $dir, '');
-        if(not -e $cachedir) {
-            require File::Path;
-            eval { File::Path::mkpath($cachedir) }
-                or Carp::croak("Xslate: Cannot prepare cache directory $cachepath (ignored): $@");
-        }
-
-        my $tmpfile = sprintf('%s.%d.d', $cachepath, $$, $self);
-
-        if (open my($out), ">:raw", $tmpfile) {
-            my $mtime = $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));
-
-            if(!close $out) {
-                 Carp::carp("Xslate: Cannot close $cachepath (ignored): $!");
-                 unlink $tmpfile;
-            }
-            elsif (rename($tmpfile => $cachepath)) {
-                # set the newest mtime of all the related files to cache mtime
-                if (not ref $fullpath) {
-                    my $main_mtime = (stat $fullpath)[_ST_MTIME];
-                    if (defined($main_mtime) && $main_mtime > $mtime) {
-                        $mtime = $main_mtime;
-                    }
-                    utime $mtime, $mtime, $cachepath;
-                    $fi->{cache_mtime} = $mtime;
-                }
-                else {
-                    $fi->{cache_mtime} = (stat $cachepath)[_ST_MTIME];
-                }
-            }
-            else {
-                Carp::carp("Xslate: Cannot rename cache file $cachepath (ignored): $!");
-                unlink $tmpfile;
-            }
-        }
-        else {
-            Carp::carp("Xslate: Cannot open $cachepath for writing (ignored): $!");
-        }
-    }
-    if(_DUMP_LOAD) {
-        $self->note("  _load_source: cache(mtime=%s)\n",
-            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef');
-    }
-
-    return $asm;
-}
-
-# load compiled templates if they are fresh enough
-sub _load_compiled {
-    my($self, $fi, $threshold) = @_;
-
-    if($self->{cache} >= 2) {
-        # threshold is the most latest modified time of all the related caches,
-        # so if the cache level >= 2, they seems always fresh.
-        $threshold = 9**9**9; # force to purge the cache
-    }
-    else {
-        $threshold ||= $fi->{cache_mtime};
-    }
-    # see also tx_load_template() in xs/Text-Xslate.xs
-    if(!( defined($fi->{cache_mtime}) and $self->{cache} >= 1
-            and $threshold >= $fi->{orig_mtime} )) {
-        $self->note( "  _load_compiled: no fresh cache: %s, %s",
-            $threshold || 0, Text::Xslate::Util::p($fi) ) if _DUMP_LOAD;
-        $fi->{cache_mtime} = undef;
-        return undef;
-    }
-
-    my $cachepath = $fi->{cachepath};
-    open my($in), '<:raw', $cachepath
-        or $self->_error("LoadError: Cannot open $cachepath for reading: $!");
-
-    my $magic = $self->_magic_token($fi->{fullpath});
-    my $data;
-    read $in, $data, length($magic);
-    if($data ne $magic) {
-        return undef;
-    }
-    else {
-        local $/;
-        $data = <$in>;
-        close $in;
-    }
-    my $unpacker = Data::MessagePack::Unpacker->new();
-    my $offset  = $unpacker->execute($data);
-    my $is_utf8 = $unpacker->data();
-    $unpacker->reset();
-
-    $unpacker->utf8($is_utf8);
-
-    my @asm;
-    if($is_utf8) { # TODO: move to XS?
-        my $seed = "";
-        utf8::upgrade($seed);
-        push @asm, ['print_raw_s', $seed, __LINE__, __FILE__];
-    }
-    while($offset < length($data)) {
-        $offset = $unpacker->execute($data, $offset);
-        my $c = $unpacker->data();
-        $unpacker->reset();
-
-        # my($name, $arg, $line, $file, $symbol) = @{$c};
-        if($c->[0] eq 'depend') {
-            my $dep_mtime = (stat $c->[1])[_ST_MTIME];
-            if(!defined $dep_mtime) {
-                Carp::carp("Xslate: Failed to stat $c->[1] (ignored): $!");
-                return undef; # purge the cache
-            }
-            if($dep_mtime > $threshold){
-                $self->note("  _load_compiled: %s(%s) is newer than %s(%s)\n",
-                    $c->[1],    scalar localtime($dep_mtime),
-                    $cachepath, scalar localtime($threshold) )
-                        if _DUMP_LOAD;
-                return undef; # purge the cache
-            }
-        }
-        elsif($c->[0] eq 'literal') {
-            # force upgrade to avoid UTF-8 key issues
-            utf8::upgrade($c->[1]) if($is_utf8);
-        }
-        push @asm, $c;
-    }
-
-    if(_DUMP_LOAD) {
-        $self->note("  _load_compiled: cache(mtime=%s)\n",
-            defined $fi->{cache_mtime} ? $fi->{cache_mtime} : 'undef');
-    }
-
-    return \@asm;
-}
-
-sub _save_compiled {
-    my($self, $out, $asm, $fullpath, $is_utf8) = @_;
-    my $mp = Data::MessagePack->new();
-    local $\;
-    print $out $self->_magic_token($fullpath);
-    print $out $mp->pack($is_utf8 ? 1 : 0);
-
-    my $newest_mtime = 0;
-    foreach my $c(@{$asm}) {
-        print $out $mp->pack($c);
-
-        if ($c->[0] eq 'depend') {
-            my $dep_mtime = (stat $c->[1])[_ST_MTIME];
-            if ($newest_mtime < $dep_mtime) {
-                $newest_mtime = $dep_mtime;
-            }
-        }
-    }
-    return $newest_mtime;
-}
-
-sub _magic_token {
-    my($self, $fullpath) = @_;
-
-    $self->{serial_opt} ||= Data::MessagePack->pack([
-        ref($self->{compiler}) || $self->{compiler},
-        $self->_filter_options_for_magic_token($self->_extract_options($self->parser_option)),
-        $self->_filter_options_for_magic_token($self->_extract_options($self->compiler_option)),
-        $self->input_layer,
-        [sort keys %{ $self->{function} }],
-    ]);
-
-    if(ref $fullpath) { # ref to content string
-        $fullpath = join ':', ref($fullpath),
-            $self->_digest(${$fullpath});
-    }
-    return sprintf $XSLATE_MAGIC, $fullpath, $self->{serial_opt};
 }
 
 sub _digest {
@@ -607,14 +331,30 @@ sub _filter_options_for_magic_token {
     @filterd_options;
 }
 
+sub _setup_components {
+    my $self = shift;
 
+    # MUST BE IN THIS ORDER, b.c. loader uses assembler
+    foreach my $name (qw(assembler loader)) {
+        my $component = $self->{$name};
+        if (ref $component) {
+            $component->configure($self);
+        } else {
+            require Mouse;
+            Mouse::load_class($component);
+            $component = $component->build($self);
+        }
+        $self->{$name} = $component;
+    }
+}
 
+sub _loader { $_[0]->{loader} }
+sub _assembler { $_[0]->{assembler} }
 sub _compiler {
     my($self) = @_;
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        require Mouse;
         Mouse::load_class($compiler);
 
         my $input_layer = $self->input_layer;
@@ -642,8 +382,10 @@ sub compile {
         omit_augment => $self->{omit_augment});
 }
 
-sub _error {
-    die make_error(@_);
+sub _magic_token_arguments {
+    my $self = shift;
+    return (
+    );
 }
 
 sub note {
@@ -1173,8 +915,7 @@ C<< $var == nil >> returns true if and only if I<$var> is nil.
 
 Perl 5.8.1 or later.
 
-If you have a C compiler, the XS backend will be used. Otherwise the pure Perl
-backend will be used.
+C compiler
 
 =head1 TODO
 

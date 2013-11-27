@@ -305,7 +305,7 @@ sub std_switch {
 sub std_case {
     my($parser, $symbol) = @_;
     if(!$parser->in_given) {
-        $parser->_error("You cannot use $symbol statements outside switch statements");
+        $parser->throw_error("You cannot use $symbol statements outside switch statements");
     }
     my $case = $symbol->clone(arity => "case");
 
@@ -475,7 +475,7 @@ sub std_macro {
 
     my $name = $parser->token;
     if($name->arity ne "variable") {
-        $parser->_error("a name", $name);
+        $parser->throw_error("a name", $name);
     }
 
     $parser->define_function($name->id);

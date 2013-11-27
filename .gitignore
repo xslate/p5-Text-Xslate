@@ -31,3 +31,12 @@ cover_db*
 *.cache
 xslate_ops.h
 lib/Text/Xslate/PP/Const.pm
+/Text-Xslate-*
+/.build
+/_build_params
+/Build
+/Build.bat
+!Build/
+!META.json
+!LICENSE
+/lib/Text/Xslate.xs

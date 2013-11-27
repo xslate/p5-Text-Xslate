@@ -747,6 +747,7 @@ TXC_w_sviv(macro_nargs);
 TXC_w_sviv(macro_outer);
 TXC(set_opinfo);
 TXC(super);
+TXC_w_sv(meta);
 
 /* "end" must be here (the last opcode) */
 TXC(end) {

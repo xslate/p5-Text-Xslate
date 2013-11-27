@@ -8,15 +8,16 @@ use constant LDIR => '.test_deps';
 BEGIN{ rmtree(LDIR) }
 END  { rmtree(LDIR) }
 
-my @opts = qw(-q --reinstall);
+my @opts = qw(-v --reinstall);
 if(!scalar grep { $_ eq '--install' } @ARGV) {
     push @opts, '-l', LDIR;
 }
 my $cpanm = which('cpanm') or plan skip_all => 'no cpanm';
 
 my @modules = qw(
-    Text::Xslate::Bridge::TT2Like
+    Test::Pod::Coverage
     Catalyst::View::Xslate
+    Text::Xslate::Bridge::TT2Like
 );
 
 foreach my $mod(@modules) {

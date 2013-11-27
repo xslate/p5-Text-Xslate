@@ -2,10 +2,10 @@
 use strict;
 use Test::More;
 
+use Text::Xslate::MakeError;
 use Text::Xslate::Util qw(
     literal_to_value
     value_to_literal
-    read_around
     html_builder
     uri_escape
     html_escape
@@ -74,12 +74,12 @@ is value_to_literal('01'), q{"01"};
 
 # other utils
 
-is read_around(__FILE__, 1), <<'X', 'read_around';
+is(Text::Xslate::MakeError::read_around(__FILE__, 1), <<'X', 'Text::Xslate::MakeError::read_around');
 #!perl -w
 use strict;
 X
 
-is read_around(__FILE__, 1, 2), <<'X', 'read_around';
+is(Text::Xslate::MakeError::read_around(__FILE__, 1, 2), <<'X', 'Text::Xslate::MakeError::read_around');
 #!perl -w
 use strict;
 use Test::More;
@@ -88,16 +88,16 @@ X
 #foo
 #bar
 #baz
-is read_around(__FILE__, __LINE__ - 2), <<'X', 'read_around';
+is(Text::Xslate::MakeError::read_around(__FILE__, __LINE__ - 2), <<'X', 'Text::Xslate::MakeError::read_around');
 #foo
 #bar
 #baz
 X
 
-is read_around(__FILE__ . "__unlikely__", 1), <<'X', 'read_around';
+is(Text::Xslate::MakeError::read_around(__FILE__ . "__unlikely__", 1), <<'X', 'Text::Xslate::MakeError::read_around');
 X
 
-is read_around(undef, undef), <<'X', 'read_around';
+is(Text::Xslate::MakeError::read_around(undef, undef), <<'X', 'Text::Xslate::MakeError::read_around');
 X
 
 # html escaping

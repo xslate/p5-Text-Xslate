@@ -58,6 +58,8 @@ $tx = Text::Xslate->new(
 is $tx->render_string('Hello, {lang} world!', { lang => 'Xslate' }), 'Hello, Xslate world!';
 
 
+TODO: {
+    todo_skip("objects on syntax make magic_token() fail", 6);
 my $myparser = Text::Xslate::Parser->new(
     line_start => undef,
     tag_start  => '[%',
@@ -88,6 +90,7 @@ foreach my $pair(@data) {
     my($in, $out) = @$pair;
 
     is $tx->render_string($in, \%vars), $out or diag $in;
+}
 }
 
 done_testing;

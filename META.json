@@ -1,0 +1,105 @@
+{
+   "abstract" : "Scalable template engine for Perl5",
+   "author" : [
+      "Fuji, Goro (gfx) <gfuji@cpan.org>."
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v0.9.0, CPAN::Meta::Converter version 2.132830",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "Text-Xslate",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author",
+         "builder"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "CPAN::Meta" : "0",
+            "CPAN::Meta::Prereqs" : "0",
+            "Devel::PPPort" : "3.19",
+            "ExtUtils::MakeMaker" : "6.59",
+            "ExtUtils::ParseXS" : "3.21",
+            "File::Copy::Recursive" : "0",
+            "Module::Build" : "0.38",
+            "Module::Build::XSUtil" : "0"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion" : "0.10108",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.7"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Data::MessagePack" : "0.38",
+            "Mouse" : "0.61",
+            "Scalar::Util" : "1.14",
+            "XSLoader" : "0.02",
+            "parent" : "0.221",
+            "perl" : "5.008001"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Test::More" : "0.88",
+            "Test::Requires" : "0"
+         }
+      }
+   },
+   "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/xslate/p5-Text-Xslate/issues"
+      },
+      "homepage" : "https://github.com/xslate/p5-Text-Xslate",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/xslate/p5-Text-Xslate.git",
+         "web" : "https://github.com/xslate/p5-Text-Xslate"
+      }
+   },
+   "version" : "3.1.0",
+   "x_contributors" : [
+      "Yoshiki Kurihara <kurihara@cpan.org>",
+      "makamaka <makamaka.donzoko@gmail.com>",
+      "Mons Anderson <mons@cpan.org>",
+      "hiratara <hiratara@cpan.org>",
+      "c9s <cornelius.howl@gmail.com>",
+      "Shigeki Morimoto <shigeki.morimoto@mixi.co.jp>",
+      "Olaf Alders <olaf@wundersolutions.com>",
+      "Christian Walde <walde.christian@googlemail.com>",
+      "punytan <punytan@gmail.com>",
+      "Ueda Satoshi <ueda.satoshi@dena.jp>",
+      "Ueda Satoshi <gunyoki@gmail.com>",
+      "AndrÃ© Walker <andre@andrewalker.net>",
+      "Masahiro Chiba <chiba@everqueue.com>",
+      "Fuji, Goro <fuji.goro@dena.jp>",
+      "Kenichi Ishigaki <ishigaki@cpan.org>",
+      "Tasuku SUENAGA a.k.a. gunyarakun <tasuku-s-github@titech.ac>",
+      "Mariano Wahlmann <dichoso@gmail.com>",
+      "Jesse Luehrs <doy@tozt.net>",
+      "Fuji, Goro <g.psy.va@gmail.com>",
+      "David Steinbrunner <dsteinbrunner@pobox.com>",
+      "Shigeki Morimoto <github@morimo.to>",
+      "Fuji, Goro <goro-fuji@cookpad.com>",
+      "tokuhirom <tokuhirom@gmail.com>",
+      "Daisuke Maki <lestrrat+github@gmail.com>"
+   ]
+}
