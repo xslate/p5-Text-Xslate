@@ -1025,6 +1025,11 @@ This method is significant when it is called by template functions and methods.
 
 Adds the argument into the output buffer. This method is available on executing.
 
+=head3 B<< $tx->validate($file) :Void >>
+
+Checks whether the syntax of I<$file> is valid or invalid as Xslate.
+If it detects the invalid factor, this method throws the exception.
+
 =head2 Exportable functions
 
 =head3 C<< mark_raw($str :Str) :RawStr >>
