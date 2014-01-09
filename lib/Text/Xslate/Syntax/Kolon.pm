@@ -120,7 +120,7 @@ Logical operators (C<< ! && || // not and or >>)
 
 String operators (C<< ~ >>)
 
-    : "[" ~ $var ~ "]" # concatination
+    : "[" ~ $var ~ "]" # concatenation
 
 The operator precedence is very like Perl's:
 
