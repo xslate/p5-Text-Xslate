@@ -11,18 +11,9 @@ use Text::Xslate;
         is  => 'rw',
         isa => 'Int',
     );
-
-    package MyXslate;
-    our @ISA = qw(Text::Xslate);
-
-    sub render_string {
-        my($self, @args) = @_;
-        local $self->{foo} = 'bar';
-        return $self->SUPER::render_string(@args);
-    }
 }
 
-my $tx = MyXslate->new(
+my $tx = Text::Xslate->new(
     module       => [qw(Carp) => [qw(confess croak)] ],
     warn_handler => sub { die @_ },
 );
