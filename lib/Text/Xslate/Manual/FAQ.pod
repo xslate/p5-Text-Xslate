@@ -92,6 +92,12 @@ number of C<malloc()> calls required to render a template.
 
 =back
 
+=head3 How can I throw errors in functions and/or methods?
+
+Handle warnings by C<warn_handler> and raises exceptions if needed.
+
+That's because Xslate catches exceptions in templates and emits them as warnings.
+
 =head2 Configuration
 
 =head3 When I create the Xslate instance?
