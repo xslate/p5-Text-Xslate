@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Fatal qw(open close);
 use File::Path qw(remove_tree);
-use Test::More tests => 2;
+use Test::More;
 
 use Text::Xslate;
 
@@ -56,6 +56,18 @@ my $out2 = $tx->render('sub.tx');
 { local $TODO = 'not yet';
 is($out2, "here is base A\nthis is sub B\n", "cascade with base in different directory");
 }
+
+
+$tx = Text::Xslate->new(
+    path => ['path_b', 'path_a'],
+
+    cache => 1,
+);
+
+note 'after re-creating an Xslate instance';
+my $out3 = $tx->render('sub.tx');
+is($out3, "here is base A\nthis is sub B\n", "cascade with base in different directory");
+
 done_testing;
 
 sub write_file {
