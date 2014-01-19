@@ -2,7 +2,7 @@ Revision history for Perl extension Text::Xslate
 
 3.1.0 2013-11-16 16:46:35+0900
     [BUG FIXES]
-    - Close #95; $/ affected the parse() method
+    - Close #96; $/ affected the parse() method
     
     [FEATURES]
     - Add $xslate->validate($file) method to check template syntax
