@@ -1,5 +1,13 @@
 Revision history for Perl extension Text::Xslate
 
+3.1.1 2014-01-24 07:50:52+0900
+    [DOCUMENTS]
+    - Fix some typos (#102)
+    - Add an explanation of `validate()` (#101)
+
+    [BUG FIXES]
+    - Fix a race condition on making cache dirs (#103)
+
 3.1.0 2013-11-16 16:46:35+0900
     [BUG FIXES]
     - Close #96; $/ affected the parse() method
