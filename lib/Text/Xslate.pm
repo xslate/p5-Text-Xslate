@@ -409,8 +409,10 @@ sub _load_source {
         my $cachedir      = File::Spec->catpath($volume, $dir, '');
         if(not -e $cachedir) {
             require File::Path;
-            eval { File::Path::mkpath($cachedir) }
-                or Carp::croak("Xslate: Cannot prepare cache directory $cachepath (ignored): $@");
+            my $created = eval { File::Path::mkpath($cachedir) };
+            if (!$created && ! -e $cachedir) {
+                Carp::croak("Xslate: Cannot prepare cache directory $cachepath (ignored): $@");
+            }
         }
 
         my $tmpfile = sprintf('%s.%d.d', $cachepath, $$, $self);
