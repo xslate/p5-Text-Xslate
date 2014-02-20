@@ -409,8 +409,8 @@ sub _load_source {
         my $cachedir      = File::Spec->catpath($volume, $dir, '');
         if(not -e $cachedir) {
             require File::Path;
-            my $created = eval { File::Path::mkpath($cachedir) };
-            if (!$created && ! -e $cachedir) {
+            File::Path::mkpath($cachedir);
+            if (! -e $cachedir) {
                 Carp::croak("Xslate: Cannot prepare cache directory $cachepath (ignored): $@");
             }
         }
