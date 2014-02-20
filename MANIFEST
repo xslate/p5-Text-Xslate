@@ -305,6 +305,7 @@ t/900_bugs/038_conbine_flaged_utf8_and_other.t
 t/900_bugs/039_issue96.t
 t/900_bugs/040_issue95.t
 t/900_bugs/041_cachedir_other_process.t
+t/900_bugs/042_perl59_issue.t
 t/900_bugs/issue79/tmpl/contentA.tt
 t/900_bugs/issue79/tmpl/contentB.tt
 t/900_bugs/issue79/tmpl/wrapperA.tt
