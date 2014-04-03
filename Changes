@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.2.0 2014-04-04 07:39:59+0900
+    [BUG FIXES]
+    - Fix #107, #109 HashWithDefault should use "exists" (yappo, tokuhirom)
+
 3.1.2 2014-02-20 21:09:47+0900
     [TEST]
     - Add a test for github issue #105, which will fail on Perl 5.19.x
