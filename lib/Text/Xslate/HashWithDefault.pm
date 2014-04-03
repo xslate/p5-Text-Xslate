@@ -11,9 +11,8 @@ sub TIEHASH {
 
 sub FETCH {
     my($self, $key) = @_;
-    my $value = $self->[0]{$key};
-    if(defined $value) {
-        return $value;
+    if(exists $self->[0]{$key}) {
+        return $self->[0]{$key};
     }
     else {
         return ref($self->[1]) eq 'CODE'
