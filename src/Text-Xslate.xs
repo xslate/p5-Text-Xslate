@@ -593,12 +593,6 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
             // CopyToken("&apos;", d);
             CopyToken("&#39;", d);
         }
-        else if(c == '{') {
-            CopyToken("&#123;", d);
-        }
-        else if(c == '}') {
-            CopyToken("&#125;", d);
-        }
         else {
             *(d++) = c;
         }
