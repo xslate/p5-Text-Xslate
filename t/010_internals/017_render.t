@@ -28,7 +28,7 @@ $tx = Text::Xslate->new(
 );
 
 is $tx->render('func.tx', { lang => 'Xslate' }),
-    "Hello, {Xslate} world!\n";
+    "Hello, &#123;Xslate&#125; world!\n";
 
 for(1 .. 2) {
     my $tx = Text::Xslate->new({ cache => 0, path => [path] });
