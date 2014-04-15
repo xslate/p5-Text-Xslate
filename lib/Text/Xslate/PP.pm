@@ -64,6 +64,8 @@ our %html_escape = (
     '>' => '&gt;',
     '"' => '&quot;',
     "'" => '&#39;', # IE8 doesn't support &apos; in title
+    "{" => '&#123;',
+    "}" => '&#125;',
 );
 our $html_metachars = sprintf '[%s]', join '', map { quotemeta } keys %html_escape;
 
