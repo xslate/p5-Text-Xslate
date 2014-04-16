@@ -311,7 +311,7 @@ sub split :method {
 
     my $in_tag = 0;
 
-    while($_) {
+    while($_ ne '') {
         if($in_tag) {
             my $start = 0;
             my $pos;
