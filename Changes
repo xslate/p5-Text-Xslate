@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.2.1 2014-04-17 07:55:38+0900
+    [BUG FIXES]
+    - Fix #111 (by syohex in #113) inputting "0" made a wrong result
+
 3.2.0 2014-04-04 07:39:59+0900
     [BUG FIXES]
     - Fix #107, #109 HashWithDefault should use "exists" (yappo, tokuhirom)
