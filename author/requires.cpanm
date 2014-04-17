@@ -1,6 +1,7 @@
 # for configure
 Module::Install
 Module::Install::XSUtil
+Module::Install::TestTarget
 Module::Install::AuthorTests
 Module::Install::ExtendsMakeTest
 Module::Install::Repository
