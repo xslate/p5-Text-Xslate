@@ -2,7 +2,7 @@
 Module::Install
 Module::Install::XSUtil
 Module::Install::AuthorTests
-Module::Install::ExtendsMakeTest
+Module::Install::TestTarget
 Module::Install::Repository
 
 # for testing
