@@ -298,7 +298,9 @@ tx_load_lvar(pTHX_ tx_state_t* const st, I32 const lvar_ix) { /* the guts of TX_
 
     assert(SvTYPE(cframe) == SVt_PVAV);
 
-    if(AvFILLp(cframe) < real_ix || SvREADONLY(AvARRAY(cframe)[real_ix])) {
+    if(AvFILLp(cframe) < real_ix
+       || AvARRAY(cframe)[real_ix] == NULL
+       || SvREADONLY(AvARRAY(cframe)[real_ix])) {
         av_store(cframe, real_ix, newSV(0));
     }
     st->pad = AvARRAY(cframe) + TXframe_START_LVAR;
