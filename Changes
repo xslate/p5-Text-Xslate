@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.2.2 2014-04-23 07:29:42+0900
+    [BUG FIXES]
+    - Fix #105 SEGV on blead (reported by tokuhirom, fixed by syohex in #117)
+
 3.2.1 2014-04-17 07:55:38+0900
     [BUG FIXES]
     - Fix #111 (by syohex in #113) inputting "0" made a wrong result
