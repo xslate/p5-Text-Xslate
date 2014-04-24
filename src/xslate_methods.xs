@@ -83,6 +83,16 @@ tx_keys(pTHX_ SV* const hvref) {
 /* SCALAR */
 
 /* ARRAY */
+TXBM(array, first) {
+    SV **svp = av_fetch((AV*)SvRV(*MARK), 0, FALSE);
+    sv_setsv(retval, svp ? *svp : &PL_sv_undef);
+}
+
+TXBM(array, last) {
+    AV* const av = (AV*)SvRV(*MARK);
+    SV **svp = av_fetch(av, av_len(av), FALSE);
+    sv_setsv(retval, svp ? *svp : &PL_sv_undef);
+}
 
 TXBM(array, size) {
     sv_setiv(retval, av_len((AV*)SvRV(*MARK)) + 1);
@@ -377,6 +387,8 @@ TXBM(hash, merge) {
 }
 
 static const tx_builtin_method_t tx_builtin_method[] = {
+    TXBM_SETUP(array,  first,   0, 0),
+    TXBM_SETUP(array,  last,    0, 0),
     TXBM_SETUP(array,  size,    0, 0),
     TXBM_SETUP(array,  join,    1, 1),
     TXBM_SETUP(array,  reverse, 0, 0),

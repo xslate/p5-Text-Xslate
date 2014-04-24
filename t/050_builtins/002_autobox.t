@@ -60,6 +60,11 @@ my @set = (
     ['<: $a.merge($a).join(",") :>', { a => [1, 2, 3] }, '1,2,3,1,2,3'],
     ['<: $a.merge([1, 2, 3]).join(",") :>', { a => [0] }, '0,1,2,3'],
 
+    ['<: $a.first() :>', { a => [1, 2, 3] }, '1', 'get first element'],
+    ['<: $a.first() :>', { a => [] }, '', 'first for empty array'],
+    ['<: $a.last() :>', { a => [1, 2, 3] }, '3', 'get last element'],
+    ['<: $a.last() :>', { a => [] }, '', 'last for empty array'],
+
     # hash
     ['<: $h.size() :>', { h => {} },        '0', 'for hash'],
     ['<: $h.size() :>', { h => {a => 1, b => 2, c => 3} }, '3'],
