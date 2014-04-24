@@ -22,6 +22,18 @@ our $_st;
 
 our $_context;
 
+sub _array_first {
+    my($array_ref) = @_;
+    return $_st->bad_arg('first') if @_ != 1;
+    return $array_ref->[0];
+}
+
+sub _array_last {
+    my($array_ref) = @_;
+    return $_st->bad_arg('last') if @_ != 1;
+    return $array_ref->[-1];
+}
+
 sub _array_size {
     my($array_ref) = @_;
     return $_st->bad_arg('size') if @_ != 1;
@@ -118,6 +130,8 @@ sub _hash_merge {
 
 BEGIN {
     our %builtin_method = (
+        'array::first'   => \&_array_first,
+        'array::last'    => \&_array_last,
         'array::size'    => \&_array_size,
         'array::join'    => \&_array_join,
         'array::reverse' => \&_array_reverse,

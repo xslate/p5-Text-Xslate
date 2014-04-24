@@ -35,6 +35,14 @@ The namespace of ARRAY references is C<array>.
 
 Returns true;
 
+=head3 C<$a.first()>
+
+Returns the first element of I<$a>.
+
+=head3 C<$a.last()>
+
+Returns the last element of I<$a>.
+
 =head3 C<$a.size()>
 
 Returns the number of elements of I<$a>.
