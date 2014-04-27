@@ -1,5 +1,11 @@
 Revision history for Perl extension Text::Xslate
 
+3.2.4 2014-04-27 17:18:15+0900
+    [TEST FIXES]
+        - Fix #122, #120 testing issue on windows (syohex)
+    [FEATURES]
+        - Add $array.first() and $array.last() methods (#116, #118 / shyohex)
+
 3.2.3 2014-04-23 07:32:39+0900
     - Made a mistake in the release engineering, re-packaged on the correct
       status.
