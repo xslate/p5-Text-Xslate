@@ -8,6 +8,8 @@ use File::Spec;
 use Time::HiRes qw(sleep);
 use Text::Xslate;
 
+plan skip_all => 'fork emulation does not work' if $^O eq 'MSWin32';
+
 rmtree(cache_dir);
 
 my $tx = Text::Xslate->new(
