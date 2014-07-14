@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.2.5 2014-07-15 08:18:31+0900
+    [TEST FIXES]
+        - No CGI.pm, which is no longer a standard module
+
 3.2.4 2014-04-27 17:18:15+0900
     [TEST FIXES]
         - Fix #122, #120 testing issue on windows (syohex)
