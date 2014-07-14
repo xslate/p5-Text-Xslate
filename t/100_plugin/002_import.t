@@ -6,8 +6,12 @@ use Text::Xslate qw(html_escape html_builder mark_raw);
 use Text::Xslate::Util qw(p);
 use Data::Dumper;
 use Time::localtime qw(localtime);
-use CGI qw(span);
+#use CGI qw(span);
 use Digest::MD5 qw(md5 md5_hex);
+
+sub span {
+    return "<span>@_</span>";
+}
 
 $Data::Dumper::Sortkeys = 1;
 
