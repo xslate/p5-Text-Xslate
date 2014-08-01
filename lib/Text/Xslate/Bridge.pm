@@ -24,7 +24,7 @@ sub methods {
     my($class, %args) = @_;
 
     if(!exists $storage{$class}) {
-        Carp::croak("$class has no methods (possibly not a bride class)");
+        Carp::croak("$class has no methods (possibly not a bridge class)");
     }
 
     if(exists $args{-exclude}) {
@@ -122,7 +122,8 @@ This module is the base class for adaptor classes.
 
 =head2 C<< __PACKAGE__->bridge(@mapping) :Void >>
 
-Install a bridge module that has method I<@mapping>.
+Install a bridge module that has method I<@mapping>.  See C<example/bridge.pl>
+for more an example.
 
 =head1 SEE ALSO
 
