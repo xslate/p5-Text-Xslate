@@ -17,7 +17,7 @@ Note that optional functions are defined in L<Text::Xslate::Bridge::Star>.
 
 The xslate engine supports auto-boxing, so you can call methods for
 primitive (non-object) values.
-The following is builtin methods.
+The following are builtin methods.
 
 =head2 For nil
 
@@ -33,76 +33,83 @@ provided.
 
 The namespace of ARRAY references is C<array>.
 
-Returns true;
+=head3 C<$arrayref.first()>
 
-=head3 C<$a.first()>
+Returns the first element of I<$arrayref>.
 
-Returns the first element of I<$a>.
+=head3 C<$arrayref.last()>
 
-=head3 C<$a.last()>
+Returns the last element of I<$arrayref>.
 
-Returns the last element of I<$a>.
+=head3 C<$arrayref.size()>
 
-=head3 C<$a.size()>
+Returns the number of elements in I<$arrayref>.
 
-Returns the number of elements of I<$a>.
+=head3 C<$arrayref.join($separator)>
 
-=head3 C<$a.join($separator)>
-
-Joins the elements of I<$a> into a single string separated by
+Joins the elements of I<$arrayref> into a single string separated by
 I<$separator>.
 
-=head3 C<$a.reverse()>
+=head3 C<$arrayref.reverse()>
 
-Returns an ARRAY reference consisting of the elements of I<$a>
+Returns an ARRAY reference consisting of the elements of I<$arrayref>
 in the opposite order.
 
-=head3 C<$a.sort(?$callback)>
+=head3 C<$arrayref.sort(?$callback)>
 
-Sorts I<$a> and returns a new ARRAY reference.
+Sorts I<$arrayref> and returns a new ARRAY reference.
 The optional I<$callback> is the same as Perl's.
 
 Examples:
 
-    : my $a = [2, 1, 10];
+    : my $arrayref = [2, 1, 10];
     : # alphabetic sort (default)
-    : $a.sort().join(" "); # 1 10, 2
+    : $arrayref.sort().join(" "); # 1 10 2
     : # explicitly alphabetic
-    : $a.sort(-> $a, $b { $a cmp $b }).join(" "); # 1, 10, 2
+    : $arrayref.sort(-> $a, $b { $a cmp $b }).join(" "); # 1 10 2
     : # numeric sort
-    : $a.sort(-> $a, $b { $a <=> $b }).join(" "); # 1, 2, 10
+    : $arrayref.sort(-> $a, $b { $a <=> $b }).join(" "); # 1 2 10
 
 See also L<perlfunc/"sort">.
 
-=head3 C<$a.map($callback)>
+=head3 C<$arrayref.map($callback)>
 
-Evaluates I<$callback> for each element of I<$a> and returns
+Evaluates I<$callback> for each element of I<$arrayref> and returns
 a new ARRAY reference composed of the result of each such evaluation.
-
-See also L<perlfunc/"map">
-
-=head3 C<$a.reduce($callback)>
-
-Reduces I<$a> by calling I<$callback> multiple times.
-If I<$a> is empty, this method returns C<nil>.
 
 Examples:
 
-    : my $a = [10, 20, 30];
+    : my $arrayref = [1, 2, 4, 8, 16];
+    : # double
+    : $arrayref.map(-> $a { $a * 2 }).join(','); # 2,4,8,16,32
+    : # sequence
+    : my $hashref = {a => 1, b => 2, c => 3, d => 4};
+    : ['b', 'd', 'a'].map(-> $a {$hashref[$a]}).join(','); # 2,4,1
+
+See also L<perlfunc/"map">
+
+=head3 C<$arrayref.reduce($callback)>
+
+Reduces I<$arrayref> by calling I<$callback> multiple times.
+If I<$arrayref> is empty, this method returns C<nil>.
+
+Examples:
+
+    : my $arrayref = [10, 20, 30];
     : # sum
-    : $a.reduce(-> $a, $b { $a + $b }); # 60
+    : $arrayref.reduce(-> $a, $b { $a + $b }); # 60
     : # concat
-    : $a.reduce(-> $a, $b { $a ~ $b }); # 102030
+    : $arrayref.reduce(-> $a, $b { $a ~ $b }); # 102030
     : # min
-    : $a.reduce(-> $a, $b { $a min $b }); # 10
+    : $arrayref.reduce(-> $a, $b { $a min $b }); # 10
     : # max
-    : $a.reduce(-> $a, $b { $a max $b }); # 30
+    : $arrayref.reduce(-> $a, $b { $a max $b }); # 30
 
 See also L<List::Util/"reduce">.
 
-=head3 C<$a.merge($v)>
+=head3 C<$arrayref.merge($v)>
 
-Returns a new ARRAY reference consisting of I<$a> and I<$v>.
+Returns a new ARRAY reference consisting of I<$arrayref> and I<$v>.
 
 I<$v> may be an ARRAY reference or a scalar value.
 
@@ -110,41 +117,63 @@ I<$v> may be an ARRAY reference or a scalar value.
 
 The namespace of HASH references is C<hash>.
 
-=head3 C<$h.size()>
+=head3 C<$hashref.size()>
 
-Returns the number of entries of I<$h>.
+Returns the number of entries of I<$hashref>.
 
-=head3 C<$h.keys()>
+    : my $hashref = {a => 1, b => 2, c => 3, d => 4};
+    : $hashref.size(); # 4
 
-Returns an ARRAY reference consisting of the keys of I<$h>, which are sorted
-by the keys.
+=head3 C<$hashref.keys()>
 
-=head3 C<$h.values()>
-
-Returns an ARRAY reference consisting of the values of I<$h>, which are
+Returns an ARRAY reference consisting of the keys of I<$hashref>, which are
 sorted by the keys.
 
-=head3 C<$h.kv()>
+    : my $hashref = {a => 1, b => 2, c => 3, d => 4};
+    : $hashref.keys().join(' '); # a b c d
 
-Returns an ARRAY reference consisting of the key-value pairs of I<$h>, which
-are sorted by the keys.
-Each pair is an object that has the C<keys> and C<value> attributes.
+=head3 C<$hashref.values()>
+
+Returns an ARRAY reference consisting of the values of I<$hashref>, which are
+sorted by the keys.
+
+    : my $hashref = {a => 1, b => 2, c => 3, d => 4};
+    : $hashref.values().join(' '); # 1 2 3 4
+
+=head3 C<$hashref.kv()>
+
+Returns an ARRAY reference consisting of the key-value pairs of I<$hashref>,
+which are sorted by the keys. Each pair is an object that has the C<keys> and
+C<value> attributes.
 
 For example:
 
-    : for $hash_ref.kv() -> $pair {
+    : for $hashref.kv() -> $pair {
         <: $pair.key :>=<: $pair.value :>
     : }
 
-=head3 C<$h.merge($v)>
+Output:
 
-Returns a new HASH reference consisting of I<$h> and I<$v>.
+    a=1
+    b=2
+    c=3
+    d=4
+
+=head3 C<$hashref.merge($v)>
+
+Returns a new HASH reference consisting of I<$hashref> and I<$v>.
+
+    : my $hashref = {a => 1, b => 2, c => 3, d => 4};
+    : my $new = $hashref.merge({a => 0, e => 5});
+    : # {a => 0, b => 2, c => 3, d => 4, e => 5}
 
 I<$v> must be a HASH reference.
 
 =head1 LOOP VARIABLES
 
-You can use special loop variables in C<for> loops, although its forms vary in template syntaxes, i.e. C<< $~item >> in Kolon and C<< loop >> in TTerse. In this list, the name of the loop variable is represented as C<< $~item >>.
+You can use special loop variables in C<for> loops, although its forms vary in
+template syntaxes, i.e. C<< $~item >> in Kolon and C<< loop >> in TTerse. In
+this list, the name of the loop variable is represented as C<< $~item >>.
 
 See also L<Text::Xslate::Syntax::Kolon/Loops> and L<Text::Xslate::Syntax::TTerse/Loops>.
 
