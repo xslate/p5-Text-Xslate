@@ -415,7 +415,7 @@ sub _load_source {
             }
         }
 
-        my $tmpfile = sprintf('%s.%d.d', $cachepath, $$, $self);
+        my $tmpfile = sprintf('%s.%d.%d', $cachepath, $$, $self);
 
         if (open my($out), ">:raw", $tmpfile) {
             my $mtime = $self->_save_compiled($out, $asm, $fullpath, utf8::is_utf8($source));

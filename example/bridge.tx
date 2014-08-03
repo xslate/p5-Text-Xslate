@@ -1,0 +1,19 @@
+: my $num   = 100;
+: my $str   = 'abc';
+: my $array = [1,2,4,8,16];
+: my $hash  = {a => 1, b => 2, c => 3, d => 4};
+
+: $num ~ ' is a number' if  $num.looks_like_number();
+
+: $str ~ ' is a string' if !$str.looks_like_number();
+
+: $str ~ ' length is ' ~ $str.length();
+
+: 'sum of ' ~ $array.join(',') ~ ' is ' ~ $array.sum();
+
+: my $reduced = $hash.delete_keys('b', 'd');
+
+After keys b and d have been deleted, the hash is:
+: for $reduced.kv() -> $pair {
+    <: $pair.key :> = <: $pair.value :>
+: };

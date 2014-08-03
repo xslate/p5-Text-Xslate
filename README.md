@@ -73,3 +73,10 @@ Copyright (c) 2010, Fuji, Goro (gfx). All rights reserved.
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
+
+# MAINTAINERS
+
+ * [Fuji, Goro](https://github.com/gfx/)
+ * [Daisuke Maki](https://github.com/lestrrat)
+ * [Syohei Yoshida](https://github.com/syohex/)
+ * [Tokuhiro Matsuno](https://github.com/tokuhirom/)
