@@ -3,7 +3,7 @@ Revision history for Perl extension Text::Xslate
 3.3.1 2014-08-03 11:45:40+0900
     [ANNOUNCE]
     - Now Xslate has new co-maintainers (those who can maintain and release
-      Xslate): lestrrat, syohex, lestrrat and tokuhirom
+      Xslate): lestrrat, syohex, and tokuhirom
 
     [BUG FIXES]
     - #126 Fix a typo in naming tempfiles (Hugmeir)
