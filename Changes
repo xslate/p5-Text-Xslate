@@ -1,6 +1,6 @@
 Revision history for Perl extension Text::Xslate
 
-3.3.0 2014-08-03 11:45:40+0900
+3.3.1 2014-08-03 11:45:40+0900
     [ANNOUNCE]
     - Now Xslate has new co-maintainers (those who can maintain and release
       Xslate): lestrrat, syohex, lestrrat and tokuhirom
@@ -11,6 +11,9 @@ Revision history for Perl extension Text::Xslate
     [DOCMENT]
     - #125 Update document on Text::Xslate->bridge() and Builtin.pod
       (Mike Raynham)
+
+3.3.0 2014-08-03 11:54:02+0900
+    (mis-packaging release)
 
 3.2.5 2014-07-15 08:18:31+0900
     [TEST FIXES]

@@ -40,6 +40,8 @@ example/amon2.psgi.gold
 example/autolink.pl
 example/autolink.pl.gold
 example/base.tx
+example/bridge.pl
+example/bridge.tx
 example/cascade.pl
 example/cascade.pl.gold
 example/cascade.tx
