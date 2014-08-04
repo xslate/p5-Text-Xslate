@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.3.2 2014-08-05 12:40:00+0900
+   [IMPROVEMENT]
+    - #127 Improve generating temporary file name
+
 3.3.1 2014-08-03 11:45:40+0900
     [ANNOUNCE]
     - Now Xslate has new co-maintainers (those who can maintain and release
