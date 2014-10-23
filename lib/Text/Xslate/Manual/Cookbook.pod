@@ -10,14 +10,14 @@ The Xslate cookbook is a set of recipes showing Xslate features.
 
 =head2 How to manage HTML forms
 
-Managing HTML forms is an important issue on web applications.
-You'd better to use modules that manage HTML forms, rather than do something
-with templates by yourself. This section proposes two basic solutions:
+Managing HTML forms is an important issue for web applications.  You're better
+off using modules that manage HTML forms rather than managing this yourself
+in your templates.  This section proposes two basic solutions:
 using FillInForm and HTML form builders.
 
-In both solutions, one should not use the C<mark_raw filter> in templates,
-which easily makes B<security holes>. Instead, application code should be
-responsible to call the C<mark_raw function> that C<Text::Xslate> can export.
+In both solutions, you should not use the C<mark_raw> filter in templates,
+which easily creates B<security holes>. Instead, application code should be
+responsible for calling the C<mark_raw> function that C<Text::Xslate> can export.
 
 =head3 Using FillInForm
 
@@ -66,8 +66,8 @@ Output:
     <input type="text" name="foo" value="&lt;filled value&gt;" />
     </form>
 
-Because L<HTML::FillInForm::Lite> provides C<fillinform> function,
-it becomes more simple:
+Because L<HTML::FillInForm::Lite> provides a C<fillinform> function,
+it becomes even simpler:
 
     use HTML::FillInForm::Lite qw(fillinform);
 
@@ -75,7 +75,7 @@ it becomes more simple:
         function => { fillinform => html_builder(\&fillinform) },
     );
 
-From 1.5018 on, C<html_builder_module> are supported for HTML builder modules like C<HTML::FillInForm>. Just import HTML builder functions with C<html_builder_module> option.
+From 1.5018 on, C<html_builder_module> is supported for HTML builder modules like C<HTML::FillInForm>. Just import HTML builder functions with C<html_builder_module> option.
 
     my $tx = Text::Xslate->new(
         html_builder_module => [ 'HTML::FillInForm::Lite' => [qw(fillinform)] ],
@@ -221,12 +221,12 @@ Because Xslate escapes only HTML meta characters, you must escape
 JavaScript meta characters by yourself when you put data into
 C<< <script> ... </script> >> sections.
 
-C<JSON> module is not suitable because it doesn't escape some meta
+The C<JSON> module is not suitable because it doesn't escape some meta
 characters such as C<< "</script>" >>.
 
 It is better to use utilities proven to be secure for JavaScript escaping
 to avoid XSS.
-L<JavaScript::Value::Escape> helps you for this aim.
+L<JavaScript::Value::Escape> helps you in this regard.
 
     my $tx = Text::Xslate->new(
         module => ['JavaScript::Value::Escape' => [qw(js)]],

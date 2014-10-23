@@ -769,8 +769,8 @@ engine and even add a new syntax via extending the parser.
 
 =head3 B<< Text::Xslate->new(%options) >>
 
-Creates a new Xslate template engine with options. You can reuse the instance
-for multiple call of C<render()>.
+Creates a new Xslate template engine with options. You can reuse this instance
+for multiple calls to C<render()>.
 
 Possible options are:
 
@@ -810,13 +810,13 @@ template names.
 Specifies a function map which contains name-coderef pairs.
 A function C<f> may be called as C<f($arg)> or C<$arg | f> in templates.
 
-Note that those registered function have to return a B<text string>,
+Note that these registered functions have to return a B<text string>,
 not a binary string unless you want to handle bytes in whole templates.
-Make sure what you want to use returns whether text string or binary
-strings.
+Make sure what you want to use returns either a text string or a binary
+string.
 
 For example, some methods of C<Time::Piece> might return a binary string
-which is encoded in UTF-8, so you'd like to decode their values.
+which is encoded in UTF-8, so you'll want to decode their values.
 
     # under LANG=ja_JP.UTF-8 on MacOSX (Darwin 11.2.0)
     use Time::Piece;
@@ -1064,11 +1064,11 @@ This function is available in templates as the C<unmark_raw> filter.
 Escapes HTML meta characters in I<$str>, and returns it as a raw string (see above).
 If I<$str> is already a raw string, it returns I<$str> as is.
 
-By default, this function will be automatically applied to all the template
+By default, this function will automatically be applied to all template
 expressions.
 
-This function is available in templates as the C<html> filter, but you'd better
-to use C<unmark_raw> to ensure expressions to be html-escaped.
+This function is available in templates as the C<html> filter, but you're better
+off using C<unmark_raw> to ensure that expressions are html-escaped.
 
 =head3 C<< uri_escape($str :Str) :Str >>
 

@@ -78,8 +78,8 @@ Hash:
 
     : foo({ foo => "bar" })
 
-Note that C<{ ... }> is always parsed as hash literals, so you need not
-to use prefix:<+> as Perl sometimes requires:
+Note that C<{ ... }> is always parsed as hash literals, so you don't need
+to use the <+> prefix as Perl sometimes requires:
 
     :  {}.kv(); # ok
     : +{}.kv(); # also ok
@@ -153,7 +153,7 @@ These two statements has the same semantics, so you cannot modify C<$foo>.
 
 =head2 Loops
 
-There is C<for> loops that are like Perl's C<foreach>.
+There are C<for> loops that are like Perl's C<foreach>.
 
     : # iterate over an ARRAY reference
     : for $data -> $item {
@@ -166,7 +166,7 @@ There is C<for> loops that are like Perl's C<foreach>.
         <: $key :>=<: $data[$key] :>
     : }
 
-And the C<for> statement can take C<else> block:
+And the C<for> statement can take an C<else> block:
 
     : for $data -> $item {
         [<: $item.field :>]
@@ -481,18 +481,18 @@ because template cascading is statically processed.
 =head2 Macro blocks
 
 Macros are supported, which are called in the same way as functions and
-return a C<raw> string. Macros returns what their bodies render, so
-they cannot return references nor objects including other macros.
+return a C<raw> string. Macros return what their bodies render, so
+they cannot return references or objects, including other macros.
 
     : macro add ->($x, $y) {
     :   $x + $y;
     : }
     : add(10, 20)
 
-    : macro signeture -> {
+    : macro signature -> {
         This is foo version <: $VERSION :>
     : }
-    : signeture()
+    : signature()
 
     : macro factorial -> $x {
     :   $x == 0 ? 1 : $x * factorial($x-1)
