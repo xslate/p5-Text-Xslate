@@ -1226,20 +1226,13 @@ A "too-safe" HTML escaping filter which escape all the symbolic characters
 
 WEB: L<http://xslate.org/>
 
-ML: L<http://groups.google.com/group/xslate>
-
-IRC: #xslate @ irc.perl.org
-
 PROJECT HOME: L<http://github.com/xslate/>
 
 REPOSITORY: L<http://github.com/xslate/p5-Text-Xslate/>
 
 =head1 BUGS
 
-All complex software has bugs lurking in it, and this module is no
-exception. If you find a bug please either email me, or add the bug
-to cpan-RT. Patches are welcome :)
-
+Please make a file on L<http://github.com/xslate/>. Patches are always welcome.
 =head1 SEE ALSO
 
 Documents:

@@ -61,10 +61,9 @@ to read the documentation online with your favorite pager.
 
 # RESOURCE
 
-    web site:     http://xslate.org/
-    repositories: http://github.com/xslate
-    mailing list: http://groups.google.com/group/xslate
-    irc         : irc://irc.perl.org/#xslate
+    web site:       http://xslate.org/
+    repositories:   http://github.com/xslate
+    issue tracking: http://github.com/xslate/issues
 
 # LICENSE AND COPYRIGHT
 
