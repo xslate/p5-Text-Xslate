@@ -349,6 +349,14 @@ Template inclusion is a traditional way to extend templates.
     : include "foo.tx" { var1 => value1, var2 => value2, ... };
     : include "foo.tx" {$vars}; # use $vars as the params
 
+if a var exist in the {$vars} and __ROOT__, the one in {$vars} will win.
+
+also, be careful about the order of vars. 
+
+    : include "foo.tx" { var1 => $id, id => $var, var2 => $id }
+
+var1 and var2 will be replaced by $id, var2 will be replaced by $var, because the value of id is changed
+
 As C<cascade> does, C<include> allows barewords:
 
     : include foo      # the same as 'foo.tx'
