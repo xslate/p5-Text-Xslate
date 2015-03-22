@@ -80,7 +80,10 @@ BEGIN {
             last;
         }
     }
-    *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
+    {
+        my $cache_dir = $cache_dir;
+	*_DEFAULT_CACHE_DIR = sub() { $cache_dir };
+    }
 }
 
 # the real defaults are defined in the parser
