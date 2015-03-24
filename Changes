@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.3.4 2015-03-24 23:21:57+0900
+    - Fix typos in document
+    - Introduce $Text::Xslate::DEFAULT_CACHE_DIR
+
 3.3.3 2014-08-04 15:50:00+0900
     - No code changes from 3.3.2, just re-packaging.
 
