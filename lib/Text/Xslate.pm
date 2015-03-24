@@ -33,6 +33,8 @@ my $BYTECODE_VERSION = '1.6';
 # $bytecode_version + $fullpath + $compiler_and_parser_options
 my $XSLATE_MAGIC   = qq{xslate;$BYTECODE_VERSION;%s;%s;};
 
+our $DEFAULT_CACHE_DIR;
+
 # load backend (XS or PP)
 my $use_xs = 0;
 if(!exists $INC{'Text/Xslate/PP.pm'}) {
@@ -72,7 +74,9 @@ BEGIN {
     *_SAVE_SRC  = sub() { $save_src };
 
     *_ST_MTIME = sub() { 9 }; # see perldoc -f stat
+}
 
+unless(defined $DEFAULT_CACHE_DIR) {
     my $cache_dir = '.xslate_cache';
     foreach my $d($ENV{HOME}, File::Spec->tmpdir) {
         if(defined($d) and -d $d and -w _) {
@@ -80,7 +84,8 @@ BEGIN {
             last;
         }
     }
-    *_DEFAULT_CACHE_DIR = sub() { $cache_dir };
+
+    $DEFAULT_CACHE_DIR = $cache_dir;
 }
 
 # the real defaults are defined in the parser
@@ -140,7 +145,7 @@ sub options { # overridable
         path         => ['.'],
         input_layer  => $self->input_layer,
         cache        => 1, # 0: not cached, 1: checks mtime, 2: always cached
-        cache_dir    => _DEFAULT_CACHE_DIR,
+        cache_dir    => $DEFAULT_CACHE_DIR,
         module       => undef,
         function     => undef,
         html_builder_module => undef,
