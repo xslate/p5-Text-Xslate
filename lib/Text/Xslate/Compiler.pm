@@ -1,9 +1,10 @@
 package Text::Xslate::Compiler;
 use Moo;
-use Moo::Util::TypeConstraints;
 
 use Scalar::Util ();
 use Carp         ();
+
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
@@ -140,7 +141,7 @@ has lvar => ( # local variable id table
 
 has const => (
     is  => 'rw',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
 
     init_arg => undef,
 );
@@ -155,14 +156,14 @@ has macro_table => (
 
 has engine => ( # Xslate engine
     is       => 'ro',
-    isa      => 'Object',
+    isa      => Object,
     required => 0,
     weak_ref => 1,
 );
 
 has dependencies => (
     is  => 'ro',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
     init_arg => undef,
 );
 
@@ -187,7 +188,7 @@ has parser_option => (
 
 has parser => (
     is  => 'rw',
-    isa => 'Object', # Text::Xslate::Parser
+    isa => Object, # Text::Xslate::Parser
 
     handles => [qw(define_function)],
 
@@ -227,7 +228,7 @@ has cascade => (
 
 has [qw(header footer macro)] => (
     is  => 'rw',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
 );
 
 has current_file => (
@@ -1595,7 +1596,6 @@ sub _error {
 }
 
 no Moo;
-no Moo::Util::TypeConstraints;
 
 __PACKAGE__->meta->make_immutable;
 __END__

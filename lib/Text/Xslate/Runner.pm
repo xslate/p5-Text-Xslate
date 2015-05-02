@@ -14,7 +14,7 @@ use Getopt::Long   ();
 
     has cmd_aliases => (
         is         => 'ro',
-        isa        => 'ArrayRef[Str]',
+        isa        => ArrayRef[Str],
         default    => sub { [] },
         auto_deref => 1,
     );
@@ -87,7 +87,7 @@ has path => (
     documentation => 'Include paths',
     cmd_aliases   => [qw(I)],
     is            => 'ro',
-    isa           => 'ArrayRef[Str]',
+    isa           => ArrayRef[Str],
     predicate     => 'has_path',
     traits        => $getopt_traits,
 );
@@ -201,7 +201,7 @@ has help => (
 
 has targets => (
     is         => 'ro',
-    isa        => 'ArrayRef[Str]',
+    isa        => ArrayRef[Str],
     default    => sub { [] },
     auto_deref => 1,
 );
@@ -228,7 +228,7 @@ sub _build_getopt_spec {
         elsif($isa->is_a_type_of('Num')) {
             $type = '=f';
         }
-        elsif($isa->is_a_type_of('ArrayRef')) {
+        elsif($isa->is_a_type_of(ArrayRef)) {
             $type = '=s@';
         }
         elsif($isa->is_a_type_of(HashRef)) {

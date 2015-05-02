@@ -37,7 +37,7 @@ has outer => (
 
 has state => (
     is  => 'rw',
-    isa => 'Object',
+    isa => Object,
 
     required => 1,
     weak_ref => 1,
