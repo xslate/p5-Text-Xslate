@@ -70,7 +70,7 @@ has [qw(compiler engine)] => (
 
 has symbol_table => ( # the global symbol table
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     default  => sub{ {} },
 
@@ -79,7 +79,7 @@ has symbol_table => ( # the global symbol table
 
 has iterator_element => (
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     lazy     => 1,
     builder  => '_build_iterator_element',

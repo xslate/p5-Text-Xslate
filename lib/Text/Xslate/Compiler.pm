@@ -147,7 +147,7 @@ has const => (
 
 has macro_table => (
     is  => 'rw',
-    isa => 'HashRef',
+    isa => HashRef,
 
     predicate => 'has_macro_table',
     init_arg  => undef,
@@ -180,7 +180,7 @@ has syntax => (
 
 has parser_option => (
     is       => 'rw',
-    isa      => 'HashRef',
+    isa      => HashRef,
 
     default  => sub { {} },
 );
@@ -244,7 +244,7 @@ has file => (
 
 has overridden_builtin => (
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     default => sub { +{} },
 );

@@ -161,7 +161,7 @@ has assignment => (
 
 #has scope => (
 #    is  => 'rw',
-#    isa => 'HashRef',
+#    isa => HashRef,
 #
 #    required => 0,
 #);

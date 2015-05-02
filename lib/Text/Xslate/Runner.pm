@@ -135,7 +135,7 @@ has suffix => (
     documentation => 'Output suffix mapping (e.g. tx=html)',
     cmd_aliases   => [qw(x)],
     is            => 'ro',
-    isa           => 'HashRef',
+    isa           => HashRef,
     default       => sub { +{} },
     traits        => $getopt_traits,
 );
@@ -153,7 +153,7 @@ has define => (
     documentation => 'Define template variables (e.g. foo=bar)',
     cmd_aliases   => [qw(D)],
     is            => 'ro',
-    isa           => 'HashRef',
+    isa           => HashRef,
     predicate     => 'has_define',
     traits        => $getopt_traits,
 );
@@ -231,7 +231,7 @@ sub _build_getopt_spec {
         elsif($isa->is_a_type_of('ArrayRef')) {
             $type = '=s@';
         }
-        elsif($isa->is_a_type_of('HashRef')) {
+        elsif($isa->is_a_type_of(HashRef)) {
             $type = '=s%';
         }
         else {
