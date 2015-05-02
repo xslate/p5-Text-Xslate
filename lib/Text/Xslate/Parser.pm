@@ -2,6 +2,9 @@ package Text::Xslate::Parser;
 use Moo;
 
 use Scalar::Util ();
+use Carp qw/ confess /;
+
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
@@ -49,7 +52,7 @@ my $CHOMP_FLAGS = qr/-/xms;
 
 has identity_pattern => (
     is  => 'ro',
-    isa => 'RegexpRef',
+    isa => RegexpRef,
 
     builder  => '_build_identity_pattern',
     init_arg => undef,

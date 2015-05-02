@@ -3,6 +3,8 @@ use Moo;
 
 use Text::Xslate::Util qw(p $DEBUG);
 
+use MooX::Types::MooseLike::Base qw(:all);  
+
 use overload
     bool => sub() { 1 },
     '""' => sub   { $_[0]->id },
@@ -14,14 +16,14 @@ our @CARP_NOT = qw(Text::Xslate::Parser);
 use constant _DUMP_DENOTE => scalar($DEBUG =~ /\b dump=denote \b/xmsi);
 
 has id => (
-    is       => 'rw',
-    isa      => 'Str',
+    is       => 'rw',   
+    isa      => Str,
     required => 1,
 );
 
 has lbp => ( # left binding power
     is       => 'rw',
-    isa      => 'Int',
+    isa      => Int,
 
     lazy     => 1,
     default  => 0,
@@ -29,7 +31,7 @@ has lbp => ( # left binding power
 
 has ubp => ( # unary binding power
     is       => 'rw',
-    isa      => 'Int',
+    isa      => Int,
 
     required => 0,
 );
@@ -57,7 +59,7 @@ has value => (
 # some tokens have the counterpart token (e.g. '{' to '}')
 has counterpart => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     required => 0,
 );
@@ -74,13 +76,13 @@ has [
         'can_be_modifier', # statement modifiers (e.g. expr if cond)
     ] => (
     is       => 'rw',
-    isa      => 'Bool',
+    isa      => Bool,
     required => 0,
 );
 
 has nud => ( # null denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_nud',
     reader    => 'get_nud',
@@ -100,7 +102,7 @@ has nud => ( # null denotation
 
 has led => ( # left denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_led',
     reader    => 'get_led',
@@ -114,7 +116,7 @@ has led => ( # left denotation
 
 has std => ( # statement denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_std',
     reader    => 'get_std',
@@ -135,14 +137,14 @@ has [qw(first second third)] => (
 
 has type => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     required => 0,
 );
 
 has arity => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     lazy    => 1,
     default => 'name',
@@ -152,7 +154,7 @@ has arity => (
 
 has assignment => (
     is  => 'rw',
-    isa => 'Bool',
+    isa => Bool,
 
     required => 0,
 );
@@ -166,7 +168,7 @@ has assignment => (
 
 has line => (
     is  => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     lazy    => 1,
     default => 0,
