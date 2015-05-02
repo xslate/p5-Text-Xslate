@@ -9,28 +9,28 @@ use overload
 
 has name => (
     is => 'ro',
-    isa => 'Str',
+    isa => Str,
 
     required => 1,
 );
 
 has addr => (
     is => 'ro',
-    isa => 'Int',
+    isa => Int,
 
     required => 1,
 );
 
 has nargs => (
     is => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     default => 0,
 );
 
 has outer => (
     is => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     default => 0,
 );

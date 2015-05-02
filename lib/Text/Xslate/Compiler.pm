@@ -126,7 +126,7 @@ my %builtin = (
 
 has lvar_id => ( # local variable id
     is  => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     init_arg => undef,
 );
