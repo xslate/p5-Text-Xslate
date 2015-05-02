@@ -57,7 +57,7 @@ has module => (
     documentation => 'Modules templates will use (e.g. name=sub1,sub2)',
     cmd_aliases   => [qw(M)],
     is            => 'ro',
-    isa           => 'HashRef[Str]',
+    isa           => HashRef[Str],
     predicate     => 'has_module',
     traits        => $getopt_traits,
 );

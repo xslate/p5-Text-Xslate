@@ -165,7 +165,7 @@ sub _build_comment_pattern { $COMMENT }
 
 has shortcut_table => (
     is      => 'ro',
-    isa     => 'HashRef[Str]',
+    isa     => HashRef[Str],
     builder => '_build_shortcut_table',
 );
 sub _build_shortcut_table { \%shortcut_table }

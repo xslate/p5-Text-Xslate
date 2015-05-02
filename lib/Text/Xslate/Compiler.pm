@@ -133,7 +133,7 @@ has lvar_id => ( # local variable id
 
 has lvar => ( # local variable id table
     is  => 'rw',
-    isa => 'HashRef[Int]',
+    isa => HashRef[Int],
 
     init_arg => undef,
 );
