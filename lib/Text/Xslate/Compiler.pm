@@ -169,7 +169,7 @@ has dependencies => (
 
 has type => (
     is      => 'rw',
-    isa     => Enum(qw(html xml text)),
+    isa     => Enum[qw(html xml text)],
     default => 'html',
 );
 
