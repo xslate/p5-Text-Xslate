@@ -13,7 +13,7 @@ use t::lib::Util;
 
 package MyXslate;
 {
-    use Mouse;
+    use Moo;
 
     extends qw(Text::Xslate);
 
@@ -41,11 +41,11 @@ package MyXslate;
         return $value;
     }
 
-    no Mouse;
+    no Moo;
 
     package MyCompiler;
 
-    use Mouse;
+    use Moo;
 
     extends qw(Text::Xslate::Compiler);
 
@@ -53,12 +53,12 @@ package MyXslate;
         is       => 'rw',
     );
 
-    no Mouse;
+    no Moo;
     __PACKAGE__->meta->make_immutable();
 }
 package MySyntax;
 {
-    use Mouse;
+    use Moo;
 
     extends qw(Text::Xslate::Parser);
 
@@ -66,7 +66,7 @@ package MySyntax;
         is       => 'rw',
     );
 
-    no Mouse;
+    no Moo;
     __PACKAGE__->meta->make_immutable();
 }
 package main;

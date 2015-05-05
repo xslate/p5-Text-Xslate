@@ -621,8 +621,8 @@ sub _compiler {
     my $compiler = $self->{compiler};
 
     if(!ref $compiler){
-        require Moo;
-        Moo::load_class($compiler);
+        require Class::Load;
+        Class::Load::load_class($compiler);
 
         my $input_layer = $self->input_layer;
         $compiler = $compiler->new(

@@ -169,14 +169,14 @@ has dependencies => (
 
 has type => (
     is      => 'rw',
-    isa     => enum([qw(html xml text)]),
+    isa     => Enum(qw(html xml text)),
     default => 'html',
 );
 
 has syntax => (
     is       => 'rw',
 
-    default  => 'Kolon',
+    default  => sub{'Kolon'},
 );
 
 has parser_option => (
@@ -205,11 +205,13 @@ has input_layer => (
 sub _build_parser {
     my($self) = @_;
     my $syntax = $self->syntax;
+    
     if(ref($syntax)) {
         return $syntax;
     }
     else {
-        my $parser_class = Moo::Util::load_first_existing_class(
+	require Class::Load;
+        my $parser_class = Class::Load::load_first_existing_class(
             "Text::Xslate::Syntax::" . $syntax,
             $syntax,
         );
