@@ -1,6 +1,9 @@
 package Text::Xslate::PP::Type::Macro;
-use Moo;
+
 use warnings FATAL => 'recursion';
+
+use Moo;
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use overload
     '&{}'    => \&as_code_ref,
