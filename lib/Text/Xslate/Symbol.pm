@@ -95,7 +95,8 @@ has nud => ( # null denotation
         return;
     },
 
-    lazy_build => 1,
+    lazy => 1,
+    builder => '_build_nud',
 
     required => 0,
 );
@@ -109,7 +110,8 @@ has led => ( # left denotation
     predicate => 'has_led',
     clearer   => 'remove_led',
 
-    lazy_build => 1,
+    lazy => 1,
+    builder => '_build_led',
 
     required => 0,
 );
