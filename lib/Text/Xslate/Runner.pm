@@ -22,7 +22,6 @@ use Class::Load;
         is         => 'ro',
         isa        => ArrayRef[Str],
         default    => sub { [] },
-        auto_deref => 1,
     );
 
     no Moo::Role;
@@ -206,7 +205,6 @@ has targets => (
     is         => 'ro',
     isa        => ArrayRef[Str],
     default    => sub { [] },
-    auto_deref => 1,
 );
 
 my @Spec = __PACKAGE__->_build_getopt_spec();
@@ -215,33 +213,35 @@ sub getopt_spec { @Spec }
 sub _build_getopt_spec {
     my($self) = @_;
 
+    $DB::single = 1;
+    
     my @spec;
     foreach my $attr($self->meta->get_all_attributes) {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $isa = $attr->type_constraint;
-
+        
         my $type;
-        if($isa->is_a_type_of(Bool)) {
+        if($isa->is_a_type_of('Bool')) {
             $type = '';
         }
-        elsif($isa->is_a_type_of(Int)) {
+        elsif($isa->is_a_type_of('Int')) {
             $type = '=i';
         }
         elsif($isa->is_a_type_of('Num')) {
             $type = '=f';
         }
-        elsif($isa->is_a_type_of(ArrayRef)) {
+        elsif($isa->is_a_type_of('ArrayRef')) {
             $type = '=s@';
         }
-        elsif($isa->is_a_type_of(HashRef)) {
+        elsif($isa->is_a_type_of('HashRef')) {
             $type = '=s%';
         }
         else {
             $type = '=s';
         }
 
-        my @names = ($attr->name, $attr->cmd_aliases);
+        my @names = ($attr->name, @{ $attr->cmd_aliases} );
         push @spec, join('|', @names) . $type;
     }
     return @spec;
@@ -413,7 +413,7 @@ sub help_message {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $name  = join ' ', map { length($_) == 1 ? "-$_": "--$_" }
-                                ($attr->cmd_aliases, $attr->name);
+                                (@{ $attr->cmd_aliases }, $attr->name);
 
         push @options, [ $name => $attr->documentation ];
     }
