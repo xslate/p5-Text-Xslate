@@ -35,30 +35,36 @@ foreach my $code(
     q{ 1 ? html(nil) : "UNLIKELY" },
     q{ $empty x 10 },
 ) {
-    $warn = '';
 
-    my $out = eval {
-        $tx->render_string("<: $code :>", { h => {'' => 'foo' }, a => [42] });
-    };
+    subtest $code => sub {
+        $warn = '';
 
-    is $out,  '', $code;
-    is $warn, '';
-    is $@,  '';
+        my $out = eval {
+            $tx->render_string("<: $code :>", { h => {'' => 'foo' }, a => [42] });
+        };
+
+        is $out,  '', $code;
+        is $warn, '';
+        is $@,  '';
+    }
 }
 
 
-$warn = '';
-my $out = eval {
-    $tx->render_string("<: f() :>");
+subtest 'f()' => sub {
+    $warn = '';
+
+    my $out = eval {
+        $tx->render_string("<: f() :>");
+    };
+
+    is $out, '', 'no output' or die "Oops: [$warn][$@]";
+    like $warn, qr/DIE/, 'warn contains DIE';
+    like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+    is $@,  '';
 };
 
-is $out, '', 'nothing' or die "Oops: [$warn][$@]";
-like $warn, qr/DIE/, $warn;
-like $warn, qr/at $FILE line \d+/, 'warns come from the file';
-is $@,  '';
-
 $warn = '';
-$out = eval {
+my $out = eval {
     $tx->render_string('<: constant FOO = 42; FOO[0] :>');
 };
 
@@ -67,17 +73,20 @@ like $warn, qr/not a container/;
 like $warn, qr/at $FILE line \d+/, 'warns come from the file';
 is $@,  '';
 
+subtest '$a + $b' => sub {
 
-$warn = '';
-$out = eval {
-    $tx->render_string('<: $a + $b :>', { a => 'foo', b => 'bar' });
+    $warn = '';
+    $out = eval {
+        $tx->render_string('<: $a + $b :>', { a => 'foo', b => 'bar' });
+    };
+
+    is $out, '0', 'warn in render_string()';
+    like $warn, qr/"foo" isn't numeric/;
+    like $warn, qr/"bar" isn't numeric/;
+    like $warn, qr/at $FILE line \d+/, 'warns come from the file';
+    is $@,  '';
+
 };
-
-is $out, '0', 'warn in render_string()';
-like $warn, qr/"foo" isn't numeric/;
-like $warn, qr/"bar" isn't numeric/;
-like $warn, qr/at $FILE line \d+/, 'warns come from the file';
-is $@,  '';
 
 $warn = '';
 $out = eval {

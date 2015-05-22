@@ -1,22 +1,27 @@
 package Text::Xslate::Runner;
+
 use Moo;
-use Moo::Util::TypeConstraints;
+
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use List::Util     ();
 use File::Spec     ();
 use File::Basename ();
 use Getopt::Long   ();
 
+use Class::Load;
+
 {
     package
         Text::Xslate::Runner::Getopt;
+
     use Moo::Role;
+    use MooX::Types::MooseLike::Base qw(:all);  
 
     has cmd_aliases => (
         is         => 'ro',
         isa        => ArrayRef[Str],
         default    => sub { [] },
-        auto_deref => 1,
     );
 
     no Moo::Role;
@@ -29,9 +34,6 @@ my $getopt = Getopt::Long::Parser->new(
         no_auto_abbrev
     )],
 );
-
-my $Pattern = subtype __PACKAGE__ . '.Pattern', as RegexpRef;
-coerce $Pattern => from Str => via { qr/$_/ };
 
 my $getopt_traits = ['Text::Xslate::Runner::Getopt'];
 
@@ -125,8 +127,8 @@ has ignore => (
     documentation => 'Regular expression the process will ignore',
     cmd_aliases   => [qw(i)],
     is            => 'ro',
-    isa           => $Pattern,
-    coerce        => 1,
+    isa           => RegexpRef,
+    coerce        => sub { ref $_[0] ? $_[0] : qr/$_[0]/ },
     traits        => $getopt_traits,
 );
 
@@ -203,7 +205,6 @@ has targets => (
     is         => 'ro',
     isa        => ArrayRef[Str],
     default    => sub { [] },
-    auto_deref => 1,
 );
 
 my @Spec = __PACKAGE__->_build_getopt_spec();
@@ -212,33 +213,35 @@ sub getopt_spec { @Spec }
 sub _build_getopt_spec {
     my($self) = @_;
 
+    $DB::single = 1;
+    
     my @spec;
     foreach my $attr($self->meta->get_all_attributes) {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $isa = $attr->type_constraint;
-
+        
         my $type;
-        if($isa->is_a_type_of(Bool)) {
+        if($isa->is_a_type_of('Bool')) {
             $type = '';
         }
-        elsif($isa->is_a_type_of(Int)) {
+        elsif($isa->is_a_type_of('Int')) {
             $type = '=i';
         }
         elsif($isa->is_a_type_of('Num')) {
             $type = '=f';
         }
-        elsif($isa->is_a_type_of(ArrayRef)) {
+        elsif($isa->is_a_type_of('ArrayRef')) {
             $type = '=s@';
         }
-        elsif($isa->is_a_type_of(HashRef)) {
+        elsif($isa->is_a_type_of('HashRef')) {
             $type = '=s%';
         }
         else {
             $type = '=s';
         }
 
-        my @names = ($attr->name, $attr->cmd_aliases);
+        my @names = ($attr->name, @{ $attr->cmd_aliases} );
         push @spec, join('|', @names) . $type;
     }
     return @spec;
@@ -293,7 +296,7 @@ sub run {
         return;
     }
 
-    Moo::load_class($self->engine);
+    Class::Load::load_class($self->engine);
     my $xslate = $self->engine->new(%args);
 
     if($self->has_eval) {
@@ -410,7 +413,7 @@ sub help_message {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $name  = join ' ', map { length($_) == 1 ? "-$_": "--$_" }
-                                ($attr->cmd_aliases, $attr->name);
+                                (@{ $attr->cmd_aliases }, $attr->name);
 
         push @options, [ $name => $attr->documentation ];
     }
@@ -447,7 +450,6 @@ sub _encode {
 }
 
 no Moo;
-no Moo::Util::TypeConstraints;
 __PACKAGE__->meta->make_immutable;
 
 __END__
