@@ -1,5 +1,5 @@
 package Text::Xslate::Syntax::TTerse;
-use Moo;
+use Moo 2.000001;
 use Text::Xslate::Util qw(p any_in);
 use Scalar::Util ();
 

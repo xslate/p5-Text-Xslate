@@ -1,5 +1,5 @@
 package Text::Xslate::Syntax::Metakolon;
-use Moo;
+use Moo 2.000001;
 
 extends qw(Text::Xslate::Parser);
 

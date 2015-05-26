@@ -1,5 +1,5 @@
 package Text::Xslate::PP::State; # implement tx_state_t
-use Moo;
+use Moo 2.000001;
 
 use Text::Xslate::Util qw(neat p $DEBUG);
 use Text::Xslate::PP;

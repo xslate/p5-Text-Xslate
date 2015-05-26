@@ -1,5 +1,5 @@
 package Text::Xslate::Compiler;
-use Moo;
+use Moo 2.000001;
 
 use Scalar::Util ();
 use Carp         ();
