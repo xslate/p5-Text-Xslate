@@ -1,5 +1,5 @@
 package Text::Xslate::PP::Type::Pair;
-use Moo;
+use Moo 2.000001;
 
 has [qw(key value)] => (
     is       => 'rw',

@@ -2,7 +2,7 @@ package Text::Xslate::PP::Type::Macro;
 
 use warnings FATAL => 'recursion';
 
-use Moo;
+use Moo 2.000001;
 use MooX::Types::MooseLike::Base qw(:all);  
 
 use overload

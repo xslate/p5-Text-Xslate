@@ -1,5 +1,5 @@
 package Text::Xslate::PP::Opcode;
-use Moo;
+use Moo 2.000001;
 extends qw(Text::Xslate::PP::State);
 
 use version; our $VERSION = version->declare('v3.5.6');

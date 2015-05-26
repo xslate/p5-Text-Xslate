@@ -1,6 +1,6 @@
 package Text::Xslate::Runner;
 
-use Moo;
+use Moo 2.000001;
 
 use MooX::Types::MooseLike::Base qw(:all);  
 
