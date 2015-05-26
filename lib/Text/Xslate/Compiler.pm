@@ -1,9 +1,10 @@
 package Text::Xslate::Compiler;
-use Mouse;
-use Mouse::Util::TypeConstraints;
+use Moo 2.000001;
 
 use Scalar::Util ();
 use Carp         ();
+
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(
@@ -126,28 +127,28 @@ my %builtin = (
 
 has lvar_id => ( # local variable id
     is  => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     init_arg => undef,
 );
 
 has lvar => ( # local variable id table
     is  => 'rw',
-    isa => 'HashRef[Int]',
+    isa => HashRef[Int],
 
     init_arg => undef,
 );
 
 has const => (
     is  => 'rw',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
 
     init_arg => undef,
 );
 
 has macro_table => (
     is  => 'rw',
-    isa => 'HashRef',
+    isa => HashRef,
 
     predicate => 'has_macro_table',
     init_arg  => undef,
@@ -155,39 +156,39 @@ has macro_table => (
 
 has engine => ( # Xslate engine
     is       => 'ro',
-    isa      => 'Object',
+    isa      => Object,
     required => 0,
     weak_ref => 1,
 );
 
 has dependencies => (
     is  => 'ro',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
     init_arg => undef,
 );
 
 has type => (
     is      => 'rw',
-    isa     => enum([qw(html xml text)]),
+    isa     => Enum[qw(html xml text)],
     default => 'html',
 );
 
 has syntax => (
     is       => 'rw',
 
-    default  => 'Kolon',
+    default  => sub{'Kolon'},
 );
 
 has parser_option => (
     is       => 'rw',
-    isa      => 'HashRef',
+    isa      => HashRef,
 
     default  => sub { {} },
 );
 
 has parser => (
     is  => 'rw',
-    isa => 'Object', # Text::Xslate::Parser
+    isa => Object, # Text::Xslate::Parser
 
     handles => [qw(define_function)],
 
@@ -204,11 +205,13 @@ has input_layer => (
 sub _build_parser {
     my($self) = @_;
     my $syntax = $self->syntax;
+    
     if(ref($syntax)) {
         return $syntax;
     }
     else {
-        my $parser_class = Mouse::Util::load_first_existing_class(
+	require Class::Load;
+        my $parser_class = Class::Load::load_first_existing_class(
             "Text::Xslate::Syntax::" . $syntax,
             $syntax,
         );
@@ -227,7 +230,7 @@ has cascade => (
 
 has [qw(header footer macro)] => (
     is  => 'rw',
-    isa => 'ArrayRef',
+    isa => ArrayRef,
 );
 
 has current_file => (
@@ -244,7 +247,7 @@ has file => (
 
 has overridden_builtin => (
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     default => sub { +{} },
 );
@@ -1594,8 +1597,7 @@ sub _error {
     die $self->make_error($message, $self->file, $line);
 }
 
-no Mouse;
-no Mouse::Util::TypeConstraints;
+no Moo;
 
 __PACKAGE__->meta->make_immutable;
 __END__

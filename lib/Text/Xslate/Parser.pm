@@ -1,7 +1,10 @@
 package Text::Xslate::Parser;
-use Mouse;
+use Moo 2.000001;
 
 use Scalar::Util ();
+use Carp qw/ confess /;
+
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use Text::Xslate::Symbol;
 use Text::Xslate::Util qw(
@@ -49,7 +52,7 @@ my $CHOMP_FLAGS = qr/-/xms;
 
 has identity_pattern => (
     is  => 'ro',
-    isa => 'RegexpRef',
+    isa => RegexpRef,
 
     builder  => '_build_identity_pattern',
     init_arg => undef,
@@ -67,7 +70,7 @@ has [qw(compiler engine)] => (
 
 has symbol_table => ( # the global symbol table
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     default  => sub{ {} },
 
@@ -76,7 +79,7 @@ has symbol_table => ( # the global symbol table
 
 has iterator_element => (
     is  => 'ro',
-    isa => 'HashRef',
+    isa => HashRef,
 
     lazy     => 1,
     builder  => '_build_iterator_element',
@@ -86,7 +89,7 @@ has iterator_element => (
 
 has scope => (
     is  => 'rw',
-    isa => 'ArrayRef[HashRef]',
+    isa => ArrayRef[HashRef],
 
     clearer => 'init_scope',
 
@@ -98,28 +101,28 @@ has scope => (
 
 has token => (
     is  => 'rw',
-    isa => 'Maybe[Object]',
+    isa => Maybe[Object],
 
     init_arg => undef,
 );
 
 has next_token => ( # to peek the next token
     is  => 'rw',
-    isa => 'Maybe[ArrayRef]',
+    isa => Maybe[ArrayRef],
 
     init_arg => undef,
 );
 
 has statement_is_finished => (
     is  => 'rw',
-    isa => 'Bool',
+    isa => Bool,
 
     init_arg => undef,
 );
 
 has following_newline => (
     is  => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     default  => 0,
     init_arg => undef,
@@ -127,49 +130,49 @@ has following_newline => (
 
 has input => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     init_arg => undef,
 );
 
 has line_start => (
     is      => 'ro',
-    isa     => 'Maybe[Str]',
+    isa     => Maybe[Str],
     builder => '_build_line_start',
 );
 sub _build_line_start { ':' }
 
 has tag_start => (
     is      => 'ro',
-    isa     => 'Str',
+    isa     => Str,
     builder => '_build_tag_start',
 );
 sub _build_tag_start { '<:' }
 
 has tag_end => (
     is      => 'ro',
-    isa     => 'Str',
+    isa     => Str,
     builder => '_build_tag_end',
 );
 sub _build_tag_end { ':>' }
 
 has comment_pattern => (
     is      => 'ro',
-    isa     => 'RegexpRef',
+    isa     => RegexpRef,
     builder => '_build_comment_pattern',
 );
 sub _build_comment_pattern { $COMMENT }
 
 has shortcut_table => (
     is      => 'ro',
-    isa     => 'HashRef[Str]',
+    isa     => HashRef[Str],
     builder => '_build_shortcut_table',
 );
 sub _build_shortcut_table { \%shortcut_table }
 
 has in_given => (
     is       => 'rw',
-    isa      => 'Bool',
+    isa      => Bool,
     init_arg => undef,
 );
 
@@ -1995,7 +1998,7 @@ sub _error {
         $parser->file, $line || $parser->line);
 }
 
-no Mouse;
+no Moo;
 __PACKAGE__->meta->make_immutable;
 __END__
 
