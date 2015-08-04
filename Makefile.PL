@@ -29,7 +29,7 @@ use inc::Module::Install;
 
 all_from 'lib/Text/Xslate.pm';
 
-requires 'Mouse'                => '0.61';
+requires 'Mouse'                => 'v2.4.5';
 requires 'Data::MessagePack'    => '0.38';
 requires 'parent'               => '0.221';
 requires 'Scalar::Util'         => '1.14';
