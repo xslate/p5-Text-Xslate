@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+3.3.5 2015-08-05 18:50:00+0900
+    - Update Mouse version for Perl 5.22 or higher
+
 3.3.4 2015-03-24 23:21:57+0900
     - Fix typos in document
     - Introduce $Text::Xslate::DEFAULT_CACHE_DIR
