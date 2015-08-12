@@ -14,4 +14,18 @@ This class represents raw strings so that Xslate does not escape them.
 
 Note that you cannot extend this class.
 
+=head1 METHODS
+
+=head2 new
+
+create a new instance
+
+=head2 as_string
+
+this method is overload to string.
+
+    print Text::Xslate::Type::Raw->new('raw_string')->as_string
+    print Text::Xslate::Type::Raw->new('raw_string') # the same, becuase the overload
+
+
 =cut
