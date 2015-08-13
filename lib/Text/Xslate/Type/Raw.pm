@@ -25,7 +25,7 @@ create a new instance
 this method is overload to string.
 
     print Text::Xslate::Type::Raw->new('raw_string')->as_string
-    print Text::Xslate::Type::Raw->new('raw_string') # the same, becuase the overload
+    print Text::Xslate::Type::Raw->new('raw_string') # the same, because of overload
 
 
 =cut
