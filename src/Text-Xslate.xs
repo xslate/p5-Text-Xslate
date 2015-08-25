@@ -1077,7 +1077,7 @@ tx_invoke_load_file(pTHX_ SV* const self, SV* const name, SV* const mtime, bool 
     PUSHs(boolSV(from_include));
     PUTBACK;
 
-    call_method("load_file", G_EVAL | G_VOID);
+    call_method("load_file", G_EVAL | G_VOID | G_DISCARD);
     if(TX_CATCH_ERROR()){
         dMY_CXT;
         SV* const msg = PL_diehook == MY_CXT.die_handler
