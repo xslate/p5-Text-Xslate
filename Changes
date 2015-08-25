@@ -1,5 +1,8 @@
 Revision history for Perl extension Text::Xslate
 
+3.3.6 2015-08-25 13:50:00+0900
+    - Fix issue 'include' makes stack pointer incorrect(#130)
+
 3.3.5 2015-08-05 18:50:00+0900
     - Update Mouse version for Perl 5.22 or higher
 
