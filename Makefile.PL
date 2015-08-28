@@ -37,6 +37,7 @@ requires 'Scalar::Util'         => '1.14';
 test_requires 'Test::More' => 0.88; # done_testing()
 test_requires 'Test::Requires';
 test_requires 'File::Copy::Recursive';
+test_requires 'File::Path' => '2.07';
 #test_requires 'Test::LeakTrace';
 
 install_script 'xslate';
