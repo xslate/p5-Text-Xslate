@@ -3,6 +3,21 @@
 
 use strict;
 use Test::More;
+use Test::Requires qw(
+    Data::Section::Simple
+    HTML::FillInForm
+    HTML::FillInForm::Lite
+    HTML::Shakan
+    URI::Find
+    Mojolicious
+    MojoX::Renderer::Xslate
+    JavaScript::Value::Escape
+    Locale::Maketext::Lexicon
+    Data::Localize
+    File::Which
+    Amon2::Lite
+    Catalyst::View::Xslate
+);
 
 use HTTP::Request::Common;
 use Plack::Test;

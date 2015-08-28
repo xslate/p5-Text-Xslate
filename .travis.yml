@@ -2,8 +2,9 @@ language: perl
 install: cpanm --installdeps --notest --verbose .
 before_install:
   - perlbrew install-cpanm -f
-  - cpanm --notest < author/requires.cpanm
+  - cpanm --notest < author/requires.cpanm || true
 perl:
+  - "5.8"
   - "5.10"
   - "5.18"
   - "5.20"
