@@ -1046,6 +1046,8 @@ so you have to escape these strings by yourself.
 
 For example:
 
+    use Text::Xslate qw( mark_raw );
+
     my $tx   = Text::Xslate->new();
     my $tmpl = 'Mailaddress: <: $email :>';
     my %vars = (
