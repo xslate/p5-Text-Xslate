@@ -4,7 +4,7 @@ use Moo 2.000001;
 use Scalar::Util ();
 use Carp         ();
 
-use MooX::Types::MooseLike::Base qw(:all);  
+use Types::Standard '-all';
 
 use Text::Xslate::Parser;
 use Text::Xslate::Util qw(

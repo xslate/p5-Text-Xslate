@@ -11,7 +11,7 @@ my $tx = Text::Xslate->new(
 
 {
     package Obj;
-    use Mouse;
+    use Moo;
 
     sub join :method {
         my($self, $sep, @args) = @_;

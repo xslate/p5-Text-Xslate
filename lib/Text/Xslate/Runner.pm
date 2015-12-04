@@ -2,7 +2,7 @@ package Text::Xslate::Runner;
 
 use Moo 2.000001;
 
-use MooX::Types::MooseLike::Base qw(:all);  
+use Types::Standard '-all';
 
 use List::Util     ();
 use File::Spec     ();

@@ -8,7 +8,7 @@ use Util;
 
 {
     package BlogEntry;
-    use Mouse;
+    use Moo;
     has title => (is => 'rw');
     has body  => (is => 'rw');
 }

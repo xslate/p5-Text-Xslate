@@ -7,7 +7,7 @@ use Text::Xslate;
 
 BEGIN {
     package Text::Xslate::Syntax::Custom;
-    use Mouse;
+    use Moo;
     extends 'Text::Xslate::Parser';
 
     sub init_symbols {
@@ -30,7 +30,7 @@ BEGIN {
     }
 
     package Text::Xslate::Compiler::Custom;
-    use Mouse;
+    use Moo;
     extends 'Text::Xslate::Compiler';
 
     sub _generate_find_file {
