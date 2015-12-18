@@ -1,5 +1,9 @@
 Revision history for Perl extension Text::Xslate
 
+3.3.9 2015-12-18 22:15:00+0900
+    - Fix test for Windows
+      3.3.8 change breaks Windows
+
 3.3.8 2015-12-18 16:20:00+0900
     - Fix test for DragonflyBSD
     - Update document
