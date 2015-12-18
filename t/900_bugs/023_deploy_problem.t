@@ -50,8 +50,10 @@ sub write_file {
 
     open my($fh), ">", $file;
     print $fh $content;
-    $fh->flush;
-    $fh->sync;
+    eval {
+        $fh->flush;
+        $fh->sync;
+    };
     close $fh;
     return;
 }
