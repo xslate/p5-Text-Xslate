@@ -455,7 +455,6 @@ sub _process_cascade {
             # retrieve macros from assembly code
             if($c->[_OP_NAME] eq 'macro_begin' .. $c->[_OP_NAME] eq 'macro_end') {
                 if($c->[_OP_NAME] eq 'macro_begin') {
-                    $macro = [];
                     $macro = {
                         name  => $c->[_OP_ARG],
                         line  => $c->[_OP_LINE],
@@ -481,6 +480,17 @@ sub _process_cascade {
                 $self->requires($c->[_OP_ARG]);
             }
         }
+        # We don't call _process_cascade_file here because when the template
+        # uses multiple cascades (introduced with 'with') and multiple
+        # overrides, We need to know all the overrides beforehand to calculate
+        # the right override order for all cascade hierarchy.
+
+        # $self->requires($fullpath);
+        # $self->_process_cascade_file($cfile, $base_code);
+    }
+
+    foreach my $cfile(@components) {
+        my $fullpath = $engine->find_file($cfile)->{fullpath};
         $self->requires($fullpath);
         $self->_process_cascade_file($cfile, $base_code);
     }
@@ -502,6 +512,25 @@ sub _process_cascade {
     else { # overlay
         return;
     }
+}
+
+sub _inflate_super_body {
+    my (@args) = @_;
+    my $last_merge = shift @args;
+    my @res;
+    for my $cur (@args, $last_merge) {
+        my @body;
+        for (my $j = 0; $j < @$cur; $j++) {
+            if ($cur->[$j][_OP_NAME] ne 'super') {
+                push @body, $cur->[$j];
+                next;
+            }
+            push @body, @res;
+        }
+        @res = @body;
+    }
+
+    return @res;
 }
 
 sub _process_cascade_file {
@@ -553,15 +582,8 @@ sub _process_cascade_file {
             my @original = splice @{$base_code}, $macro_start, ($i - $macro_start);
             $i = $macro_start;
 
-            my @body;
-            foreach my $m(@{$around}) {
-                push @body, @{$m->{body}};
-            }
-            for(my $j = 0; $j < @body; $j++) {
-                if($body[$j][_OP_NAME] eq 'super') {
-                    splice @body, $j, 1, @original;
-                }
-            }
+            my @body = _inflate_super_body(map { $_->{body} } @$around);
+
             splice @{$base_code}, $macro_start, 0, @body;
 
             $i += scalar(@body);
