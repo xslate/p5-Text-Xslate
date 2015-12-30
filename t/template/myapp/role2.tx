@@ -1,0 +1,3 @@
+: override hello -> {
+    Hello, <:= $lang :> world!(role2)
+: }
