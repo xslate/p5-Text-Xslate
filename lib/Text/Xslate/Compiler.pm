@@ -516,9 +516,8 @@ sub _process_cascade {
 
 sub _inflate_super_body {
     my (@args) = @_;
-    my $last_merge = shift @args;
     my @res;
-    for my $cur (@args, $last_merge) {
+    for my $cur (@args) {
         my @body;
         for (my $j = 0; $j < @$cur; $j++) {
             if ($cur->[$j][_OP_NAME] ne 'super') {
@@ -582,7 +581,8 @@ sub _process_cascade_file {
             my @original = splice @{$base_code}, $macro_start, ($i - $macro_start);
             $i = $macro_start;
 
-            my @body = _inflate_super_body(map { $_->{body} } @$around);
+            my ($main, @overrides) = (map { $_->{body} } @$around);
+            my @body = _inflate_super_body(\@original, @overrides, $main);
 
             splice @{$base_code}, $macro_start, 0, @body;
 
