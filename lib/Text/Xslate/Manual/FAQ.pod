@@ -87,7 +87,7 @@ C<malloc()> is to pre-allocate the output buffer in an intelligent manner:
 For example, Text::Xslate assumes that most templates will be rendered to be
 about the same as the previous run, so when a template is rendered it uses
 the size allocated for the previous rendering as an approximation of how much
-space the current rendering will require. This allows to greatly reduce the
+space the current rendering will require. This allows you to greatly reduce the
 number of C<malloc()> calls required to render a template.
 
 =back
@@ -196,7 +196,7 @@ It is unlikely to need to write plugins for Xslate, because Xslate allows
 you to export any functions to templates. Any function-based modules
 are available by the C<module> option.
 
-Xslate also allows to call methods for object instances, so you can
+Xslate also allows you to call methods for object instances, so you can
 use any object-oriented modules, except for classes which only provide
 class methods (they need wrappers).
 
