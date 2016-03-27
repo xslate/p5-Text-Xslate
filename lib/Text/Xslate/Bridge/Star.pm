@@ -153,7 +153,7 @@ See L<perldoc/sprintf> for details.
 
 =head2 C<rx($regex_pattern)>
 
-Compiles I<$regex_patter> as a regular expression and return the regex object. You can pass a regex object to C<match()> or C<replace()> described bellow.
+Compiles I<$regex_patter> as a regular expression and return the regex object. You can pass a regex object to C<match()> or C<replace()> described below.
 The same as C<qr//> operator in Perl.
 
 =head2 C<match($str, $pattern)>

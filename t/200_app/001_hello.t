@@ -24,7 +24,7 @@ system $^X, (map { "-I$_" } @INC), "script/xslate",
 
 is $?, 0, "command executed successfully (1)";
 
-ok -d CACHE_DIR, 'cache directry created';
+ok -d CACHE_DIR, 'cache directory created';
 
 ok -f sprintf('%s/out/hello.txt', $Bin), 'correct file generated';
 

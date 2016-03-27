@@ -141,7 +141,7 @@ has suffix => (
 );
 
 has dest => (
-    documentation => 'Destination directry',
+    documentation => 'Destination directory',
     cmd_aliases   => [qw(o)],
     is            => 'ro',
     isa           => 'Str', # Maybe[Str]
