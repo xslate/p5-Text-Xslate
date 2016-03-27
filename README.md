@@ -62,8 +62,8 @@ to read the documentation online with your favorite pager.
 # RESOURCE
 
     web site:       http://xslate.org/
-    repositories:   http://github.com/xslate
-    issue tracking: http://github.com/xslate/issues
+    repositories:   https://github.com/xslate
+    issue tracking: https://github.com/xslate/p5-Text-Xslate/issues
 
 # LICENSE AND COPYRIGHT
 
