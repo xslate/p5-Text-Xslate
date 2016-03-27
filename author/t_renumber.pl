@@ -4,7 +4,7 @@ use strict;
 
 my $dir = shift(@ARGV) or die "Usage: $0 test-dir\n";
 $dir =~ s{/$}{};
--d $dir or die "No such directry: $dir\n";
+-d $dir or die "No such directory: $dir\n";
 
 my $i = 0;
 foreach my $dir (sort { ($a =~ /(\d+)_\w+\.t$/)[0] <=> ($b =~ /(\d+)_\w+\.t$/)[0] } <$dir/*.t>) {

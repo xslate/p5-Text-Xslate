@@ -31,7 +31,7 @@ xslate - Process Xslate Templates
     --ie --input_encoding    Input encoding (default: UTF-8)
     -i --ignore              Regular expression the process will ignore
     -c --cache_dir           Directory the cache files will be saved in
-    -o --dest                Destination directry
+    -o --dest                Destination directory
     -w --verbose             Warning level (default: 2)
 
     # one liners, with $ARGV and $ENV
