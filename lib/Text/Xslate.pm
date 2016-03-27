@@ -1233,13 +1233,13 @@ A "too-safe" HTML escaping filter which escape all the symbolic characters
 
 WEB: L<http://xslate.org/>
 
-PROJECT HOME: L<http://github.com/xslate/>
+PROJECT HOME: L<https://github.com/xslate/>
 
-REPOSITORY: L<http://github.com/xslate/p5-Text-Xslate/>
+REPOSITORY: L<https://github.com/xslate/p5-Text-Xslate/>
 
 =head1 BUGS
 
-Please make a file on L<http://github.com/xslate/>. Patches are always welcome.
+Please report issues at L<https://github.com/xslate/p5-Text-Xslate/issues>. Patches are always welcome.
 =head1 SEE ALSO
 
 Documents:
