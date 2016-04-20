@@ -541,18 +541,38 @@ tx_unmark_raw(pTHX_ SV* const str) {
 /* does sv_catsv_nomg(dest, src), but significantly faster */
 STATIC_INLINE void
 tx_sv_cat(pTHX_ SV* const dest, SV* const src) {
+    STRLEN len;
+    const char* pv = SvPV_const(src, len);
+
     if(!SvUTF8(dest) && SvUTF8(src)) {
         sv_utf8_upgrade(dest);
     }
 
-    {
-        STRLEN len;
-        const char* const pv  = SvPV_const(src, len);
+    if(SvUTF8(dest) == SvUTF8(src)
+       || is_utf8_string((const U8 *)pv, len)) {
         STRLEN const dest_cur = SvCUR(dest);
         char* const d         = SvGROW(dest, dest_cur + len + 1 /* count '\0' */);
 
         SvCUR_set(dest, dest_cur + len);
         Copy(pv, d + dest_cur, len + 1 /* copy '\0' */, char);
+    }
+    else {
+        STRLEN const dest_cur = SvCUR(dest);
+        /* Longest UTF-8 representation of each char is 2 octets. */
+        char* const d_start   = SvGROW(dest, dest_cur + 2 * len + 1 /* count '\0' */);
+        char* d = d_start + dest_cur;
+
+        while(len--) {
+            const U8 c = *pv++;
+            if (UTF8_IS_INVARIANT(c)) {
+                *(d++) = c;
+            } else {
+                *(d++) = UTF8_EIGHT_BIT_HI(c);
+                *(d++) = UTF8_EIGHT_BIT_LO(c);
+            }
+        }
+        *d = '\0';
+        SvCUR_set(dest, d - d_start);
     }
 }
 
@@ -563,6 +583,8 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
     const char* const end = cur + len;
     STRLEN const dest_cur = SvCUR(dest);
     char* d;
+    const U32 upgrade_on_copy = SvUTF8(dest) && !SvUTF8(src)
+        && !is_utf8_string((const U8 *)cur, len);
 
     (void)SvGROW(dest, dest_cur + ( len * ( sizeof("&quot;") - 1) ) + 1);
     if(!SvUTF8(dest) && SvUTF8(src)) {
@@ -594,6 +616,10 @@ tx_sv_cat_with_html_escape_force(pTHX_ SV* const dest, SV* const src) {
             // XXX: Internet Explorer (at least version 8) doesn't support &apos; in title
             // CopyToken("&apos;", d);
             CopyToken("&#39;", d);
+        }
+        else if (upgrade_on_copy && !UTF8_IS_INVARIANT(c)) {
+            *(d++) = UTF8_EIGHT_BIT_HI((U8) c);
+            *(d++) = UTF8_EIGHT_BIT_LO((U8) c);
         }
         else {
             *(d++) = c;

@@ -177,7 +177,7 @@ sub print {
         if(defined ${$sv}) {
             $st->{output} .=
                 (utf8::is_utf8($st->{output}) && !utf8::is_utf8(${$sv}))
-                 ? $st->encoding->decode(${$sv})
+                 ? eval {$st->encoding->decode(${$sv}, Encode::FB_CROAK())} || ${$sv}
                  : ${$sv};
         }
         else {
@@ -188,7 +188,7 @@ sub print {
         $sv =~ s/($Text::Xslate::PP::html_metachars)/$Text::Xslate::PP::html_escape{$1}/xmsgeo;
         $st->{output} .=
             (utf8::is_utf8($st->{output}) && !utf8::is_utf8($sv))
-             ? $st->encoding->decode($sv)
+             ? eval {$st->encoding->decode($sv, Encode::FB_CROAK())} || $sv
              : $sv;
     }
     else {

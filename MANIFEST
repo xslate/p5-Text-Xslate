@@ -311,6 +311,7 @@ t/900_bugs/042_perl59_issue.t
 t/900_bugs/043_issue107.t
 t/900_bugs/044_empty_result.t
 t/900_bugs/045_issue130.t
+t/900_bugs/046_issue88.t
 t/900_bugs/issue79/tmpl/contentA.tt
 t/900_bugs/issue79/tmpl/contentB.tt
 t/900_bugs/issue79/tmpl/wrapperA.tt
