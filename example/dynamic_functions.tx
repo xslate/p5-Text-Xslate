@@ -1,0 +1,17 @@
+Block syntax:
+: block my_block | my_func(foo => 'bar') -> {'baz, qux'}
+
+Subroutine syntax:
+: my_func(foo => 'bar')('baz, qux');
+
+Filter syntax:
+: 'baz, qux' | my_func(foo => 'bar')
+
+Scalar object syntax:
+: 'baz, qux'.my_func(foo => 'bar')
+
+Hash object syntax:
+: {baz => 'qux'}.my_func(foo => 'bar')
+
+Array object syntax:
+: ['baz', 'qux'].my_func(foo => 'bar')

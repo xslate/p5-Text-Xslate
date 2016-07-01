@@ -314,6 +314,10 @@ Functions are just Perl's subroutines, so you can define dynamic functions
     : $value | indent("> ") # Template-Toolkit like
     : indent("> ")($value)  # This is also valid
 
+C<example/dynamic_functions.tx> has examples of dynamic functions being used
+with block, function and filter syntax, and with scalar, hash and array
+objects.
+
 There are several builtin functions, which you cannot redefine:
 
     : $var | mark_raw   # marks it as a raw string
