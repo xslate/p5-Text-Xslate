@@ -1239,7 +1239,9 @@ REPOSITORY: L<https://github.com/xslate/p5-Text-Xslate/>
 
 =head1 BUGS
 
-Please report issues at L<https://github.com/xslate/p5-Text-Xslate/issues>. Patches are always welcome.
+Please report issues at L<https://github.com/xslate/p5-Text-Xslate/issues>.
+Patches are always welcome.
+
 =head1 SEE ALSO
 
 Documents:
