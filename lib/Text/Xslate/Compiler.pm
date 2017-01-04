@@ -2,7 +2,7 @@ package Text::Xslate::Compiler;
 use Mouse;
 use Mouse::Util::TypeConstraints;
 
-use Scalar::Util ();
+use Scalar::Util qw( blessed );
 use Carp         ();
 
 use Text::Xslate::Parser;
