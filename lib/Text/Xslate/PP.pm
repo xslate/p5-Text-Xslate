@@ -443,6 +443,11 @@ sub tx_match { # simple smart matching
 
 sub tx_concat {
     my($lhs, $rhs) = @_;
+    if (!defined $lhs){
+        return $rhs;
+    }elsif(!defined $rhs){
+        return $lhs;
+    }
     if(ref($lhs) eq TXt_RAW) {
         if(ref($rhs) eq TXt_RAW) {
             return Text::Xslate::Util::mark_raw(${ $lhs } . ${ $rhs });
