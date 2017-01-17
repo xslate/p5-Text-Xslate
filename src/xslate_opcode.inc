@@ -56,7 +56,12 @@ TXC_w_key(localize_s) {
     }
     else {
         if (tied) {
+#ifdef SAVEf_KEEPOLDELEM /* 5.12.0 or higher versions */
             save_helem_flags(vars, key, svp, SAVEf_KEEPOLDELEM);
+#else
+            SV *tmp = newSVsv(*svp);
+            save_helem(vars, key, &tmp);
+#endif
         }
         else {
             save_helem(vars, key, svp);
