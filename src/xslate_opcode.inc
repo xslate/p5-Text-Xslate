@@ -40,6 +40,7 @@ TXC_w_var(load_lvar_to_sb) {
 /* see pp_helem() in pp_hot.c */
 TXC_w_key(localize_s) {
     HV* const vars   = TX_st->vars;
+    const bool tied = SvRMAGICAL(vars) && mg_find((const SV *)vars, PERL_MAGIC_tied);
     SV* const key    = TX_op_arg_sv;
     bool const preeminent
                      = hv_exists_ent(vars, key, 0U);
@@ -54,7 +55,17 @@ TXC_w_key(localize_s) {
             SvUTF8(key) ? -(I32)keylen : (I32)keylen);
     }
     else {
-        save_helem(vars, key, svp);
+        if (tied) {
+#ifdef SAVEf_KEEPOLDELEM /* 5.12.0 or higher versions */
+            save_helem_flags(vars, key, svp, SAVEf_KEEPOLDELEM);
+#else
+            SV *tmp = newSVsv(*svp);
+            save_helem(vars, key, &tmp);
+#endif
+        }
+        else {
+            save_helem(vars, key, svp);
+        }
     }
     sv_setsv_mg(*svp, newval);
 
