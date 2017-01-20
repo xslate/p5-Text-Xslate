@@ -1,5 +1,10 @@
 Revision history for Perl extension Text::Xslate
 
+3.4.0 2017-01-20 15:00:00+0900
+    - Fix tied hash issue(#173)
+    - Fix encoding issue(#160)
+    - Fix segmentation fault issue by accessing uninitialized array element(#159)
+
 3.3.9 2015-12-18 22:15:00+0900
     - Fix test for Windows
       3.3.8 change breaks Windows
