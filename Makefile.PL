@@ -39,6 +39,9 @@ test_requires 'Test::Requires';
 test_requires 'File::Copy::Recursive';
 test_requires 'File::Path' => '2.07';
 #test_requires 'Test::LeakTrace';
+if ($^O ne 'MSWin32') {
+    test_requires 'Time::HiRes';
+}
 
 install_script 'xslate';
 
