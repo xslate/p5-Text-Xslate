@@ -41,4 +41,19 @@ $t->({s1 => undef,           s2 => mark_raw('<B>') } => '<B>');
 # undef on both sides
 $t->({s1 => undef,           s2 => undef           } => '');
 
+my $t_ref = sub {
+    is $xslate->render_string('<: $s1 :>', shift), shift;
+};
+
+package TestOverload {
+    use overload fallback => 1, '""' => sub { ${$_[0]} };
+};
+
+my $blessed = do {
+    my $str = "<A>";
+    bless(\$str, 'TestOverload');
+};
+$t_ref->({ s1 => $blessed } => '&lt;A&gt;');
+
 done_testing();
+

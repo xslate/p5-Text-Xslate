@@ -329,14 +329,10 @@ TXC_w_sv(concat) {
     SvGETMAGIC(rhs);
 
     if(!SvOK(lhs)){
-        sv_setsv_nomg(sv, rhs);
-        TX_st_sa = sv;
-        TX_RETURN_NEXT();
+        sv_setpvs(TX_st_sb, "");
     }
     if(!SvOK(rhs)){
-        sv_setsv_nomg(sv, lhs);
-        TX_st_sa = sv;
-        TX_RETURN_NEXT();
+        sv_setpvs(TX_st_sa, "");
     }
 
     if(tx_str_is_raw(aTHX_ aMY_CXT_ lhs)) {
