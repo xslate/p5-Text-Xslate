@@ -1,9 +1,6 @@
 sudo: false
 language: perl
-install: cpanm --installdeps --notest --verbose .
-before_install:
-  - perlbrew install-cpanm -f
-  - cpanm --notest < author/requires.cpanm || true
+install: cpanm --installdeps --notest --verbose --with-configure .
 perl:
   - "5.8"
   - "5.10"
