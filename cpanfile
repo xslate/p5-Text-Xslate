@@ -6,6 +6,7 @@ requires 'Scalar::Util', '1.14';
 
 on configure => sub {
     requires 'Module::Build::XSUtil';
+    requires 'version', '0.9913';
 };
 
 on test => sub {
