@@ -8,10 +8,6 @@ use constant LDIR => '.test_deps';
 BEGIN{ rmtree(LDIR) }
 END  { rmtree(LDIR) }
 
-my @opts = qw(-q --reinstall);
-if(!scalar grep { $_ eq '--install' } @ARGV) {
-    push @opts, '-l', LDIR;
-}
 my $cpanm = which('cpanm') or plan skip_all => 'no cpanm';
 
 my @modules = qw(
@@ -21,7 +17,8 @@ my @modules = qw(
 
 foreach my $mod(@modules) {
     note $mod;
-    is system($^X, $cpanm, @opts, $mod), 0, $mod;
+    is system($^X, $cpanm, -l => LDIR, qw(-nq --installdeps), $mod), 0, $mod;
+    is system($^X, $cpanm, -l => LDIR, qw(-q --test-only), $mod), 0, $mod;
 }
 
 done_testing;
