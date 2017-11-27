@@ -320,6 +320,13 @@ tx_push_frame(pTHX_ tx_state_t* const st) {
     newframe = (AV*)*av_fetch(st->frames, st->current_frame, TRUE);
 
     (void)SvUPGRADE((SV*)newframe, SVt_PVAV);
+    // In perl 5.8, SvUPGRADE(newframe, SVt_PVAV) does not make newframe AvREAL_only.
+    // Then av_fill() in tx_pop_frame() does not frees deleted elements, and it implies memory leaks.
+    // So we need to set AvREAL_only (= AvREIFY_off + AvREAL_on) manually.
+    // Note that if we drop support for perl 5.8, then we can safely delete these lines.
+    AvREIFY_off(newframe);
+    AvREAL_on(newframe);
+
     if(AvFILLp(newframe) < TXframe_START_LVAR) {
         av_extend(newframe, TXframe_START_LVAR);
     }

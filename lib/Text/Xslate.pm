@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-our $VERSION = '3.4.0';
+use version; our $VERSION = version->declare('v3.4.0');
 
 use Carp              ();
 use File::Spec        ();

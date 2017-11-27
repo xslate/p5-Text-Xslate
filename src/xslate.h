@@ -1,4 +1,5 @@
 /* xslate.h */
+#define NEED_gv_fetchpvn_flags
 #include "xshelper.h"
 
 #if defined(__GNUC__) && !defined(TX_NO_DTC)
