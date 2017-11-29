@@ -9,11 +9,16 @@ use Test::More 0.96;
 
 use Text::Xslate;
 
-my $xslate = Text::Xslate->new();
-$xslate->render_string(<<'...');
+my @warn;
+{
+    local $SIG{__WARN__} = sub { push @warn, @_ };
+    my $xslate = Text::Xslate->new();
+    $xslate->render_string(<<'...');
 : '/' ~ uri('a')
 : for 3 -> $n { }
 ...
+}
+note $_ for @warn;
 
 pass;
 
