@@ -4,7 +4,8 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 use File::Path qw(rmtree);
 
 rmtree(cache_dir);

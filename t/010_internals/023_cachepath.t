@@ -6,7 +6,8 @@ use Test::More;
 use Text::Xslate;
 use Text::Xslate::Util qw();
 use File::Path;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }

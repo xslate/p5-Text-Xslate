@@ -2,8 +2,9 @@
 use strict;
 use Test::More;
 
-use t::lib::TTSimple;
-use t::lib::Util;
+use lib "t/lib";
+use TTSimple;
+use Util;
 use Text::Xslate::Util qw(p);
 #use Template;
 #my $t = Template->new(

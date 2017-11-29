@@ -8,7 +8,8 @@ use Text::Xslate;
 use Fatal qw(open);
 use File::Path qw(rmtree);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $tx = Text::Xslate->new(path => [path], cache_dir => cache_dir);
 

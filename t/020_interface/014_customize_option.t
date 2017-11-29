@@ -9,7 +9,8 @@ use Text::Xslate::Parser;
 use Fatal qw(open);
 use File::Path qw(rmtree);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 package MyXslate;
 {

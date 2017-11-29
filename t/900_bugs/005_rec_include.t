@@ -6,7 +6,8 @@ use strict;
 use Test::More;
 
 use Text::Xslate;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $tx = Text::Xslate->new( cache => 0, path => [path] );
 

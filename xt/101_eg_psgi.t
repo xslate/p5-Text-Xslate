@@ -25,7 +25,8 @@ use Plack::Util;
 
 use File::Path qw(rmtree);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 rmtree(cache_dir);
 END{ rmtree(cache_dir) }

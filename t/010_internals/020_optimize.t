@@ -7,7 +7,8 @@ BEGIN { eval "use Test::Difflet qw(is_deeply)"; }
 use Text::Xslate;
 use Text::Xslate::Compiler;
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 use File::Find;
 use File::Basename;
 

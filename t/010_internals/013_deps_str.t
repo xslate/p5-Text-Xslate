@@ -8,7 +8,8 @@ use FindBin qw($Bin);
 use File::Copy qw(copy move);
 use File::Path qw(rmtree);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $base    = path . "/myapp/base.tx";
 END{

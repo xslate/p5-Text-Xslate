@@ -11,7 +11,8 @@ use Plack::Builder;
 
 use Text::Xslate;
 use Text::Xslate::Util qw(p);
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 
 my $tx = Text::Xslate->new(

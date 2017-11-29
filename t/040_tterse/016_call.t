@@ -2,7 +2,8 @@
 use strict;
 use Test::More;
 
-use t::lib::TTSimple;
+use lib "t/lib";
+use TTSimple;
 use Text::Xslate::Util qw(p);
 
 my @data = (

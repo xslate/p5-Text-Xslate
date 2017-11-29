@@ -4,7 +4,8 @@ use Test::More;
 
 use Text::Xslate;
 use FindBin qw($Bin);
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 use File::Copy qw(copy move);
 use File::Path qw(rmtree);
 

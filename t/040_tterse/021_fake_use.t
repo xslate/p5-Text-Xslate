@@ -3,7 +3,8 @@ use strict;
 use Test::Requires qw(Template::Plugin::Math);
 use Test::More;
 
-use t::lib::TTSimple;
+use lib "t/lib";
+use TTSimple;
 
 use Template::Plugin::String;
 

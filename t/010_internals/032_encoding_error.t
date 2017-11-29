@@ -5,7 +5,8 @@ use Text::Xslate;
 use File::Path qw(rmtree);
 use utf8;
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 BEGIN{ rmtree(cache_dir) }
 END  { rmtree(cache_dir) }
 

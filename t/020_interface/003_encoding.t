@@ -5,7 +5,8 @@ use Test::More;
 use Text::Xslate qw(mark_raw);
 use utf8;
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 use File::Path qw(rmtree);
 
 rmtree(cache_dir);

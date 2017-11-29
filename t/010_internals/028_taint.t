@@ -9,8 +9,8 @@ use Text::Xslate;
 use Scalar::Util qw(tainted);
 
 
-use lib '.';
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $dataset = {
     scalar_variable => 'twinkle twinkle little scalar',
