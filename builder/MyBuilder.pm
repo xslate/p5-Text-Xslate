@@ -68,8 +68,18 @@ sub ACTION_code {
 
 sub ACTION_test {
     my ($self, @args) = @_;
-    local $ENV{PERL_ONLY} = 1 if $self->pureperl_only;
-    $self->SUPER::ACTION_test(@args);
+
+    if (!$self->pureperl_only) {
+        local $ENV{XSLATE} = 'xs';
+        $self->log_info("xs tests\n");
+        $self->SUPER::ACTION_test(@args);
+    }
+
+    {
+        local $ENV{PERL_ONLY} = 1;
+        $self->log_info("pureperl tests\n");
+        $self->SUPER::ACTION_test(@args);
+    }
 }
 
 1;
