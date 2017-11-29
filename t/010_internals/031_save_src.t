@@ -7,7 +7,8 @@ BEGIN{ $ENV{XSLATE} ||= ''; $ENV{XSLATE} .= ':save_src' }
 
 use Text::Xslate;
 use File::Spec;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $tx = Text::Xslate->new(
     path  => [{ foo => 'Hello, <: "" :>world!' }, path],

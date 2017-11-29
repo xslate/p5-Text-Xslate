@@ -5,7 +5,8 @@ use Test::More;
 
 use Text::Xslate;
 use Text::Xslate::Util qw(p mark_raw);
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $tx = Text::Xslate->new(
     path => [path],

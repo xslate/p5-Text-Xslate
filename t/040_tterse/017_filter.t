@@ -3,12 +3,13 @@ use strict;
 use Test::More;
 
 BEGIN {
-    %t::lib::TTSimple::Func = (
+    %TTSimple::Func = (
         indent => \&mk_indent,
     );
 }
 
-use t::lib::TTSimple;
+use lib "t/lib";
+use TTSimple;
 use Text::Xslate::Util qw(p);
 
 sub mk_indent {

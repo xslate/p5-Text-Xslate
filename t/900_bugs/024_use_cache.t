@@ -8,7 +8,8 @@ use warnings;
 use Test::More;
 
 use File::Path;
-use t::lib::Util ();
+use lib "t/lib";
+use Util ();
 use Fatal qw(open close);
 
 use Text::Xslate;
@@ -25,7 +26,7 @@ my @read_files;
     }
 }
 
-my $cache_dir = t::lib::Util::cache_dir;
+my $cache_dir = Util::cache_dir;
 
 my $tmplpath = "t/macrotmpl";
 END{

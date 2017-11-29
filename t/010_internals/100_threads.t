@@ -13,7 +13,8 @@ use if ( Test::More->VERSION >= 2.0 ),
 use Test::More tests => 13;
 
 use Text::Xslate;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 eval {
     my $tx = Text::Xslate->new(path => [path], cache => 0);

@@ -9,7 +9,8 @@ use Encode qw(encode_utf8);
 
 use Test::More tests => 5;
 
-use t::lib::Util qw(path);
+use lib "t/lib";
+use Util qw(path);
 
 
 eval {

@@ -1,4 +1,4 @@
-package t::lib::Util;
+package Util;
 use strict;
 
 use parent qw(Exporter);

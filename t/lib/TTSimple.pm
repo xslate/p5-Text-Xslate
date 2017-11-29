@@ -1,4 +1,4 @@
-package t::lib::TTSimple;
+package TTSimple;
 
 use strict;
 use constant USE_TT => scalar(grep { $_ eq '--tt' } @ARGV) || $ENV{USE_TT};
@@ -7,7 +7,8 @@ use Carp;
 use parent qw(Exporter);
 our @EXPORT = qw(render_str render_file);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $tt;
 

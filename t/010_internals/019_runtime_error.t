@@ -5,7 +5,8 @@ use Test::More;
 
 use Text::Xslate;
 use Text::Xslate::Compiler;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $perl_warnings = '';
 local $SIG{__WARN__} = sub{ $perl_warnings .= "@_" };

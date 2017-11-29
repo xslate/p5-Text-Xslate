@@ -7,7 +7,8 @@ use Text::Xslate;
 use File::Copy qw(copy move);
 use File::Path qw(rmtree);
 use File::Spec;
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 rmtree cache_dir;
 

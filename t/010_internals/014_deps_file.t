@@ -7,7 +7,8 @@ use Text::Xslate;
 use File::Copy qw(copy move);
 use File::Path qw(rmtree);
 
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 
 my $base    = path . "/myapp/base.tx";
 my $derived = path . "/myapp/derived.tx";

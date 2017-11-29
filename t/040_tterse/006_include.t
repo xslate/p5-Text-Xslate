@@ -3,7 +3,8 @@
 use strict;
 use Test::More;
 
-use t::lib::TTSimple;
+use lib "t/lib";
+use TTSimple;
 
 is render_file('include.tt', { lang => "Xslate" }),
     "include:\n" . "Hello, Xslate world!\n";

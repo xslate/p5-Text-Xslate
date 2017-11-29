@@ -1,4 +1,4 @@
-package t::lib::UtilNoleak;
+package UtilNoleak;
 use strict;
 
 use parent qw(Exporter);

@@ -6,7 +6,8 @@ use Test::More;
 use Text::Xslate;
 use Text::Xslate::Compiler;
 use Text::Xslate::Util qw(p);
-use t::lib::Util;
+use lib "t/lib";
+use Util;
 use utf8;
 {
     package MyArray;
