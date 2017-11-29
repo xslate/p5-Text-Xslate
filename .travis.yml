@@ -1,9 +1,8 @@
 sudo: false
 language: perl
-install: cpanm --installdeps --notest --verbose --with-configure .
+install: cpanm --installdeps --notest --quiet --with-configure .
 perl:
   - "5.8"
   - "5.10"
-  - "5.18"
-  - "5.20"
-  - "5.22"
+  - "5.16"
+  - "5.26"
