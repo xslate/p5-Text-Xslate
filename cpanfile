@@ -19,3 +19,9 @@ on test => sub {
     requires 'File::Copy::Recursive';
     requires 'File::Path', '2.07';
 };
+
+on develop => sub {
+    requires 'Test::LeakTrace';
+    requires 'Devel::StackTrace';
+    requires 'Data::Section::Simple';
+};
