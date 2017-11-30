@@ -2,6 +2,9 @@ Revision history for Perl extension Text::Xslate
 
 {{$NEXT}}
 
+v3.5.1 2017-11-30T16:09:33Z
+    - Fix packaging issue; explicitly declare version for Text::Xslate::Engine
+
 v3.5.0 2017-11-30T15:57:50Z
     - Migrate to using minil (#179)
     - Improve perl 5.8 support (#182)
