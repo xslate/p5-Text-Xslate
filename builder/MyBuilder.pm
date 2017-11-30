@@ -6,7 +6,7 @@ use base 'Module::Build::XSUtil';
 sub new {
     my ($class, %args) = @_;
 
-    $class->SUPER::new(
+    my $self = $class->SUPER::new(
         %args,
         c_source => ['src'],
         cc_warnings => 1,
@@ -14,6 +14,13 @@ sub new {
         generate_xshelper_h => 'src/xshelper.h',
         xs_files => { 'src/Text-Xslate.xs' => 'lib/Text/Xslate.xs' },
     );
+
+    # src/xslate_ops.h uses special operators name in C++,
+    # such as "and", "or", "not";
+    # so remove "-Wc++-compat" flags
+    my $flags = $self->extra_compiler_flags;
+    $self->extra_compiler_flags(grep { $_ ne "-Wc++-compat" } @$flags);
+    $self;
 }
 
 sub _derive_opcode {
@@ -68,8 +75,18 @@ sub ACTION_code {
 
 sub ACTION_test {
     my ($self, @args) = @_;
-    local $ENV{PERL_ONLY} = 1 if $self->pureperl_only;
-    $self->SUPER::ACTION_test(@args);
+
+    if (!$self->pureperl_only) {
+        local $ENV{XSLATE} = 'xs';
+        $self->log_info("xs tests\n");
+        $self->SUPER::ACTION_test(@args);
+    }
+
+    {
+        local $ENV{PERL_ONLY} = 1;
+        $self->log_info("pureperl tests\n");
+        $self->SUPER::ACTION_test(@args);
+    }
 }
 
 1;

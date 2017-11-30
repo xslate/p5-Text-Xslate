@@ -1,8 +1,12 @@
 requires 'perl', '5.008001';
-requires 'Mouse', 'v2.4.5';
+requires 'Mouse', 'v2.5.0';
 requires 'Data::MessagePack', '0.38';
 requires 'parent', '0.221';
 requires 'Scalar::Util', '1.14';
+
+# fix local $SIG{__DIE__} + eval problems
+requires 'Encode', '2.26';
+requires 'Storable', '2.15';
 
 on configure => sub {
     requires 'Module::Build::XSUtil';
@@ -14,4 +18,10 @@ on test => sub {
     requires 'Test::Requires';
     requires 'File::Copy::Recursive';
     requires 'File::Path', '2.07';
+};
+
+on develop => sub {
+    requires 'Test::LeakTrace';
+    requires 'Devel::StackTrace';
+    requires 'Data::Section::Simple';
 };
