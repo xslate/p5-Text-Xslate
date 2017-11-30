@@ -1,5 +1,15 @@
 Revision history for Perl extension Text::Xslate
 
+{{$NEXT}}
+
+v3.5.0 2017-11-30T15:57:50Z
+    - Migrate to using minil (#179)
+    - Improve perl 5.8 support (#182)
+    - Use version->declare() to declare $VERSION (#182)
+    - Make `prove -br t` work with dot-not-in-INC perls (#184)
+    - Run tests against both XS and pureperl (#185)
+    - Fix typo (anirvan #181)
+
 3.4.0 2017-01-20 15:00:00+0900
     - Fix tied hash issue(#173)
     - Fix encoding issue(#160)
