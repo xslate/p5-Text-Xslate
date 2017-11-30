@@ -1,5 +1,5 @@
 requires 'perl', '5.008001';
-requires 'Mouse', 'v2.4.5';
+requires 'Mouse', 'v2.5.0';
 requires 'Data::MessagePack', '0.38';
 requires 'parent', '0.221';
 requires 'Scalar::Util', '1.14';
