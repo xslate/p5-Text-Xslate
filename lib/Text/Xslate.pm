@@ -58,6 +58,8 @@ sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
 package Text::Xslate::Engine; # XS/PP common base class
 
+use version; our $VERSION = version->declare('v3.5.0');
+
 use Text::Xslate::Util qw(
     make_error
     dump
