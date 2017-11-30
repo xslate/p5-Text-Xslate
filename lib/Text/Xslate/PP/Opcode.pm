@@ -639,6 +639,8 @@ no Mouse;
 __PACKAGE__->meta->make_immutable();
 __END__
 
+=for stopwords opcodes
+
 =head1 NAME
 
 Text::Xslate::PP::Opcode - Text::Xslate opcode implementation in pure Perl

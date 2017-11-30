@@ -1,3 +1,4 @@
+=for stopwords parens
 
 =head1 NAME
 

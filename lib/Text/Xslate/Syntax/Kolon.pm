@@ -8,6 +8,8 @@ __PACKAGE__->meta->make_immutable();
 
 __END__
 
+=for stopwords autoboxing newlines
+
 =head1 NAME
 
 Text::Xslate::Syntax::Kolon - The default template syntax

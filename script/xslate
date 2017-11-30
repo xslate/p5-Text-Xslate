@@ -7,6 +7,8 @@ $app->run( $app->targets );
 
 __END__
 
+=for stopwords xslate
+
 =head1 NAME
 
 xslate - Process Xslate Templates

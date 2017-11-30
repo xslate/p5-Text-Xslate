@@ -1,3 +1,5 @@
+=for stopwords ing
+
 =head1 NAME
 
 Text::Xslate::Manual::Cookbook - How to cook Xslate templates

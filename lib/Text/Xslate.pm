@@ -662,6 +662,8 @@ package Text::Xslate;
 1;
 __END__
 
+=for stopwords sandboxing vs metacharacters name-coderef html xml cb tx TTerse HTML xslate HTMLTemplate gardejo jjn1056 clouder chiba turugina cho45 shmorimo ueda punytan
+
 =head1 NAME
 
 Text::Xslate - Scalable template engine for Perl5
