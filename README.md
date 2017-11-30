@@ -294,7 +294,7 @@ Possible options are:
 
     For example:
 
-        # Remove withespace from templates
+        # Remove whitespace from templates
         my $tx = Text::Xslate->new(
             pre_process_handler => sub {
                 my $text = shift;

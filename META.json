@@ -29,12 +29,16 @@
       "configure" : {
          "requires" : {
             "Module::Build" : "0.4005",
-            "Module::Build::XSUtil" : "0"
+            "Module::Build::XSUtil" : "0",
+            "version" : "0.9913"
          }
       },
       "develop" : {
          "requires" : {
+            "Data::Section::Simple" : "0",
+            "Devel::StackTrace" : "0",
             "Test::CPAN::Meta" : "0",
+            "Test::LeakTrace" : "0",
             "Test::MinimumVersion::Fast" : "0.04",
             "Test::PAUSE::Permissions" : "0.04",
             "Test::Pod" : "1.41",
@@ -44,8 +48,10 @@
       "runtime" : {
          "requires" : {
             "Data::MessagePack" : "0.38",
-            "Mouse" : "v2.4.5",
+            "Encode" : "2.26",
+            "Mouse" : "v2.5.0",
             "Scalar::Util" : "1.14",
+            "Storable" : "2.15",
             "parent" : "0.221",
             "perl" : "5.008001"
          }
@@ -71,9 +77,10 @@
          "web" : "https://github.com/xslate/p5-Text-Xslate"
       }
    },
-   "version" : "3.4.0",
+   "version" : "v3.4.0",
    "x_contributors" : [
       "André Walker <andre@andrewalker.net>",
+      "Anirvan Chatterjee <anirvan@users.noreply.github.com>",
       "Anirvan Chatterjee <x.github@chatterjee.net>",
       "Brian Fraser <fraserbn@gmail.com>",
       "Christian Walde <walde.christian@googlemail.com>",
@@ -98,6 +105,7 @@
       "Shigeki Morimoto <github@morimo.to>",
       "Shigeki Morimoto <shigeki.morimoto@mixi.co.jp>",
       "Shoichi Kaji <skaji@cpan.org>",
+      "Shoichi Kaji <skaji@outlook.com>",
       "Syohei YOSHIDA <syohex@gmail.com>",
       "Tasuku SUENAGA a.k.a. gunyarakun <tasuku-s-github@titech.ac>",
       "Tokuhiro Matsuno <tokuhirom@gmail.com>",
@@ -112,5 +120,5 @@
       "moznion <moznion@gmail.com>",
       "punytan <punytan@gmail.com>"
    ],
-   "x_serialization_backend" : "JSON::PP version 2.94"
+   "x_serialization_backend" : "JSON::PP version 2.97000"
 }

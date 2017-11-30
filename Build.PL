@@ -24,8 +24,10 @@ my %args = (
 
     requires => {
         'Data::MessagePack' => '0.38',
-        'Mouse' => 'v2.4.5',
+        'Encode' => '2.26',
+        'Mouse' => 'v2.5.0',
         'Scalar::Util' => '1.14',
+        'Storable' => '2.15',
         'parent' => '0.221',
         'perl' => '5.008001',
     },
