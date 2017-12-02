@@ -3,6 +3,7 @@ use strict;
 use Test::More;
 use File::Path qw(rmtree);
 use Test::Requires 'File::Which';
+plan skip_all => 'disable on windows' if $^O eq 'MSWin32';
 
 use constant LDIR => '.test_deps';
 BEGIN{ rmtree(LDIR) }
