@@ -9,6 +9,7 @@ requires 'Encode', '2.26';
 requires 'Storable', '2.15';
 
 on configure => sub {
+    requires 'Devel::PPPort', '3.33';
     requires 'Module::Build::XSUtil';
     requires 'version', '0.9913';
 };
