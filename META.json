@@ -28,6 +28,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
+            "Devel::PPPort" : "3.33",
             "Module::Build" : "0.4005",
             "Module::Build::XSUtil" : "0",
             "version" : "0.9913"
@@ -77,7 +78,7 @@
          "web" : "https://github.com/xslate/p5-Text-Xslate"
       }
    },
-   "version" : "v3.5.1",
+   "version" : "v3.5.2",
    "x_contributors" : [
       "André Walker <andre@andrewalker.net>",
       "Anirvan Chatterjee <anirvan@users.noreply.github.com>",
