@@ -1,5 +1,6 @@
 Text-Xslate-*
 .*
+!.appveyor.yml
 !.gitignore
 !.shipit
 !.proverc
