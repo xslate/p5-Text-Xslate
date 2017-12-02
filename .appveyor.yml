@@ -1,0 +1,14 @@
+build: off
+shallow_clone: true
+skip_tags: true
+skip_branch_with_pr: true
+init:
+  - git config --global core.autocrlf input
+install:
+  - choco install strawberryperl
+  - SET "PATH=C:\strawberry\c\bin;C:\strawberry\perl\site\bin;C:\strawberry\perl\bin;%PATH%"
+  - cpanm --installdeps --notest --quiet --with-configure --with-develop .
+test_script:
+  - perl Build.PL
+  - perl ./Build
+  - perl ./Build test
