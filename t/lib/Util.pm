@@ -14,7 +14,7 @@ $File::Copy::Recursive::KeepMode = 0;
 my $cur;
 sub path () {
 
-    if ( (caller())[1] =~ 't/010_internals/028_taint.t') {
+    if ( (caller())[1] =~ m{t.010_internals.028_taint\.t}) {
         $Bin = $1 if $Bin =~ /(.+)/;  # sigh... :(
     }
 
