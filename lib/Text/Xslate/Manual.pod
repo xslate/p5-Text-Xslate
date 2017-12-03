@@ -25,8 +25,6 @@ Xslate manual pages are not yet completed. Patches are welcome.
 
 =head1 SEE ALSO
 
-L<http://xslate.org> - The Xslate web site
-
 L<https://github.com/xslate> - Xslate repositories
 
 =cut

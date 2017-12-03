@@ -1235,8 +1235,6 @@ A "too-safe" HTML escaping filter which escape all the symbolic characters
 
 =head1 RESOURCES
 
-WEB: L<http://xslate.org/>
-
 PROJECT HOME: L<https://github.com/xslate/>
 
 REPOSITORY: L<https://github.com/xslate/p5-Text-Xslate/>
@@ -1285,8 +1283,6 @@ L<Template::Sandbox>
 Benchmarks:
 
 L<Template::Benchmark>
-
-L<http://xslate.org/benchmark.html>
 
 Papers:
 

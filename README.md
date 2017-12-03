@@ -533,8 +533,6 @@ backend will be used.
 
 # RESOURCES
 
-WEB: [http://xslate.org/](http://xslate.org/)
-
 PROJECT HOME: [https://github.com/xslate/](https://github.com/xslate/)
 
 REPOSITORY: [https://github.com/xslate/p5-Text-Xslate/](https://github.com/xslate/p5-Text-Xslate/)
@@ -583,8 +581,6 @@ Other template modules that Xslate has been influenced by:
 Benchmarks:
 
 [Template::Benchmark](https://metacpan.org/pod/Template::Benchmark)
-
-[http://xslate.org/benchmark.html](http://xslate.org/benchmark.html)
 
 Papers:
 
