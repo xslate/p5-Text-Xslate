@@ -4,31 +4,29 @@ use strict;
 use parent qw(Exporter);
 our @EXPORT = qw(path cache_dir);
 
-use FindBin qw($Bin);
-use File::Basename qw(dirname);
 use File::Temp qw(tempdir);
+use File::Find qw(find);
 
 use Test::Requires "File::Copy::Recursive";
 $File::Copy::Recursive::KeepMode = 0;
 
-my $cur;
-sub path () {
+my $path;
+my $cache_dir;
 
-    if ( (caller())[1] =~ m{t.010_internals.028_taint\.t}) {
-        $Bin = $1 if $Bin =~ /(.+)/;  # sigh... :(
+sub reinit {
+    $path = tempdir CLEANUP => 1;
+    File::Copy::Recursive::rcopy("t/template", $path) or die $!;
+    if ($^O eq 'MSWin32') {
+        # On windows, File::Copy::copy equals Win32::CopyFile, which preserves mtime.
+        # In our case, we need to ensure that mtime of copied files are now
+        find({wanted => sub { utime $^T, $^T, $_ if -f }, no_chdir => 1}, $path);
     }
-
-    unless ($cur) {
-        $cur = tempdir(DIR =>  dirname($Bin) . "/.", CLEANUP => 1);
-    }
-
-    {
-        my $template_path = dirname($Bin) . "/template";
-        File::Copy::Recursive::rcopy($template_path, $cur) or die $!;
-    }
-
-    return $cur;
+    $cache_dir = tempdir CLEANUP => 1;
 }
 
-use constant cache_dir => ".xslate_cache/$0";
+sub path () { $path }
+sub cache_dir () { $cache_dir }
+
+reinit();
+
 1;

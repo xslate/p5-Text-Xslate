@@ -15,7 +15,7 @@ on configure => sub {
 };
 
 on test => sub {
-    requires 'Test::More', '0.88';
+    requires 'Test::More', '0.98';
     requires 'Test::Requires';
     requires 'File::Copy::Recursive';
     requires 'File::Path', '2.07';
