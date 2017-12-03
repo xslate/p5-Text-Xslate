@@ -2,6 +2,9 @@ Revision history for Perl extension Text::Xslate
 
 {{$NEXT}}
 
+v3.5.3 2017-12-03T05:18:51Z
+    - Fix tests for windows again (#188)
+
 v3.5.2 2017-12-02T08:19:33Z
     - Fix tests for windows (zdm #186, #187)
 

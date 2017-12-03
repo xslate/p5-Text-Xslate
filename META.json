@@ -61,7 +61,7 @@
          "requires" : {
             "File::Copy::Recursive" : "0",
             "File::Path" : "2.07",
-            "Test::More" : "0.88",
+            "Test::More" : "0.98",
             "Test::Requires" : "0"
          }
       }
@@ -78,7 +78,7 @@
          "web" : "https://github.com/xslate/p5-Text-Xslate"
       }
    },
-   "version" : "v3.5.2",
+   "version" : "v3.5.3",
    "x_contributors" : [
       "André Walker <andre@andrewalker.net>",
       "Anirvan Chatterjee <anirvan@users.noreply.github.com>",

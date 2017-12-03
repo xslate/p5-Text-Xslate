@@ -44,7 +44,7 @@ my %args = (
     test_requires => {
         'File::Copy::Recursive' => '0',
         'File::Path' => '2.07',
-        'Test::More' => '0.88',
+        'Test::More' => '0.98',
         'Test::Requires' => '0',
     },
 
