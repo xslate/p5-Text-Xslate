@@ -19,7 +19,12 @@ sub reinit {
     if ($^O eq 'MSWin32') {
         # On windows, File::Copy::copy equals Win32::CopyFile, which preserves mtime.
         # In our case, we need to ensure that mtime of copied files are now
-        find({wanted => sub { utime $^T, $^T, $_ if -f }, no_chdir => 1}, $path);
+        my $wanted = sub {
+            return unless -f;
+            $_ = $1 if /(.+)/; # untaint
+            utime $^T, $^T, $_;
+        };
+        find({wanted => $wanted, no_chdir => 1}, $path);
     }
     $cache_dir = tempdir CLEANUP => 1;
 }
