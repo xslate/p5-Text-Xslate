@@ -8,6 +8,8 @@ use Test::More;
 
 use Text::Xslate;
 
+use File::Temp qw(tempdir);
+
 # here's some test template files
 my $base_a = <<'EOF';
 here is base A
@@ -41,6 +43,7 @@ my $tx = Text::Xslate->new(
     path => ['path_b', 'path_a'],
 
     cache => 1,
+    cache_dir => tempdir(CLEANUP => 1),
 );
 
 my $out = $tx->render('sub.tx');
@@ -62,6 +65,7 @@ $tx = Text::Xslate->new(
     path => ['path_b', 'path_a'],
 
     cache => 1,
+    cache_dir => tempdir(CLEANUP => 1),
 );
 
 note 'after re-creating an Xslate instance';
