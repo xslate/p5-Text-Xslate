@@ -4,7 +4,7 @@ use 5.008_001;
 use strict;
 use warnings;
 
-use version; our $VERSION = version->declare('v3.5.3');
+use version; our $VERSION = version->declare('v3.5.4');
 
 use Carp              ();
 use File::Spec        ();
@@ -58,7 +58,7 @@ sub input_layer { ref($_[0]) ? $_[0]->{input_layer} : ':utf8' }
 
 package Text::Xslate::Engine; # XS/PP common base class
 
-use version; our $VERSION = version->declare('v3.5.3');
+use version; our $VERSION = version->declare('v3.5.4');
 
 use Text::Xslate::Util qw(
     make_error
@@ -672,7 +672,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 =head1 VERSION
 
-This document describes Text::Xslate version v3.5.3.
+This document describes Text::Xslate version v3.5.4.
 
 =head1 SYNOPSIS
 

@@ -4,7 +4,7 @@
       "Fuji, Goro (gfx) <gfuji@cpan.org>."
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v3.0.13, CPAN::Meta::Converter version 2.150010",
+   "generated_by" : "Minilla/v3.0.14, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -78,7 +78,7 @@
          "web" : "https://github.com/xslate/p5-Text-Xslate"
       }
    },
-   "version" : "v3.5.3",
+   "version" : "v3.5.4",
    "x_contributors" : [
       "André Walker <andre@andrewalker.net>",
       "Anirvan Chatterjee <anirvan@users.noreply.github.com>",
@@ -90,6 +90,7 @@
       "Fuji, Goro <fuji.goro@dena.jp>",
       "Fuji, Goro <g.psy.va@gmail.com>",
       "Hao Wu <hwu@intellisurvey.com>",
+      "James E Keenan <jkeenan@cpan.org>",
       "Jesse Luehrs <doy@tozt.net>",
       "Justin Cook <jscook@users.noreply.github.com>",
       "Kazuhiro Osawa <yappo@shibuya.pl>",
