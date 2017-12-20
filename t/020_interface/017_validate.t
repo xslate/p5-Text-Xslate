@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Test::More;
+use File::Temp ( qw| tempdir | );
 
 use Text::Xslate;
 
@@ -23,7 +24,10 @@ Hello, <: $xslate ??? :> world!
 T
 );
 
-my $tx = Text::Xslate->new(path => [\%vpath]);
+my $tx = Text::Xslate->new(
+    path => [\%vpath],
+    cache_dir => tempdir(CLEANUP => 1),
+);
 
 foreach my $name (qw(ok0 ok1)) {
     eval { $tx->validate($name) };

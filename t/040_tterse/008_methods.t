@@ -4,7 +4,10 @@ use Test::More;
 
 use Text::Xslate;
 
-my $tx = Text::Xslate->new(syntax => 'TTerse');
+my $tx = Text::Xslate->new(
+    syntax => 'TTerse',
+    cache => 0,
+);
 
 {
     package Obj;
