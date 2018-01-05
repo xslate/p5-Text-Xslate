@@ -3,6 +3,7 @@ requires 'Mouse', 'v2.5.0';
 requires 'Data::MessagePack', '0.38';
 requires 'parent', '0.221';
 requires 'Scalar::Util', '1.14';
+requires 'Text::Xslate::PP::Const';
 
 # fix local $SIG{__DIE__} + eval problems
 requires 'Encode', '2.26';
