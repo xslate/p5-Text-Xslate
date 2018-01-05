@@ -121,6 +121,7 @@ my %vpath = (
 my $tx = Text::Xslate->new(
     syntax => 'TTerse',
     path   => \%vpath,
+    cache  => 0,
     header => ['wrap_begin'],
     footer => ['wrap_end'],
 );

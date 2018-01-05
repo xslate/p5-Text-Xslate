@@ -19,6 +19,7 @@ my $xslate1 = Text::Xslate->new(
        'page.tx' => q{: cascade "base.tx"},
     },
     warn_handler => sub { die @_ },
+    cache => 0,
 );
 my $res1 = $xslate1->render('page.tx', { });
 is $res1, "Good\n";

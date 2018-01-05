@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 use Test::More;
+use File::Temp ( qw| tempdir | );
 
 use Text::Xslate;
 
@@ -29,7 +30,8 @@ T
 );
 
 my $xslate = Text::Xslate->new(
-    path => [\%vpath]
+    path => [\%vpath],
+    cache_dir => tempdir(CLEANUP => 1),
 );
 is eval { $xslate->render('Z') }, "This is Z.\n";
 is $@, '';

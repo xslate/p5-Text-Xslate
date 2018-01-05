@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use File::Temp ( qw| tempdir | );
 
 {
     package MyCounter;
@@ -26,6 +27,7 @@ my $tx = Text::Xslate->new(
             [%- mymacro() -%]
         },
     },
+    cache_dir => tempdir(CLEANUP => 1),
 );
 
 ok $tx->render('recurse.tt', { recurse_count => MyCounter->new(count => 101) });

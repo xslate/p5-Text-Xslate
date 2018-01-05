@@ -11,6 +11,7 @@ my $tx = Text::Xslate->new(
     function => {
         reverse => sub { scalar reverse $_[0]; },
     },
+    cache => 0,
 );
 
 {
