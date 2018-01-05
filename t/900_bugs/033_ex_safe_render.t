@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use File::Temp ( qw| tempdir | );
+use File::Temp qw(tempdir);
 
 {
     package MyCounter;
