@@ -9,7 +9,7 @@ use Test::More;
 my $vpath = Data::Section::Simple->new()->get_data_section();
 my $vars = { foo => 'hoge', bar => 'fuga' };
 
-my $xslate = Text::Xslate->new(path => [$vpath]);
+my $xslate = Text::Xslate->new(path => [$vpath], cache => 0);
 
 my $tied = Text::Xslate::Util::hash_with_default($vars, sub { "FILL @_" });
 my $got = $xslate->render('base.tx', $tied);
