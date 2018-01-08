@@ -3,7 +3,7 @@ package Text::Xslate::PP;
 use 5.008_001;
 use strict;
 
-use version; our $VERSION = version->declare('v3.5.5');
+use version; our $VERSION = version->declare('v3.5.6');
 
 BEGIN{
     $ENV{XSLATE} = ($ENV{XSLATE} || '') . '[pp]';
@@ -681,7 +681,7 @@ Text::Xslate::PP - Yet another Text::Xslate runtime in pure Perl
 
 =head1 VERSION
 
-This document describes Text::Xslate::PP version v3.5.5.
+This document describes Text::Xslate::PP version v3.5.6.
 
 =head1 DESCRIPTION
 

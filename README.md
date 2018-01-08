@@ -5,7 +5,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 # VERSION
 
-This document describes Text::Xslate version v3.5.5.
+This document describes Text::Xslate version v3.5.6.
 
 # SYNOPSIS
 
