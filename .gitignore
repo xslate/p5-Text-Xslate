@@ -35,3 +35,4 @@ lib/Text/Xslate/PP/Const.pm
 /Build
 /_build
 /lib/Text/Xslate.xs
+/src/xs_version.h

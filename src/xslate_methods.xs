@@ -1,3 +1,4 @@
+#include "xs_version.h"
 #include "xslate.h"
 
 #define TXBM_DECL(name) void name \

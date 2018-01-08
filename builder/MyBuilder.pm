@@ -23,6 +23,14 @@ sub new {
     $self;
 }
 
+sub _write_xs_version {
+    my ($self, $file) = @_;
+    open my $fh, ">", $file or die "$file: $!";
+    print  {$fh} "#ifndef XS_VERSION\n";
+    printf {$fh} "#  define XS_VERSION \"%s\"\n", $self->dist_version;
+    print  {$fh} "#endif\n";
+}
+
 sub _derive_opcode {
     my ($self, $script, $source, $derived) = @_;
     my @cmd = ($self->{properties}{perl}, $script, $source);
@@ -33,6 +41,10 @@ sub _derive_opcode {
 
 sub ACTION_code {
     my ($self, @args) = @_;
+
+    if (!$self->pureperl_only) {
+        $self->_write_xs_version("src/xs_version.h");
+    }
 
     my @derive = (
         {
