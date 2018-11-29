@@ -3,7 +3,7 @@ use Moo 2.000001;
 
 use Text::Xslate::Util qw(p $DEBUG);
 
-use MooX::Types::MooseLike::Base qw(:all);  
+use MooX::Types::MooseLike::Base qw(:all);
 
 use overload
     bool => sub() { 1 },
@@ -16,7 +16,7 @@ our @CARP_NOT = qw(Text::Xslate::Parser);
 use constant _DUMP_DENOTE => scalar($DEBUG =~ /\b dump=denote \b/xmsi);
 
 has id => (
-    is       => 'rw',   
+    is       => 'rw',
     isa      => Str,
     required => 1,
 );
@@ -46,14 +46,6 @@ has value => (
         $self->is_value(1);
         return;
     },
-#    default => sub{
-#        if(!defined $_[0]) { #XXX: Moo::XS's bug
-#            my(undef, $file, $line) = caller;
-#            warn "[bug] no invocant at $file line $line.\n";
-#            return '(null)';
-#        }
-#        return $_[0]->id
-#   },
 );
 
 # some tokens have the counterpart token (e.g. '{' to '}')
