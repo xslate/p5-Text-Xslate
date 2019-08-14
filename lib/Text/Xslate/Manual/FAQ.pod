@@ -100,7 +100,7 @@ That's because Xslate catches exceptions in templates and emits them as warnings
 
 =head2 Configuration
 
-=head3 When I create the Xslate instance?
+=head3 When should I create the Xslate instance?
 
 Xslate instances are reusable and creating the instance costs somewhat
 so you're recommended to reuse them as much as possible.
