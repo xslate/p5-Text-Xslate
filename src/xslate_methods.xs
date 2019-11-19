@@ -105,7 +105,7 @@ TXBM(array, join) {
     I32 const len    = av_len(av) + 1;
     I32 i;
 
-    EXTEND(SP, len);
+    MEXTEND(SP, len);
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
         PUSHs(svp ? *svp : &PL_sv_undef);
