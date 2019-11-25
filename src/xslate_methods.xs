@@ -101,11 +101,13 @@ TXBM(array, size) {
 
 TXBM(array, join) {
     dSP;
+    dORIGMARK;
     AV* const av     = (AV*)SvRV(*MARK);
     I32 const len    = av_len(av) + 1;
     I32 i;
 
-    MEXTEND(SP, len);
+    EXTEND(SP, len);
+    MARK = ORIGMARK;
     for(i = 0; i < len; i++) {
         SV** const svp = av_fetch(av, i, FALSE);
         PUSHs(svp ? *svp : &PL_sv_undef);
