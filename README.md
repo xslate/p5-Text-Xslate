@@ -5,7 +5,7 @@ Text::Xslate - Scalable template engine for Perl5
 
 # VERSION
 
-This document describes Text::Xslate version v3.5.6.
+This document describes Text::Xslate version v3.5.7.
 
 # SYNOPSIS
 
@@ -170,7 +170,7 @@ Possible options are:
             ...,
         );
 
-    Built-in functions are described in [Text::Xslate::Manual::Builtin](https://metacpan.org/pod/Text::Xslate::Manual::Builtin).
+    Built-in functions are described in [Text::Xslate::Manual::Builtin](https://metacpan.org/pod/Text%3A%3AXslate%3A%3AManual%3A%3ABuiltin).
 
 - `module => [$module => ?\@import_args, ...]`
 
@@ -433,7 +433,7 @@ HTML builder that returns HTML sources. For example:
         },
     );
 
-See also [Text::Xslate::Manual::Cookbook](https://metacpan.org/pod/Text::Xslate::Manual::Cookbook).
+See also [Text::Xslate::Manual::Cookbook](https://metacpan.org/pod/Text%3A%3AXslate%3A%3AManual%3A%3ACookbook).
 
 ## Command line interface
 
@@ -455,7 +455,7 @@ There are multiple template syntaxes available in Xslate.
 - Kolon
 
     **Kolon** is the default syntax, using `<: ... :>` inline code and
-    `: ...` line code, which is explained in [Text::Xslate::Syntax::Kolon](https://metacpan.org/pod/Text::Xslate::Syntax::Kolon).
+    `: ...` line code, which is explained in [Text::Xslate::Syntax::Kolon](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3AKolon).
 
 - Metakolon
 
@@ -465,15 +465,15 @@ There are multiple template syntaxes available in Xslate.
 - TTerse
 
     **TTerse** is a syntax that is a subset of Template-Toolkit 2 (and partially TT3),
-    which is explained in [Text::Xslate::Syntax::TTerse](https://metacpan.org/pod/Text::Xslate::Syntax::TTerse).
+    which is explained in [Text::Xslate::Syntax::TTerse](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3ATTerse).
 
 - HTMLTemplate
 
     There's HTML::Template compatible layers in CPAN.
 
-    [Text::Xslate::Syntax::HTMLTemplate](https://metacpan.org/pod/Text::Xslate::Syntax::HTMLTemplate) is a syntax for HTML::Template.
+    [Text::Xslate::Syntax::HTMLTemplate](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3AHTMLTemplate) is a syntax for HTML::Template.
 
-    [HTML::Template::Parser](https://metacpan.org/pod/HTML::Template::Parser) is a converter from HTML::Template to Text::Xslate.
+    [HTML::Template::Parser](https://metacpan.org/pod/HTML%3A%3ATemplate%3A%3AParser) is a converter from HTML::Template to Text::Xslate.
 
 # NOTES
 
@@ -546,15 +546,15 @@ Patches are always welcome.
 
 Documents:
 
-[Text::Xslate::Manual](https://metacpan.org/pod/Text::Xslate::Manual)
+[Text::Xslate::Manual](https://metacpan.org/pod/Text%3A%3AXslate%3A%3AManual)
 
 Xslate template syntaxes:
 
-[Text::Xslate::Syntax::Kolon](https://metacpan.org/pod/Text::Xslate::Syntax::Kolon)
+[Text::Xslate::Syntax::Kolon](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3AKolon)
 
-[Text::Xslate::Syntax::Metakolon](https://metacpan.org/pod/Text::Xslate::Syntax::Metakolon)
+[Text::Xslate::Syntax::Metakolon](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3AMetakolon)
 
-[Text::Xslate::Syntax::TTerse](https://metacpan.org/pod/Text::Xslate::Syntax::TTerse)
+[Text::Xslate::Syntax::TTerse](https://metacpan.org/pod/Text%3A%3AXslate%3A%3ASyntax%3A%3ATTerse)
 
 Xslate command:
 
@@ -562,25 +562,25 @@ Xslate command:
 
 Other template modules that Xslate has been influenced by:
 
-[Text::MicroTemplate](https://metacpan.org/pod/Text::MicroTemplate)
+[Text::MicroTemplate](https://metacpan.org/pod/Text%3A%3AMicroTemplate)
 
-[Text::MicroTemplate::Extended](https://metacpan.org/pod/Text::MicroTemplate::Extended)
+[Text::MicroTemplate::Extended](https://metacpan.org/pod/Text%3A%3AMicroTemplate%3A%3AExtended)
 
-[Text::ClearSilver](https://metacpan.org/pod/Text::ClearSilver)
+[Text::ClearSilver](https://metacpan.org/pod/Text%3A%3AClearSilver)
 
 [Template](https://metacpan.org/pod/Template) (Template::Toolkit)
 
-[HTML::Template](https://metacpan.org/pod/HTML::Template)
+[HTML::Template](https://metacpan.org/pod/HTML%3A%3ATemplate)
 
-[HTML::Template::Pro](https://metacpan.org/pod/HTML::Template::Pro)
+[HTML::Template::Pro](https://metacpan.org/pod/HTML%3A%3ATemplate%3A%3APro)
 
-[Template::Alloy](https://metacpan.org/pod/Template::Alloy)
+[Template::Alloy](https://metacpan.org/pod/Template%3A%3AAlloy)
 
-[Template::Sandbox](https://metacpan.org/pod/Template::Sandbox)
+[Template::Sandbox](https://metacpan.org/pod/Template%3A%3ASandbox)
 
 Benchmarks:
 
-[Template::Benchmark](https://metacpan.org/pod/Template::Benchmark)
+[Template::Benchmark](https://metacpan.org/pod/Template%3A%3ABenchmark)
 
 Papers:
 
