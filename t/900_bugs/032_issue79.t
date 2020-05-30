@@ -15,11 +15,12 @@ my $dir = "$Bin/issue79";
 
 rmtree "$dir/cache";
 
-my %std_inc = map { $_ => 1 } (".", @Config::Config{qw(
-    sitelibexp sitearchexp
-    privlibexp archlibexp
-)});
-my $libs = join " ", map { qq{"-I$_" } } grep { !$std_inc{$_} } @INC;
+my @include_dirs = (
+  '../../blib/lib',
+  '../blib/lib',
+  './blib/lib'
+);
+my $libs = join " ", map { qq{ "-I$_" } } @include_dirs;
 
 my $run_cmd = qq{$^X $libs "$dir/xslate.pl"};
 note $run_cmd;
