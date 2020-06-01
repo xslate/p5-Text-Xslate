@@ -2,6 +2,9 @@ Revision history for Perl extension Text::Xslate
 
 {{$NEXT}}
 
+v3.5.8 2020-06-01T15:17:51Z
+    - Fix "Argument list too long" in test (greeneg #202, #203, #204)
+
 v3.5.7 2019-11-25T16:15:32Z
     - Fix a segfault on array join (zanyou #199, #200)
 
