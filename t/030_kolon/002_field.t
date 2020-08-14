@@ -50,7 +50,7 @@ my @data = (
 
 {
     package A;
-    use Mouse;
+    use Moo;
     use overload '""' => sub{ "as_string" };
 
     has foo => (

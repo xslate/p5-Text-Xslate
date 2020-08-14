@@ -8,7 +8,7 @@ my $tx = Text::Xslate->new();
 
 {
     package ResultSet;
-    use Mouse;
+    use Moo;
 
     has data => (
         is  => 'ro',

@@ -8,7 +8,7 @@ my $tx = Text::Xslate->new(verbose => 2);
 
 {
     package Obj;
-    use Mouse;
+    use Moo;
 
     sub join :method {
         my($self, $sep, @args) = @_;
@@ -23,7 +23,7 @@ my $tx = Text::Xslate->new(verbose => 2);
 }
 {
     package Anything;
-    use Mouse;
+    use Moo;
 
     sub AUTOLOAD {
         our $AUTOLOAD;

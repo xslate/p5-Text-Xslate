@@ -1,9 +1,9 @@
 package Text::Xslate::Syntax::Kolon;
-use Mouse;
+use Moo 2.000001;
 
 extends qw(Text::Xslate::Parser);
 
-no Mouse;
+no Moo;
 __PACKAGE__->meta->make_immutable();
 
 __END__

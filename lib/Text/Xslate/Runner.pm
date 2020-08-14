@@ -1,25 +1,30 @@
 package Text::Xslate::Runner;
-use Mouse;
-use Mouse::Util::TypeConstraints;
+
+use Moo 2.000001;
+
+use Types::Standard '-all';
 
 use List::Util     ();
 use File::Spec     ();
 use File::Basename ();
 use Getopt::Long   ();
 
+use Class::Load;
+
 {
     package
         Text::Xslate::Runner::Getopt;
-    use Mouse::Role;
+
+    use Moo::Role;
+    use MooX::Types::MooseLike::Base qw(:all);  
 
     has cmd_aliases => (
         is         => 'ro',
-        isa        => 'ArrayRef[Str]',
+        isa        => ArrayRef[Str],
         default    => sub { [] },
-        auto_deref => 1,
     );
 
-    no Mouse::Role;
+    no Moo::Role;
 }
 
 my $getopt = Getopt::Long::Parser->new(
@@ -30,16 +35,13 @@ my $getopt = Getopt::Long::Parser->new(
     )],
 );
 
-my $Pattern = subtype __PACKAGE__ . '.Pattern', as 'RegexpRef';
-coerce $Pattern => from 'Str' => via { qr/$_/ };
-
 my $getopt_traits = ['Text::Xslate::Runner::Getopt'];
 
 has cache_dir => (
     documentation => 'Directory the cache files will be saved in',
     cmd_aliases   => [qw(c)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     predicate     => 'has_cache_dir',
     traits        => $getopt_traits,
 );
@@ -48,7 +50,7 @@ has cache => (
     documentation => 'Cache level',
     cmd_aliases   => [qw(a)],
     is            => 'ro',
-    isa           => 'Int',
+    isa           => Int,
     predicate     => 'has_cache',
     traits        => $getopt_traits,
 );
@@ -57,7 +59,7 @@ has module => (
     documentation => 'Modules templates will use (e.g. name=sub1,sub2)',
     cmd_aliases   => [qw(M)],
     is            => 'ro',
-    isa           => 'HashRef[Str]',
+    isa           => HashRef[Str],
     predicate     => 'has_module',
     traits        => $getopt_traits,
 );
@@ -66,7 +68,7 @@ has input_encoding => (
     documentation => 'Input encoding (default: UTF-8)',
     cmd_aliases   => [qw(ie)],
     is            => 'rw',
-    isa           => 'Str',
+    isa           => Str,
     default       => 'UTF-8',
     predicate     => 'has_input_encoding',
     traits        => $getopt_traits,
@@ -76,7 +78,7 @@ has output_encoding => (
     documentation => 'Output encoding (default: UTF-8)',
     cmd_aliases   => [qw(oe)],
     is            => 'rw',
-    isa           => 'Str',
+    isa           => Str,
     default       => 'UTF-8',
     predicate     => 'has_output_encoding',
     traits        => $getopt_traits,
@@ -87,7 +89,7 @@ has path => (
     documentation => 'Include paths',
     cmd_aliases   => [qw(I)],
     is            => 'ro',
-    isa           => 'ArrayRef[Str]',
+    isa           => ArrayRef[Str],
     predicate     => 'has_path',
     traits        => $getopt_traits,
 );
@@ -96,7 +98,7 @@ has syntax => (
     documentation => 'Template syntax (e.g. TTerse)',
     cmd_aliases   => [qw(s)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     predicate     => 'has_syntax',
     traits        => $getopt_traits,
 );
@@ -105,7 +107,7 @@ has type => (
     documentation => 'Output content type (html | xml | text)',
     cmd_aliases   => [qw(t)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     predicate     => 'has_type',
     traits        => $getopt_traits,
 );
@@ -114,7 +116,7 @@ has verbose => (
     documentation => 'Warning level (default: 2)',
     cmd_aliases   => [qw(w)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     default       => 2,
     predicate     => 'has_verbose',
     traits        => $getopt_traits,
@@ -125,8 +127,8 @@ has ignore => (
     documentation => 'Regular expression the process will ignore',
     cmd_aliases   => [qw(i)],
     is            => 'ro',
-    isa           => $Pattern,
-    coerce        => 1,
+    isa           => RegexpRef,
+    coerce        => sub { ref $_[0] ? $_[0] : qr/$_[0]/ },
     traits        => $getopt_traits,
 );
 
@@ -135,7 +137,7 @@ has suffix => (
     documentation => 'Output suffix mapping (e.g. tx=html)',
     cmd_aliases   => [qw(x)],
     is            => 'ro',
-    isa           => 'HashRef',
+    isa           => HashRef,
     default       => sub { +{} },
     traits        => $getopt_traits,
 );
@@ -144,7 +146,7 @@ has dest => (
     documentation => 'Destination directory',
     cmd_aliases   => [qw(o)],
     is            => 'ro',
-    isa           => 'Str', # Maybe[Str]
+    isa           => Str, # Maybe[Str]
     required      => 0,
     traits        => $getopt_traits,
 );
@@ -153,7 +155,7 @@ has define => (
     documentation => 'Define template variables (e.g. foo=bar)',
     cmd_aliases   => [qw(D)],
     is            => 'ro',
-    isa           => 'HashRef',
+    isa           => HashRef,
     predicate     => 'has_define',
     traits        => $getopt_traits,
 );
@@ -162,7 +164,7 @@ has eval => (
     documentation => 'One line of template code',
     cmd_aliases   => [qw(e)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     predicate     => 'has_eval',
     traits        => $getopt_traits,
 );
@@ -171,7 +173,7 @@ has engine => (
     documentation => 'Template engine',
     cmd_aliases   => [qw(E)],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     default       => 'Text::Xslate',
     traits        => $getopt_traits,
 );
@@ -180,7 +182,7 @@ has debug => (
     documentation => 'Debugging flags',
     cmd_aliases   => ['d'],
     is            => 'ro',
-    isa           => 'Str',
+    isa           => Str,
     predicate     => 'has_debug',
     traits        => $getopt_traits,
 );
@@ -188,22 +190,21 @@ has debug => (
 has version => (
     documentation => 'Print version information',
     is            => 'ro',
-    isa           => 'Bool',
+    isa           => Bool,
     traits        => $getopt_traits,
 );
 
 has help => (
     documentation => 'Print this help',
     is            => 'ro',
-    isa           => 'Bool',
+    isa           => Bool,
     traits        => $getopt_traits,
 );
 
 has targets => (
     is         => 'ro',
-    isa        => 'ArrayRef[Str]',
+    isa        => ArrayRef[Str],
     default    => sub { [] },
-    auto_deref => 1,
 );
 
 my @Spec = __PACKAGE__->_build_getopt_spec();
@@ -217,7 +218,7 @@ sub _build_getopt_spec {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $isa = $attr->type_constraint;
-
+        
         my $type;
         if($isa->is_a_type_of('Bool')) {
             $type = '';
@@ -238,7 +239,7 @@ sub _build_getopt_spec {
             $type = '=s';
         }
 
-        my @names = ($attr->name, $attr->cmd_aliases);
+        my @names = ($attr->name, @{ $attr->cmd_aliases} );
         push @spec, join('|', @names) . $type;
     }
     return @spec;
@@ -293,7 +294,7 @@ sub run {
         return;
     }
 
-    Mouse::load_class($self->engine);
+    Class::Load::load_class($self->engine);
     my $xslate = $self->engine->new(%args);
 
     if($self->has_eval) {
@@ -410,7 +411,7 @@ sub help_message {
         next unless $attr->does('Text::Xslate::Runner::Getopt');
 
         my $name  = join ' ', map { length($_) == 1 ? "-$_": "--$_" }
-                                ($attr->cmd_aliases, $attr->name);
+                                (@{ $attr->cmd_aliases }, $attr->name);
 
         push @options, [ $name => $attr->documentation ];
     }
@@ -446,8 +447,7 @@ sub _encode {
     }
 }
 
-no Mouse;
-no Mouse::Util::TypeConstraints;
+no Moo;
 __PACKAGE__->meta->make_immutable;
 
 __END__

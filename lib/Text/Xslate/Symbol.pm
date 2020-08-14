@@ -1,7 +1,9 @@
 package Text::Xslate::Symbol;
-use Mouse;
+use Moo 2.000001;
 
 use Text::Xslate::Util qw(p $DEBUG);
+
+use MooX::Types::MooseLike::Base qw(:all);
 
 use overload
     bool => sub() { 1 },
@@ -15,13 +17,13 @@ use constant _DUMP_DENOTE => scalar($DEBUG =~ /\b dump=denote \b/xmsi);
 
 has id => (
     is       => 'rw',
-    isa      => 'Str',
+    isa      => Str,
     required => 1,
 );
 
 has lbp => ( # left binding power
     is       => 'rw',
-    isa      => 'Int',
+    isa      => Int,
 
     lazy     => 1,
     default  => 0,
@@ -29,7 +31,7 @@ has lbp => ( # left binding power
 
 has ubp => ( # unary binding power
     is       => 'rw',
-    isa      => 'Int',
+    isa      => Int,
 
     required => 0,
 );
@@ -44,20 +46,12 @@ has value => (
         $self->is_value(1);
         return;
     },
-#    default => sub{
-#        if(!defined $_[0]) { #XXX: Mouse::XS's bug
-#            my(undef, $file, $line) = caller;
-#            warn "[bug] no invocant at $file line $line.\n";
-#            return '(null)';
-#        }
-#        return $_[0]->id
-#   },
 );
 
 # some tokens have the counterpart token (e.g. '{' to '}')
 has counterpart => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     required => 0,
 );
@@ -74,13 +68,13 @@ has [
         'can_be_modifier', # statement modifiers (e.g. expr if cond)
     ] => (
     is       => 'rw',
-    isa      => 'Bool',
+    isa      => Bool,
     required => 0,
 );
 
 has nud => ( # null denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_nud',
     reader    => 'get_nud',
@@ -93,28 +87,30 @@ has nud => ( # null denotation
         return;
     },
 
-    lazy_build => 1,
+    lazy => 1,
+    builder => '_build_nud',
 
     required => 0,
 );
 
 has led => ( # left denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_led',
     reader    => 'get_led',
     predicate => 'has_led',
     clearer   => 'remove_led',
 
-    lazy_build => 1,
+    lazy => 1,
+    builder => '_build_led',
 
     required => 0,
 );
 
 has std => ( # statement denotation
     is  => 'bare',
-    isa => 'CodeRef',
+    isa => CodeRef,
 
     writer    => 'set_std',
     reader    => 'get_std',
@@ -135,14 +131,14 @@ has [qw(first second third)] => (
 
 has type => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     required => 0,
 );
 
 has arity => (
     is  => 'rw',
-    isa => 'Str',
+    isa => Str,
 
     lazy    => 1,
     default => 'name',
@@ -152,21 +148,21 @@ has arity => (
 
 has assignment => (
     is  => 'rw',
-    isa => 'Bool',
+    isa => Bool,
 
     required => 0,
 );
 
 #has scope => (
 #    is  => 'rw',
-#    isa => 'HashRef',
+#    isa => HashRef,
 #
 #    required => 0,
 #);
 
 has line => (
     is  => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     lazy    => 1,
     default => 0,
@@ -240,7 +236,7 @@ sub _dump_denote {
     ;
 }
 
-no Mouse;
+no Moo;
 __PACKAGE__->meta->make_immutable;
 
 __END__

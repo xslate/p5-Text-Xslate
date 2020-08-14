@@ -11,7 +11,7 @@ use Util;
 use utf8;
 {
     package MyArray;
-    use Mouse;
+    use Moo;
 
     has size => (
         is      => 'rw',

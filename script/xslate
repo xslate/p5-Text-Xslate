@@ -3,7 +3,7 @@ use strict;
 use Text::Xslate::Runner;
 
 my $app = Text::Xslate::Runner->new_from(@ARGV);
-$app->run( $app->targets );
+$app->run( @{$app->targets} );
 
 __END__
 
