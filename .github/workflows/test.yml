@@ -1,0 +1,37 @@
+name: test
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.8-buster'
+          - '5.10-buster'
+          - 'latest'
+    container:
+      image: perl:${{ matrix.perl-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: perl -V
+      - run: cpanm --installdeps --notest --quiet --with-configure --with-develop .
+      - run: perl Build.PL
+      - run: ./Build
+      - run: ./Build test
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: perl -V
+      - run: cpanm --installdeps --notest --quiet --with-configure --with-develop .
+      - run: perl Build.PL
+      - run: perl Build
+      - run: perl Build test

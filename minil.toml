@@ -1,7 +1,7 @@
 name = "Text-Xslate"
 module_maker = "ModuleBuild"
 allow_pureperl = 1
-badges = ["travis"]
+badges = ["github-actions/test"]
 
 [build]
 build_class = "builder::MyBuilder"
