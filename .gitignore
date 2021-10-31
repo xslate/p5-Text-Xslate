@@ -1,10 +1,8 @@
 Text-Xslate-*
-.*
-!.appveyor.yml
+.xslate_cache/
 !.gitignore
 !.shipit
 !.proverc
-!.travis.yml
 *~
 *.o
 *.obj
