@@ -68,7 +68,8 @@ subtest 'cache => 1 (default mode)' => sub {
     # change the content
     copy "$x.mod", $x;
 
-    utime $^T+10, $^T+10, $x;
+    my $t = time + 10;
+    utime $t, $t, $x;
 
     is $tx->render('hello.tx', { lang => 'Perl' }),
         "Hi, Perl.\n", "auto reload $_" for 1 .. 2;
@@ -86,7 +87,8 @@ subtest 'cache => 2 (release mode)' => sub {
     # change the content
     copy "$x.mod", $x;
 
-    utime $^T+10, $^T+10, $x;
+    my $t = time + 10;
+    utime $t, $t, $x;
 
     is $tx->render('hello.tx', { lang => 'Xslate' }),
         "Hello, Xslate world!\n", "second (modified, but not reloaded)" for 1 .. 2;
