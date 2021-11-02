@@ -34,7 +34,7 @@ my @data = (
 
 {
     package A;
-    use Mouse;
+    use Moo;
 
     has foo => (
         is => 'rw',

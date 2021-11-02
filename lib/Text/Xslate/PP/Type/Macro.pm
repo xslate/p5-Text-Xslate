@@ -1,6 +1,9 @@
 package Text::Xslate::PP::Type::Macro;
-use Mouse;
+
 use warnings FATAL => 'recursion';
+
+use Moo 2.000001;
+use MooX::Types::MooseLike::Base qw(:all);  
 
 use overload
     '&{}'    => \&as_code_ref,
@@ -9,35 +12,35 @@ use overload
 
 has name => (
     is => 'ro',
-    isa => 'Str',
+    isa => Str,
 
     required => 1,
 );
 
 has addr => (
     is => 'ro',
-    isa => 'Int',
+    isa => Int,
 
     required => 1,
 );
 
 has nargs => (
     is => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     default => 0,
 );
 
 has outer => (
     is => 'rw',
-    isa => 'Int',
+    isa => Int,
 
     default => 0,
 );
 
 has state => (
     is  => 'rw',
-    isa => 'Object',
+    isa => Object,
 
     required => 1,
     weak_ref => 1,
@@ -53,7 +56,7 @@ sub as_code_ref {
     };
 }
 
-no Mouse;
+no Moo;
 __PACKAGE__->meta->make_immutable;
 __END__
 
