@@ -140,6 +140,37 @@ HEAD
 FOOT
 X
 
+    [<<'T', { lang => 'Xslate' }, <<'X', 'single role mixin'],
+: cascade myapp::base with myapp::role1
+
+: override hello -> {
+    AROUND[
+    : super
+    ]AROUND
+: }
+T
+HEAD
+    AROUND[
+    Hello, Xslate world!(role1)
+    ]AROUND
+FOOT
+X
+
+    [<<'T', { lang => 'Xslate' }, <<'X', 'multiple roles mixin'],
+: cascade myapp::base with myapp::role1, myapp::role2
+
+: override hello -> {
+    AROUND[
+    : super
+    ]AROUND
+: }
+T
+HEAD
+    AROUND[
+    Hello, Xslate world!(role2)
+    ]AROUND
+FOOT
+X
 );
 
 foreach my $d(@set) {
