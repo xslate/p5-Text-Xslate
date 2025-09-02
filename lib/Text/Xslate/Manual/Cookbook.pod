@@ -158,7 +158,7 @@ Use template cascading, which is a super-set of the C<WRAPPER> directive.
 F<wrapper.tx>:
 
     <div class="wrapper">
-    block content -> { }
+    : block content -> { }
     </div>
 
 F<content.tx>
