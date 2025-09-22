@@ -5,11 +5,13 @@ use Text::Xslate;
 
 {
     package Foo;
-    use Mouse;
+    use Moo;
+
+    use Types::Standard qw/ Int /;
 
     has bar => (
         is  => 'rw',
-        isa => 'Int',
+        isa => Int,
     );
 }
 
@@ -31,6 +33,6 @@ like $@, qr/bar/, 'confess in templates';
 eval {
     $tx->render_string('<: $foo.bar("xyzzy") :>', { foo => Foo->new });
 };
-like $@, qr/Validation failed/, 'confess in templates';
+like $@, qr/failed/, 'confess in templates';
 done_testing;
 

@@ -1,5 +1,5 @@
 package Text::Xslate::PP::Opcode;
-use Mouse;
+use Moo 2.000001;
 extends qw(Text::Xslate::PP::State);
 
 use version; our $VERSION = version->declare('v3.5.9');
@@ -635,7 +635,7 @@ sub proccall {
     }
 }
 
-no Mouse;
+no Moo;
 __PACKAGE__->meta->make_immutable();
 __END__
 

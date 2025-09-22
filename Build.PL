@@ -23,6 +23,7 @@ my %args = (
     },
 
     requires => {
+        'Types::Standard' => '0',
         'Data::MessagePack' => '0.38',
         'Encode' => '2.26',
         'Mouse' => 'v2.5.0',
